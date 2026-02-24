@@ -12,7 +12,6 @@ from rootmap import ROOT
 
 
 def get_random_banner():
-    # Gunakan ROOT_DIR agar lebih bersih
     banner_dir = os.path.join(ROOT, "lib", "ui", "banners")
     try:
         if not os.path.exists(banner_dir):
@@ -29,11 +28,11 @@ def get_random_banner():
         random_file = random.choice(all_files)
         module_path = f"lib.ui.banners.{random_file.replace('.py', '')}"
 
-        # Reload module jika perlu atau import biasa
+        # Reload module if necessary or import normally
         banner_module = importlib.import_module(module_path)
         raw_banner = getattr(banner_module, "DATA", "Banner data not found.")
 
-        # --- LOGIKA PENGUKUR LAYAR (RESPONSIVE) ---
+        # --- SCREEN MEASUREMENT LOGIC ---
         try:
             columns = os.get_terminal_size().columns
         except:
@@ -43,14 +42,14 @@ def get_random_banner():
         if not lines:
             return raw_banner
 
-        # Cari baris terpanjang untuk menentukan lebar asli banner
+        # Find the longest line to determine the original width of the banner.
         max_banner_width = max(len(line) for line in lines)
 
         # Hitung jarak spasi dari kiri agar pas di tengah
         padding_size = max(0, (columns - max_banner_width) // 2)
         padding_str = " " * padding_size
 
-        # Gabungkan kembali dengan spasi tambahan di setiap baris
+        # Rejoin with additional spaces on each line
         centered_banner = "\n".join([f"{padding_str}{line}" for line in lines])
 
         return centered_banner
