@@ -6,12 +6,12 @@ from rootmap import ROOT
 from scripts.cpl.advcore import safe_mode
 from concurrent.futures import ProcessPoolExecutor
 
-# Satukan semua cache
+# Merge all caches
 SHARED_TARGET = os.path.join(ROOT, "lib", "smf", "core",  "cache", "rust_target")
 
 
 def run_cmd(cmd, cwd=None):
-    # Set environment variable agar Cargo tahu pakai target folder mana
+    # Set environment variables
     env = os.environ.copy()
     env["CARGO_TARGET_DIR"] = SHARED_TARGET
 
@@ -33,7 +33,7 @@ def run_cmd(cmd, cwd=None):
 def get_bin_name(path):
     with open(path, "r") as f:
         txt = f.read()
-        # Cari nama di blok [[bin]], kalau nggak ada baru ambil dari [package]
+        # Search for name in block [[bin]]
         res = re.findall(r'\[(?:\[bin\]|package)\].*?name\s*=\s*"([^"]+)"', txt, re.S)
         return res[-1].replace("-", "_") if res else os.path.basename(os.path.dirname(path))
 
@@ -41,8 +41,9 @@ def compile_rust_project(cargo_path):
     output_dir = os.path.dirname(cargo_path)
     output_name = os.path.basename(os.path.abspath(output_dir))
 
-    # Gunakan --offline karena kita sudah pakai cargo vendor
-    # Flag --frozen memastikan Cargo tidak mengubah Cargo.lock
+    # Run as --offline
+    # The --frozen flag ensures Cargo does not modify Cargo.lock
+    # -j 1 This ensures 1 process uses 1 CPU core
     cmd = "cargo build --release --quiet --offline --frozen -j 1"
 
     if run_cmd(cmd, cwd=output_dir):
@@ -61,7 +62,7 @@ def compile_single_file(task):
     output = os.path.splitext(src_path)[0]
 
     if lang == "go":
-        # Gunakan -mod=vendor jika kamu juga vendor library Go nantinya
+        # Use -mod=vendor if you also vendor the Go libraries later.
         cmd = f"CGO_ENABLED=1 go build -o '{output}' '{src_path}'"
     else:
         with open(src_path, 'r', errors='ignore') as f:
@@ -71,8 +72,8 @@ def compile_single_file(task):
 
     if run_cmd(cmd):
         os.chmod(output, 0o755)
-        return f"[✓] {lang.upper()}: {src_path}"
-    return f"[!] {lang.upper()} Failed: {src_path}"
+        return f"[✓] {lang.upper()}: {output}"
+    return f"[!] {lang.upper()} Failed: {output}"
 
 def main():
     os.chdir(ROOT)
@@ -81,9 +82,9 @@ def main():
     rust_tasks = []
     other_tasks = []
 
-    # SCANNING PHASE (Cepat & Akurat)
+    # SCANNING PHASE (Fast & Accurate)
     for root, dirs, files in os.walk("."):
-        # Jangan pernah masuk ke vendor atau target!
+        # Never enter a vendor or target!
         if any(x in root for x in [".git", "vendor", "cache", "target"]):
             continue
 
@@ -105,7 +106,7 @@ def main():
         run_cmd("go mod tidy")
 
     # EXECUTE PARALLEL
-    print(f"[*] Storm Engine: Compiling on {os.cpu_count()} core")
+    print(f"[*] Storm Engine: Compiling on {os.cpu_count()} cores")
     with ProcessPoolExecutor(max_workers=safe_mode()) as executor:
         # Submit Rust projects
         rust_results = list(executor.map(compile_rust_project, rust_tasks))
@@ -114,7 +115,7 @@ def main():
 
     for r in rust_results + other_results: print(r)
 
-    # Hapus folder build_cache tapi setelah semua biner dipindah
+    # Delete the build_cache folder but after all the binaries have been moved
     # shutil.rmtree(os.path.join(ROOT, "cache"), ignore_errors=True)
 
 if __name__ == "__main__":
