@@ -3,6 +3,7 @@ import subprocess
 import shutil
 import re
 from rootmap import ROOT
+from scripts.cpl.ioname import get_bin_name
 from scripts.cpl.advcore import safe_mode
 from concurrent.futures import ProcessPoolExecutor
 
@@ -30,12 +31,6 @@ def run_cmd(cmd, cwd=None):
         print(f"[!] Rust Failed: {os.path.basename(cwd)}")
         return False
 
-def get_bin_name(path):
-    with open(path, "r") as f:
-        txt = f.read()
-        # Search for name in block [[bin]]
-        res = re.findall(r'\[(?:\[bin\]|package)\].*?name\s*=\s*"([^"]+)"', txt, re.S)
-        return res[-1].replace("-", "_") if res else os.path.basename(os.path.dirname(path))
 
 def compile_rust_project(cargo_path):
     output_dir = os.path.dirname(cargo_path)
