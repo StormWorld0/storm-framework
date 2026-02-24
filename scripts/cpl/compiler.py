@@ -37,20 +37,25 @@ def run_cmd(cmd, cwd=None):
 def compile_rust_project(cargo_path):
     output_dir = os.path.dirname(cargo_path)
     output_name = os.path.basename(os.path.abspath(output_dir))
+    bin_name = get_bin_name(cargo_path)
+    src_bin = os.path.join(SHARED_TARGET, "release", bin_name)
+    dst_bin = os.path.join(output_dir, output_name)
 
-    cmd = "cargo build --release --offline"
+    if os.path.exists(src_bin):
+        try:
+            shutil.copy(src_bin, dst_bin)
+            os.chmod(dst_bin, 0o755)
+            return f"[✓] Rust: {output_name}"
+        except Exception as e:
+            return f"[!] Copy Error: {output_name} ({e})"
 
-    if run_cmd(cmd, cwd=output_dir):
-        bin_name = get_bin_name(cargo_path)
-
-        src_bin = os.path.join(SHARED_TARGET, "release", bin_name)
-        dst_bin = os.path.join(output_dir, output_name)
-
+    if run_cmd("cargo build --release --offline", cwd=output_dir):
         if os.path.exists(src_bin):
             shutil.copy(src_bin, dst_bin)
             os.chmod(dst_bin, 0o755)
             return f"[✓] Rust: {output_name}"
-    return f"[!] Rust Failed: {output_name}"
+    return f"[!] Rust Binary Not Found: {output_name}"
+
 
 def compile_single_file(task):
     lang, src_path = task
