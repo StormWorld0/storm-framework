@@ -82,13 +82,23 @@ fn main() {
     let mut untracked_files = Vec::new();
     let mut found_in_disk = HashSet::new();
 
-    let ignored_items = [".git", "__pycache__", ".pytest_cache", ".github", "storm.db", "signed_manifest.json", ".gitignore", ".env", "target", "res/"];
+    let ignored_items = [".git", "__pycache__", ".pytest_cache", ".github", "storm.db", "signed_manifest.json", ".gitignore", ".env", "target", "res"];
 
     for entry in WalkDir::new(".").into_iter().filter_map(|e| e.ok()) {
         let path = entry.path();
         if path.is_file() {
             let path_str = path.to_str().unwrap_or("");
-            if ignored_items.iter().any(|&ignored| path_str.contains(ignored)) { continue; }
+            let mut should_ignore = false;
+
+            for comp in path.components() {
+                let name = comp.as_os_str().to_string_lossy();
+
+                for ignored in &ignored_items {
+                    if name == *ignored {should_ignore = true; break;}
+                }
+                if should_ignore {break;}
+            }
+            if should_ignore {continue;}
 
             let clean_path = path_str.strip_prefix("./").unwrap_or(path_str);
             found_in_disk.insert(clean_path.to_string());
