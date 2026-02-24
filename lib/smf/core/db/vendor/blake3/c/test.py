@@ -11,10 +11,12 @@ TEST_VECTORS = json.load(open(TEST_VECTORS_PATH))
 
 
 def run_blake3(args, input):
-    output = subprocess.run([path.join(HERE, "blake3")] + args,
-                            input=input,
-                            stdout=subprocess.PIPE,
-                            check=True)
+    output = subprocess.run(
+        [path.join(HERE, "blake3")] + args,
+        input=input,
+        stdout=subprocess.PIPE,
+        check=True,
+    )
     return output.stdout.decode().strip()
 
 
@@ -47,50 +49,55 @@ def main():
         # Test the default hash.
         test_hash = run_blake3([], input)
         for line in test_hash.splitlines():
-            assert expected_hash == line, \
-                "hash({}): {} != {}".format(input_len, expected_hash, line)
+            assert expected_hash == line, "hash({}): {} != {}".format(
+                input_len, expected_hash, line
+            )
 
         # Test the extended hash.
         xof_len = len(expected_hash_xof) // 2
         test_hash_xof = run_blake3(["--length", str(xof_len)], input)
         for line in test_hash_xof.splitlines():
-            assert expected_hash_xof == line, \
-                "hash_xof({}): {} != {}".format(
-                    input_len, expected_hash_xof, line)
+            assert expected_hash_xof == line, "hash_xof({}): {} != {}".format(
+                input_len, expected_hash_xof, line
+            )
 
         # Test the default keyed hash.
         test_keyed_hash = run_blake3(["--keyed", hex_key], input)
         for line in test_keyed_hash.splitlines():
-            assert expected_keyed_hash == line, \
-                "keyed_hash({}): {} != {}".format(
-                    input_len, expected_keyed_hash, line)
+            assert expected_keyed_hash == line, "keyed_hash({}): {} != {}".format(
+                input_len, expected_keyed_hash, line
+            )
 
         # Test the extended keyed hash.
         xof_len = len(expected_keyed_hash_xof) // 2
         test_keyed_hash_xof = run_blake3(
-            ["--keyed", hex_key, "--length",
-             str(xof_len)], input)
+            ["--keyed", hex_key, "--length", str(xof_len)], input
+        )
         for line in test_keyed_hash_xof.splitlines():
-            assert expected_keyed_hash_xof == line, \
-                "keyed_hash_xof({}): {} != {}".format(
-                    input_len, expected_keyed_hash_xof, line)
+            assert (
+                expected_keyed_hash_xof == line
+            ), "keyed_hash_xof({}): {} != {}".format(
+                input_len, expected_keyed_hash_xof, line
+            )
 
         # Test the default derive key.
         test_derive_key = run_blake3(["--derive-key", context_string], input)
         for line in test_derive_key.splitlines():
-            assert expected_derive_key == line, \
-                "derive_key({}): {} != {}".format(
-                    input_len, expected_derive_key, line)
+            assert expected_derive_key == line, "derive_key({}): {} != {}".format(
+                input_len, expected_derive_key, line
+            )
 
         # Test the extended derive key.
         xof_len = len(expected_derive_key_xof) // 2
         test_derive_key_xof = run_blake3(
-            ["--derive-key", context_string, "--length",
-             str(xof_len)], input)
+            ["--derive-key", context_string, "--length", str(xof_len)], input
+        )
         for line in test_derive_key_xof.splitlines():
-            assert expected_derive_key_xof == line, \
-                "derive_key_xof({}): {} != {}".format(
-                    input_len, expected_derive_key_xof, line)
+            assert (
+                expected_derive_key_xof == line
+            ), "derive_key_xof({}): {} != {}".format(
+                input_len, expected_derive_key_xof, line
+            )
 
 
 if __name__ == "__main__":

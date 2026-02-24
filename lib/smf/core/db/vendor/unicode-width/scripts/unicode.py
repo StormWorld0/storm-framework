@@ -831,9 +831,9 @@ class Bucket:
         """If either `self` or `attempt`'s width list starts with the other bucket's width list,
         set `self`'s width list to the longer of the two, add all of `attempt`'s codepoints
         into `self`, and return `True`. Otherwise, return `False`."""
-        (less, more) = (self.widths, attempt.widths)
+        less, more = (self.widths, attempt.widths)
         if len(self.widths) > len(attempt.widths):
-            (less, more) = (attempt.widths, self.widths)
+            less, more = (attempt.widths, self.widths)
         if less != more[: len(less)]:
             return False
         self.entry_set |= attempt.entry_set
@@ -1627,8 +1627,7 @@ impl WidthInfo {
                     f"    const {variant.name}: Self = Self(0b{variant.value:016b});\n"
                 )
 
-        module.write(
-            f"""
+        module.write(f"""
     /// Whether this width mode is ligature_transparent
     /// (has 5th MSB set.)
     fn is_ligature_transparent(self) -> bool {{
@@ -1727,8 +1726,7 @@ impl WidthInfo {
 /// The version of [Unicode](http://www.unicode.org/)
 /// that this version of unicode-width is based on.
 pub const UNICODE_VERSION: (u8, u8, u8) = {unicode_version};
-"""
-        )
+""")
 
         module.write(lookup_fns(False, special_ranges, joining_group_lam))
         module.write(lookup_fns(True, special_ranges_cjk, joining_group_lam))
@@ -1737,8 +1735,7 @@ pub const UNICODE_VERSION: (u8, u8, u8) = {unicode_version};
         text_presentation_idx, text_presentation_leaves = text_presentation_table
         emoji_modifier_idx, emoji_modifier_leaves = emoji_modifier_table
 
-        module.write(
-            """
+        module.write("""
 /// Whether this character is a zero-width character with
 /// `Joining_Type=Transparent`. Used by the Alef-Lamed ligatures.
 /// See also [`is_ligature_transparent`], a near-subset of this (only ZWJ is excepted)
@@ -1768,8 +1765,7 @@ fn is_transparent_zero_width(c: char) -> bool {
 /// Whether this character is a default-ignorable combining mark
 /// or ZWJ. These characters won't interrupt non-Arabic ligatures.
 fn is_ligature_transparent(c: char) -> bool {
-    matches!(c, """
-        )
+    matches!(c, """)
 
         tail = False
         for lo, hi in ligature_transparent:
@@ -1780,8 +1776,7 @@ fn is_ligature_transparent(c: char) -> bool {
             if hi != lo:
                 module.write(f"..='\\u{{{hi:X}}}'")
 
-        module.write(
-            """)
+        module.write(""")
 }
 
 /// Whether this character is transparent wrt the effect of
@@ -1816,14 +1811,12 @@ pub fn starts_emoji_presentation_seq(c: char) -> bool {
     // First level of lookup uses all but 10 LSB
     let top_bits = cp >> 10;
     let idx_of_leaf: usize = match top_bits {
-"""
-        )
+""")
 
         for msbs, i in emoji_presentation_idx:
             module.write(f"        0x{msbs:X} => {i},\n")
 
-        module.write(
-            """        _ => return false,
+        module.write("""        _ => return false,
     };
     // Extract the 3-9th (0-indexed) least significant bits of `cp`,
     // and use them to index into `leaf_row`.
@@ -1843,14 +1836,12 @@ pub fn starts_non_ideographic_text_presentation_seq(c: char) -> bool {
     // First level of lookup uses all but 8 LSB
     let top_bits = cp >> 8;
     let leaf: &[(u8, u8)] = match top_bits {
-"""
-        )
+""")
 
         for msbs, i in text_presentation_idx:
             module.write(f"        0x{msbs:X} => &TEXT_PRESENTATION_LEAF_{i},\n")
 
-        module.write(
-            """        _ => return false,
+        module.write("""        _ => return false,
     };
 
     let bottom_bits = (cp & 0xFF) as u8;
@@ -1873,14 +1864,12 @@ pub fn is_emoji_modifier_base(c: char) -> bool {
     // First level of lookup uses all but 8 LSB
     let top_bits = cp >> 8;
     let leaf: &[(u8, u8)] = match top_bits {
-"""
-        )
+""")
 
         for msbs, i in emoji_modifier_idx:
             module.write(f"        0x{msbs:X} => &EMOJI_MODIFIER_LEAF_{i},\n")
 
-        module.write(
-            """        _ => return false,
+        module.write("""        _ => return false,
     };
 
     let bottom_bits = (cp & 0xFF) as u8;
@@ -1904,8 +1893,7 @@ struct Align64<T>(T);
 
 #[repr(align(128))]
 struct Align128<T>(T);
-"""
-        )
+""")
 
         subtable_count = 1
         for i, table in enumerate(tables):
@@ -1965,14 +1953,12 @@ static {table.name}: Align{table.align}<[[u8; {table.bytes_per_row}]; {table.nam
 
         # non transparent zero width table
 
-        module.write(
-            f"""
+        module.write(f"""
 /// Sorted list of codepoint ranges (inclusive)
 /// that are zero-width but not `Joining_Type=Transparent`
 /// FIXME: can we get better compression?
 static NON_TRANSPARENT_ZERO_WIDTHS: [([u8; 3], [u8; 3]); {len(non_transparent_zero_widths)}] = [
-"""
-        )
+""")
 
         for lo, hi in non_transparent_zero_widths:
             module.write(
@@ -1981,8 +1967,7 @@ static NON_TRANSPARENT_ZERO_WIDTHS: [([u8; 3], [u8; 3]); {len(non_transparent_ze
 
         # solidus transparent table
 
-        module.write(
-            f"""];
+        module.write(f"""];
 
 /// Sorted list of codepoint ranges (inclusive)
 /// that don't affect how the combining solidus applies
@@ -1990,8 +1975,7 @@ static NON_TRANSPARENT_ZERO_WIDTHS: [([u8; 3], [u8; 3]); {len(non_transparent_ze
 /// FIXME: can we get better compression?
 #[cfg(feature = "cjk")]
 static SOLIDUS_TRANSPARENT: [([u8; 3], [u8; 3]); {len(solidus_transparent)}] = [
-"""
-        )
+""")
 
         for lo, hi in solidus_transparent:
             module.write(
@@ -2000,14 +1984,12 @@ static SOLIDUS_TRANSPARENT: [([u8; 3], [u8; 3]); {len(solidus_transparent)}] = [
 
         # emoji table
 
-        module.write(
-            f"""];
+        module.write(f"""];
 
 /// Array of 1024-bit bitmaps. Index into the correct bitmap with the 10 LSB of your codepoint
 /// to get whether it can start an emoji presentation sequence.
 static EMOJI_PRESENTATION_LEAVES: Align128<[[u8; 128]; {len(emoji_presentation_leaves)}]> = Align128([
-"""
-        )
+""")
         for leaf in emoji_presentation_leaves:
             module.write("    [\n")
             for row in batched(leaf, 15):
@@ -2022,12 +2004,10 @@ static EMOJI_PRESENTATION_LEAVES: Align128<[[u8; 128]; {len(emoji_presentation_l
         # text table
 
         for leaf_idx, leaf in enumerate(text_presentation_leaves):
-            module.write(
-                f"""
+            module.write(f"""
 #[rustfmt::skip]
 static TEXT_PRESENTATION_LEAF_{leaf_idx}: [(u8, u8); {len(leaf)}] = [
-"""
-            )
+""")
             for lo, hi in leaf:
                 module.write(f"    (0x{lo:02X}, 0x{hi:02X}),\n")
             module.write(f"];\n")
@@ -2035,12 +2015,10 @@ static TEXT_PRESENTATION_LEAF_{leaf_idx}: [(u8, u8); {len(leaf)}] = [
         # emoji modifier table
 
         for leaf_idx, leaf in enumerate(emoji_modifier_leaves):
-            module.write(
-                f"""
+            module.write(f"""
 #[rustfmt::skip]
 static EMOJI_MODIFIER_LEAF_{leaf_idx}: [(u8, u8); {len(leaf)}] = [
-"""
-            )
+""")
             for lo, hi in leaf:
                 module.write(f"    (0x{lo:02X}, 0x{hi:02X}),\n")
             module.write(f"];\n")
@@ -2054,8 +2032,7 @@ static EMOJI_MODIFIER_LEAF_{leaf_idx}: [(u8, u8); {len(leaf)}] = [
                 if not variant.is_non_cjk_only():
                     test_width_variants_cjk.append(variant)
 
-        module.write(
-            f"""
+        module.write(f"""
 #[cfg(test)]
 mod tests {{
     use super::*;
@@ -2122,20 +2099,17 @@ mod tests {{
     }}
 
     static NORMALIZATION_TEST_WIDTHS: [WidthInfo; {len(test_width_variants) + 1}] = [
-        WidthInfo::DEFAULT,\n"""
-        )
+        WidthInfo::DEFAULT,\n""")
 
         for variant in WidthState:
             if variant.is_carried() and not variant.is_cjk_only():
                 module.write(f"        WidthInfo::{variant.name},\n")
 
-        module.write(
-            f"""    ];
+        module.write(f"""    ];
 
     #[cfg(feature = "cjk")]
     static NORMALIZATION_TEST_WIDTHS_CJK: [WidthInfo; {len(test_width_variants_cjk) + 1}] = [
-        WidthInfo::DEFAULT,\n"""
-        )
+        WidthInfo::DEFAULT,\n""")
 
         for variant in WidthState:
             if variant.is_carried() and not variant.is_non_cjk_only():
@@ -2165,7 +2139,7 @@ def main(module_path: str):
     version = load_unicode_version()
     print(f"Generating module for Unicode {version[0]}.{version[1]}.{version[2]}")
 
-    (width_map, cjk_width_map) = load_width_maps()
+    width_map, cjk_width_map = load_width_maps()
 
     tables = make_tables(width_map, cjk_width_map)
 
