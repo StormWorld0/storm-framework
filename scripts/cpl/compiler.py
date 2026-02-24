@@ -20,7 +20,7 @@ def run_cmd(cmd, cwd=None):
     try:
         subprocess.run(
             cmd,
-            shell=False,
+            shell=True,
             check=True,
             cwd=cwd,
             env=env,
