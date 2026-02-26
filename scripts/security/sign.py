@@ -8,7 +8,9 @@ import json
 import hashlib
 import base64
 from rootmap import ROOT
+from app.utility.spin import StormSpin
 from cryptography.hazmat.primitives.asymmetric import ed25519
+
 # logic for sha256 mathematical calculations
 def calculate_sha256(file_path):
     sha256_hash = hashlib.sha256()
@@ -16,6 +18,7 @@ def calculate_sha256(file_path):
         for byte_block in iter(lambda: f.read(4096), b""):
             sha256_hash.update(byte_block)
     return sha256_hash.hexdigest()
+    
 def generate_folder_manifest():
     print("[+] Get started with Storm Framework security.")
 
