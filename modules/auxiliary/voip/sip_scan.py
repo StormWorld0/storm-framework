@@ -30,5 +30,9 @@ def execute(options):
         sock.sendto(payload.encode(), (ip, port))
         data, addr = sock.recvfrom(2048)
         print(f"[+] Response from {addr}: {data.decode()}")
+    except KeyboardInterrupt:
+        pass
     except Exception as e:
         print(f"[-] No Response: {e}")
+    finally:
+        s.close()
