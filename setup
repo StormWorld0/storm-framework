@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+# MIT License
+# Copyright (c) Storm Framework
+
+# This file is protected by a License. Read the full LICENSE in the root.
+
 # --- CONFIGURATION ---
 TOOL_NAME="pentest"
 REPO_NAME="storm-framework"
