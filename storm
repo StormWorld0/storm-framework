@@ -100,7 +100,7 @@ def main():
 
             if new_context.get("exit"): break
         else:
-            print(f"[-] Unknown Command: {cmd}. Run the {C.SUCCESS}help{C.RESET} {C.INPUT}command for more details.")
+            print(f"[-] Unknown Command: {cmd} > Run the {C.SUCCESS}help{C.RESET} command for more details.")
 
 if __name__ == "__main__":
     main()
