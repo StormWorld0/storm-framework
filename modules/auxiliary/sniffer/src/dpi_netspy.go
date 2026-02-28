@@ -1,6 +1,5 @@
 // MIT License.
 // Copyright (c) 2026 Storm Framework
-
 // See LICENSE file in the project root for full license information.
 
 package main
@@ -15,7 +14,7 @@ import (
 func main() {
 	// Checks whether interface arguments are given
 	if len(os.Args) < 2 {
-		fmt.Println("[!] Penggunaan: ./sniffer <interface>")
+		fmt.Println("[!] Use: ./sniffer <interface>")
 		os.Exit(1)
 	}
 
