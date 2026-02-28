@@ -23,17 +23,23 @@ def install_osint_module():
     setup_file = os.path.join(target_dir, "setup.py")
     if os.path.exists(setup_file):
         print("[*] Detected setup.py. Installing module in editable mode...")
-        extra = [] if "com.termux" in os.environ.get("PREFIX", "") else ["--break-system-packages"]
+        extra = (
+            []
+            if "com.termux" in os.environ.get("PREFIX", "")
+            else ["--break-system-packages"]
+        )
         # multi environment, this is good for users testing on termux or standard linux
         subprocess.run(
-            [sys.executable, "-m", "pip", "install", ".", target_dir] + extra, check=True
+            [sys.executable, "-m", "pip", "install", ".", target_dir] + extra,
+            check=True,
         )
-        
+
         print("[✓] OSINT Package osint-storm installed successfully.")
     try:
         from scripts.security.sign import generate_folder_manifest
+
         generate_folder_manifest()
-        
+
         return True
     except Exception as e:
         print(f"ERROR: {e}")
