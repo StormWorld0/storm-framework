@@ -1,8 +1,6 @@
 # MIT License.
 # Copyright (c) 2026 Storm Framework
-
 # See LICENSE file in the project root for full license information.
-
 
 import os
 import subprocess
@@ -25,16 +23,17 @@ def install_osint_module():
     setup_file = os.path.join(target_dir, "setup.py")
     if os.path.exists(setup_file):
         print("[*] Detected setup.py. Installing module in editable mode...")
-        # '-e .' This means install this folder as a package so that it can be imported.
+        extra = [] if "com.termux" in os.environ.get("PREFIX", "") else ["--break-system-packages"]
+        # multi environment, this is good for users testing on termux or standard linux
         subprocess.run(
-            [sys.executable, "-m", "pip", "install", ".", target_dir], check=True
+            [sys.executable, "-m", "pip", "install", ".", target_dir] + extra, check=True
         )
-        print("[✓] OSINT Package 'osint-storm' installed successfully.")
-
+        
+        print("[✓] OSINT Package osint-storm installed successfully.")
     try:
         from scripts.security.sign import generate_folder_manifest
-
         generate_folder_manifest()
+        
         return True
     except Exception as e:
         print(f"ERROR: {e}")
