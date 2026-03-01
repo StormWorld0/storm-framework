@@ -13,25 +13,29 @@ def execute(options):
 
     module = options.get("MODULE")
     target = options.get("EMAIL")
-    json = "storm-ghunt.json"
+    
+    output_filename = "storm-ghunt.json"
+    
     # 1. Tentukan path ke Python di dalam venv GHunt
     # Sesuaikan 'script/ghunt/' dengan struktur folder aslimu
-    base_path = os.path.join(ROOT, "script", "ghunt")
-
+    base_path = Path(ROOT) / "script" / "ghunt"
+    
     # Jika Linux/Mac pakai 'bin'
     python_executable = base_path / "venv" / "bin" / "python"
     worker_script = base_path / "ghunt" / "ghunt.py"
 
+    output_dir = Path(__file__).parent / "results"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    json_out_path = output_dir / output_filename
+    
     # 2. Siapkan data JSON untuk dikirim
     payload = {
         "module": module,
         "target": target,
-        "json_out": str(Path(__file__).parent / "results" / json),
+        "json_out": str(json_out_path),
     }
 
     try:
-        # 3. Panggil prosesnya
-        # Kita pakai subprocess.run karena kamu mau "Selesai -> Mati"
         process = subprocess.run(
             [str(python_executable), str(worker_script)],
             input=json.dumps(payload),  # Kirim JSON ke stdin
@@ -48,6 +52,3 @@ def execute(options):
         return {"status": "error", "message": str(e)}
 
 
-# Contoh Penggunaan:
-# result = call_ghunt_worker("email", "target@gmail.com", "target_info.json")
-# print(result)
