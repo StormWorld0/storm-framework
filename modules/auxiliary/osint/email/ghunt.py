@@ -10,6 +10,7 @@ REQUIRED_OPTIONS = {
     "EMAIL": "",
 }
 
+
 def execute(options):
 
     module = options.get("MODULE")
@@ -51,6 +52,4 @@ def execute(options):
     except subprocess.CalledProcessError as e:
         return {"status": "error", "message": e.stderr}
     except Exception as e:
-        return {"status": "error", "message": str(e)} 
-    
-    
+        return {"status": "error", "message": str(e)}
