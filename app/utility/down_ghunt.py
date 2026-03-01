@@ -4,6 +4,7 @@ import sys
 
 from rootmap import ROOT
 
+
 def down_ghunt():
     repo_url = "https://github.com/storm-os/GhOSINT.git"
     target_dir = os.path.join(ROOT, "script", "ghunt")
@@ -38,8 +39,6 @@ def down_ghunt():
         print("[*] Downloading OSINT Module...")
         subprocess.run(["git", "clone", repo_url, target_dir], check=True)
 
-
-    
     venv_dir = base_path / "venv"
     python_exe = venv_dir / "bin" / "python"
     pip_exe = venv_dir / "bin" / "pip"
@@ -66,5 +65,3 @@ def down_ghunt():
     except Exception as e:
         print(f"\n[-] Installation Failed: {e}")
         return False
-
-
