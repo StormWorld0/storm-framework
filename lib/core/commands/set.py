@@ -13,7 +13,7 @@ def execute(args, context):
     if len(args) >= 2:
         var_name = args[0].upper()
         var_value = args[1]
-        if "PATH" in var_name or var_name == "PASS":
+        if "PASS" in var_name:
             found_path = utils.resolve_path(var_value)
             if found_path:
                 options[var_name] = found_path
