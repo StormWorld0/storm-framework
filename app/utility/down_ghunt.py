@@ -7,7 +7,7 @@ from rootmap import ROOT
 from scripts.security.sign import generate_folder_manifest
 
 
-def down_ghunt():
+def install_ghunt_module():
     repo_url = "https://github.com/storm-os/GhOSINT.git"
     target_dir = Path(ROOT) / "script" / "ghunt"
 
