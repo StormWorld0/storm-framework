@@ -1,5 +1,4 @@
 import subprocess
-import json
 from pathlib import Path
 from rootmap import ROOT
 
@@ -7,6 +6,7 @@ REQUIRED_OPTIONS = {
     "MODULE": "",
     "PORT": "",
 }
+
 
 def execute(options):
 
@@ -16,7 +16,7 @@ def execute(options):
     # 1. Tentukan path ke Python di dalam venv GHunt
     # Sesuaikan 'script/ghunt/' dengan struktur folder aslimu
     base_path = os.path.join(ROOT, "script", "ghunt")
-    
+
     # Jika Linux/Mac pakai 'bin'
     python_executable = base_path / "venv" / "bin" / "python"
     worker_script = base_path / "ghunt" / "ghunt.py"
