@@ -4,7 +4,7 @@
 
 ---
 
-## 🛡️ Cyber-Pentest 
+## 🛡️ Storm-Framework
 
 Tool Suite untuk Pengumpulan Informasi dan Analisis Kerentanan Awal.
 
@@ -12,7 +12,7 @@ Tool Suite untuk Pengumpulan Informasi dan Analisis Kerentanan Awal.
 
 ### 🚀 Pendahuluan
 
-**Cyber-Pentest** adalah suite tool siber yang dirancang khusus untuk membantu profesional keamanan siber, bug bounty hunter, dan peneliti dalam fase **pengumpulan informasi (reconnaissance)** dan **analisis kerentanan awal**. Tool ini bertujuan untuk menyederhanakan langkah-langkah awal dalam proses penetration testing (pentest).
+**Storm-Framework** adalah suite tool siber yang dirancang khusus untuk membantu profesional keamanan siber, bug bounty hunter, dan peneliti dalam fase **pengumpulan informasi (reconnaissance)** dan **analisis kerentanan awal**. Tool ini bertujuan untuk menyederhanakan langkah-langkah awal dalam proses penetration testing (pentest).
 
 ---
 
@@ -47,7 +47,7 @@ Pastikan Anda memiliki **Python 3.12.x** terinstal pada sistem Anda. Tool ini di
 Gunakan perintah `curl` berikut untuk mengkloning repositori dan menjalankan skrip instalasi yang diperlukan:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/storm-os/Cyber-Pentest/main/setup | bash 
+curl -fsSL https://raw.githubusercontent.com/storm-os/storm-framework/main/setup | bash 
 ```
 
 ### 2. Jalankan
@@ -60,7 +60,7 @@ sudo pentest
 
 ### 🤝 Contributing 
 
-Proyek open source Cyber Pentest Framework ini terbuka untuk siapapun. 
+Proyek open source Storm Framework ini terbuka untuk siapapun. 
 Kalau kamu tertarik untuk membantu pengembangan project ini—baik lewat perbaikan bug, penambahan fitur, atau dokumentasi—silakan cek panduan kontribusi kami. 
 
 👉 **Baca panduan kontribusi di sini:** 
