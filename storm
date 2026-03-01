@@ -62,7 +62,8 @@ def main():
         "INTERFACE": "",
         "THREAD": "",
         "DOMAIN": "",
-        "HOSTNAME": ""
+        "HOSTNAME": "",
+        "MODULE": ""
     }
     options = ldch.session(options)
 
