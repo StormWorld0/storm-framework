@@ -1,17 +1,17 @@
 <h2 align="center">Storm-Framework</h2>
 
 <p align="center">
-  <a href="https://github.com/storm-os/storm-framework/blob/main/LICENSE">
+  <a href="https://github.com/STORM-CORP/storm-framework/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/license-MIT-blue">
   </a>
-  <a href="https://github.com/storm-os/storm-framework">
+  <a href="https://github.com/STORM-CORP/storm-framework">
     <img src="https://img.shields.io/badge/Kali%20Linux-supported-black?logo=kalilinux">
   </a>
   </a>
-  <a href="https://github.com/storm-os/storm-framework">
+  <a href="https://github.com/STORM-CORP/storm-framework">
     <img src="https://img.shields.io/badge/Termux-supported-black?logo=android">
   </a>
-  <a href="https://github.com/storm-os/storm-framework/blob/main/README_ID.md">
+  <a href="https://github.com/STORM-CORP/storm-framework/blob/main/README_ID.md">
     <img src="https://img.shields.io/badge/Language-Indonesian-red?logo=indonesia&logoColor=white">
   </a>
 </p>
@@ -68,7 +68,7 @@ sudo pentest
 ```
 
 ### 📖 Wiki
-If you need further explanation about Storm-Framework, don't forget to read at [wiki](https://github.com/storm-os/storm-framework/wiki)
+If you need further explanation about Storm-Framework, don't forget to read at [wiki](https://github.com/STORM-CORP/storm-framework/wiki)
 
 ### 🤝 Contributing 
 
