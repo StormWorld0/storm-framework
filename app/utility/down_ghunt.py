@@ -44,7 +44,7 @@ def install_ghunt_module():
         except Exception as e:
             print(f"[-] Update failed: {e}")
     else:
-        print("[*] Downloading OSINT Module...")
+        print("[*] Downloading GhOSINT Module...")
         subprocess.run(["git", "clone", repo_url, str(target_dir)], check=True)
 
     # setup after installation/update is complete
@@ -70,7 +70,7 @@ def install_ghunt_module():
         subprocess.run(
             [str(python_exe), "-m", "playwright", "install", "chromium"], check=True
         )
-        print("[✓] OSINT Package ghunt installed successfully.")
+        print("[✓] GhOSINT Package installed successfully.")
 
         # New file hash and signature
         generate_folder_manifest()
