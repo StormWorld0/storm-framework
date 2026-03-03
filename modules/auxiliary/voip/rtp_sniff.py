@@ -8,7 +8,7 @@ import os
 import subprocess
 import shutil
 
-from rootmap import ROOT 
+from rootmap import ROOT
 
 REQUIRED_OPTIONS = {"INTERFACE": "example: eth0"}
 
