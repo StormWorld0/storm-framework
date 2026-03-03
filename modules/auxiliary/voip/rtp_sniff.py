@@ -8,16 +8,16 @@ import os
 import subprocess
 import shutil
 
+from rootmap import ROOT 
+
 REQUIRED_OPTIONS = {"INTERFACE": "example: eth0"}
 
 
 def execute(options):
     interface = options.get("INTERFACE")
     # --- DYNAMIC PATH LOGIC ---
-    # Gets the absolute path to the folder where this module is located.
-    module_dir = os.path.dirname(os.path.realpath(__file__))
     # Internal path for Storm's innards
-    src_dir = os.path.join(module_dir, "src")
+    src_dir = os.path.join(ROOT, "external", "source", "binary")
     binary = os.path.join(src_dir, "rtp_sniff")
     # Output path for User (Current Working Directory)
     output_pcm = os.path.join(os.getcwd(), "storm_capture.pcm")
