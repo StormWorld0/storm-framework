@@ -8,8 +8,8 @@
 # --- CONFIGURATION ---
 TOOL_NAME="pentest"
 REPO_NAME="storm-framework"
-GITHUB_REPO="https://github.com/storm-os/$REPO_NAME.git"
-VERSION=$(curl -s https://raw.githubusercontent.com/storm-os/storm-framework/main/version.txt)
+GITHUB_REPO="https://github.com/STORM-CORP/$REPO_NAME.git"
+VERSION=$(curl -s https://raw.githubusercontent.com/STORM-CORP/storm-framework/main/version.txt)
 
 # Warna
 GREEN='\033[92m'

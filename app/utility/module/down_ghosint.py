@@ -8,7 +8,7 @@ from scripts.security.sign import generate_folder_manifest
 
 
 def install_ghunt_module():
-    repo_url = "https://github.com/storm-os/GhOSINT.git"
+    repo_url = "https://github.com/STORM-CORP/GhOSINT.git"
     target_dir = Path(ROOT) / "script" / "ghunt"
 
     # Clone Repo or Update

@@ -26,7 +26,7 @@ In order for the code merging process (*Merge*) to run smoothly, please follow t
 | Step | Order / Action |
 | :--- | :--- |
 | **1. Fork** | Click the button **Fork** in the top right corner of this repo. |
-| **2. Clone** | `git clone https://github.com/storm-os/storm-framework.git` |
+| **2. Clone** | `git clone https://github.com/STORM-CORP/storm-framework.git` |
 | **3. Branch** | `git checkout -b your new features` |
 | **4. Commit** | `git commit -m "Add scanner module X"` |
 | **5. Push** | `git push origin your new features` |
