@@ -1,6 +1,5 @@
 # MIT License.
 # Copyright (c) 2026 Storm Framework
-
 # See LICENSE file in the project root for full license information.
 
 
@@ -11,7 +10,7 @@ from app.utility.colors import C
 
 
 def run_verif():
-    bin_p = "external/source/binary/rust/check"
+    bin_p = "external/source/binary/check"
     if not os.path.exists(bin_p):
         print(f"[-] ERROR: Rust binary not found in {bin_p}")
         sys.exit(1)
