@@ -11,7 +11,7 @@ from app.utility.colors import C
 
 
 def run_verif():
-    bin_p = "app/base/check"
+    bin_p = "external/source/binary/rust/check"
     if not os.path.exists(bin_p):
         print(f"[-] ERROR: Rust binary not found in {bin_p}")
         sys.exit(1)
