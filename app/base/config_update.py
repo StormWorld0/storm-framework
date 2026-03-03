@@ -11,7 +11,7 @@ from app.utility.colors import C
 
 def check_update():
     # Raw URL to the version.txt file on GitHub
-    url = "https://raw.githubusercontent.com/storm-os/storm-framework/main/version.txt"
+    url = "https://raw.githubusercontent.com/STORM-CORP/storm-framework/main/version.txt"
     try:
         response = requests.get(url, timeout=5)
         latest_version = response.text.strip()
