@@ -1,16 +1,11 @@
 # MIT License.
 # Copyright (c) 2026 Storm Framework
-
 # See LICENSE file in the project root for full license information.
-
-
-# scanner.py
 import socket
 from app.utility.colors import C
 
 STATUS_OPEN = "✅"
 STATUS_CLOSED = "❌"
-
 
 def get_service_banner(target_ip, port, timeout=1.0):
     """
@@ -18,35 +13,23 @@ def get_service_banner(target_ip, port, timeout=1.0):
     """
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.settimeout(timeout)
-    # ---------------------------------------------
-    # 1. Open Port: Do Banner Grabbing
-    # ---------------------------------------------
     try:
         result = s.connect_ex((target_ip, port))
-
         if result == 0:
             status_color = f"{C.SUCCESS} OPEN " + STATUS_OPEN
             banner_info = "No version information."
-
             try:
-                # Especially for web services (HTTP/HTTPS), send a minimum request
                 if port in [80, 443, 8080]:
-                    # Send an HTTP HEAD request to trigger a Server Header response.
                     request = f"HEAD / HTTP/1.1\r\nHost: {target_ip}\r\n\r\n"
                     s.sendall(request.encode())
-
-                # Accepts up to 1024 bytes of data (Banner Grabbing)
+                    
                 banner = s.recv(1024)
-
                 if banner:
                     banner_info = banner.decode(errors="ignore").strip()
-
-                    # Banner Cleaning Logic
                     if port == 22:
-                        # SSH: Take the first line only
                         banner_info = banner_info.split("\n")[0]
+                        
                     elif port in [80, 443, 8080]:
-                        # HTTP: Try looking for the 'Server' header
                         server_header = next(
                             (
                                 line
@@ -64,13 +47,8 @@ def get_service_banner(target_ip, port, timeout=1.0):
                 banner_info = "Timeout"
             except Exception as e:
                 banner_info = f"ERROR: {e}"
-
-            # Returns banner status and information
+                
             return status_color, banner_info
-
-        # ---------------------------------------------
-        # 2. Closed Port
-        # ---------------------------------------------
         else:
             s.close()
             return f"{C.ERROR} CLOSED " + STATUS_CLOSED, None
@@ -79,7 +57,6 @@ def get_service_banner(target_ip, port, timeout=1.0):
         return
     finally:
         s.close()
-
 
 REQUIRED_OPTIONS = {"IP": ""}
 
@@ -153,29 +130,15 @@ def execute(options):
     ports_to_check = port_names.keys()
 
     print(f"{C.HEADER} SCANNING: PORT & VERSION in {target_ip}")
-
-    # Specify the total column width for the Port and Service Name sections.
-    # Adjusted so that the colons are always aligned
     MAX_TOTAL_WIDTH = 30
     try:
         for port in ports_to_check:
-            # Call the function that returns the status and banner
             status_line, banner = get_service_banner(target_ip, port)
             service_name = port_names.get(port, "Unknown Service")
-
-            # 1. Setting up the initial part of the line (Port and Service Name)
-
-            # The initial string to be aligned
+            
             port_info_string = f"  Port {port} ({service_name})"
-
-            # Calculating the required spacing (padding)
-            # ljust() ensures the string has a MINIMUM width of 30 characters
             padding_string = port_info_string.ljust(MAX_TOTAL_WIDTH)
-
-            # Creating initial output: Port 80 (HTTP): OPEN ✅
             output_line = f"{C.MENU}{padding_string}: {status_line}"
-
-            # 2. Add Banner/Version (Only if port is open)
             if "OPEN" in status_line:
                 if (
                     banner
@@ -185,15 +148,12 @@ def execute(options):
                     clean_banner = banner.replace("\n", " ").strip()
                     output_line += f" {C.MENU} | {C.SUCCESS}{clean_banner}"
                 else:
-                    # Info message if failed to retrieve banner
                     output_line += f" {C.MENU} | INFO: {banner}"
 
-            # End the line with RESET
             output_line += f"{C.RESET}"
-
-            # 3. Full Single Line Print
             print(output_line)
 
         print(f"{C.HEADER} --- SCAN COMPLETE ---")
+    except KeyboardInterrupt: return 
     except KeyboardInterrupt:
         print(f"\n{C.ERROR}[!] Scan stopped.{C.RESET}")
