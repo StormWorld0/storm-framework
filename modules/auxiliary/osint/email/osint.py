@@ -27,5 +27,5 @@ def execute(options):
     except KeyboardInterrupt:
         return 
     except Exception as e:
-        return {"status": "error": "message": str(e)}
+        return {"status": "error", "message": str(e)}
 
