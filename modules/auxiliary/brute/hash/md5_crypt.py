@@ -1,27 +1,20 @@
 # MIT License.
 # Copyright (c) 2026 Storm Framework
-
 # See LICENSE file in the project root for full license information.
-
-
-# script/md5_crypt.py
 import crypt
 from app.utility.colors import C
 
 REQUIRED_OPTIONS = {"HASH": "", "PASS": ""}
 
-
-# --- Main Cracker Functions ---
 def execute(options):
     """
     Cracking MD5-Crypt password hashes using wordlists.
     """
     shadow_entry = options.get("HASH")
     wordlist_file = options.get("PASS")
-    # 1. Parsing Hash
+    
     try:
         parts = shadow_entry.split(":")
-
         if len(parts) < 2:
             print(f"{C.ERROR} Input at least (user:hash...)")
             return
@@ -50,19 +43,17 @@ def execute(options):
     print(f"{C.MENU} [*] Hash Type: MD5-Crypt ($1$)")
     print(f"{C.MENU} [*] Salt: {salt_crypt}")
     print(f"{C.MENU} [*] Loading Wordlist from: {wordlist_file}")
-    # 2. Starting Cracking
+    
     try:
         with open(wordlist_file, "r", encoding="latin-1") as f:
             for line in f:
                 word = line.strip()
                 if not word:
                     continue
-
-                # Regenerate MD5-Crypt hash with the same salt
+                    
                 hashed_word = crypt.crypt(word, salt_crypt)
-
                 print(f"{C.MENU}  Try: {word}{C.RESET}", end="\r")
-                # Compares the regenerated hash with the original hash
+                
                 if hashed_word == full_hash:
                     print(f"{C.SUCCESS} [✓] SUCCESSFULLY FOUND U:{username} H:{word}")
                     print(
@@ -78,3 +69,4 @@ def execute(options):
         print(f"{C.ERROR} \n[-] ERROR: Wordlist file not found.")
     except Exception as e:
         print(f"{C.ERROR} \n[-] Unexpected error while cracking: {e}")
+        return 
