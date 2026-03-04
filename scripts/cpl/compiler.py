@@ -9,7 +9,7 @@ from rootmap import ROOT
 from app.utility.spin import StormSpin
 from scripts.cpl.ioname import get_bin_name
 from scripts.cpl.advcore import safe_mode
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 
 SHARED_TARGET = os.path.join(ROOT, "lib", "smf", "core", "cache", "rust-session")
 
@@ -115,7 +115,7 @@ def main():
 
     # Perform parallel compilation in all languages
     print(f"[*] Storm Engine: Compiling on {os.cpu_count()} cores")
-    with ProcessPoolExecutor(max_workers=safe_mode()) as executor:
+    with ThreadPoolExecutor(max_workers=safe_mode()) as executor:
         rust_results_future = [executor.submit(compile_rust_project, task) for task in rust_tasks]
         other_results_future = [executor.submit(compile_single_file, task) for task in other_tasks]
 
