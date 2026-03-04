@@ -31,5 +31,5 @@ class StormSpin:
         if self._thread:
             self._thread.join()
 
-        sys.stdout.write("\r\033[K") 
+        sys.stdout.write("\r\033[K")
         sys.stdout.flush()
