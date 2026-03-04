@@ -4,15 +4,25 @@ version = "3.5.11"
 readme = "README.md"
 requires-python = ">=3.12"
 author = [
-    {
-     name = "Elzy",
-     email = "elzyproot@protonmail.com"
-    }
+    {name = "Elzy", email = "elzyproot@protonmail.com"}
 ]
 dependencies = [
-    "cryptography>=42.0.0",
-    "requests>=2.31.0",
-    "pydantic>=2.0.0",
+    "cryptography==46.0.4",
+    "requests==2.32.5",
+    "urllib3==2.6.3",
+    "colorama==0.4.6",
+    "python-nmap==0.7.1",
+    "python-whois==0.9.6",
+
+    "dnspython==2.8.0",
+    "paramiko==4.0.0",
+    "scapy==2.7.0",
+
+    "ipwhois==1.3.0",
+    "ipaddress==1.0.23",
+    "whoisdomain==1.20260106.1",
+    "telnetlib3==4.0.0",
+    "beautifulsoup4==4.14.3",
 ]
 
 [tool.black]
