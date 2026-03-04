@@ -1,6 +1,7 @@
 # MIT License.
 # Copyright (c) 2026 Storm Framework
 # See LICENSE file in the project root for full license information.
+
 from app.utility.colors import C
 try:
     from script.osint.handstorm import StormOSModuleRunner
@@ -9,6 +10,7 @@ except ImportError:
         f"[*] Try running {C.SUCCESS}down osint{C.RESET} first to download the module."
     )
 REQUIRED_OPTIONS = {"EMAIL": ""}
+
 
 def execute(options):
     mail = options.get("EMAIL")
@@ -25,5 +27,5 @@ def execute(options):
     except KeyboardInterrupt:
         return 
     except Exception as e:
-        {"status": "error": "message": str(e)}
+        return {"status": "error": "message": str(e)}
 
