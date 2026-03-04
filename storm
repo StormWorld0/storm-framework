@@ -10,15 +10,15 @@ import os
 import time
 import sys
 import readline  # noqa: F401
-import app.base.config_ui as config_ui
-import app.utility.verify as r
+import app.base.config_ui as ui
 import lib.smf.core.sf.ldch as ldch
 
 from app.base.config_update import check_update
 from app.utility.colors import C
+from app.utility.verify import *
 from app.banners.banner import get_random_banner
 
-from lib.core import handler
+from lib.core import handler as h
 
 def clear_screen():
     """Clearing the terminal screen"""
@@ -32,8 +32,8 @@ def clear_screen():
 # --- Menu Functions ---
 
 def main():
-    r.check_critical_files()
-    r.run_verif()
+    check_critical_files()
+    run_verif()
     for i in range(6, 0, -1):
         sys.stdout.write(f"\r{C.SUCCESS}[*] Verification Success! Start Storm: [{i}] {C.RESET}")
         sys.stdout.flush()
@@ -41,7 +41,7 @@ def main():
 
     clear_screen()
     print(get_random_banner())
-    config_ui.stormUI()
+    ui.stormUI()
     check_update()
 
     current_module = None
@@ -97,7 +97,7 @@ def main():
         }
 
         # HAND IT OVER TO THE FOREMAN (HANDLER)
-        new_context = handler.execute(cmd, args, context)
+        new_context = h.execute(cmd, args, context)
 
         if new_context:
             current_module = new_context["current_module"]
