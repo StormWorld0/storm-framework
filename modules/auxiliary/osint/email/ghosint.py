@@ -10,10 +10,7 @@ REQUIRED_OPTIONS = {
     "MODULE": "",
     "EMAIL": "",
 }
-
-
 def execute(options):
-
     module = options.get("MODULE")
     target = options.get("EMAIL")
 
@@ -49,7 +46,7 @@ def execute(options):
             )
 
     except KeyboardInterrupt:
-        pass
+        return 
     except subprocess.CalledProcessError as e:
         return {"status": "error", "message": e.stderr}
     except Exception as e:
