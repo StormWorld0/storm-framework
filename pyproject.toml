@@ -1,3 +1,20 @@
+[project]
+name = "storm-framework"
+version = "3.5.11"
+readme = "README.md"
+requires-python = ">=3.12"
+author = [
+    {
+     name = "Elzy",
+     email = "elzyproot@protonmail.com"
+    }
+]
+dependencies = [
+    "cryptography>=42.0.0",
+    "requests>=2.31.0",
+    "pydantic>=2.0.0",
+]
+
 [tool.black]
 line-length = 88
 target-version = ['py312']
