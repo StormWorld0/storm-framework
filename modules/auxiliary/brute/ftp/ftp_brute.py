@@ -1,9 +1,6 @@
 # MIT License.
 # Copyright (c) 2026 Storm Framework
-
 # See LICENSE file in the project root for full license information.
-
-
 import ftplib
 import os
 from assets.wordlist.userpass import DEFAULT_CREDS, COMMON_USERS
@@ -54,3 +51,4 @@ def execute(options):
         return
     except Exception as e:
         print("{C.ERROR}[x] ERROR: {e}")
+        return
