@@ -14,7 +14,7 @@ def execute(cmd, args, context):
     if os.path.exists(cmd_path):
         try:
             module = importlib.import_module(f"lib.core.commands.{cmd}")
-            
+
             return module.execute(args, context)
         except KeyboardInterrupt:
             return context
