@@ -5,6 +5,7 @@ from app.utility.colors import C
 
 REQUIRED_OPTIONS = {"IP": "", "PORT": "", "PASS": ""}
 
+
 def test_grafana(target_ip, port, username, password):
     """Trying to login to grafana using requests (HTTP POST)."""
     login_url = f"http://{target_ip}:{port}/login"
@@ -21,6 +22,7 @@ def test_grafana(target_ip, port, username, password):
             return False
     except:
         return False
+
 
 def execute(options):
     """Operate BruteForce on service Grafana."""

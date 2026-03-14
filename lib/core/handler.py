@@ -2,6 +2,7 @@ import importlib
 import os
 from app.utility.colors import C
 
+
 def execute(cmd, args, context):
     """
     Central function to search for and execute command files.

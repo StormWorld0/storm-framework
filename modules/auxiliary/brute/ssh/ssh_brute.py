@@ -6,6 +6,7 @@ from app.utility.colors import C
 
 REQUIRED_OPTIONS = {"IP": "", "PASS": ""}
 
+
 def test_ssh(target_ip, port, username, password):
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -30,6 +31,7 @@ def test_ssh(target_ip, port, username, password):
         return False
     finally:
         client.close()
+
 
 def execute(options):
     target_ip = options.get("IP")

@@ -1,5 +1,3 @@
-
-
 from app.utility.colors import C
 
 DATA = f"""

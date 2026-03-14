@@ -6,6 +6,7 @@ from pathlib import Path
 from rootmap import ROOT
 from scripts.security.sign import generate_folder_manifest
 
+
 def install_ghunt_module():
     repo_url = "https://github.com/StormWorld0/GhOSINT.git"
     target_dir = Path(ROOT) / "script" / "ghunt"

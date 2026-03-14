@@ -1,8 +1,7 @@
-
-
 import os
 import sys
 import lib.smf.core.sf.svch as svch
+
 
 def run_restart(context):
     # save old variables

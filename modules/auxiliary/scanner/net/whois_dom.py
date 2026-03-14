@@ -1,8 +1,8 @@
-
 import whoisdomain as whois
 from app.utility.colors import C
 
 REQUIRED_OPTIONS = {"DOMAIN": "(e.g., example.com)"}
+
 
 def get_clean_data(data):
     """Tidy up the date or list format to make it easier to read."""
@@ -11,6 +11,7 @@ def get_clean_data(data):
     if isinstance(data, list):
         return str(data[0]).split()[0]
     return str(data).split()[0]
+
 
 def execute(options):
     target = options.get("DOMAIN")

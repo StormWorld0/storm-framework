@@ -1,8 +1,7 @@
-
-
 import os
 from app.banners.banner import get_random_banner
 import app.base.config_ui as ui
+
 
 def execute(args, context):
     # Clean the screen according to the OS

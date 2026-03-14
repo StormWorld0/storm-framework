@@ -1,7 +1,6 @@
-
-
 import app.utility.utils as utils
 from app.utility.colors import C
+
 
 def execute(args, context):
     options = context["options"]

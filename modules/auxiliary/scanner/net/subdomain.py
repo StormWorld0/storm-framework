@@ -41,6 +41,7 @@ SUBDOMAINS = [
 
 REQUIRED_OPTIONS = {"DOMAIN": ""}
 
+
 def execute(options):
     """Searching for active subdomains"""
     target_domain = options.get("DOMAIN")

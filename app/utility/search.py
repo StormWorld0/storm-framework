@@ -1,7 +1,6 @@
-
-
 import os
 from rootmap import ROOT
+
 
 def search_modules(query):
     # Langsung gunakan ROOT_DIR, tidak perlu os.path.dirname lagi di sini

@@ -1,4 +1,3 @@
-
 import subprocess
 import os
 from rootmap import ROOT
@@ -8,6 +7,7 @@ REQUIRED_OPTIONS = {
     "PORT": "ex: 25",
     "THREAD": "ex: 1000",
 }
+
 
 def execute(options):
     target = str(options.get("HOSTNAME"))

@@ -9,6 +9,7 @@ REQUIRED_OPTIONS = {"IP": "", "PASS": ""}
 SYM_SUCCESS = "🔑"
 SYM_FAILED = "🔒"
 
+
 async def test_telnet(target_ip, port, username, password):
     """
     Attempting Telnet login using telnetlib3 with prompt-based interaction.
@@ -43,6 +44,7 @@ async def test_telnet(target_ip, port, username, password):
         return False
     except Exception:
         return False
+
 
 async def _execute_async(options):
     """Operate BruteForce Telnet"""
@@ -107,6 +109,7 @@ async def _execute_async(options):
         return
     except Exception as e:
         print(f"{C.ERROR}[x] GLOBAL ERROR: {e}")
+
 
 def execute(options):
     try:

@@ -3,6 +3,7 @@ from app.utility.colors import C
 
 REQUIRED_OPTIONS = {"HASH": "", "PASS": ""}
 
+
 def execute(options):
     """
     Cracking MD5-Crypt password hashes using wordlists.

@@ -1,8 +1,7 @@
-
-
 from colorama import Fore, Style, init
 
 init(autoreset=True)
+
 
 # Dictionary Warna Global
 class C:

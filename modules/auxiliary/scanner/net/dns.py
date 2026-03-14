@@ -1,5 +1,3 @@
-
-
 # dns.py
 import dns.resolver
 import dns.exception
@@ -39,6 +37,7 @@ DNS_RECORDS = [
 ]
 
 REQUIRED_OPTIONS = {"DOMAIN": ""}
+
 
 def execute(options):
     target_domain = options.get("DOMAIN")

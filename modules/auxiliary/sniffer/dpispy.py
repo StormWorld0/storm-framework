@@ -1,4 +1,3 @@
-
 import subprocess
 import os
 
@@ -7,6 +6,7 @@ from rootmap import ROOT
 REQUIRED_OPTIONS = {
     "INTERFACE": "example: eth0",
 }
+
 
 def execute(options):
     iface = options.get("INTERFACE")

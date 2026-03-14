@@ -1,9 +1,8 @@
-
-
 from app.utility.restart import run_restart
 from app.utility.update import run_update
 from app.utility.verify import run_verif
 from app.utility.colors import C
+
 
 def execute(args, context):
     cmd = args[0].lower() if args else ""

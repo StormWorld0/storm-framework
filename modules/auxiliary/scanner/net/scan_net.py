@@ -4,6 +4,7 @@ from app.utility.colors import C
 STATUS_OPEN = "✅"
 STATUS_CLOSED = "❌"
 
+
 def get_service_banner(target_ip, port, timeout=1.0):
     """
     Checking port status and trying to get banner/version information.
@@ -55,7 +56,9 @@ def get_service_banner(target_ip, port, timeout=1.0):
     finally:
         s.close()
 
+
 REQUIRED_OPTIONS = {"IP": ""}
+
 
 def execute(options):
     """The main function is to run a scan with version/banner detection.."""

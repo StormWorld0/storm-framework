@@ -3,6 +3,7 @@ import os
 import sys
 from app.utility.colors import C
 
+
 def run_verif():
     bin_p = "external/source/binary/check"
     if not os.path.exists(bin_p):
@@ -23,6 +24,7 @@ def run_verif():
     except Exception as e:
         print(f"[-] ERROR during execution: {e}")
         sys.exit(1)
+
 
 def check_critical_files():
     if not os.path.exists(".env"):

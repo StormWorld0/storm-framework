@@ -4,6 +4,7 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 REQUIRED_OPTIONS = {"URL": ""}
 
+
 def execute(options):
     target = options.get("URL")
     port = 443

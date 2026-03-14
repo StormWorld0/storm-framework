@@ -1,9 +1,9 @@
-
 import requests
 import re
 from app.utility.colors import C
 
 REQUIRED_OPTIONS = {"URL": ""}
+
 
 def execute(options):
     """Checking the security header of a URL."""

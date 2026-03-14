@@ -5,6 +5,7 @@ from app.utility.colors import C
 
 REQUIRED_OPTIONS = {"IP": "", "PASS": ""}
 
+
 def test_ftp(target_ip, port, username, password):
     ftp = ftplib.FTP()
     try:
@@ -18,6 +19,7 @@ def test_ftp(target_ip, port, username, password):
         except:
             pass
         return False
+
 
 def execute(options):
     target_ip = options.get("IP")

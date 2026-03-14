@@ -1,8 +1,8 @@
-
 from ipwhois import IPWhois
 from app.utility.colors import C
 
 REQUIRED_OPTIONS = {"IP": "(ex: x.x.x.x)"}
+
 
 def execute(options):
     target_ip = options.get("IP")

@@ -1,8 +1,7 @@
-
-
 import socket
 
 REQUIRED_OPTIONS = {"IP": "", "PORT": "standar port 5060"}
+
 
 def execute(options):
     ip = options.get("IP")

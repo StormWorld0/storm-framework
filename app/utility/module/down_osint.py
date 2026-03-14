@@ -1,8 +1,8 @@
-
 import os
 import subprocess
 import sys
 from rootmap import ROOT
+
 
 def install_osint_module():
     repo_url = "https://github.com/StormWorld0/OSINT.git"
@@ -61,6 +61,7 @@ def install_osint_module():
         return True
     except Exception as e:
         print(f"ERROR: {e}")
+
 
 if __name__ == "__main__":
     install_osint_module()

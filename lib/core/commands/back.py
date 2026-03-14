@@ -1,5 +1,3 @@
-
-
 def execute(args, context):
     if context["current_module"]:
         context["current_module"] = None
