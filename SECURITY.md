@@ -1,34 +1,34 @@
-# Security Policy (Storm Framework)
+# Security Policy
 
 ## Supported Versions
 
-Kami sangat menyarankan untuk selalu menggunakan versi terbaru dari Storm Framework guna memastikan semua patch keamanan terbaru sudah terpasang.
+We strongly recommend always using the latest version of the Storm Framework to ensure all the latest security patches are installed.
 
 ## Reporting a Vulnerability
 
-Sebagai pengembang Storm Framework, saya sangat menghargai kontribusi dari komunitas peneliti keamanan. Jika Anda menemukan kerentanan keamanan (vulnerability) pada core engine, modul, atau skrip instalasi kami:
+As a Storm Framework developer, I greatly appreciate the contributions of the security research community. If you discover a security vulnerability in our core engine, modules, or installation scripts:
 
-1. **JANGAN** membuka GitHub Issue publik untuk melaporkan bug keamanan.
-2. Kirimkan laporan secara privat melalui email terenkripsi:
-   - **Email:** elzyproot@protonmail.com
-   - **Subjek:** `[VULNERABILITY REPORT] Storm-Framework`
+1. **DON'T** open a public GitHub Issue to report a security bug.
+2. Send reports privately via encrypted email:
+   - **E-mail:** elzyproot@protonmail.com
+   - **Subject:** `[VULNERABILITY REPORT] Storm-Framework`
 
-### Informasi yang Dibutuhkan:
-Untuk mempercepat proses verifikasi, mohon sertakan:
-- Deskripsi detail mengenai celah keamanan.
-- Langkah-langkah untuk mereproduksi celah tersebut (Proof of Concept).
-- Dampak potensial (misal: RCE, LFI, Bypass Authentication).
-- Saran perbaikan (jika ada).
+### Required Information:
+To expedite the verification process, please include:
+- Detailed description of the security vulnerability.
+- Steps to reproduce the vulnerability (Proof of Concept).
+- Potential impacts (e.g.: RCE, LFI, Bypass Authentication).
+- Suggestions for improvement (if any).
 
 ## Our Commitment
 
-Jika laporan Anda valid:
-- Kami akan memberikan respon awal dalam waktu **48-72 jam**.
-- Kami akan bekerja sama dengan Anda untuk melakukan *patching*.
-- Nama Anda akan dicantumkan dalam **Security Credits** pada rilis versi terbaru (kecuali jika Anda ingin tetap anonim).
+If your report is valid:
+- We will provide an initial response within **48-72 hours**.
+- We will work with you to do this *patching*.
+- Your name will be listed in **Security Credits** on the latest version release (unless you wish to remain anonymous).
 
 ## Scope
-Kebijakan ini mencakup semua file di bawah organisasi/repo `StormWorld0/storm-framework`. Masalah terkait dependensi pihak ketiga (seperti `requests`, `scapy`, dll) harus dilaporkan ke vendor masing-masing, namun kami tetap menghargai jika Anda menginformasikan dampaknya terhadap framework ini.
+This policy covers all files under the organization/repo `StormWorld0/storm-framework`. Issues related to third party dependencies (such as `requests`, `scapy`, etc.) must be reported to the respective vendors, but we would still appreciate it if you could inform us about the impact on this framework..
 
 ---
-*Terima kasih telah membantu menjaga Storm Framework tetap aman dan terbuka.*
+*Thank you for helping keep the Storm Framework safe and open.*
