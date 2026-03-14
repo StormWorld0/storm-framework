@@ -1,29 +1,42 @@
 [project]
 name = "Storm-Framework"
 version = "3.5.11"
-readme = "README.md"
-license = "MIT"
-requires-python = ">=3.12"
 authors = [
     {name = "Elzy", email = "elzyproot@protonmail.com"}
 ]
-dependencies = [
-    "cryptography==46.0.4",
-    "requests==2.32.5",
-    "urllib3==2.6.3",
-    "colorama==0.4.6",
-    "python-nmap==0.7.1",
-    "python-whois==0.9.6",
-
-    "dnspython==2.8.0",
-    "paramiko==4.0.0",
-    "scapy==2.7.0",
-
-    "ipwhois==1.3.0",
-    "ipaddress==1.0.23",
-    "whoisdomain==1.20260106.1",
-    "telnetlib3==4.0.0",
+description = "Just a Storm Framework"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "GPL-3.0"}
+classifiers = [
+    "License :: OSI Approved :: GPL License"
+    "Operating System :: OS Independent"
+    "Programming Language :: Python :: 3",
 ]
+dependencies = [
+    "cryptography>=46.0.4",
+    "requests>=2.32.5",
+    "urllib3>=2.6.3",
+    "colorama>=0.4.6",
+    "python-nmap>=0.7.1",
+    "python-whois>=0.9.6",
+
+    "dnspython>=2.8.0",
+    "paramiko>=4.0.0",
+    "scapy>=2.7.0",
+
+    "ipwhois>=1.3.0",
+    "ipaddress>=1.0.23",
+    "whoisdomain>=1.20260106.1",
+    "telnetlib3>=4.0.0",
+]
+keywords=["storm", "pentest", "cybersecurity", "security-research", "pentesting-tools"]
+
+[project.urls]
+"Homepage" = "https://github.com/StormWorld0/storm-framework"
+"Bug Reports" = "https://github.com/StormWorld0/storm-framework/issues"
+"wiki" = "https://github.com/StormWorld0/storm-framework/wiki"
+"Source" = "https://github.com/StormWorld0/storm-framework"
 
 [tool.black]
 line-length = 88
