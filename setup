@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
-# MIT License
+# GPL License
 # Copyright (c) Storm Framework
-
 # This file is protected by a License. Read the full LICENSE in the root.
 
 # --- CONFIGURATION ---
@@ -11,7 +10,7 @@ REPO_NAME="storm-framework"
 GITHUB_REPO="https://github.com/StormWorld0/$REPO_NAME.git"
 VERSION=$(curl -s https://raw.githubusercontent.com/StormWorld0/storm-framework/main/version.txt)
 
-# Warna
+# Color
 GREEN='\033[92m'
 RED='\033[91m'
 BLUE='\033[94m'
@@ -171,8 +170,6 @@ fi
 # 5. Creating a Dynamic Wrapper Script
 WRAPPER_DST="$BIN_DIR/$TOOL_NAME"
 
-echo -e "[+] Creating a wrapper script: ${TOOL_NAME}"
-
 # Create wrapper content in variables for easy management
 CREATE_WRAPPER="${SHEBANG_PATH}
 PROJECT_DIR=\"$INSTALL_DIR\"
@@ -181,7 +178,6 @@ exec ./storm \"\$@\""
 
 write_to_file "$CREATE_WRAPPER" "$WRAPPER_DST" false
 
-# Execute file creation based on access rights (Sudo vs User)
 if $NEEDS_SUDO; then
     sudo chmod +x "$WRAPPER_DST"
 else
