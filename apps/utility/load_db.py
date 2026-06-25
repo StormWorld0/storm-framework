@@ -90,11 +90,11 @@ def search_modules(query):
     smf.printf(f"{CC.CYAN}{'Module Path':<40} {'Category':<15} {'Description'}{CC.RESET}")
     smf.printf(f"{CC.MAGENTA}{'-'*40} {'-'*15} {'-'*50}{CC.RESET}")
 
-    supported_filters = {"author", "act", "defact", "cve", "saverity"}
+    supported_filters = {"author", "act", "defact", "cve", "severity"}
 
     if filters and not all(f_key in supported_filters for f_key in filters.keys()):
         smf.printf(
-            f"{CC.YELLOW}[!] Invalid filter detected. Supported: author, act, defact, cve, saverity{CC.RESET}\n"
+            f"{CC.YELLOW}[!] Invalid filter detected. Supported: author, act, defact, cve, severity{CC.RESET}\n"
         )
         return
 
@@ -119,8 +119,8 @@ def search_modules(query):
         elif f_key == "cve":
             query_parts.append("LOWER(cve) LIKE ?")
             sql_params.append(f"%{f_val}%")
-        elif f_key == "saverity":
-            query_parts.append("LOWER(saverity) LIKE ?")
+        elif f_key == "severity":
+            query_parts.append("LOWER(severity) LIKE ?")
             sql_params.append(f"%{f_val}%")
 
     # Finalisasi SQL String
