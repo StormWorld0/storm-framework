@@ -55,6 +55,18 @@ class StormSmartCache:
             self.cursor.execute(
                 "CREATE INDEX IF NOT EXISTS idx_module_name ON module_cache(module_name)"
             )
+            self.cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_description ON module_cache(description)"
+            )
+            self.cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_author ON module_cache(author)"
+            )
+            self.cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_actions ON module_cache(actions)"
+            )
+            self.cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_default_action ON module_cache(default_action)"
+            )
             self.conn.commit()
         except Exception as e:
             smf.printd("Failed to initialize database schema", e, level="CRITICAL")
