@@ -164,7 +164,7 @@ class StormSmartCache:
                                         actions_json,
                                         def_action,
                                         cve,
-                                        saverity,
+                                        severity,
                                     )
                                 )
         except Exception as e:
