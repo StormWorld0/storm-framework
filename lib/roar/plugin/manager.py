@@ -67,9 +67,7 @@ def get_plugin(plugin_name: str) -> Any:
     """Mengambil proxy plugin dari RAM."""
     plugin = REGISTRY.get(plugin_name)
     if plugin is None:
-        smf.printd(
-            "Caller requested inactive/missing plugin", plugin_name, level="WARN"
-        )
+        smf.printd("Caller requested inactive/missing plugin", plugin_name, level="WARN")
         return NullPlugin(plugin_name)
     return plugin
 

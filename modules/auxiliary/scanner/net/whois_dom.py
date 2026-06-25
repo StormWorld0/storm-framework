@@ -50,9 +50,7 @@ def execute(options):
             return
 
         # Show Information
-        smf.printf(
-            f"{C.MENU} Registrar:      {C.RESET}{getattr(w, 'registrar', 'N/A')}"
-        )
+        smf.printf(f"{C.MENU} Registrar:      {C.RESET}{getattr(w, 'registrar', 'N/A')}")
         smf.printf(
             f"{C.MENU} Created Date:   {C.RESET}{get_clean_data(getattr(w, 'creation_date', None))}"
         )

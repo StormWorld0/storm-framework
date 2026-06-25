@@ -42,9 +42,7 @@ class Plugin:
 
         # 3. Jika payload berhasil bermutasi, kirim balik ke engine
         if current_payload != payload:
-            smf.printd(
-                f"[{self.name}] Payload successfully transformed.", level="DEBUG"
-            )
+            smf.printd(f"[{self.name}] Payload successfully transformed.", level="DEBUG")
             return {"mutated_payload": current_payload}
 
         return {"handled": False}

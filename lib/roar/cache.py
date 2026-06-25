@@ -106,10 +106,7 @@ class StormSmartCache:
                             current_disk_files.add(full_path)
                             mtime = entry.stat().st_mtime
 
-                            if (
-                                full_path not in db_state
-                                or db_state[full_path] != mtime
-                            ):
+                            if full_path not in db_state or db_state[full_path] != mtime:
                                 rel_path = os.path.relpath(full_path, self.modules_dir)
                                 module_path = rel_path.replace(os.sep, "/").replace(
                                     ".py", ""

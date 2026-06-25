@@ -73,9 +73,7 @@ class StormAPI:
         if callable(action):
             return action(payload)
 
-        smf.printd(
-            f"Plugin {plugin_name}", "Has no function 'execute()'", level="ERROR"
-        )
+        smf.printd(f"Plugin {plugin_name}", "Has no function 'execute()'", level="ERROR")
         return
 
 

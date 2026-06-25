@@ -75,9 +75,7 @@ def get_status_map(
             else:
                 status = "ACTIVE"
 
-        status_report.append(
-            {"name": p_name, "status": status, "is_package": is_package}
-        )
+        status_report.append({"name": p_name, "status": status, "is_package": is_package})
 
     # Fase 2: Deteksi "Orphaned / Zombie Plugins"
     for p_name, instance in registry.items():

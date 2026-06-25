@@ -15,9 +15,7 @@ is FTP login auth that weak or quite strong.
     "Action": [
         [
             "Bruteforce",
-            {
-                "Description": "Trying to bypass with thousands of passwords and usernames"
-            },
+            {"Description": "Trying to bypass with thousands of passwords and usernames"},
         ],
     ],
     "DefaultAction": "Bruteforce",

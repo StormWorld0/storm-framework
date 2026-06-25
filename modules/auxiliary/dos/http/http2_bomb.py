@@ -250,9 +250,7 @@ def send_header_block(
     block: bytes,
     max_frame: int = 16384,
 ) -> int:
-    chunks = [block[i : i + max_frame] for i in range(0, len(block), max_frame)] or [
-        b""
-    ]
+    chunks = [block[i : i + max_frame] for i in range(0, len(block), max_frame)] or [b""]
     sent_frames = 0
 
     for i, chunk in enumerate(chunks):
@@ -306,9 +304,7 @@ def drip_window(sock: socket.socket, stream_ids: List[int], amount: int) -> None
     # 각 stream에 amount만큼 열어주려면 connection-level window도 stream 수만큼 열어주는 게 맞다.
     conn_amount = amount * max(1, len(stream_ids))
 
-    sock.sendall(
-        h2_frame(FRAME_WINDOW_UPDATE, 0, 0, window_update_payload(conn_amount))
-    )
+    sock.sendall(h2_frame(FRAME_WINDOW_UPDATE, 0, 0, window_update_payload(conn_amount)))
 
     for stream_id in stream_ids:
         sock.sendall(
@@ -437,8 +433,7 @@ def execute(options):
 
     accepted_duplicate_refs = min(refs, 4091)
     merge_alloc = (
-        accepted_duplicate_refs * (accepted_duplicate_refs + 1)
-        + accepted_duplicate_refs
+        accepted_duplicate_refs * (accepted_duplicate_refs + 1) + accepted_duplicate_refs
     )
     final_cookie = accepted_duplicate_refs * 2
 

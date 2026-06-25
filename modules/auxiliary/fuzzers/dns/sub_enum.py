@@ -129,9 +129,7 @@ def execute(options):
 
     except KeyboardInterrupt:
         if current_bar:
-            sys.stdout.write(
-                "\r\033[K"
-            )  # Bersihkan bar saat di-stop agar prompt bersih
+            sys.stdout.write("\r\033[K")  # Bersihkan bar saat di-stop agar prompt bersih
         smf.printf("\n[✓] Sub Enumeration is stopped")
 
     except Exception as e:

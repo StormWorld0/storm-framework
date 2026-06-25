@@ -50,9 +50,7 @@ def execute(args, ctx):
 
             # 1. BLOK WAJIB: Name, Description, Author, License
             mod_name = info.get("name", "UNTITLED MODULE")
-            smf.printf(
-                f"{CC.CYAN}{'Name':<{label_w}} : {CC.YELLOW}{mod_name}{CC.RESET}"
-            )
+            smf.printf(f"{CC.CYAN}{'Name':<{label_w}} : {CC.YELLOW}{mod_name}{CC.RESET}")
 
             smf.printf(f"{CC.CYAN}{'Description':<{label_w}}{CC.RESET}")
             raw_desc = info.get("description", "No description provided")
@@ -67,9 +65,7 @@ def execute(args, ctx):
 
             # Menangani jika Author ditulis berupa List atau String murni
             authors = info.get("author", ["Unknown"])
-            author_str = (
-                ", ".join(authors) if isinstance(authors, list) else str(authors)
-            )
+            author_str = ", ".join(authors) if isinstance(authors, list) else str(authors)
             smf.printf(
                 f"{CC.CYAN}{'Author':<{label_w}} : {CC.YELLOW}{author_str}{CC.RESET}"
             )

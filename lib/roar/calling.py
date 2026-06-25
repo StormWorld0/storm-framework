@@ -115,7 +115,5 @@ def call_so(query_name: str, module_name: str = None):
         spec.loader.exec_module(module)
         return module
     except Exception as e:
-        smf.printd(
-            f"Failed to load Python extension '{lib_path}'.", e, level="CRITICAL"
-        )
+        smf.printd(f"Failed to load Python extension '{lib_path}'.", e, level="CRITICAL")
         raise

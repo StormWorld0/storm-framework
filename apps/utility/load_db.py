@@ -74,9 +74,7 @@ def show_modules(category: str) -> List[str]:
         conn.close()
         return results
     except Exception as e:
-        smf.printd(
-            f"Failed to execute lookup for category: {category}", e, level="ERROR"
-        )
+        smf.printd(f"Failed to execute lookup for category: {category}", e, level="ERROR")
         return []
 
 
@@ -88,9 +86,7 @@ def search_modules(query):
 
     smf.printf(f"\n{CC.YELLOW}[*] Searching for =>{CC.RESET} {query}")
     smf.printf()
-    smf.printf(
-        f"{CC.CYAN}{'Module Path':<35} {'Category':<15} {'Description'}{CC.RESET}"
-    )
+    smf.printf(f"{CC.CYAN}{'Module Path':<35} {'Category':<15} {'Description'}{CC.RESET}")
     smf.printf(f"{CC.MAGENTA}{'-'*35} {'-'*15} {'-'*45}{CC.RESET}")
 
     supported_filters = {"author", "action", "defaction"}

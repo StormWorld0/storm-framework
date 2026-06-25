@@ -53,9 +53,7 @@ def sync_bin() -> None:
 
     for cat, folder in search_targets.items():
         if not folder.exists():
-            smf.printd(
-                f"Target directory not found and skipped: {folder}", level="WARN"
-            )
+            smf.printd(f"Target directory not found and skipped: {folder}", level="WARN")
             continue
 
         # Scan recursive

@@ -21,9 +21,7 @@ def execute(args, ctx):
     plugin = ctx.plugin
 
     if not current_module:
-        smf.printf(
-            f"{CC.YELLOW}[!] No modules selected. (use <module>) first.{CC.RESET}"
-        )
+        smf.printf(f"{CC.YELLOW}[!] No modules selected. (use <module>) first.{CC.RESET}")
         return
 
     # Validate options

@@ -41,12 +41,8 @@ def execute(options):
         # Show Information
         smf.printf(f"{C.MENU} ASN:            {C.RESET}{results.get('asn')}")
         smf.printf(f"{C.MENU} CIDR:           {C.RESET}{results.get('asn_cidr')}")
-        smf.printf(
-            f"{C.MENU} Country:        {C.RESET}{results.get('asn_country_code')}"
-        )
-        smf.printf(
-            f"{C.MENU} ASN Description:{C.RESET}{results.get('asn_description')}"
-        )
+        smf.printf(f"{C.MENU} Country:        {C.RESET}{results.get('asn_country_code')}")
+        smf.printf(f"{C.MENU} ASN Description:{C.RESET}{results.get('asn_description')}")
         smf.printf(
             f"{C.MENU} Network Name:   {C.RESET}{results.get('network', {}).get('name')}"
         )

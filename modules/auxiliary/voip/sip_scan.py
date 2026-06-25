@@ -94,9 +94,7 @@ def execute(options):
         stdout_thread = threading.Thread(
             target=read_output, args=(process.stdout, "[GO]")
         )
-        stderr_thread = threading.Thread(
-            target=read_output, args=(process.stderr, "[!]")
-        )
+        stderr_thread = threading.Thread(target=read_output, args=(process.stderr, "[!]"))
 
         stdout_thread.start()
         stderr_thread.start()
