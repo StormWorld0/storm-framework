@@ -28,7 +28,7 @@ def parse_query(query):
 
 
 def resolve_module_path(user_input: str) -> str | None:
-    """Mendukung dual-mekanisme: mencari lewat module_path ATAU module_name"""
+    """Supports dual-mechanism: searching via module_path OR module_name"""
     clean_input = user_input.strip().replace("\\", "/")
 
     conn = _get_db_connection()
@@ -60,8 +60,8 @@ def resolve_module_path(user_input: str) -> str | None:
 # ---------------------------------------------------------
 def show_modules(category: str) -> List[str]:
     """
-    Mengembalikan daftar module_name berdasarkan kategori.
-    Sangat cepat karena menggunakan SQL Index 'idx_category'.
+    Returns a list of module_names by category.
+    Very fast because it uses SQL Index.
     """
     smf.printd(f"Executing category fetch for", category, level="DEBUG")
     try:
@@ -82,18 +82,19 @@ def show_modules(category: str) -> List[str]:
 # SEARCH FUNCTION WITH DYNAMIC SQL
 # ---------------------------------------------------------
 def search_modules(query):
+    """Searching contains filters to find things faster"""
     base_query, filters = parse_query(query)
 
     smf.printf(f"\n{CC.YELLOW}[*] Searching for =>{CC.RESET} {query}")
     smf.printf()
-    smf.printf(f"{CC.CYAN}{'Module Path':<35} {'Category':<15} {'Description'}{CC.RESET}")
-    smf.printf(f"{CC.MAGENTA}{'-'*35} {'-'*15} {'-'*45}{CC.RESET}")
+    smf.printf(f"{CC.CYAN}{'Module Path':<40} {'Category':<15} {'Description'}{CC.RESET}")
+    smf.printf(f"{CC.MAGENTA}{'-'*40} {'-'*15} {'-'*50}{CC.RESET}")
 
-    supported_filters = {"author", "action", "defaction"}
+    supported_filters = {"author", "act", "defact", "cve", "saverity"}
 
     if filters and not all(f_key in supported_filters for f_key in filters.keys()):
         smf.printf(
-            f"{CC.YELLOW}[!] Invalid filter detected. Supported: author, action, defaction{CC.RESET}\n"
+            f"{CC.YELLOW}[!] Invalid filter detected. Supported: author, act, defact, cve, saverity{CC.RESET}\n"
         )
         return
 
@@ -109,11 +110,17 @@ def search_modules(query):
         if f_key == "author":
             query_parts.append("LOWER(author) LIKE ?")
             sql_params.append(f"%{f_val}%")
-        elif f_key == "action":
+        elif f_key == "act":
             query_parts.append("LOWER(actions) LIKE ?")
             sql_params.append(f"%{f_val}%")
-        elif f_key == "defaction":
+        elif f_key == "defact":
             query_parts.append("LOWER(default_action) LIKE ?")
+            sql_params.append(f"%{f_val}%")
+        elif f_key == "cve":
+            query_parts.append("LOWER(cve) LIKE ?")
+            sql_params.append(f"%{f_val}%")
+        elif f_key == "saverity":
+            query_parts.append("LOWER(saverity) LIKE ?")
             sql_params.append(f"%{f_val}%")
 
     # Finalisasi SQL String
@@ -144,7 +151,7 @@ def search_modules(query):
             desc = desc[:47] + "..."
 
         count += 1
-        smf.printf(f"{CC.YELLOW}{module_name:<35}{CC.RESET} {category:<15} {desc}")
+        smf.printf(f"{CC.YELLOW}{module_name:<40}{CC.RESET} {category:<15} {desc}")
 
     if count == 0:
         smf.printf(f"\n{CC.YELLOW}[!] {query} => Not found{CC.RESET}\n")
