@@ -4,20 +4,20 @@ version = "3.10"
 authors = [
     {name = "エルジー", email = "elzyproot@protonmail.com"}
 ]
-description = "Just a Storm Framework"
+description = "Just a Storm Framework. All-in-one Pentest tool."
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 license = {text = "GPL-3.0"}
 classifiers = [
     "License :: OSI Approved :: GPL License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
 ]
-keywords=["storm", "pentest", "cybersecurity", "security-research", "pentesting-tools"]
+keywords=["storm", "python", "tool-suite", "offensive-security", "storm-framework"]
 
 [tool.black]
-line-length = 88
-target-version = ['py312']
+line-length = 90
+target-version = ['py313']
 exclude = '''
 /(
     \.git
