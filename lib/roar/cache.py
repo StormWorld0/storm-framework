@@ -69,9 +69,7 @@ class StormSmartCache:
             self.cursor.execute(
                 "CREATE INDEX IF NOT EXISTS idx_default_action ON module_cache(default_action)"
             )
-            self.cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_cve ON module_cache(cve)"
-            )
+            self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_cve ON module_cache(cve)")
             self.cursor.execute(
                 "CREATE INDEX IF NOT EXISTS idx_saverity ON module_cache(saverity)"
             )
@@ -153,7 +151,6 @@ class StormSmartCache:
                                 vuln = meta.get("Vulnerability") or {}
                                 cve = vuln.get("CVE", "")
                                 severity = vuln.get("Severity", "")
-
 
                                 to_upsert.append(
                                     (
