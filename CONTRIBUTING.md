@@ -15,9 +15,7 @@ In order for the code merging process (*Merge*) to run smoothly, please follow t
 ### 2. Module Structure & Dependencies
 - **Modules Folder**: Save your new module in the `modules/` folder.
 - **Requirements**: If your module requires additional libraries, please note them in the `requirements.txt` file.
-
-> [!IMPORTANT]
-> **Safety & Ethics**: We keep Storm-Framework clean. Inserting malicious code is strictly prohibited. (*malware*), *backdoor*, or scripts that steal user data. We will check each PR manually line by line.
+- **Modules Guide**: You can read the explanation [here](https://github.com/StormWorld0/storm-framework/blob/main/docs/storm-framework.wiki/MODULE_GUIDE.md) to know how to implement modules correctly.
 
 ---
 
@@ -26,9 +24,9 @@ In order for the code merging process (*Merge*) to run smoothly, please follow t
 | Step | Order / Action |
 | :--- | :--- |
 | **1. Fork** | Click the button **Fork** in the top right corner of this repo. |
-| **2. Clone** | `git clone https://github.com/StormWorld0/storm-framework.git` |
+| **2. Clone** | `git clone https://github.com/[your-username]/storm-framework.git` |
 | **3. Branch** | `git checkout -b your new features` |
-| **4. Commit** | `git commit -m "Add scanner module X"` |
+| **4. Commit** | `git commit -m "Add modules X"` |
 | **5. Push** | `git push origin your new features` |
 | **6. Test** | Please test your changes before committing to PR |
 | **7. PR** | Open **Pull Request** to our `main` branch. |
@@ -37,8 +35,8 @@ In order for the code merging process (*Merge*) to run smoothly, please follow t
 
 ## 🏆 Award
 We really appreciate your hard work. The name of each contributor whose code was successfully-*merge* will be permanently displayed at:
+
 * **File CONTRIBUTE.md** (Part Hall of Fame).
-* **Menu About** in the Storm-Framework tools.
 
 ---
 
