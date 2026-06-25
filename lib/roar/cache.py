@@ -43,7 +43,9 @@ class StormSmartCache:
                     description TEXT,
                     author TEXT,
                     actions TEXT,
-                    default_action TEXT
+                    default_action TEXT,
+                    cve TEXT,
+                    saverity TEXT
                 )
             """)
             self.cursor.execute(
@@ -66,6 +68,12 @@ class StormSmartCache:
             )
             self.cursor.execute(
                 "CREATE INDEX IF NOT EXISTS idx_default_action ON module_cache(default_action)"
+            )
+            self.cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_cve ON module_cache(cve)"
+            )
+            self.cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_saverity ON module_cache(saverity)"
             )
             self.conn.commit()
         except Exception as e:
@@ -142,6 +150,11 @@ class StormSmartCache:
                                 actions_json = json.dumps(meta.get("Action", []))
                                 def_action = str(meta.get("DefaultAction", ""))
 
+                                vuln = meta.get("Vulnerability") or {}
+                                cve = vuln.get("CVE", "")
+                                severity = vuln.get("Severity", "")
+
+
                                 to_upsert.append(
                                     (
                                         full_path,
@@ -153,6 +166,8 @@ class StormSmartCache:
                                         author_json,
                                         actions_json,
                                         def_action,
+                                        cve,
+                                        saverity,
                                     )
                                 )
         except Exception as e:
@@ -175,8 +190,8 @@ class StormSmartCache:
                         self.cursor.executemany(
                             """
                             INSERT OR REPLACE INTO module_cache 
-                            (path, mtime, category, module_name, module_path, description, author, actions, default_action) 
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            (path, mtime, category, module_name, module_path, description, author, actions, default_action, cve, saverity) 
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                             to_upsert,
                         )
