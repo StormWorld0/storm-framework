@@ -13,6 +13,7 @@ def _get_db_connection():
     # Helper for Read-Only DB connections
     return sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True, check_same_thread=False)
 
+
 """
 def parse_query(query):
     parts = query.split()
@@ -26,6 +27,7 @@ def parse_query(query):
             base_queries.append(part.lower())
     return " ".join(base_queries), filters
 """
+
 
 def parse_query(query):
     parts = query.split()
