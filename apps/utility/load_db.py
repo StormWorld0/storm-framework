@@ -81,6 +81,13 @@ def show_modules(category: str) -> List[str]:
 # ---------------------------------------------------------
 # SEARCH FUNCTION WITH DYNAMIC SQL
 # ---------------------------------------------------------
+FILTER_MAP = {
+    "author": ("author", "like"),
+    "act": ("actions", "token"),
+    "defact": ("default_action", "exact"),
+    "cve": ("cve", "exact"),
+    "severity": ("severity", "exact"),
+}
 def search_modules(query):
     """Searching contains filters to find things faster"""
     base_query, filters = parse_query(query)
@@ -90,38 +97,63 @@ def search_modules(query):
     smf.printf(f"{CC.CYAN}{'Module Path':<40} {'Category':<15} {'Description'}{CC.RESET}")
     smf.printf(f"{CC.MAGENTA}{'-'*40} {'-'*15} {'-'*50}{CC.RESET}")
 
-    supported_filters = {"author", "act", "defact", "cve", "severity"}
-
+    supported_filters = set(FILTER_MAP)
+    
     if filters and not all(f_key in supported_filters for f_key in filters.keys()):
         smf.printf(
             f"{CC.YELLOW}[!] Invalid filter detected. Supported: author, act, defact, cve, severity{CC.RESET}\n"
         )
         return
 
-    # Membangun Raw SQL Query secara dinamis berdasarkan input user
     query_parts = []
     sql_params = []
 
     if base_query:
-        query_parts.append("module_path LIKE ?")
+        query_parts.append("module_name LIKE ?")
         sql_params.append(f"%{base_query}%")
 
+    for key, value in filters.items():
+        column, mode = FILTER_MAP[key]
+        if mode == "exact":
+            query_parts.append(f"LOWER({column}) = ?")
+            sql_params.append(value.lower())
+        elif mode == "like":
+            query_parts.append(f"LOWER({column}) LIKE ?")
+            sql_params.append(f"%{value.lower()}%")
+        elif mode == "token":
+            query_parts.append(
+                f"""(
+                    {column} = ?
+                    OR {column} LIKE ?
+                    OR {column} LIKE ?
+                    OR {column} LIKE ?
+                )"""
+            )
+            sql_params.extend([
+                value,
+                f"{value}|%",
+                f"%|{value}|%",
+                f"%|{value}",
+            ])
+
+    """
     for f_key, f_val in filters.items():
         if f_key == "author":
-            query_parts.append("LOWER(author) LIKE ?")
+            query_parts.append("LOWER(author)=?")
             sql_params.append(f"%{f_val}%")
         elif f_key == "act":
-            query_parts.append("LOWER(actions) LIKE ?")
+            query_parts.append("LOWER(actions)=?")
             sql_params.append(f"%{f_val}%")
         elif f_key == "defact":
-            query_parts.append("LOWER(default_action) LIKE ?")
+            query_parts.append("LOWER(default_action)=?")
             sql_params.append(f"%{f_val}%")
         elif f_key == "cve":
-            query_parts.append("LOWER(cve) LIKE ?")
+            query_parts.append("LOWER(cve)=?")
             sql_params.append(f"%{f_val}%")
         elif f_key == "severity":
-            query_parts.append("LOWER(severity) LIKE ?")
+            query_parts.append("LOWER(severity)=?")
             sql_params.append(f"%{f_val}%")
+    """
 
     # Finalisasi SQL String
     sql_query = "SELECT module_path, category, description FROM module_cache"
