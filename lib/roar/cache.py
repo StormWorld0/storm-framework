@@ -142,10 +142,12 @@ class StormSmartCache:
                                 desc = " ".join(raw_desc.split())
 
                                 author = ", ".join(meta.get("Author", []))
-                                actions = ", ".join(
-                                    action[0]
+                                actions = "|".join(
+                                    action[0].strip()
                                     for action in meta.get("Action", [])
-                                    if isinstance(action, (list, tuple)) and action
+                                    if isinstance(action, (list, tuple))
+                                    and action
+                                    and isinstance(action[0], str)
                                 )
                                 def_action = str(meta.get("DefaultAction", ""))
 
