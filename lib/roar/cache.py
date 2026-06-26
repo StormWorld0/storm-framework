@@ -140,10 +140,14 @@ class StormSmartCache:
                                     continue
 
                                 raw_desc = meta.get("Description", "")
-                                clean_desc = " ".join(raw_desc.split())
+                                desc = " ".join(raw_desc.split())
 
-                                author_json = json.dumps(meta.get("Author", []))
-                                actions_json = json.dumps(meta.get("Action", []))
+                                author = ", ".join(meta.get("Author", []))
+                                actions = ", ".join(
+                                    action[0]
+                                    for action in meta.get("Action", [])
+                                    if isinstance(action, (list, tuple)) and action
+                                )
                                 def_action = str(meta.get("DefaultAction", ""))
 
                                 vuln = meta.get("Vulnerability") or {}
@@ -157,9 +161,9 @@ class StormSmartCache:
                                         category,
                                         module_name,
                                         module_path,
-                                        clean_desc,
-                                        author_json,
-                                        actions_json,
+                                        desc,
+                                        author,
+                                        actions,
                                         def_action,
                                         cve,
                                         severity,
