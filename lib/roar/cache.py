@@ -185,7 +185,7 @@ class StormSmartCache:
                         self.cursor.executemany(
                             """
                             INSERT OR REPLACE INTO module_cache 
-                            (path, mtime, category, module_name, module_path, description, author, actions, default_action, cve, saverity) 
+                            (path, mtime, category, module_name, module_path, description, author, actions, default_action, cve, severity) 
                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                             to_upsert,
