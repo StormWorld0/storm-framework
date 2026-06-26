@@ -82,7 +82,7 @@ def show_modules(category: str) -> List[str]:
 # SEARCH FUNCTION WITH DYNAMIC SQL
 # ---------------------------------------------------------
 FILTER_MAP = {
-    "author": ("author", "like"),
+    "author": ("author", "token"),
     "act": ("actions", "token"),
     "defact": ("default_action", "exact"),
     "cve": ("cve", "exact"),
