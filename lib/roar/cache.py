@@ -26,9 +26,7 @@ class StormSmartCache:
             self.cursor.execute("PRAGMA synchronous=NORMAL;")
             self._init_db()
         except Exception as e:
-            smf.printd(
-                "Failed to connect or configure SQLite database", e, level="ERROR"
-            )
+            smf.printd("Failed to connect or configure SQLite database", e, level="ERROR")
             raise
 
     def _init_db(self):
