@@ -63,7 +63,7 @@ class StormSmartCache:
             self.cursor.execute(
                 "CREATE INDEX IF NOT EXISTS idx_author ON module_cache(author)"
             )
-            self.cursor.executee
+            self.cursor.execute(
                 "CREATE INDEX IF NOT EXISTS idx_actions ON module_cache(actions)"
             )
             self.cursor.execute(
