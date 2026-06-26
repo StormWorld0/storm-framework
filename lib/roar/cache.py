@@ -27,7 +27,7 @@ class StormSmartCache:
             self._init_db()
         except Exception as e:
             smf.printd(
-                "Failed to connect or configure SQLite database", e, level="CRITICAL"
+                "Failed to connect or configure SQLite database", e, level="ERROR"
             )
             raise
 
@@ -45,7 +45,7 @@ class StormSmartCache:
                     actions TEXT,
                     default_action TEXT,
                     cve TEXT,
-                    saverity TEXT
+                    severity TEXT
                 )
             """)
             self.cursor.execute(
@@ -63,7 +63,7 @@ class StormSmartCache:
             self.cursor.execute(
                 "CREATE INDEX IF NOT EXISTS idx_author ON module_cache(author)"
             )
-            self.cursor.execute(
+            self.cursor.executee
                 "CREATE INDEX IF NOT EXISTS idx_actions ON module_cache(actions)"
             )
             self.cursor.execute(
@@ -71,11 +71,11 @@ class StormSmartCache:
             )
             self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_cve ON module_cache(cve)")
             self.cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_saverity ON module_cache(saverity)"
+                "CREATE INDEX IF NOT EXISTS idx_severity ON module_cache(severity)"
             )
             self.conn.commit()
         except Exception as e:
-            smf.printd("Failed to initialize database schema", e, level="CRITICAL")
+            smf.printd("Failed to initialize database schema", e, level="ERROR")
             raise
 
     def _extract_metadata(self, file_path: str) -> dict:
@@ -200,7 +200,7 @@ class StormSmartCache:
             else:
                 smf.printd("No drift detected. Sync skipped.", level="INFO")
         except Exception as e:
-            smf.printd("Fatal error during sync", e, level="CRITICAL")
+            smf.printd("Fatal error during sync", e, level="ERROR")
             raise
 
 
