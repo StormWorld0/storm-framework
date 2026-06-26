@@ -3,7 +3,6 @@
 import os
 import sqlite3
 import ast
-import json
 import smf
 
 from typing import List, Set, Tuple, Dict
