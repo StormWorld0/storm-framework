@@ -13,7 +13,7 @@ def _get_db_connection():
     # Helper for Read-Only DB connections
     return sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True, check_same_thread=False)
 
-
+"""
 def parse_query(query):
     parts = query.split()
     base_queries = []
@@ -24,6 +24,39 @@ def parse_query(query):
             filters[key.lower()] = val.lower()
         else:
             base_queries.append(part.lower())
+    return " ".join(base_queries), filters
+"""
+
+def parse_query(query):
+    parts = query.split()
+
+    base_queries = []
+    filters = {}
+
+    current_filter = None
+    current_value = []
+
+    for part in parts:
+        if ":" in part:
+            # Simpan filter sebelumnya
+            if current_filter is not None:
+                filters[current_filter] = " ".join(current_value)
+
+            # Mulai filter baru
+            key, value = part.split(":", 1)
+            current_filter = key.lower()
+            current_value = [value]
+
+        else:
+            if current_filter is None:
+                base_queries.append(part)
+            else:
+                current_value.append(part)
+
+    # Simpan filter terakhir
+    if current_filter is not None:
+        filters[current_filter] = " ".join(current_value)
+
     return " ".join(base_queries), filters
 
 
