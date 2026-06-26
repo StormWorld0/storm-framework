@@ -136,7 +136,7 @@ def search_modules(query):
         rows = cursor.fetchall()
         conn.close()
     except sqlite3.Error as e:
-        smf.printf("{CC.RED}[!] Database Read Error{CC.RESET}")
+        smf.printf(f"{CC.RED}[!] Database Read Error{CC.RESET}")
         smf.printd("Database Read Error", e, level="ERROR")
         return
 
