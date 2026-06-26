@@ -88,6 +88,8 @@ FILTER_MAP = {
     "cve": ("cve", "exact"),
     "severity": ("severity", "exact"),
 }
+
+
 def search_modules(query):
     """Searching contains filters to find things faster"""
     base_query, filters = parse_query(query)
@@ -98,7 +100,7 @@ def search_modules(query):
     smf.printf(f"{CC.MAGENTA}{'-'*40} {'-'*15} {'-'*50}{CC.RESET}")
 
     supported_filters = set(FILTER_MAP)
-    
+
     if filters and not all(f_key in supported_filters for f_key in filters.keys()):
         smf.printf(
             f"{CC.YELLOW}[!] Invalid filter detected. Supported: author, act, defact, cve, severity{CC.RESET}\n"
@@ -121,20 +123,20 @@ def search_modules(query):
             query_parts.append(f"LOWER({column}) LIKE ?")
             sql_params.append(f"%{value.lower()}%")
         elif mode == "token":
-            query_parts.append(
-                f"""(
+            query_parts.append(f"""(
                     {column} = ?
                     OR {column} LIKE ?
                     OR {column} LIKE ?
                     OR {column} LIKE ?
-                )"""
+                )""")
+            sql_params.extend(
+                [
+                    value,
+                    f"{value}|%",
+                    f"%|{value}|%",
+                    f"%|{value}",
+                ]
             )
-            sql_params.extend([
-                value,
-                f"{value}|%",
-                f"%|{value}|%",
-                f"%|{value}",
-            ])
 
     """
     for f_key, f_val in filters.items():
