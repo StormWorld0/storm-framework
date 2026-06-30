@@ -1,30 +1,28 @@
 use crate::object::*;
 use crate::pyport::Py_ssize_t;
+use core::ffi::{c_char, c_double, c_int, c_long, c_longlong, c_ulong, c_ulonglong, c_void};
 use libc::size_t;
-#[cfg(not(Py_LIMITED_API))]
-use std::os::raw::c_uchar;
-use std::os::raw::{c_char, c_double, c_int, c_long, c_longlong, c_ulong, c_ulonglong, c_void};
-use std::ptr::addr_of_mut;
 
-opaque_struct!(PyLongObject);
-
-#[cfg_attr(windows, link(name = "pythonXY"))]
-extern "C" {
-    #[cfg_attr(PyPy, link_name = "PyPyLong_Type")]
-    pub static mut PyLong_Type: PyTypeObject;
-}
+opaque_struct!(pub PyLongObject);
 
 #[inline]
+#[cfg(not(RustPython))]
 pub unsafe fn PyLong_Check(op: *mut PyObject) -> c_int {
     PyType_FastSubclass(Py_TYPE(op), Py_TPFLAGS_LONG_SUBCLASS)
 }
 
 #[inline]
+#[cfg(not(RustPython))]
 pub unsafe fn PyLong_CheckExact(op: *mut PyObject) -> c_int {
-    (Py_TYPE(op) == addr_of_mut!(PyLong_Type)) as c_int
+    Py_IS_TYPE(op, &raw mut PyLong_Type)
 }
 
-extern "C" {
+extern_libpython! {
+    #[cfg(RustPython)]
+    pub fn PyLong_Check(op: *mut PyObject) -> c_int;
+    #[cfg(RustPython)]
+    pub fn PyLong_CheckExact(op: *mut PyObject) -> c_int;
+
     #[cfg_attr(PyPy, link_name = "PyPyLong_FromLong")]
     pub fn PyLong_FromLong(arg1: c_long) -> *mut PyObject;
     #[cfg_attr(PyPy, link_name = "PyPyLong_FromUnsignedLong")]
@@ -47,7 +45,66 @@ extern "C" {
     pub fn PyLong_AsUnsignedLong(arg1: *mut PyObject) -> c_ulong;
     #[cfg_attr(PyPy, link_name = "PyPyLong_AsUnsignedLongMask")]
     pub fn PyLong_AsUnsignedLongMask(arg1: *mut PyObject) -> c_ulong;
-    // skipped non-limited _PyLong_AsInt
+
+    // skipped non-limited PyLong_AsInt
+
+    #[cfg(Py_3_14)]
+    pub fn PyLong_FromInt32(arg1: i32) -> *mut PyObject;
+    #[cfg(Py_3_14)]
+    pub fn PyLong_FromUInt32(arg1: u32) -> *mut PyObject;
+    #[cfg(Py_3_14)]
+    pub fn PyLong_FromInt64(arg1: i64) -> *mut PyObject;
+    #[cfg(Py_3_14)]
+    pub fn PyLong_FromUInt64(arg1: u64) -> *mut PyObject;
+
+    #[cfg(Py_3_14)]
+    pub fn PyLong_AsInt32(arg1: *mut PyObject, arg2: *mut i32) -> c_int;
+    #[cfg(Py_3_14)]
+    pub fn PyLong_AsUInt32(arg1: *mut PyObject, arg2: *mut u32) -> c_int;
+    #[cfg(Py_3_14)]
+    pub fn PyLong_AsInt64(arg1: *mut PyObject, arg2: *mut i64) -> c_int;
+    #[cfg(Py_3_14)]
+    pub fn PyLong_AsUInt64(arg1: *mut PyObject, arg2: *mut u64) -> c_int;
+}
+
+#[cfg(any(Py_3_14, all(Py_3_13, not(Py_LIMITED_API))))]
+pub const Py_ASNATIVEBYTES_DEFAULTS: c_int = -1;
+#[cfg(any(Py_3_14, all(Py_3_13, not(Py_LIMITED_API))))]
+pub const Py_ASNATIVEBYTES_BIG_ENDIAN: c_int = 0;
+#[cfg(any(Py_3_14, all(Py_3_13, not(Py_LIMITED_API))))]
+pub const Py_ASNATIVEBYTES_LITTLE_ENDIAN: c_int = 1;
+#[cfg(any(Py_3_14, all(Py_3_13, not(Py_LIMITED_API))))]
+pub const Py_ASNATIVEBYTES_NATIVE_ENDIAN: c_int = 3;
+#[cfg(any(Py_3_14, all(Py_3_13, not(Py_LIMITED_API))))]
+pub const Py_ASNATIVEBYTES_UNSIGNED_BUFFER: c_int = 4;
+#[cfg(any(Py_3_14, all(Py_3_13, not(Py_LIMITED_API))))]
+pub const Py_ASNATIVEBYTES_REJECT_NEGATIVE: c_int = 8;
+#[cfg(any(Py_3_14, all(Py_3_13, not(Py_LIMITED_API))))]
+pub const Py_ASNATIVEBYTES_ALLOW_INDEX: c_int = 16;
+
+extern_libpython! {
+    #[cfg(any(Py_3_14, all(Py_3_13, not(Py_LIMITED_API))))]
+    pub fn PyLong_AsNativeBytes(
+        v: *mut PyObject,
+        buffer: *mut c_void,
+        n_bytes: Py_ssize_t,
+        flags: c_int,
+    ) -> Py_ssize_t;
+
+    #[cfg(any(Py_3_14, all(Py_3_13, not(Py_LIMITED_API))))]
+    pub fn PyLong_FromNativeBytes(
+        buffer: *const c_void,
+        n_bytes: size_t,
+        flags: c_int,
+    ) -> *mut PyObject;
+
+    #[cfg(any(Py_3_14, all(Py_3_13, not(Py_LIMITED_API))))]
+    pub fn PyLong_FromUnsignedNativeBytes(
+        buffer: *const c_void,
+        n_bytes: size_t,
+        flags: c_int,
+    ) -> *mut PyObject;
+
     pub fn PyLong_GetInfo() -> *mut PyObject;
     // skipped PyLong_AS_LONG
 
@@ -55,15 +112,6 @@ extern "C" {
     // skipped PyLong_AsPid
     // skipped _Py_PARSE_INTPTR
     // skipped _Py_PARSE_UINTPTR
-
-    // skipped non-limited _PyLong_UnsignedShort_Converter
-    // skipped non-limited _PyLong_UnsignedInt_Converter
-    // skipped non-limited _PyLong_UnsignedLong_Converter
-    // skipped non-limited _PyLong_UnsignedLongLong_Converter
-    // skipped non-limited _PyLong_Size_t_Converter
-
-    // skipped non-limited _PyLong_DigitValue
-    // skipped non-limited _PyLong_Frexp
 
     #[cfg_attr(PyPy, link_name = "PyPyLong_AsDouble")]
     pub fn PyLong_AsDouble(arg1: *mut PyObject) -> c_double;
@@ -90,46 +138,8 @@ extern "C" {
         arg3: c_int,
     ) -> *mut PyObject;
 }
-// skipped non-limited PyLong_FromUnicodeObject
-// skipped non-limited _PyLong_FromBytes
 
-#[cfg(not(Py_LIMITED_API))]
-extern "C" {
-    // skipped non-limited _PyLong_Sign
-
-    #[cfg_attr(PyPy, link_name = "_PyPyLong_NumBits")]
-    pub fn _PyLong_NumBits(obj: *mut PyObject) -> size_t;
-
-    // skipped _PyLong_DivmodNear
-
-    #[cfg_attr(PyPy, link_name = "_PyPyLong_FromByteArray")]
-    pub fn _PyLong_FromByteArray(
-        bytes: *const c_uchar,
-        n: size_t,
-        little_endian: c_int,
-        is_signed: c_int,
-    ) -> *mut PyObject;
-
-    #[cfg_attr(PyPy, link_name = "_PyPyLong_AsByteArrayO")]
-    pub fn _PyLong_AsByteArray(
-        v: *mut PyLongObject,
-        bytes: *mut c_uchar,
-        n: size_t,
-        little_endian: c_int,
-        is_signed: c_int,
-    ) -> c_int;
-}
-
-// skipped non-limited _PyLong_Format
-// skipped non-limited _PyLong_FormatWriter
-// skipped non-limited _PyLong_FormatBytesWriter
-// skipped non-limited _PyLong_FormatAdvancedWriter
-
-extern "C" {
+extern_libpython! {
     pub fn PyOS_strtoul(arg1: *const c_char, arg2: *mut *mut c_char, arg3: c_int) -> c_ulong;
     pub fn PyOS_strtol(arg1: *const c_char, arg2: *mut *mut c_char, arg3: c_int) -> c_long;
 }
-
-// skipped non-limited _PyLong_GCD
-// skipped non-limited _PyLong_Rshift
-// skipped non-limited _PyLong_Lshift

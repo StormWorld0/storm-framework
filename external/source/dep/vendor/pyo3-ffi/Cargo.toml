@@ -11,10 +11,17 @@
 
 [package]
 edition = "2021"
+rust-version = "1.83"
 name = "pyo3-ffi"
-version = "0.21.2"
+version = "0.29.0"
 authors = ["PyO3 Project and Contributors <https://github.com/PyO3>"]
+build = "build.rs"
 links = "python"
+autolib = false
+autobins = false
+autoexamples = false
+autotests = false
+autobenches = false
 description = "Python-API bindings for the PyO3 ecosystem"
 homepage = "https://github.com/pyo3/pyo3"
 readme = "README.md"
@@ -31,42 +38,42 @@ categories = [
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/pyo3/pyo3"
 
+[package.metadata.cpython]
+min-version = "3.8"
+max-version = "3.15"
+
+[package.metadata.pypy]
+min-version = "3.11"
+max-version = "3.11"
+
+[features]
+abi3 = []
+abi3-py310 = ["abi3-py311"]
+abi3-py311 = ["abi3-py312"]
+abi3-py312 = ["abi3-py313"]
+abi3-py313 = ["abi3-py314"]
+abi3-py314 = ["abi3-py315"]
+abi3-py315 = ["abi3"]
+abi3-py38 = ["abi3-py39"]
+abi3-py39 = ["abi3-py310"]
+abi3t = []
+abi3t-py315 = ["abi3t"]
+default = []
+extension-module = ["pyo3-build-config/extension-module"]
+generate-import-lib = ["pyo3-build-config/generate-import-lib"]
+
+[lib]
+name = "pyo3_ffi"
+path = "src/lib.rs"
+
 [dependencies.libc]
 version = "0.2.62"
 
-[build-dependencies.pyo3-build-config]
-version = "=0.21.2"
-features = ["resolve-config"]
+[dev-dependencies.paste]
+version = "1"
 
-[features]
-abi3 = ["pyo3-build-config/abi3"]
-abi3-py310 = [
-    "abi3-py311",
-    "pyo3-build-config/abi3-py310",
-]
-abi3-py311 = [
-    "abi3-py312",
-    "pyo3-build-config/abi3-py311",
-]
-abi3-py312 = [
-    "abi3",
-    "pyo3-build-config/abi3-py312",
-]
-abi3-py37 = [
-    "abi3-py38",
-    "pyo3-build-config/abi3-py37",
-]
-abi3-py38 = [
-    "abi3-py39",
-    "pyo3-build-config/abi3-py38",
-]
-abi3-py39 = [
-    "abi3-py310",
-    "pyo3-build-config/abi3-py39",
-]
-default = []
-extension-module = ["pyo3-build-config/extension-module"]
-generate-import-lib = ["pyo3-build-config/python3-dll-a"]
+[build-dependencies.pyo3-build-config]
+version = "=0.29.0"
 
 [lints.clippy]
 checked_conversions = "warn"
@@ -79,6 +86,7 @@ let_unit_value = "warn"
 manual_assert = "warn"
 manual_ok_or = "warn"
 todo = "warn"
+undocumented_unsafe_blocks = "warn"
 unnecessary_wraps = "warn"
 used_underscore_binding = "warn"
 useless_transmute = "warn"
@@ -86,9 +94,21 @@ useless_transmute = "warn"
 [lints.rust]
 elided_lifetimes_in_paths = "warn"
 invalid_doc_attributes = "warn"
-rust_2018_idioms = "warn"
 rust_2021_prelude_collisions = "warn"
+unsafe_op_in_unsafe_fn = "warn"
 unused_lifetimes = "warn"
+
+[lints.rust.rust_2018_idioms]
+level = "warn"
+priority = -1
+
+[lints.rust.unexpected_cfgs]
+level = "warn"
+priority = 0
+check-cfg = [
+    "cfg(pyo3_disable_reference_pool)",
+    "cfg(pyo3_leak_on_drop_without_reference_pool)",
+]
 
 [lints.rustdoc]
 bare_urls = "warn"

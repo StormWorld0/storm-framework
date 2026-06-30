@@ -2,7 +2,7 @@
 
 This crate provides [Rust](https://www.rust-lang.org/) FFI declarations for Python 3.
 It supports both the stable and the unstable component of the ABI through the use of cfg flags.
-Python Versions 3.7+ are supported.
+Python Versions 3.8+ are supported.
 It is meant for advanced users only - regular PyO3 users shouldn't
 need to interact with this crate at all.
 
@@ -12,9 +12,12 @@ Manual][capi] for up-to-date documentation.
 
 # Minimum supported Rust and Python versions
 
-PyO3 supports the following software versions:
-  - Python 3.7 and up (CPython and PyPy)
-  - Rust 1.56 and up
+Requires Rust 1.63 or greater.
+
+`pyo3-ffi` supports the following Python distributions:
+  - CPython 3.8 or greater
+  - PyPy 7.3 (Python 3.9+)
+  - GraalPy 24.0 or greater (Python 3.10+)
 
 # Example: Building Python Native modules
 
@@ -37,27 +40,46 @@ name = "string_sum"
 # crate-type = ["cdylib", "rlib"]
 crate-type = ["cdylib"]
 
-[dependencies.pyo3-ffi]
-version = "*"
-features = ["extension-module"]
+[dependencies]
+pyo3-ffi = "0.29.0"
+
+[build-dependencies]
+# This is only necessary if you need to configure your build based on
+# the Python version or the compile-time configuration for the interpreter.
+pyo3_build_config = "0.29.0"
+```
+
+If you need to use conditional compilation based on Python version or how
+Python was compiled, you need to add `pyo3-build-config` as a
+`build-dependency` in your `Cargo.toml` as in the example above and either
+create a new `build.rs` file or modify an existing one so that
+`pyo3_build_config::use_pyo3_cfgs()` gets called at build time:
+
+**`build.rs`**
+
+```rust,ignore
+fn main() {
+    pyo3_build_config::use_pyo3_cfgs()
+}
 ```
 
 **`src/lib.rs`**
-```rust
-use std::os::raw::c_char;
+```rust,no_run
+#[cfg(Py_3_15)]
+use std::ffi::c_void;
+use std::ffi::{c_char, c_long};
 use std::ptr;
 
 use pyo3_ffi::*;
 
+#[cfg(not(Py_3_15))]
 static mut MODULE_DEF: PyModuleDef = PyModuleDef {
     m_base: PyModuleDef_HEAD_INIT,
-    m_name: "string_sum\0".as_ptr().cast::<c_char>(),
-    m_doc: "A Python module written in Rust.\0"
-        .as_ptr()
-        .cast::<c_char>(),
+    m_name: c"string_sum".as_ptr(),
+    m_doc: c"A Python module written in Rust.".as_ptr(),
     m_size: 0,
-    m_methods: unsafe { METHODS.as_mut_ptr().cast() },
-    m_slots: std::ptr::null_mut(),
+    m_methods: (&raw mut METHODS).cast(),
+    m_slots: (&raw mut SLOTS).cast(),
     m_traverse: None,
     m_clear: None,
     m_free: None,
@@ -65,24 +87,124 @@ static mut MODULE_DEF: PyModuleDef = PyModuleDef {
 
 static mut METHODS: [PyMethodDef; 2] = [
     PyMethodDef {
-        ml_name: "sum_as_string\0".as_ptr().cast::<c_char>(),
+        ml_name: c"sum_as_string".as_ptr(),
         ml_meth: PyMethodDefPointer {
-            _PyCFunctionFast: sum_as_string,
+            PyCFunctionFast: sum_as_string,
         },
         ml_flags: METH_FASTCALL,
-        ml_doc: "returns the sum of two integers as a string\0"
-            .as_ptr()
-            .cast::<c_char>(),
+        ml_doc: c"returns the sum of two integers as a string".as_ptr(),
     },
     // A zeroed PyMethodDef to mark the end of the array.
-    PyMethodDef::zeroed()
+    PyMethodDef::zeroed(),
 ];
 
-// The module initialization function, which must be named `PyInit_<your_module>`.
-#[allow(non_snake_case)]
+#[cfg(Py_3_15)]
+PyABIInfo_VAR!(ABI_INFO);
+
+const SLOTS_LEN: usize =
+    1 + cfg!(Py_3_12) as usize + cfg!(Py_GIL_DISABLED) as usize + 4 * (cfg!(Py_3_15) as usize);
+static mut SLOTS: [PyModuleDef_Slot; SLOTS_LEN] = [
+    #[cfg(Py_3_15)]
+    PyModuleDef_Slot {
+        slot: Py_mod_abi,
+        value: (&raw mut ABI_INFO).cast(),
+    },
+    #[cfg(Py_3_15)]
+    PyModuleDef_Slot {
+        slot: Py_mod_name,
+        // safety: Python does not write to this field
+        value: c"string_sum".as_ptr() as *mut c_void,
+    },
+    #[cfg(Py_3_15)]
+    PyModuleDef_Slot {
+        slot: Py_mod_doc,
+        // safety: Python does not write to this field
+        value: c"A Python module written in Rust.".as_ptr() as *mut c_void,
+    },
+    #[cfg(Py_3_15)]
+    PyModuleDef_Slot {
+        slot: Py_mod_methods,
+        value: (&raw mut METHODS).cast(),
+    },
+    #[cfg(Py_3_12)]
+    PyModuleDef_Slot {
+        slot: Py_mod_multiple_interpreters,
+        value: Py_MOD_PER_INTERPRETER_GIL_SUPPORTED,
+    },
+    #[cfg(Py_GIL_DISABLED)]
+    PyModuleDef_Slot {
+        slot: Py_mod_gil,
+        value: Py_MOD_GIL_NOT_USED,
+    },
+    PyModuleDef_Slot {
+        slot: 0,
+        value: ptr::null_mut(),
+    },
+];
+
+// The module initialization function
+#[cfg(not(Py_3_15))]
+#[allow(non_snake_case, reason = "must be named `PyInit_<your_module>`")]
 #[no_mangle]
 pub unsafe extern "C" fn PyInit_string_sum() -> *mut PyObject {
-    PyModule_Create(ptr::addr_of_mut!(MODULE_DEF))
+    PyModuleDef_Init(&raw mut MODULE_DEF)
+}
+
+#[cfg(Py_3_15)]
+#[allow(non_snake_case, reason = "must be named `PyModExport_<your_module>`")]
+#[no_mangle]
+pub unsafe extern "C" fn PyModExport_string_sum() -> *mut PyModuleDef_Slot {
+    (&raw mut SLOTS).cast()
+}
+
+/// A helper to parse function arguments
+/// If we used PyO3's proc macros they'd handle all of this boilerplate for us :)
+unsafe fn parse_arg_as_i32(obj: *mut PyObject, n_arg: usize) -> Option<i32> {
+    if PyLong_Check(obj) == 0 {
+        let msg = format!(
+            "sum_as_string expected an int for positional argument {}\0",
+            n_arg
+        );
+        PyErr_SetString(PyExc_TypeError, msg.as_ptr().cast::<c_char>());
+        return None;
+    }
+
+    // Let's keep the behaviour consistent on platforms where `c_long` is bigger than 32 bits.
+    // In particular, it is an i32 on Windows but i64 on most Linux systems
+    let mut overflow = 0;
+    let i_long: c_long = PyLong_AsLongAndOverflow(obj, &mut overflow);
+
+    #[allow(
+        irrefutable_let_patterns,
+        reason = "some platforms have c_long equal to i32"
+    )]
+    if overflow != 0 {
+        raise_overflowerror(obj);
+        None
+    } else if let Ok(i) = i_long.try_into() {
+        Some(i)
+    } else {
+        raise_overflowerror(obj);
+        None
+    }
+}
+
+unsafe fn raise_overflowerror(obj: *mut PyObject) {
+    let obj_repr = PyObject_Str(obj);
+    if !obj_repr.is_null() {
+        let mut size = 0;
+        let p = PyUnicode_AsUTF8AndSize(obj_repr, &mut size);
+        if !p.is_null() {
+            let s = std::str::from_utf8_unchecked(std::slice::from_raw_parts(
+                p.cast::<u8>(),
+                size as usize,
+            ));
+            let msg = format!("cannot fit {} in 32 bits\0", s);
+
+            PyErr_SetString(PyExc_OverflowError, msg.as_ptr().cast::<c_char>());
+        }
+        Py_DECREF(obj_repr);
+    }
 }
 
 pub unsafe extern "C" fn sum_as_string(
@@ -93,55 +215,29 @@ pub unsafe extern "C" fn sum_as_string(
     if nargs != 2 {
         PyErr_SetString(
             PyExc_TypeError,
-            "sum_as_string() expected 2 positional arguments\0"
-                .as_ptr()
-                .cast::<c_char>(),
+            c"sum_as_string expected 2 positional arguments".as_ptr(),
         );
         return std::ptr::null_mut();
     }
 
-    let arg1 = *args;
-    if PyLong_Check(arg1) == 0 {
-        PyErr_SetString(
-            PyExc_TypeError,
-            "sum_as_string() expected an int for positional argument 1\0"
-                .as_ptr()
-                .cast::<c_char>(),
-        );
-        return std::ptr::null_mut();
-    }
+    let (first, second) = (*args, *args.add(1));
 
-    let arg1 = PyLong_AsLong(arg1);
-    if !PyErr_Occurred().is_null() {
-        return ptr::null_mut();
-    }
+    let first = match parse_arg_as_i32(first, 1) {
+        Some(x) => x,
+        None => return std::ptr::null_mut(),
+    };
+    let second = match parse_arg_as_i32(second, 2) {
+        Some(x) => x,
+        None => return std::ptr::null_mut(),
+    };
 
-    let arg2 = *args.add(1);
-    if PyLong_Check(arg2) == 0 {
-        PyErr_SetString(
-            PyExc_TypeError,
-            "sum_as_string() expected an int for positional argument 2\0"
-                .as_ptr()
-                .cast::<c_char>(),
-        );
-        return std::ptr::null_mut();
-    }
-
-    let arg2 = PyLong_AsLong(arg2);
-    if !PyErr_Occurred().is_null() {
-        return ptr::null_mut();
-    }
-
-    match arg1.checked_add(arg2) {
+    match first.checked_add(second) {
         Some(sum) => {
             let string = sum.to_string();
             PyUnicode_FromStringAndSize(string.as_ptr().cast::<c_char>(), string.len() as isize)
         }
         None => {
-            PyErr_SetString(
-                PyExc_OverflowError,
-                "arguments too large to add\0".as_ptr().cast::<c_char>(),
-            );
+            PyErr_SetString(PyExc_OverflowError, c"arguments too large to add".as_ptr());
             std::ptr::null_mut()
         }
     }

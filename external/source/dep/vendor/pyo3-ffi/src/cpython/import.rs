@@ -1,33 +1,9 @@
-use crate::{PyInterpreterState, PyObject};
+#[cfg(any(not(PyPy), Py_3_14))]
+use crate::PyObject;
+#[cfg(any(not(PyPy), Py_3_14))]
+use core::ffi::c_char;
 #[cfg(not(PyPy))]
-use std::os::raw::c_uchar;
-use std::os::raw::{c_char, c_int};
-
-// skipped PyInit__imp
-
-extern "C" {
-    pub fn _PyImport_IsInitialized(state: *mut PyInterpreterState) -> c_int;
-    // skipped _PyImport_GetModuleId
-    pub fn _PyImport_SetModule(name: *mut PyObject, module: *mut PyObject) -> c_int;
-    pub fn _PyImport_SetModuleString(name: *const c_char, module: *mut PyObject) -> c_int;
-    pub fn _PyImport_AcquireLock();
-    pub fn _PyImport_ReleaseLock() -> c_int;
-    #[cfg(not(Py_3_9))]
-    pub fn _PyImport_FindBuiltin(name: *const c_char, modules: *mut PyObject) -> *mut PyObject;
-    #[cfg(not(Py_3_11))]
-    pub fn _PyImport_FindExtensionObject(a: *mut PyObject, b: *mut PyObject) -> *mut PyObject;
-    pub fn _PyImport_FixupBuiltin(
-        module: *mut PyObject,
-        name: *const c_char,
-        modules: *mut PyObject,
-    ) -> c_int;
-    pub fn _PyImport_FixupExtensionObject(
-        a: *mut PyObject,
-        b: *mut PyObject,
-        c: *mut PyObject,
-        d: *mut PyObject,
-    ) -> c_int;
-}
+use core::ffi::{c_int, c_uchar};
 
 #[cfg(not(PyPy))]
 #[repr(C)]
@@ -37,13 +13,10 @@ pub struct _inittab {
     pub initfunc: Option<unsafe extern "C" fn() -> *mut PyObject>,
 }
 
-#[cfg_attr(windows, link(name = "pythonXY"))]
-extern "C" {
+extern_libpython! {
     #[cfg(not(PyPy))]
     pub static mut PyImport_Inittab: *mut _inittab;
-}
 
-extern "C" {
     #[cfg(not(PyPy))]
     pub fn PyImport_ExtendInittab(newtab: *mut _inittab) -> c_int;
 }
@@ -57,18 +30,22 @@ pub struct _frozen {
     pub size: c_int,
     #[cfg(Py_3_11)]
     pub is_package: c_int,
-    #[cfg(Py_3_11)]
+    #[cfg(all(Py_3_11, not(Py_3_13)))]
     pub get_code: Option<unsafe extern "C" fn() -> *mut PyObject>,
 }
 
-#[cfg_attr(windows, link(name = "pythonXY"))]
-extern "C" {
+extern_libpython! {
     #[cfg(not(PyPy))]
     pub static mut PyImport_FrozenModules: *const _frozen;
-    #[cfg(all(not(PyPy), Py_3_11))]
-    pub static mut _PyImport_FrozenBootstrap: *const _frozen;
-    #[cfg(all(not(PyPy), Py_3_11))]
-    pub static mut _PyImport_FrozenStdlib: *const _frozen;
-    #[cfg(all(not(PyPy), Py_3_11))]
-    pub static mut _PyImport_FrozenTest: *const _frozen;
+
+    #[cfg(Py_3_14)]
+    pub fn PyImport_ImportModuleAttr(
+        mod_name: *mut PyObject,
+        attr_name: *mut PyObject,
+    ) -> *mut PyObject;
+    #[cfg(Py_3_14)]
+    pub fn PyImport_ImportModuleAttrString(
+        mod_name: *const c_char,
+        attr_name: *const c_char,
+    ) -> *mut PyObject;
 }

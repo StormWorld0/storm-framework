@@ -1,33 +1,42 @@
 use crate::object::*;
 use crate::pyport::Py_ssize_t;
-use std::os::raw::c_int;
-use std::ptr::addr_of_mut;
+use core::ffi::c_int;
 
-#[cfg_attr(windows, link(name = "pythonXY"))]
-extern "C" {
+#[cfg(not(RustPython))]
+extern_libpython! {
     #[cfg_attr(PyPy, link_name = "PyPyList_Type")]
     pub static mut PyList_Type: PyTypeObject;
     pub static mut PyListIter_Type: PyTypeObject;
     pub static mut PyListRevIter_Type: PyTypeObject;
 }
 
+#[cfg(not(RustPython))]
 #[inline]
 pub unsafe fn PyList_Check(op: *mut PyObject) -> c_int {
     PyType_FastSubclass(Py_TYPE(op), Py_TPFLAGS_LIST_SUBCLASS)
 }
 
 #[inline]
+#[cfg(not(RustPython))]
 pub unsafe fn PyList_CheckExact(op: *mut PyObject) -> c_int {
-    (Py_TYPE(op) == addr_of_mut!(PyList_Type)) as c_int
+    Py_IS_TYPE(op, &raw mut PyList_Type)
 }
 
-extern "C" {
+extern_libpython! {
+    #[cfg(RustPython)]
+    pub fn PyList_Check(op: *mut PyObject) -> c_int;
+    #[cfg(RustPython)]
+    pub fn PyList_CheckExact(op: *mut PyObject) -> c_int;
+
     #[cfg_attr(PyPy, link_name = "PyPyList_New")]
     pub fn PyList_New(size: Py_ssize_t) -> *mut PyObject;
     #[cfg_attr(PyPy, link_name = "PyPyList_Size")]
     pub fn PyList_Size(arg1: *mut PyObject) -> Py_ssize_t;
     #[cfg_attr(PyPy, link_name = "PyPyList_GetItem")]
     pub fn PyList_GetItem(arg1: *mut PyObject, arg2: Py_ssize_t) -> *mut PyObject;
+    #[cfg(Py_3_13)]
+    #[cfg_attr(PyPy, link_name = "PyPyList_GetItemRef")]
+    pub fn PyList_GetItemRef(arg1: *mut PyObject, arg2: Py_ssize_t) -> *mut PyObject;
     #[cfg_attr(PyPy, link_name = "PyPyList_SetItem")]
     pub fn PyList_SetItem(arg1: *mut PyObject, arg2: Py_ssize_t, arg3: *mut PyObject) -> c_int;
     #[cfg_attr(PyPy, link_name = "PyPyList_Insert")]
@@ -47,6 +56,10 @@ extern "C" {
         arg3: Py_ssize_t,
         arg4: *mut PyObject,
     ) -> c_int;
+    #[cfg(Py_3_13)]
+    pub fn PyList_Extend(list: *mut PyObject, iterable: *mut PyObject) -> c_int;
+    #[cfg(Py_3_13)]
+    pub fn PyList_Clear(list: *mut PyObject) -> c_int;
     #[cfg_attr(PyPy, link_name = "PyPyList_Sort")]
     pub fn PyList_Sort(arg1: *mut PyObject) -> c_int;
     #[cfg_attr(PyPy, link_name = "PyPyList_Reverse")]

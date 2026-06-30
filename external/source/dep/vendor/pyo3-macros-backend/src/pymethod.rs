@@ -1,10 +1,14 @@
 use std::borrow::Cow;
+use std::ffi::CString;
 
-use crate::attributes::{NameAttribute, RenamingRule};
-use crate::method::{CallingConvention, ExtractErrorMode};
-use crate::params::{check_arg_for_gil_refs, impl_arg_param, Holders};
-use crate::utils::Ctx;
+use crate::attributes::{FromPyWithAttribute, NameAttribute, RenamingRule};
+#[cfg(feature = "experimental-inspect")]
+use crate::introspection::unique_element_id;
+use crate::method::{CallingConvention, ExtractErrorMode, PyArg, SelfConversionPolicy};
+use crate::params::{impl_arg_params, impl_regular_arg_param, Holders};
+use crate::pyfunction::WarningFactory;
 use crate::utils::PythonDoc;
+use crate::utils::{Ctx, StaticIdent};
 use crate::{
     method::{FnArg, FnSpec, FnType, SelfType},
     pyfunction::PyFunctionOptions,
@@ -12,7 +16,8 @@ use crate::{
 use crate::{quotes, utils};
 use proc_macro2::{Span, TokenStream};
 use quote::{format_ident, quote, quote_spanned, ToTokens};
-use syn::{ext::IdentExt, spanned::Spanned, Result};
+use syn::LitCStr;
+use syn::{ext::IdentExt, spanned::Spanned, Field, Ident, Result};
 
 /// Generated code for a single pymethod item.
 pub struct MethodAndMethodDef {
@@ -22,12 +27,36 @@ pub struct MethodAndMethodDef {
     pub method_def: TokenStream,
 }
 
+#[cfg(feature = "experimental-inspect")]
+impl MethodAndMethodDef {
+    pub fn add_introspection(&mut self, data: TokenStream) {
+        let const_name = format_ident!("_{}", unique_element_id()); // We need an explicit name here
+        self.associated_method.extend(quote! {
+            const #const_name: () = {
+                #data
+            };
+        });
+    }
+}
+
 /// Generated code for a single pymethod item which is registered by a slot.
 pub struct MethodAndSlotDef {
     /// The implementation of the Python wrapper for the pymethod
     pub associated_method: TokenStream,
     /// The slot def which will be used to register this pymethod
     pub slot_def: TokenStream,
+}
+
+#[cfg(feature = "experimental-inspect")]
+impl MethodAndSlotDef {
+    pub fn add_introspection(&mut self, data: TokenStream) {
+        let const_name = format_ident!("_{}", unique_element_id()); // We need an explicit name here
+        self.associated_method.extend(quote! {
+            const #const_name: () = {
+                #data
+            };
+        });
+    }
 }
 
 pub enum GeneratedPyMethod {
@@ -39,7 +68,7 @@ pub enum GeneratedPyMethod {
 pub struct PyMethod<'a> {
     kind: PyMethodKind,
     method_name: String,
-    spec: FnSpec<'a>,
+    pub spec: FnSpec<'a>,
 }
 
 enum PyMethodKind {
@@ -51,6 +80,8 @@ impl PyMethodKind {
     fn from_name(name: &str) -> Self {
         match name {
             // Protocol implemented through slots
+            "__new__" => PyMethodKind::Proto(PyMethodProtoKind::Slot(&__NEW__)),
+            "__init__" => PyMethodKind::Proto(PyMethodProtoKind::Slot(&__INIT__)),
             "__str__" => PyMethodKind::Proto(PyMethodProtoKind::Slot(&__STR__)),
             "__repr__" => PyMethodKind::Proto(PyMethodProtoKind::Slot(&__REPR__)),
             "__hash__" => PyMethodKind::Proto(PyMethodProtoKind::Slot(&__HASH__)),
@@ -95,7 +126,6 @@ impl PyMethodKind {
             "__ior__" => PyMethodKind::Proto(PyMethodProtoKind::Slot(&__IOR__)),
             "__getbuffer__" => PyMethodKind::Proto(PyMethodProtoKind::Slot(&__GETBUFFER__)),
             "__releasebuffer__" => PyMethodKind::Proto(PyMethodProtoKind::Slot(&__RELEASEBUFFER__)),
-            "__clear__" => PyMethodKind::Proto(PyMethodProtoKind::Slot(&__CLEAR__)),
             // Protocols implemented through traits
             "__getattribute__" => {
                 PyMethodKind::Proto(PyMethodProtoKind::SlotFragment(&__GETATTRIBUTE__))
@@ -144,6 +174,7 @@ impl PyMethodKind {
             // Some tricky protocols which don't fit the pattern of the rest
             "__call__" => PyMethodKind::Proto(PyMethodProtoKind::Call),
             "__traverse__" => PyMethodKind::Proto(PyMethodProtoKind::Traverse),
+            "__clear__" => PyMethodKind::Proto(PyMethodProtoKind::Clear),
             // Not a proto
             _ => PyMethodKind::Fn,
         }
@@ -154,17 +185,19 @@ enum PyMethodProtoKind {
     Slot(&'static SlotDef),
     Call,
     Traverse,
+    Clear,
     SlotFragment(&'static SlotFragmentDef),
 }
 
 impl<'a> PyMethod<'a> {
-    fn parse(
+    pub fn parse(
         sig: &'a mut syn::Signature,
         meth_attrs: &mut Vec<syn::Attribute>,
         options: PyFunctionOptions,
-        ctx: &'a Ctx,
     ) -> Result<Self> {
-        let spec = FnSpec::parse(sig, meth_attrs, options, ctx)?;
+        check_generic(sig)?;
+        ensure_function_options_valid(&options)?;
+        let spec = FnSpec::parse(sig, meth_attrs, options)?;
 
         let method_name = spec.python_name.to_string();
         let kind = PyMethodKind::from_name(&method_name);
@@ -174,6 +207,24 @@ impl<'a> PyMethod<'a> {
             method_name,
             spec,
         })
+    }
+
+    #[cfg(feature = "experimental-inspect")]
+    pub fn is_returning_not_implemented_on_extraction_error(&self) -> bool {
+        match &self.kind {
+            PyMethodKind::Fn => false,
+            PyMethodKind::Proto(proto) => match proto {
+                PyMethodProtoKind::Slot(slot) => {
+                    matches!(slot.extract_error_mode, ExtractErrorMode::NotImplemented)
+                }
+                PyMethodProtoKind::SlotFragment(slot) => {
+                    matches!(slot.extract_error_mode, ExtractErrorMode::NotImplemented)
+                }
+                PyMethodProtoKind::Call
+                | PyMethodProtoKind::Traverse
+                | PyMethodProtoKind::Clear => false,
+            },
+        }
     }
 }
 
@@ -186,16 +237,18 @@ pub fn is_proto_method(name: &str) -> bool {
 
 pub fn gen_py_method(
     cls: &syn::Type,
-    sig: &mut syn::Signature,
-    meth_attrs: &mut Vec<syn::Attribute>,
-    options: PyFunctionOptions,
+    method: PyMethod<'_>,
+    meth_attrs: &[syn::Attribute],
     ctx: &Ctx,
 ) -> Result<GeneratedPyMethod> {
-    check_generic(sig)?;
-    ensure_function_options_valid(&options)?;
-    let method = PyMethod::parse(sig, meth_attrs, options, ctx)?;
     let spec = &method.spec;
-    let Ctx { pyo3_path } = ctx;
+
+    if spec.asyncness.is_some() {
+        ensure_spanned!(
+            cfg!(feature = "experimental-async"),
+            spec.asyncness.span() => "async functions are only supported with the `experimental-async` feature"
+        );
+    }
 
     Ok(match (method.kind, &spec.tp) {
         // Class attributes go before protos so that class attributes can be used to set proto
@@ -211,10 +264,13 @@ pub fn gen_py_method(
                     GeneratedPyMethod::Proto(slot)
                 }
                 PyMethodProtoKind::Call => {
-                    GeneratedPyMethod::Proto(impl_call_slot(cls, method.spec, ctx)?)
+                    GeneratedPyMethod::Proto(impl_call_slot(cls, spec, ctx)?)
                 }
                 PyMethodProtoKind::Traverse => {
                     GeneratedPyMethod::Proto(impl_traverse_slot(cls, spec, ctx)?)
+                }
+                PyMethodProtoKind::Clear => {
+                    GeneratedPyMethod::Proto(impl_clear_slot(cls, spec, ctx)?)
                 }
                 PyMethodProtoKind::SlotFragment(slot_fragment_def) => {
                     let proto = slot_fragment_def.generate_pyproto_fragment(cls, spec, ctx)?;
@@ -223,32 +279,9 @@ pub fn gen_py_method(
             }
         }
         // ordinary functions (with some specialties)
-        (_, FnType::Fn(_)) => GeneratedPyMethod::Method(impl_py_method_def(
-            cls,
-            spec,
-            &spec.get_doc(meth_attrs),
-            None,
-            ctx,
-        )?),
-        (_, FnType::FnClass(_)) => GeneratedPyMethod::Method(impl_py_method_def(
-            cls,
-            spec,
-            &spec.get_doc(meth_attrs),
-            Some(quote!(#pyo3_path::ffi::METH_CLASS)),
-            ctx,
-        )?),
-        (_, FnType::FnStatic) => GeneratedPyMethod::Method(impl_py_method_def(
-            cls,
-            spec,
-            &spec.get_doc(meth_attrs),
-            Some(quote!(#pyo3_path::ffi::METH_STATIC)),
-            ctx,
-        )?),
-        // special prototypes
-        (_, FnType::FnNew) | (_, FnType::FnNewClass(_)) => {
-            GeneratedPyMethod::Proto(impl_py_method_def_new(cls, spec, ctx)?)
-        }
-
+        (_, FnType::Fn(_) | FnType::FnClass(_) | FnType::FnStatic) => GeneratedPyMethod::Method(
+            impl_py_method_def(cls, spec, spec.get_doc(meth_attrs).as_ref(), ctx)?,
+        ),
         (_, FnType::Getter(self_type)) => GeneratedPyMethod::Method(impl_py_getter_def(
             cls,
             PropertyType::Function {
@@ -267,6 +300,13 @@ pub fn gen_py_method(
             },
             ctx,
         )?),
+        (_, FnType::Deleter(self_type)) => GeneratedPyMethod::Method(impl_py_deleter_def(
+            cls,
+            self_type,
+            spec,
+            spec.get_doc(meth_attrs),
+            ctx,
+        )?),
         (_, FnType::FnModule(_)) => {
             unreachable!("methods cannot be FnModule")
         }
@@ -274,7 +314,7 @@ pub fn gen_py_method(
 }
 
 pub fn check_generic(sig: &syn::Signature) -> syn::Result<()> {
-    let err_msg = |typ| format!("Python functions cannot have generic {} parameters", typ);
+    let err_msg = |typ| format!("Python functions cannot have generic {typ} parameters");
     for param in &sig.generics.params {
         match param {
             syn::GenericParam::Lifetime(_) => {}
@@ -298,37 +338,61 @@ fn ensure_no_forbidden_protocol_attributes(
     method_name: &str,
 ) -> syn::Result<()> {
     if let Some(signature) = &spec.signature.attribute {
-        // __call__ is allowed to have a signature, but nothing else is.
-        if !matches!(proto_kind, PyMethodProtoKind::Call) {
+        // __new__, __init__ and __call__ are allowed to have a signature, but nothing else is.
+        if !matches!(
+            proto_kind,
+            PyMethodProtoKind::Slot(SlotDef {
+                calling_convention: SlotCallingConvention::TpNew | SlotCallingConvention::TpInit,
+                ..
+            })
+        ) && !matches!(proto_kind, PyMethodProtoKind::Call)
+        {
             bail_spanned!(signature.kw.span() => format!("`signature` cannot be used with magic method `{}`", method_name));
         }
     }
     if let Some(text_signature) = &spec.text_signature {
-        bail_spanned!(text_signature.kw.span() => format!("`text_signature` cannot be used with magic method `{}`", method_name));
+        // __new__ is also allowed a text_signature (no other proto method is)
+        if !matches!(
+            proto_kind,
+            PyMethodProtoKind::Slot(SlotDef {
+                calling_convention: SlotCallingConvention::TpNew,
+                ..
+            })
+        ) {
+            bail_spanned!(text_signature.kw.span() => format!("`text_signature` cannot be used with magic method `{}`", method_name));
+        }
     }
     Ok(())
 }
 
-/// Also used by pyfunction.
 pub fn impl_py_method_def(
     cls: &syn::Type,
     spec: &FnSpec<'_>,
-    doc: &PythonDoc,
-    flags: Option<TokenStream>,
+    doc: Option<&PythonDoc>,
     ctx: &Ctx,
 ) -> Result<MethodAndMethodDef> {
-    let Ctx { pyo3_path } = ctx;
+    let Ctx { pyo3_path, .. } = ctx;
     let wrapper_ident = format_ident!("__pymethod_{}__", spec.python_name);
-    let associated_method = spec.get_wrapper_function(&wrapper_ident, Some(cls), ctx)?;
-    let add_flags = flags.map(|flags| quote!(.flags(#flags)));
-    let methoddef_type = match spec.tp {
-        FnType::FnStatic => quote!(Static),
-        FnType::FnClass(_) => quote!(Class),
-        _ => quote!(Method),
-    };
-    let methoddef = spec.get_methoddef(quote! { #cls::#wrapper_ident }, doc, ctx);
+    let calling_convention = CallingConvention::from_signature(&spec.signature);
+    let associated_method = spec.get_wrapper_function(
+        &wrapper_ident,
+        Some(cls),
+        calling_convention,
+        // SAFETY: Methods in `tp_methods` are dispatched through CPython's
+        // method-wrapper descriptor, which enforces that the receiver is an
+        // instance of the owning type before reaching the C function. The
+        // trusted path is therefore valid.
+        unsafe { SelfConversionPolicy::trusted() },
+        ctx,
+    )?;
+    let methoddef = spec.get_methoddef(
+        quote! { #cls::#wrapper_ident },
+        doc,
+        calling_convention,
+        ctx,
+    )?;
     let method_def = quote! {
-        #pyo3_path::class::PyMethodDefType::#methoddef_type(#methoddef #add_flags)
+        #pyo3_path::impl_::pymethods::PyMethodDefType::Method(#methoddef)
     };
     Ok(MethodAndMethodDef {
         associated_method,
@@ -336,89 +400,22 @@ pub fn impl_py_method_def(
     })
 }
 
-/// Also used by pyclass.
-pub fn impl_py_method_def_new(
-    cls: &syn::Type,
-    spec: &FnSpec<'_>,
-    ctx: &Ctx,
-) -> Result<MethodAndSlotDef> {
-    let Ctx { pyo3_path } = ctx;
-    let wrapper_ident = syn::Ident::new("__pymethod___new____", Span::call_site());
-    let associated_method = spec.get_wrapper_function(&wrapper_ident, Some(cls), ctx)?;
-    // Use just the text_signature_call_signature() because the class' Python name
-    // isn't known to `#[pymethods]` - that has to be attached at runtime from the PyClassImpl
-    // trait implementation created by `#[pyclass]`.
-    let text_signature_body = spec.text_signature_call_signature().map_or_else(
-        || quote!(::std::option::Option::None),
-        |text_signature| quote!(::std::option::Option::Some(#text_signature)),
-    );
-    let deprecations = &spec.deprecations;
-    let slot_def = quote! {
-        #pyo3_path::ffi::PyType_Slot {
-            slot: #pyo3_path::ffi::Py_tp_new,
-            pfunc: {
-                unsafe extern "C" fn trampoline(
-                    subtype: *mut #pyo3_path::ffi::PyTypeObject,
-                    args: *mut #pyo3_path::ffi::PyObject,
-                    kwargs: *mut #pyo3_path::ffi::PyObject,
-                ) -> *mut #pyo3_path::ffi::PyObject
-                {
-                    #deprecations
-
-                    use #pyo3_path::impl_::pyclass::*;
-                    #[allow(unknown_lints, non_local_definitions)]
-                    impl PyClassNewTextSignature<#cls> for PyClassImplCollector<#cls> {
-                        #[inline]
-                        fn new_text_signature(self) -> ::std::option::Option<&'static str> {
-                            #text_signature_body
-                        }
-                    }
-
-                    #pyo3_path::impl_::trampoline::newfunc(
-                        subtype,
-                        args,
-                        kwargs,
-                        #cls::#wrapper_ident
-                    )
-                }
-                trampoline
-            } as #pyo3_path::ffi::newfunc as _
-        }
-    };
-    Ok(MethodAndSlotDef {
-        associated_method,
-        slot_def,
-    })
-}
-
-fn impl_call_slot(cls: &syn::Type, mut spec: FnSpec<'_>, ctx: &Ctx) -> Result<MethodAndSlotDef> {
-    let Ctx { pyo3_path } = ctx;
-
-    // HACK: __call__ proto slot must always use varargs calling convention, so change the spec.
-    // Probably indicates there's a refactoring opportunity somewhere.
-    spec.convention = CallingConvention::Varargs;
-
+fn impl_call_slot(cls: &syn::Type, spec: &FnSpec<'_>, ctx: &Ctx) -> Result<MethodAndSlotDef> {
+    let Ctx { pyo3_path, .. } = ctx;
     let wrapper_ident = syn::Ident::new("__pymethod___call____", Span::call_site());
-    let associated_method = spec.get_wrapper_function(&wrapper_ident, Some(cls), ctx)?;
+    let associated_method = spec.get_wrapper_function(
+        &wrapper_ident,
+        Some(cls),
+        CallingConvention::Varargs,
+        // SAFETY: The `tp_call` slot is dispatched by CPython, which guarantees
+        // the receiver is of the correct type.
+        unsafe { SelfConversionPolicy::trusted() },
+        ctx,
+    )?;
     let slot_def = quote! {
         #pyo3_path::ffi::PyType_Slot {
             slot: #pyo3_path::ffi::Py_tp_call,
-            pfunc: {
-                unsafe extern "C" fn trampoline(
-                    slf: *mut #pyo3_path::ffi::PyObject,
-                    args: *mut #pyo3_path::ffi::PyObject,
-                    kwargs: *mut #pyo3_path::ffi::PyObject,
-                ) -> *mut #pyo3_path::ffi::PyObject
-                {
-                    #pyo3_path::impl_::trampoline::ternaryfunc(
-                        slf,
-                        args,
-                        kwargs,
-                        #cls::#wrapper_ident
-                    )
-                }
-                trampoline
-            } as #pyo3_path::ffi::ternaryfunc as _
+            pfunc: #pyo3_path::impl_::trampoline::get_trampoline_function!(ternaryfunc, #cls::#wrapper_ident) as _
         }
     };
     Ok(MethodAndSlotDef {
@@ -432,28 +429,34 @@ fn impl_traverse_slot(
     spec: &FnSpec<'_>,
     ctx: &Ctx,
 ) -> syn::Result<MethodAndSlotDef> {
-    let Ctx { pyo3_path } = ctx;
+    let Ctx { pyo3_path, .. } = ctx;
     if let (Some(py_arg), _) = split_off_python_arg(&spec.signature.arguments) {
         return Err(syn::Error::new_spanned(py_arg.ty, "__traverse__ may not take `Python`. \
             Usually, an implementation of `__traverse__(&self, visit: PyVisit<'_>) -> Result<(), PyTraverseError>` \
-            should do nothing but calls to `visit.call`. Most importantly, safe access to the GIL is prohibited \
-            inside implementations of `__traverse__`, i.e. `Python::with_gil` will panic."));
+            should do nothing but calls to `visit.call`. Most importantly, safe access to the Python interpreter is \
+            prohibited inside implementations of `__traverse__`, i.e. `Python::attach` will panic."));
     }
 
     // check that the receiver does not try to smuggle an (implicit) `Python` token into here
-    if let FnType::Fn(SelfType::TryFromBoundRef(span))
+    if let FnType::Fn(SelfType::TryFromBoundRef { span, .. })
     | FnType::Fn(SelfType::Receiver {
         mutable: true,
         span,
+        ..
     }) = spec.tp
     {
         bail_spanned! { span =>
             "__traverse__ may not take a receiver other than `&self`. Usually, an implementation of \
             `__traverse__(&self, visit: PyVisit<'_>) -> Result<(), PyTraverseError>` \
-            should do nothing but calls to `visit.call`. Most importantly, safe access to the GIL is prohibited \
-            inside implementations of `__traverse__`, i.e. `Python::with_gil` will panic."
+            should do nothing but calls to `visit.call`. Most importantly, safe access to the Python interpreter is \
+            prohibited inside implementations of `__traverse__`, i.e. `Python::attach` will panic."
         }
     }
+
+    ensure_spanned!(
+        spec.warnings.is_empty(),
+        spec.warnings.span() => "__traverse__ cannot be used with #[pyo3(warn)]"
+    );
 
     let rust_fn_ident = spec.name;
 
@@ -461,9 +464,9 @@ fn impl_traverse_slot(
         pub unsafe extern "C" fn __pymethod_traverse__(
             slf: *mut #pyo3_path::ffi::PyObject,
             visit: #pyo3_path::ffi::visitproc,
-            arg: *mut ::std::os::raw::c_void,
-        ) -> ::std::os::raw::c_int {
-            #pyo3_path::impl_::pymethods::_call_traverse::<#cls>(slf, #cls::#rust_fn_ident, visit, arg)
+            arg: *mut ::std::ffi::c_void,
+        ) -> ::std::ffi::c_int {
+            #pyo3_path::impl_::pymethods::_call_traverse::<#cls>(slf, #cls::#rust_fn_ident, visit, arg, #cls::__pymethod_traverse__)
         }
     };
     let slot_def = quote! {
@@ -478,16 +481,76 @@ fn impl_traverse_slot(
     })
 }
 
-fn impl_py_class_attribute(
+fn impl_clear_slot(cls: &syn::Type, spec: &FnSpec<'_>, ctx: &Ctx) -> syn::Result<MethodAndSlotDef> {
+    let Ctx { pyo3_path, .. } = ctx;
+    let (py_arg, args) = split_off_python_arg(&spec.signature.arguments);
+    let self_type = match &spec.tp {
+        FnType::Fn(self_type) => self_type,
+        _ => bail_spanned!(spec.name.span() => "expected instance method for `__clear__` function"),
+    };
+    let mut holders = Holders::new();
+    let slf = self_type.receiver(
+        cls,
+        ExtractErrorMode::Raise,
+        // SAFETY: The `tp_clear` slot is dispatched by CPython, which guarantees the
+        // receiver is of the correct type.
+        unsafe { SelfConversionPolicy::trusted() },
+        &mut holders,
+        ctx,
+    );
+
+    if let [arg, ..] = args {
+        bail_spanned!(arg.ty().span() => "`__clear__` function expected to have no arguments");
+    }
+
+    let name = &spec.name;
+    let holders = holders.init_holders(ctx);
+    let fncall = if py_arg.is_some() {
+        quote!(#cls::#name(#slf, py))
+    } else {
+        quote!(#cls::#name(#slf))
+    };
+
+    let associated_method = quote! {
+        pub unsafe extern "C" fn __pymethod___clear____(
+            _slf: *mut #pyo3_path::ffi::PyObject,
+        ) -> ::std::ffi::c_int {
+            #pyo3_path::impl_::pymethods::_call_clear(_slf, |py, _slf| {
+                #holders
+                let result = #fncall;
+                let result = #pyo3_path::impl_::wrap::converter(&result).wrap(result)?;
+                ::std::result::Result::Ok(result)
+            }, #cls::__pymethod___clear____)
+        }
+    };
+    let slot_def = quote! {
+        #pyo3_path::ffi::PyType_Slot {
+            slot: #pyo3_path::ffi::Py_tp_clear,
+            pfunc: #cls::__pymethod___clear____ as #pyo3_path::ffi::inquiry as _
+        }
+    };
+    Ok(MethodAndSlotDef {
+        associated_method,
+        slot_def,
+    })
+}
+
+pub(crate) fn impl_py_class_attribute(
     cls: &syn::Type,
     spec: &FnSpec<'_>,
     ctx: &Ctx,
 ) -> syn::Result<MethodAndMethodDef> {
-    let Ctx { pyo3_path } = ctx;
+    let Ctx { pyo3_path, .. } = ctx;
     let (py_arg, args) = split_off_python_arg(&spec.signature.arguments);
     ensure_spanned!(
         args.is_empty(),
-        args[0].ty.span() => "#[classattr] can only have one argument (of type pyo3::Python)"
+        args[0].ty().span() => "#[classattr] can only have one argument (of type pyo3::Python)"
+    );
+
+    ensure_spanned!(
+        spec.warnings.is_empty(),
+        spec.warnings.span()
+        => "#[classattr] cannot be used with #[pyo3(warn)]"
     );
 
     let name = &spec.name;
@@ -502,17 +565,18 @@ fn impl_py_class_attribute(
     let body = quotes::ok_wrap(fncall, ctx);
 
     let associated_method = quote! {
-        fn #wrapper_ident(py: #pyo3_path::Python<'_>) -> #pyo3_path::PyResult<#pyo3_path::PyObject> {
+        fn #wrapper_ident(py: #pyo3_path::Python<'_>) -> #pyo3_path::PyResult<#pyo3_path::Py<#pyo3_path::PyAny>> {
             let function = #cls::#name; // Shadow the method name to avoid #3017
-            #pyo3_path::impl_::wrap::map_result_into_py(py, #body)
+            let result = #body;
+            #pyo3_path::impl_::wrap::converter(&result).map_into_pyobject(py, result)
         }
     };
 
     let method_def = quote! {
-        #pyo3_path::class::PyMethodDefType::ClassAttribute({
-            #pyo3_path::class::PyClassAttributeDef::new(
+        #pyo3_path::impl_::pymethods::PyMethodDefType::ClassAttribute({
+            #pyo3_path::impl_::pymethods::PyClassAttributeDef::new(
                 #python_name,
-                #pyo3_path::impl_::pymethods::PyClassAttributeFactory(#cls::#wrapper_ident)
+                #cls::#wrapper_ident
             )
         })
     };
@@ -531,13 +595,21 @@ fn impl_call_setter(
     ctx: &Ctx,
 ) -> syn::Result<TokenStream> {
     let (py_arg, args) = split_off_python_arg(&spec.signature.arguments);
-    let slf = self_type.receiver(cls, ExtractErrorMode::Raise, holders, ctx);
+    let slf = self_type.receiver(
+        cls,
+        ExtractErrorMode::Raise,
+        // SAFETY: The setter function is dispatched by CPython's method-wrapper
+        // descriptor, which enforces the receiver is of the correct type.
+        unsafe { SelfConversionPolicy::trusted() },
+        holders,
+        ctx,
+    );
 
     if args.is_empty() {
         bail_spanned!(spec.name.span() => "setter function expected to have one argument");
     } else if args.len() > 1 {
         bail_spanned!(
-            args[1].ty.span() =>
+            args[1].ty().span() =>
             "setter function can have at most two arguments ([pyo3::Python,] and value)"
         );
     }
@@ -558,7 +630,7 @@ pub fn impl_py_setter_def(
     property_type: PropertyType<'_>,
     ctx: &Ctx,
 ) -> Result<MethodAndMethodDef> {
-    let Ctx { pyo3_path } = ctx;
+    let Ctx { pyo3_path, .. } = ctx;
     let python_name = property_type.null_terminated_python_name()?;
     let doc = property_type.doc();
     let mut holders = Holders::new();
@@ -569,8 +641,17 @@ pub fn impl_py_setter_def(
             let slf = SelfType::Receiver {
                 mutable: true,
                 span: Span::call_site(),
+                non_null: true,
             }
-            .receiver(cls, ExtractErrorMode::Raise, &mut holders, ctx);
+            .receiver(
+                cls,
+                ExtractErrorMode::Raise,
+                // SAFETY: The setter function is dispatched by CPython, which
+                // guarantees the receiver is of the correct type.
+                unsafe { SelfConversionPolicy::trusted() },
+                &mut holders,
+                ctx,
+            );
             if let Some(ident) = &field.ident {
                 // named struct field
                 quote!({ #slf.#ident = _val; })
@@ -606,36 +687,33 @@ pub fn impl_py_setter_def(
         PropertyType::Function { spec, .. } => {
             let (_, args) = split_off_python_arg(&spec.signature.arguments);
             let value_arg = &args[0];
-            let (from_py_with, ident) = if let Some(from_py_with) =
-                &value_arg.attrs.from_py_with.as_ref().map(|f| &f.value)
-            {
-                let ident = syn::Ident::new("from_py_with", from_py_with.span());
-                (
-                    quote_spanned! { from_py_with.span() =>
-                        let e = #pyo3_path::impl_::deprecations::GilRefs::new();
-                        let #ident = #pyo3_path::impl_::deprecations::inspect_fn(#from_py_with, &e);
-                        e.from_py_with_arg();
-                    },
-                    ident,
-                )
+            let (from_py_with, ident) =
+                if let Some(from_py_with) = &value_arg.from_py_with().as_ref().map(|f| &f.value) {
+                    let ident = syn::Ident::new("from_py_with", from_py_with.span());
+                    (
+                        quote_spanned! { from_py_with.span() =>
+                            let #ident = #from_py_with;
+                        },
+                        ident,
+                    )
+                } else {
+                    (quote!(), syn::Ident::new("dummy", Span::call_site()))
+                };
+
+            let arg = if let FnArg::Regular(arg) = &value_arg {
+                arg
             } else {
-                (quote!(), syn::Ident::new("dummy", Span::call_site()))
+                bail_spanned!(value_arg.name().span() => "The #[setter] value argument can't be *args, **kwargs or `cancel_handle`.");
             };
 
-            let extract = impl_arg_param(
-                &args[0],
+            let extract = impl_regular_arg_param(
+                arg,
                 ident,
-                quote!(::std::option::Option::Some(_value.into())),
+                quote!(::std::option::Option::Some(_value)),
                 &mut holders,
                 ctx,
-            )
-            .map(|tokens| {
-                check_arg_for_gil_refs(
-                    tokens,
-                    holders.push_gil_refs_checker(value_arg.ty.span()),
-                    ctx,
-                )
-            })?;
+            );
+
             quote! {
                 #from_py_with
                 let _val = #extract;
@@ -650,12 +728,10 @@ pub fn impl_py_setter_def(
                 .unwrap_or_default();
 
             let holder = holders.push_holder(span);
-            let gil_refs_checker = holders.push_gil_refs_checker(span);
             quote! {
-                let _val = #pyo3_path::impl_::deprecations::inspect_type(
-                    #pyo3_path::impl_::extract_argument::extract_argument(_value.into(), &mut #holder, #name)?,
-                    &#gil_refs_checker
-                );
+                #[allow(unused_imports, reason = "`Probe` trait used on negative case only")]
+                use #pyo3_path::impl_::pyclass::Probe as _;
+                let _val = #pyo3_path::impl_::extract_argument::extract_argument(_value, &mut #holder, #name)?;
             }
         }
     };
@@ -671,34 +747,37 @@ pub fn impl_py_setter_def(
         }
     }
 
+    let warnings = if let PropertyType::Function { spec, .. } = &property_type {
+        spec.warnings.build_py_warning(ctx)
+    } else {
+        quote!()
+    };
+
     let init_holders = holders.init_holders(ctx);
-    let check_gil_refs = holders.check_gil_refs();
     let associated_method = quote! {
         #cfg_attrs
         unsafe fn #wrapper_ident(
             py: #pyo3_path::Python<'_>,
-            _slf: *mut #pyo3_path::ffi::PyObject,
-            _value: *mut #pyo3_path::ffi::PyObject,
-        ) -> #pyo3_path::PyResult<::std::os::raw::c_int> {
+            _slf: ::std::ptr::NonNull<#pyo3_path::ffi::PyObject>,
+            _value: ::std::ptr::NonNull<#pyo3_path::ffi::PyObject>,
+        ) -> #pyo3_path::PyResult<::std::ffi::c_int> {
             use ::std::convert::Into;
-            let _value = #pyo3_path::impl_::pymethods::BoundRef::ref_from_ptr_or_opt(py, &_value)
-                .ok_or_else(|| {
-                    #pyo3_path::exceptions::PyAttributeError::new_err("can't delete attribute")
-                })?;
+            let _value = #pyo3_path::impl_::extract_argument::cast_non_null_function_argument(py, _value);
             #init_holders
             #extract
+            #warnings
             let result = #setter_impl;
-            #check_gil_refs
-            #pyo3_path::callback::convert(py, result)
+            #pyo3_path::impl_::callback::convert(py, result)
         }
     };
 
+    let doc = doc_to_optional_cstr(doc.as_deref(), ctx)?;
     let method_def = quote! {
         #cfg_attrs
-        #pyo3_path::class::PyMethodDefType::Setter(
-            #pyo3_path::class::PySetterDef::new(
+        #pyo3_path::impl_::pymethods::PyMethodDefType::Setter(
+            #pyo3_path::impl_::pymethods::PySetterDef::new(
                 #python_name,
-                #pyo3_path::impl_::pymethods::PySetter(#cls::#wrapper_ident),
+                #cls::#wrapper_ident,
                 #doc
             )
         )
@@ -718,10 +797,18 @@ fn impl_call_getter(
     ctx: &Ctx,
 ) -> syn::Result<TokenStream> {
     let (py_arg, args) = split_off_python_arg(&spec.signature.arguments);
-    let slf = self_type.receiver(cls, ExtractErrorMode::Raise, holders, ctx);
+    let slf = self_type.receiver(
+        cls,
+        ExtractErrorMode::Raise,
+        // SAFETY: The getter function is dispatched by CPython's method-wrapper
+        // descriptor, which enforces the receiver is of the correct type.
+        unsafe { SelfConversionPolicy::trusted() },
+        holders,
+        ctx,
+    );
     ensure_spanned!(
         args.is_empty(),
-        args[0].ty.span() => "getter function can only have one argument (of type pyo3::Python)"
+        args[0].ty().span() => "getter function can only have one argument (of type pyo3::Python)"
     );
 
     let name = &spec.name;
@@ -740,64 +827,9 @@ pub fn impl_py_getter_def(
     property_type: PropertyType<'_>,
     ctx: &Ctx,
 ) -> Result<MethodAndMethodDef> {
-    let Ctx { pyo3_path } = ctx;
+    let Ctx { pyo3_path, .. } = ctx;
     let python_name = property_type.null_terminated_python_name()?;
     let doc = property_type.doc();
-
-    let mut holders = Holders::new();
-    let body = match property_type {
-        PropertyType::Descriptor {
-            field_index, field, ..
-        } => {
-            let slf = SelfType::Receiver {
-                mutable: false,
-                span: Span::call_site(),
-            }
-            .receiver(cls, ExtractErrorMode::Raise, &mut holders, ctx);
-            let field_token = if let Some(ident) = &field.ident {
-                // named struct field
-                ident.to_token_stream()
-            } else {
-                // tuple struct field
-                syn::Index::from(field_index).to_token_stream()
-            };
-            quotes::map_result_into_ptr(
-                quotes::ok_wrap(
-                    quote! {
-                        ::std::clone::Clone::clone(&(#slf.#field_token))
-                    },
-                    ctx,
-                ),
-                ctx,
-            )
-        }
-        // Forward to `IntoPyCallbackOutput`, to handle `#[getter]`s returning results.
-        PropertyType::Function {
-            spec, self_type, ..
-        } => {
-            let call = impl_call_getter(cls, spec, self_type, &mut holders, ctx)?;
-            quote! {
-                #pyo3_path::callback::convert(py, #call)
-            }
-        }
-    };
-
-    let wrapper_ident = match property_type {
-        PropertyType::Descriptor {
-            field: syn::Field {
-                ident: Some(ident), ..
-            },
-            ..
-        } => {
-            format_ident!("__pymethod_get_{}__", ident)
-        }
-        PropertyType::Descriptor { field_index, .. } => {
-            format_ident!("__pymethod_get_field_{}__", field_index)
-        }
-        PropertyType::Function { spec, .. } => {
-            format_ident!("__pymethod_get_{}__", spec.name)
-        }
-    };
 
     let mut cfg_attrs = TokenStream::new();
     if let PropertyType::Descriptor { field, .. } = &property_type {
@@ -810,27 +842,125 @@ pub fn impl_py_getter_def(
         }
     }
 
+    let mut holders = Holders::new();
+    match property_type {
+        PropertyType::Descriptor {
+            field_index, field, ..
+        } => {
+            let ty = &field.ty;
+            let field = if let Some(ident) = &field.ident {
+                ident.to_token_stream()
+            } else {
+                syn::Index::from(field_index).to_token_stream()
+            };
+
+            let doc = doc_to_optional_cstr(doc.as_deref(), ctx)?;
+            let generator = quote_spanned! { ty.span() =>
+                GENERATOR.generate(#python_name, #doc)
+            };
+            // This is separate from `generator` so that the unsafe below does not inherit the span and thus does not
+            // trigger the `unsafe_code` lint
+            let method_def = quote! {
+                #cfg_attrs
+                {
+                    #[allow(unused_imports, reason = "`Probe` trait used on negative case only")]
+                    use #pyo3_path::impl_::pyclass::Probe as _;
+
+                    const GENERATOR: #pyo3_path::impl_::pyclass::PyClassGetterGenerator::<
+                        #cls,
+                        #ty,
+                        { ::std::mem::offset_of!(#cls, #field) },
+                        { #pyo3_path::impl_::pyclass::IsPyT::<#ty>::VALUE },
+                        { #pyo3_path::impl_::pyclass::IsIntoPyObjectRef::<#ty>::VALUE },
+                        { #pyo3_path::impl_::pyclass::IsIntoPyObject::<#ty>::VALUE },
+                    > = unsafe { #pyo3_path::impl_::pyclass::PyClassGetterGenerator::new() };
+                    #generator
+                }
+            };
+
+            Ok(MethodAndMethodDef {
+                associated_method: quote! {},
+                method_def,
+            })
+        }
+        // Forward to `IntoPyCallbackOutput`, to handle `#[getter]`s returning results.
+        PropertyType::Function {
+            spec, self_type, ..
+        } => {
+            let wrapper_ident = format_ident!("__pymethod_get_{}__", spec.name);
+            let call = impl_call_getter(cls, spec, self_type, &mut holders, ctx)?;
+            let body = quote! {
+                #pyo3_path::impl_::callback::convert(py, #call)
+            };
+
+            let init_holders = holders.init_holders(ctx);
+            let warnings = spec.warnings.build_py_warning(ctx);
+
+            let associated_method = quote! {
+                #cfg_attrs
+                unsafe fn #wrapper_ident(
+                    py: #pyo3_path::Python<'_>,
+                    _slf: ::std::ptr::NonNull<#pyo3_path::ffi::PyObject>
+                ) -> #pyo3_path::PyResult<*mut #pyo3_path::ffi::PyObject> {
+                    #init_holders
+                    #warnings
+                    let result = #body;
+                    result
+                }
+            };
+
+            let doc = doc_to_optional_cstr(doc.as_deref(), ctx)?;
+            let method_def = quote! {
+                #cfg_attrs
+                #pyo3_path::impl_::pymethods::PyMethodDefType::Getter(
+                    #pyo3_path::impl_::pymethods::PyGetterDef::new(
+                        #python_name,
+                        #cls::#wrapper_ident,
+                        #doc
+                    )
+                )
+            };
+
+            Ok(MethodAndMethodDef {
+                associated_method,
+                method_def,
+            })
+        }
+    }
+}
+
+pub fn impl_py_deleter_def(
+    cls: &syn::Type,
+    self_type: &SelfType,
+    spec: &FnSpec<'_>,
+    doc: Option<PythonDoc>,
+    ctx: &Ctx,
+) -> Result<MethodAndMethodDef> {
+    let Ctx { pyo3_path, .. } = ctx;
+    let python_name = spec.null_terminated_python_name();
+    let mut holders = Holders::new();
+    let deleter_impl = impl_call_deleter(cls, spec, self_type, &mut holders, ctx)?;
+    let wrapper_ident = format_ident!("__pymethod_delete_{}__", spec.name);
+    let warnings = spec.warnings.build_py_warning(ctx);
     let init_holders = holders.init_holders(ctx);
-    let check_gil_refs = holders.check_gil_refs();
+    let doc = doc_to_optional_cstr(doc.as_ref(), ctx)?;
     let associated_method = quote! {
-        #cfg_attrs
         unsafe fn #wrapper_ident(
             py: #pyo3_path::Python<'_>,
-            _slf: *mut #pyo3_path::ffi::PyObject
-        ) -> #pyo3_path::PyResult<*mut #pyo3_path::ffi::PyObject> {
+            _slf: ::std::ptr::NonNull<#pyo3_path::ffi::PyObject>,
+        ) -> #pyo3_path::PyResult<::std::ffi::c_int> {
             #init_holders
-            let result = #body;
-            #check_gil_refs
-            result
+            #warnings
+            let result = #deleter_impl;
+            #pyo3_path::impl_::callback::convert(py, result)
         }
     };
 
     let method_def = quote! {
-        #cfg_attrs
-        #pyo3_path::class::PyMethodDefType::Getter(
-            #pyo3_path::class::PyGetterDef::new(
+        #pyo3_path::impl_::pymethods::PyMethodDefType::Deleter(
+            #pyo3_path::impl_::pymethods::PyDeleterDef::new(
                 #python_name,
-                #pyo3_path::impl_::pymethods::PyGetter(#cls::#wrapper_ident),
+                #cls::#wrapper_ident,
                 #doc
             )
         )
@@ -842,10 +972,44 @@ pub fn impl_py_getter_def(
     })
 }
 
+fn impl_call_deleter(
+    cls: &syn::Type,
+    spec: &FnSpec<'_>,
+    self_type: &SelfType,
+    holders: &mut Holders,
+    ctx: &Ctx,
+) -> Result<TokenStream> {
+    let (py_arg, args) = split_off_python_arg(&spec.signature.arguments);
+    let slf = self_type.receiver(
+        cls,
+        ExtractErrorMode::Raise,
+        // SAFETY: The deleter function is dispatched by CPython's method-wrapper
+        // descriptor, which enforces the receiver is of the correct type.
+        unsafe { SelfConversionPolicy::trusted() },
+        holders,
+        ctx,
+    );
+
+    if !args.is_empty() {
+        bail_spanned!(spec.name.span() =>
+            "deleter function can have at most one argument ([pyo3::Python,])"
+        );
+    }
+
+    let name = &spec.name;
+    let fncall = if py_arg.is_some() {
+        quote!(#cls::#name(#slf, py))
+    } else {
+        quote!(#cls::#name(#slf))
+    };
+
+    Ok(fncall)
+}
+
 /// Split an argument of pyo3::Python from the front of the arg list, if present
-fn split_off_python_arg<'a>(args: &'a [FnArg<'a>]) -> (Option<&FnArg<'_>>, &[FnArg<'_>]) {
+fn split_off_python_arg<'a, 'b>(args: &'a [FnArg<'b>]) -> (Option<&'a PyArg<'b>>, &'a [FnArg<'b>]) {
     match args {
-        [py, args @ ..] if utils::is_python(py.ty) => (Some(py), args),
+        [FnArg::Py(py), args @ ..] => (Some(py), args),
         args => (None, args),
     }
 }
@@ -853,19 +1017,19 @@ fn split_off_python_arg<'a>(args: &'a [FnArg<'a>]) -> (Option<&FnArg<'_>>, &[FnA
 pub enum PropertyType<'a> {
     Descriptor {
         field_index: usize,
-        field: &'a syn::Field,
+        field: &'a Field,
         python_name: Option<&'a NameAttribute>,
         renaming_rule: Option<RenamingRule>,
     },
     Function {
         self_type: &'a SelfType,
         spec: &'a FnSpec<'a>,
-        doc: PythonDoc,
+        doc: Option<PythonDoc>,
     },
 }
 
 impl PropertyType<'_> {
-    fn null_terminated_python_name(&self) -> Result<syn::LitStr> {
+    fn null_terminated_python_name(&self) -> Result<LitCStr> {
         match self {
             PropertyType::Descriptor {
                 field,
@@ -873,48 +1037,35 @@ impl PropertyType<'_> {
                 renaming_rule,
                 ..
             } => {
-                let name = match (python_name, &field.ident) {
-                    (Some(name), _) => name.value.0.to_string(),
-                    (None, Some(field_name)) => {
-                        let mut name = field_name.unraw().to_string();
-                        if let Some(rule) = renaming_rule {
-                            name = utils::apply_renaming_rule(*rule, &name);
-                        }
-                        name.push('\0');
-                        name
-                    }
-                    (None, None) => {
-                        bail_spanned!(field.span() => "`get` and `set` with tuple struct fields require `name`");
-                    }
-                };
-                Ok(syn::LitStr::new(&name, field.span()))
+                let name = field_python_name(field, *python_name, *renaming_rule)?;
+                let name = CString::new(name).unwrap();
+                Ok(LitCStr::new(&name, field.span()))
             }
             PropertyType::Function { spec, .. } => Ok(spec.null_terminated_python_name()),
         }
     }
 
-    fn doc(&self) -> Cow<'_, PythonDoc> {
-        match self {
+    fn doc(&self) -> Option<Cow<'_, PythonDoc>> {
+        Some(match self {
             PropertyType::Descriptor { field, .. } => {
-                Cow::Owned(utils::get_doc(&field.attrs, None))
+                Cow::Owned(utils::get_doc(&field.attrs, None)?)
             }
-            PropertyType::Function { doc, .. } => Cow::Borrowed(doc),
-        }
+            PropertyType::Function { doc, .. } => Cow::Borrowed(doc.as_ref()?),
+        })
     }
 }
 
-const __STR__: SlotDef = SlotDef::new("Py_tp_str", "reprfunc");
+pub const __NEW__: SlotDef = SlotDef::new("Py_tp_new", "newfunc");
+pub const __INIT__: SlotDef = SlotDef::new("Py_tp_init", "initproc");
+pub const __STR__: SlotDef = SlotDef::new("Py_tp_str", "reprfunc");
 pub const __REPR__: SlotDef = SlotDef::new("Py_tp_repr", "reprfunc");
-const __HASH__: SlotDef = SlotDef::new("Py_tp_hash", "hashfunc")
-    .ret_ty(Ty::PyHashT)
-    .return_conversion(TokenGenerator(
-        |Ctx { pyo3_path }: &Ctx| quote! { #pyo3_path::callback::HashCallbackOutput },
+pub const __HASH__: SlotDef =
+    SlotDef::new("Py_tp_hash", "hashfunc").return_conversion(TokenGenerator(
+        |Ctx { pyo3_path, .. }: &Ctx| quote! { #pyo3_path::impl_::callback::HashCallbackOutput },
     ));
 pub const __RICHCMP__: SlotDef = SlotDef::new("Py_tp_richcompare", "richcmpfunc")
-    .extract_error_mode(ExtractErrorMode::NotImplemented)
-    .arguments(&[Ty::Object, Ty::CompareOp]);
-const __GET__: SlotDef = SlotDef::new("Py_tp_descr_get", "descrgetfunc")
-    .arguments(&[Ty::MaybeNullObject, Ty::MaybeNullObject]);
+    .extract_error_mode(ExtractErrorMode::NotImplemented);
+const __GET__: SlotDef = SlotDef::new("Py_tp_descr_get", "descrgetfunc");
 const __ITER__: SlotDef = SlotDef::new("Py_tp_iter", "getiterfunc");
 const __NEXT__: SlotDef = SlotDef::new("Py_tp_iternext", "iternextfunc")
     .return_specialized_conversion(
@@ -929,17 +1080,13 @@ const __ANEXT__: SlotDef = SlotDef::new("Py_am_anext", "unaryfunc").return_speci
     ),
     TokenGenerator(|_| quote! { async_iter_tag }),
 );
-const __LEN__: SlotDef = SlotDef::new("Py_mp_length", "lenfunc").ret_ty(Ty::PySsizeT);
-const __CONTAINS__: SlotDef = SlotDef::new("Py_sq_contains", "objobjproc")
-    .arguments(&[Ty::Object])
-    .ret_ty(Ty::Int);
-const __CONCAT__: SlotDef = SlotDef::new("Py_sq_concat", "binaryfunc").arguments(&[Ty::Object]);
-const __REPEAT__: SlotDef = SlotDef::new("Py_sq_repeat", "ssizeargfunc").arguments(&[Ty::PySsizeT]);
-const __INPLACE_CONCAT__: SlotDef =
-    SlotDef::new("Py_sq_concat", "binaryfunc").arguments(&[Ty::Object]);
-const __INPLACE_REPEAT__: SlotDef =
-    SlotDef::new("Py_sq_repeat", "ssizeargfunc").arguments(&[Ty::PySsizeT]);
-const __GETITEM__: SlotDef = SlotDef::new("Py_mp_subscript", "binaryfunc").arguments(&[Ty::Object]);
+pub const __LEN__: SlotDef = SlotDef::new("Py_mp_length", "lenfunc");
+const __CONTAINS__: SlotDef = SlotDef::new("Py_sq_contains", "objobjproc");
+const __CONCAT__: SlotDef = SlotDef::new("Py_sq_concat", "binaryfunc");
+const __REPEAT__: SlotDef = SlotDef::new("Py_sq_repeat", "ssizeargfunc");
+const __INPLACE_CONCAT__: SlotDef = SlotDef::new("Py_sq_concat", "binaryfunc");
+const __INPLACE_REPEAT__: SlotDef = SlotDef::new("Py_sq_repeat", "ssizeargfunc");
+pub const __GETITEM__: SlotDef = SlotDef::new("Py_mp_subscript", "binaryfunc");
 
 const __POS__: SlotDef = SlotDef::new("Py_nb_positive", "unaryfunc");
 const __NEG__: SlotDef = SlotDef::new("Py_nb_negative", "unaryfunc");
@@ -948,78 +1095,35 @@ const __INVERT__: SlotDef = SlotDef::new("Py_nb_invert", "unaryfunc");
 const __INDEX__: SlotDef = SlotDef::new("Py_nb_index", "unaryfunc");
 pub const __INT__: SlotDef = SlotDef::new("Py_nb_int", "unaryfunc");
 const __FLOAT__: SlotDef = SlotDef::new("Py_nb_float", "unaryfunc");
-const __BOOL__: SlotDef = SlotDef::new("Py_nb_bool", "inquiry").ret_ty(Ty::Int);
+const __BOOL__: SlotDef = SlotDef::new("Py_nb_bool", "inquiry");
 
-const __IADD__: SlotDef = SlotDef::new("Py_nb_inplace_add", "binaryfunc")
-    .arguments(&[Ty::Object])
+const __IADD__: SlotDef = SlotDef::binary_inplace_operator("Py_nb_inplace_add");
+const __ISUB__: SlotDef = SlotDef::binary_inplace_operator("Py_nb_inplace_subtract");
+const __IMUL__: SlotDef = SlotDef::binary_inplace_operator("Py_nb_inplace_multiply");
+const __IMATMUL__: SlotDef = SlotDef::binary_inplace_operator("Py_nb_inplace_matrix_multiply");
+const __ITRUEDIV__: SlotDef = SlotDef::binary_inplace_operator("Py_nb_inplace_true_divide");
+const __IFLOORDIV__: SlotDef = SlotDef::binary_inplace_operator("Py_nb_inplace_floor_divide");
+const __IMOD__: SlotDef = SlotDef::binary_inplace_operator("Py_nb_inplace_remainder");
+const __ILSHIFT__: SlotDef = SlotDef::binary_inplace_operator("Py_nb_inplace_lshift");
+const __IRSHIFT__: SlotDef = SlotDef::binary_inplace_operator("Py_nb_inplace_rshift");
+const __IAND__: SlotDef = SlotDef::binary_inplace_operator("Py_nb_inplace_and");
+const __IXOR__: SlotDef = SlotDef::binary_inplace_operator("Py_nb_inplace_xor");
+const __IOR__: SlotDef = SlotDef::binary_inplace_operator("Py_nb_inplace_or");
+
+const __IPOW__: SlotDef = SlotDef::new("Py_nb_inplace_power", "ternaryfunc")
     .extract_error_mode(ExtractErrorMode::NotImplemented)
     .return_self();
-const __ISUB__: SlotDef = SlotDef::new("Py_nb_inplace_subtract", "binaryfunc")
-    .arguments(&[Ty::Object])
-    .extract_error_mode(ExtractErrorMode::NotImplemented)
-    .return_self();
-const __IMUL__: SlotDef = SlotDef::new("Py_nb_inplace_multiply", "binaryfunc")
-    .arguments(&[Ty::Object])
-    .extract_error_mode(ExtractErrorMode::NotImplemented)
-    .return_self();
-const __IMATMUL__: SlotDef = SlotDef::new("Py_nb_inplace_matrix_multiply", "binaryfunc")
-    .arguments(&[Ty::Object])
-    .extract_error_mode(ExtractErrorMode::NotImplemented)
-    .return_self();
-const __ITRUEDIV__: SlotDef = SlotDef::new("Py_nb_inplace_true_divide", "binaryfunc")
-    .arguments(&[Ty::Object])
-    .extract_error_mode(ExtractErrorMode::NotImplemented)
-    .return_self();
-const __IFLOORDIV__: SlotDef = SlotDef::new("Py_nb_inplace_floor_divide", "binaryfunc")
-    .arguments(&[Ty::Object])
-    .extract_error_mode(ExtractErrorMode::NotImplemented)
-    .return_self();
-const __IMOD__: SlotDef = SlotDef::new("Py_nb_inplace_remainder", "binaryfunc")
-    .arguments(&[Ty::Object])
-    .extract_error_mode(ExtractErrorMode::NotImplemented)
-    .return_self();
-const __IPOW__: SlotDef = SlotDef::new("Py_nb_inplace_power", "ipowfunc")
-    .arguments(&[Ty::Object, Ty::IPowModulo])
-    .extract_error_mode(ExtractErrorMode::NotImplemented)
-    .return_self();
-const __ILSHIFT__: SlotDef = SlotDef::new("Py_nb_inplace_lshift", "binaryfunc")
-    .arguments(&[Ty::Object])
-    .extract_error_mode(ExtractErrorMode::NotImplemented)
-    .return_self();
-const __IRSHIFT__: SlotDef = SlotDef::new("Py_nb_inplace_rshift", "binaryfunc")
-    .arguments(&[Ty::Object])
-    .extract_error_mode(ExtractErrorMode::NotImplemented)
-    .return_self();
-const __IAND__: SlotDef = SlotDef::new("Py_nb_inplace_and", "binaryfunc")
-    .arguments(&[Ty::Object])
-    .extract_error_mode(ExtractErrorMode::NotImplemented)
-    .return_self();
-const __IXOR__: SlotDef = SlotDef::new("Py_nb_inplace_xor", "binaryfunc")
-    .arguments(&[Ty::Object])
-    .extract_error_mode(ExtractErrorMode::NotImplemented)
-    .return_self();
-const __IOR__: SlotDef = SlotDef::new("Py_nb_inplace_or", "binaryfunc")
-    .arguments(&[Ty::Object])
-    .extract_error_mode(ExtractErrorMode::NotImplemented)
-    .return_self();
-const __GETBUFFER__: SlotDef = SlotDef::new("Py_bf_getbuffer", "getbufferproc")
-    .arguments(&[Ty::PyBuffer, Ty::Int])
-    .ret_ty(Ty::Int)
-    .require_unsafe();
-const __RELEASEBUFFER__: SlotDef = SlotDef::new("Py_bf_releasebuffer", "releasebufferproc")
-    .arguments(&[Ty::PyBuffer])
-    .ret_ty(Ty::Void)
-    .require_unsafe();
-const __CLEAR__: SlotDef = SlotDef::new("Py_tp_clear", "inquiry")
-    .arguments(&[])
-    .ret_ty(Ty::Int);
+
+const __GETBUFFER__: SlotDef = SlotDef::new("Py_bf_getbuffer", "getbufferproc").require_unsafe();
+const __RELEASEBUFFER__: SlotDef =
+    SlotDef::new("Py_bf_releasebuffer", "releasebufferproc").require_unsafe();
+const __CLEAR__: SlotDef = SlotDef::new("Py_tp_clear", "inquiry");
 
 #[derive(Clone, Copy)]
 enum Ty {
     Object,
     MaybeNullObject,
     NonNullObject,
-    IPowModulo,
     CompareOp,
     Int,
     PyHashT,
@@ -1030,12 +1134,15 @@ enum Ty {
 
 impl Ty {
     fn ffi_type(self, ctx: &Ctx) -> TokenStream {
-        let Ctx { pyo3_path } = ctx;
+        let Ctx {
+            pyo3_path,
+            output_span,
+        } = ctx;
+        let pyo3_path = pyo3_path.to_tokens_spanned(*output_span);
         match self {
             Ty::Object | Ty::MaybeNullObject => quote! { *mut #pyo3_path::ffi::PyObject },
             Ty::NonNullObject => quote! { ::std::ptr::NonNull<#pyo3_path::ffi::PyObject> },
-            Ty::IPowModulo => quote! { #pyo3_path::impl_::pymethods::IPowModulo },
-            Ty::Int | Ty::CompareOp => quote! { ::std::os::raw::c_int },
+            Ty::Int | Ty::CompareOp => quote! { ::std::ffi::c_int },
             Ty::PyHashT => quote! { #pyo3_path::ffi::Py_hash_t },
             Ty::PySsizeT => quote! { #pyo3_path::ffi::Py_ssize_t },
             Ty::Void => quote! { () },
@@ -1051,21 +1158,23 @@ impl Ty {
         holders: &mut Holders,
         ctx: &Ctx,
     ) -> TokenStream {
-        let Ctx { pyo3_path } = ctx;
-        let name_str = arg.name.unraw().to_string();
+        let Ctx { pyo3_path, .. } = ctx;
         match self {
             Ty::Object => extract_object(
                 extract_error_mode,
                 holders,
-                &name_str,
+                arg,
+                REF_FROM_PTR,
+                CAST_FUNCTION_ARGUMENT,
                 quote! { #ident },
-                arg.ty.span(),
                 ctx
             ),
             Ty::MaybeNullObject => extract_object(
                 extract_error_mode,
                 holders,
-                &name_str,
+                arg,
+                REF_FROM_PTR,
+                CAST_FUNCTION_ARGUMENT,
                 quote! {
                     if #ident.is_null() {
                         #pyo3_path::ffi::Py_None()
@@ -1073,23 +1182,15 @@ impl Ty {
                         #ident
                     }
                 },
-                arg.ty.span(),
                 ctx
             ),
             Ty::NonNullObject => extract_object(
                 extract_error_mode,
                 holders,
-                &name_str,
-                quote! { #ident.as_ptr() },
-                arg.ty.span(),
-                ctx
-            ),
-            Ty::IPowModulo => extract_object(
-                extract_error_mode,
-                holders,
-                &name_str,
-                quote! { #ident.as_ptr() },
-                arg.ty.span(),
+                arg,
+                REF_FROM_NON_NULL,
+                CAST_NON_NULL_FUNCTION_ARGUMENT,
+                quote! { #ident },
                 ctx
             ),
             Ty::CompareOp => extract_error_mode.handle_error(
@@ -1100,7 +1201,7 @@ impl Ty {
                 ctx
             ),
             Ty::PySsizeT => {
-                let ty = arg.ty;
+                let ty = arg.ty();
                 extract_error_mode.handle_error(
                     quote! {
                             ::std::convert::TryInto::<#ty>::try_into(#ident).map_err(|e| #pyo3_path::exceptions::PyValueError::new_err(e.to_string()))
@@ -1114,30 +1215,56 @@ impl Ty {
     }
 }
 
+const REF_FROM_PTR: StaticIdent = StaticIdent::new("ref_from_ptr");
+const REF_FROM_NON_NULL: StaticIdent = StaticIdent::new("ref_from_non_null");
+
+const CAST_FUNCTION_ARGUMENT: StaticIdent = StaticIdent::new("cast_function_argument");
+const CAST_NON_NULL_FUNCTION_ARGUMENT: StaticIdent =
+    StaticIdent::new("cast_non_null_function_argument");
+
 fn extract_object(
     extract_error_mode: ExtractErrorMode,
     holders: &mut Holders,
-    name: &str,
+    arg: &FnArg<'_>,
+    ref_from_method: StaticIdent,
+    cast_method: StaticIdent,
     source_ptr: TokenStream,
-    span: Span,
     ctx: &Ctx,
 ) -> TokenStream {
-    let Ctx { pyo3_path } = ctx;
-    let holder = holders.push_holder(Span::call_site());
-    let gil_refs_checker = holders.push_gil_refs_checker(span);
-    let extracted = extract_error_mode.handle_error(
+    let Ctx { pyo3_path, .. } = ctx;
+    let name = arg.name().unraw().to_string();
+
+    let extract = if let Some(FromPyWithAttribute {
+        kw,
+        value: extractor,
+    }) = arg.from_py_with()
+    {
+        let extractor = quote_spanned! { kw.span =>
+            { let from_py_with: fn(_) -> _ = #extractor; from_py_with }
+        };
+
         quote! {
+            #pyo3_path::impl_::extract_argument::from_py_with(
+                unsafe { #pyo3_path::Bound::#ref_from_method(py, &#source_ptr) },
+                #name,
+                #extractor,
+            )
+        }
+    } else {
+        let holder = holders.push_holder(Span::call_site());
+        quote! {{
+            #[allow(unused_imports, reason = "`Probe` trait used on negative case only")]
+            use #pyo3_path::impl_::pyclass::Probe as _;
             #pyo3_path::impl_::extract_argument::extract_argument(
-                #pyo3_path::impl_::pymethods::BoundRef::ref_from_ptr(py, &#source_ptr).0,
+                unsafe { #pyo3_path::impl_::extract_argument::#cast_method(py, #source_ptr) },
                 &mut #holder,
                 #name
             )
-        },
-        ctx,
-    );
-    quote! {
-        #pyo3_path::impl_::deprecations::inspect_type(#extracted, &#gil_refs_checker)
-    }
+        }}
+    };
+
+    let extracted = extract_error_mode.handle_error(extract, ctx);
+    quote!(#extracted)
 }
 
 enum ReturnMode {
@@ -1147,16 +1274,14 @@ enum ReturnMode {
 }
 
 impl ReturnMode {
-    fn return_call_output(&self, call: TokenStream, ctx: &Ctx, holders: &Holders) -> TokenStream {
-        let Ctx { pyo3_path } = ctx;
-        let check_gil_refs = holders.check_gil_refs();
+    fn return_call_output(&self, call: TokenStream, ctx: &Ctx) -> TokenStream {
+        let Ctx { pyo3_path, .. } = ctx;
         match self {
             ReturnMode::Conversion(conversion) => {
                 let conversion = TokenGeneratorCtx(*conversion, ctx);
                 quote! {
-                    let _result: #pyo3_path::PyResult<#conversion> = #pyo3_path::callback::convert(py, #call);
-                    #check_gil_refs
-                    #pyo3_path::callback::convert(py, _result)
+                    let _result: #pyo3_path::PyResult<#conversion> = #pyo3_path::impl_::callback::convert(py, #call);
+                    #pyo3_path::impl_::callback::convert(py, _result)
                 }
             }
             ReturnMode::SpecializedConversion(traits, tag) => {
@@ -1165,16 +1290,14 @@ impl ReturnMode {
                 quote! {
                     let _result = #call;
                     use #pyo3_path::impl_::pymethods::{#traits};
-                    #check_gil_refs
                     (&_result).#tag().convert(py, _result)
                 }
             }
             ReturnMode::ReturnSelf => quote! {
-                let _result: #pyo3_path::PyResult<()> = #pyo3_path::callback::convert(py, #call);
+                let _result: #pyo3_path::PyResult<()> = #pyo3_path::impl_::callback::convert(py, #call);
                 _result?;
-                #check_gil_refs
-                #pyo3_path::ffi::Py_XINCREF(_raw_slf);
-                ::std::result::Result::Ok(_raw_slf)
+                #pyo3_path::ffi::Py_XINCREF(_slf);
+                ::std::result::Result::Ok(_slf)
             },
         }
     }
@@ -1183,36 +1306,85 @@ impl ReturnMode {
 pub struct SlotDef {
     slot: StaticIdent,
     func_ty: StaticIdent,
-    arguments: &'static [Ty],
+    calling_convention: SlotCallingConvention,
     ret_ty: Ty,
     extract_error_mode: ExtractErrorMode,
     return_mode: Option<ReturnMode>,
     require_unsafe: bool,
 }
 
-const NO_ARGUMENTS: &[Ty] = &[];
+enum SlotCallingConvention {
+    /// Specific set of arguments for the slot function
+    FixedArguments(&'static [Ty]),
+    /// Arbitrary arguments for `__new__` from the signature (extracted from args / kwargs)
+    TpNew,
+    TpInit,
+}
 
 impl SlotDef {
     const fn new(slot: &'static str, func_ty: &'static str) -> Self {
+        // The FFI function pointer type determines the arguments and return type
+        let (calling_convention, ret_ty) = match func_ty.as_bytes() {
+            b"newfunc" => (SlotCallingConvention::TpNew, Ty::Object),
+            b"initproc" => (SlotCallingConvention::TpInit, Ty::Int),
+            b"reprfunc" => (SlotCallingConvention::FixedArguments(&[]), Ty::Object),
+            b"hashfunc" => (SlotCallingConvention::FixedArguments(&[]), Ty::PyHashT),
+            b"richcmpfunc" => (
+                SlotCallingConvention::FixedArguments(&[Ty::Object, Ty::CompareOp]),
+                Ty::Object,
+            ),
+            b"descrgetfunc" => (
+                SlotCallingConvention::FixedArguments(&[Ty::MaybeNullObject, Ty::MaybeNullObject]),
+                Ty::Object,
+            ),
+            b"getiterfunc" => (SlotCallingConvention::FixedArguments(&[]), Ty::Object),
+            b"iternextfunc" => (SlotCallingConvention::FixedArguments(&[]), Ty::Object),
+            b"unaryfunc" => (SlotCallingConvention::FixedArguments(&[]), Ty::Object),
+            b"lenfunc" => (SlotCallingConvention::FixedArguments(&[]), Ty::PySsizeT),
+            b"objobjproc" => (
+                SlotCallingConvention::FixedArguments(&[Ty::Object]),
+                Ty::Int,
+            ),
+            b"binaryfunc" => (
+                SlotCallingConvention::FixedArguments(&[Ty::Object]),
+                Ty::Object,
+            ),
+            b"inquiry" => (SlotCallingConvention::FixedArguments(&[]), Ty::Int),
+            b"ssizeargfunc" => (
+                SlotCallingConvention::FixedArguments(&[Ty::PySsizeT]),
+                Ty::Object,
+            ),
+            b"getbufferproc" => (
+                SlotCallingConvention::FixedArguments(&[Ty::PyBuffer, Ty::Int]),
+                Ty::Int,
+            ),
+            b"releasebufferproc" => (
+                SlotCallingConvention::FixedArguments(&[Ty::PyBuffer]),
+                Ty::Void,
+            ),
+            b"ternaryfunc" => (
+                SlotCallingConvention::FixedArguments(&[Ty::Object, Ty::Object]),
+                Ty::Object,
+            ),
+            _ => panic!("don't know calling convention for func_ty"),
+        };
+
         SlotDef {
-            slot: StaticIdent(slot),
-            func_ty: StaticIdent(func_ty),
-            arguments: NO_ARGUMENTS,
-            ret_ty: Ty::Object,
+            slot: StaticIdent::new(slot),
+            func_ty: StaticIdent::new(func_ty),
+            calling_convention,
+            ret_ty,
             extract_error_mode: ExtractErrorMode::Raise,
             return_mode: None,
             require_unsafe: false,
         }
     }
 
-    const fn arguments(mut self, arguments: &'static [Ty]) -> Self {
-        self.arguments = arguments;
-        self
-    }
-
-    const fn ret_ty(mut self, ret_ty: Ty) -> Self {
-        self.ret_ty = ret_ty;
-        self
+    /// Specialized constructor for binary inplace operators
+    const fn binary_inplace_operator(slot: &'static str) -> Self {
+        SlotDef::new(slot, "binaryfunc")
+            .extract_error_mode(ExtractErrorMode::NotImplemented)
+            .return_self()
     }
 
     const fn return_conversion(mut self, return_conversion: TokenGenerator) -> Self {
@@ -1251,11 +1423,11 @@ impl SlotDef {
         method_name: &str,
         ctx: &Ctx,
     ) -> Result<MethodAndSlotDef> {
-        let Ctx { pyo3_path } = ctx;
+        let Ctx { pyo3_path, .. } = ctx;
         let SlotDef {
             slot,
             func_ty,
-            arguments,
+            calling_convention,
             extract_error_mode,
             ret_ty,
             return_mode,
@@ -1267,18 +1439,21 @@ impl SlotDef {
                 spec.name.span() => format!("`{}` must be `unsafe fn`", method_name)
             );
         }
-        let arg_types: &Vec<_> = &arguments.iter().map(|arg| arg.ffi_type(ctx)).collect();
-        let arg_idents: &Vec<_> = &(0..arguments.len())
-            .map(|i| format_ident!("arg{}", i))
-            .collect();
         let wrapper_ident = format_ident!("__pymethod_{}__", method_name);
         let ret_ty = ret_ty.ffi_type(ctx);
         let mut holders = Holders::new();
-        let body = generate_method_body(
+        let MethodBody {
+            arg_idents,
+            arg_types,
+            body,
+        } = generate_method_body(
             cls,
             spec,
-            arguments,
+            calling_convention,
             *extract_error_mode,
+            // SAFETY: All extension-type slots use trusted self: CPython's slot dispatch
+            // contract guarantees the receiver is of the correct type.
+            unsafe { SelfConversionPolicy::trusted() },
             &mut holders,
             return_mode.as_ref(),
             ctx,
@@ -1286,35 +1461,22 @@ impl SlotDef {
         let name = spec.name;
         let holders = holders.init_holders(ctx);
         let associated_method = quote! {
+            #[allow(non_snake_case)]
             unsafe fn #wrapper_ident(
                 py: #pyo3_path::Python<'_>,
-                _raw_slf: *mut #pyo3_path::ffi::PyObject,
                 #(#arg_idents: #arg_types),*
             ) -> #pyo3_path::PyResult<#ret_ty> {
                 let function = #cls::#name; // Shadow the method name to avoid #3017
-                let _slf = _raw_slf;
                 #holders
                 #body
             }
         };
-        let slot_def = quote! {{
-            unsafe extern "C" fn trampoline(
-                _slf: *mut #pyo3_path::ffi::PyObject,
-                #(#arg_idents: #arg_types),*
-            ) -> #ret_ty
-            {
-                #pyo3_path::impl_::trampoline:: #func_ty (
-                    _slf,
-                    #(#arg_idents,)*
-                    #cls::#wrapper_ident
-                )
-            }
-
+        let slot_def = quote! {
             #pyo3_path::ffi::PyType_Slot {
                 slot: #pyo3_path::ffi::#slot,
-                pfunc: trampoline as #pyo3_path::ffi::#func_ty as _
+                pfunc: #pyo3_path::impl_::trampoline::get_trampoline_function!(#func_ty, #cls::#wrapper_ident) as #pyo3_path::ffi::#func_ty as _
             }
-        }};
+        };
         Ok(MethodAndSlotDef {
             associated_method,
             slot_def,
@@ -1322,31 +1484,144 @@ impl SlotDef {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn generate_method_body(
     cls: &syn::Type,
     spec: &FnSpec<'_>,
-    arguments: &[Ty],
+    calling_convention: &SlotCallingConvention,
     extract_error_mode: ExtractErrorMode,
+    self_conversion: SelfConversionPolicy,
     holders: &mut Holders,
+    // NB ignored if calling_convention is SlotCallingConvention::TpNew, possibly should merge into that enum
     return_mode: Option<&ReturnMode>,
     ctx: &Ctx,
-) -> Result<TokenStream> {
-    let Ctx { pyo3_path } = ctx;
+) -> Result<MethodBody> {
+    let Ctx {
+        pyo3_path,
+        output_span,
+    } = ctx;
     let self_arg = spec
         .tp
-        .self_arg(Some(cls), extract_error_mode, holders, ctx);
+        .self_arg(Some(cls), extract_error_mode, self_conversion, holders, ctx);
     let rust_name = spec.name;
-    let args = extract_proto_arguments(spec, arguments, extract_error_mode, holders, ctx)?;
-    let call = quote! { #cls::#rust_name(#self_arg #(#args),*) };
-    Ok(if let Some(return_mode) = return_mode {
-        return_mode.return_call_output(call, ctx, holders)
-    } else {
-        let check_gil_refs = holders.check_gil_refs();
-        quote! {
-            let result = #call;
-            #check_gil_refs;
-            #pyo3_path::callback::convert(py, result)
+    let warnings = spec.warnings.build_py_warning(ctx);
+
+    let (arg_idents, arg_types, body) = match calling_convention {
+        SlotCallingConvention::TpNew => {
+            let arg_idents = vec![
+                format_ident!("_slf"),
+                format_ident!("_args"),
+                format_ident!("_kwargs"),
+            ];
+            let arg_types = vec![
+                quote! { *mut #pyo3_path::ffi::PyTypeObject },
+                quote! { *mut #pyo3_path::ffi::PyObject },
+                quote! { *mut #pyo3_path::ffi::PyObject },
+            ];
+            let (arg_convert, args) = impl_arg_params(spec, Some(cls), false, holders, ctx);
+            let args = self_arg.into_iter().chain(args);
+            let call = quote_spanned! {*output_span=> #cls::#rust_name(#(#args),*) };
+
+            // Use just the text_signature_call_signature() because the class' Python name
+            // isn't known to `#[pymethods]` - that has to be attached at runtime from the PyClassImpl
+            // trait implementation created by `#[pyclass]`.
+            let text_signature_impl = spec.text_signature_call_signature().map(|text_signature| {
+                quote! {
+                    #[allow(unknown_lints, non_local_definitions)]
+                    impl #pyo3_path::impl_::pyclass::doc::PyClassNewTextSignature for #cls {
+                        const TEXT_SIGNATURE: &'static str = #text_signature;
+                    }
+                }
+            });
+
+            let py = syn::Ident::new("py", Span::call_site());
+            let initializer = syn::Ident::new("initializer", Span::call_site());
+            let slf = syn::Ident::new("_slf", Span::call_site());
+
+            // Having just this call emitted at the span of the return value helps surface errors
+            // if the user passed an invalid return type.
+            let conversion = quote_spanned! { *output_span =>
+                #pyo3_path::impl_::pymethods::tp_new_impl::<_, #cls>(#py, #initializer, #slf)
+            };
+
+            let value = syn::Ident::new("value", Span::call_site());
+            let resolver = quote_spanned! { *output_span =>
+                #pyo3_path::impl_::pymethods::tp_new_resolver::<#cls, _>(&#value).resolve(#value);
+            };
+
+            let body = quote! {
+                #text_signature_impl
+                #warnings
+                #arg_convert
+
+                let result = #call;
+                let #value = #pyo3_path::impl_::wrap::OkWrapper::new(&result).ok_wrap(result)?;
+                let #initializer = #resolver;
+                unsafe { #conversion }
+            };
+            (arg_idents, arg_types, body)
         }
+        SlotCallingConvention::TpInit => {
+            let arg_idents = vec![
+                format_ident!("_slf"),
+                format_ident!("_args"),
+                format_ident!("_kwargs"),
+            ];
+            let arg_types = vec![
+                quote! { *mut #pyo3_path::ffi::PyObject },
+                quote! { *mut #pyo3_path::ffi::PyObject },
+                quote! { *mut #pyo3_path::ffi::PyObject },
+            ];
+            let (arg_convert, args) = impl_arg_params(spec, Some(cls), false, holders, ctx);
+            let args = self_arg.into_iter().chain(args);
+            let call = quote! {{
+                let r = #cls::#rust_name(#(#args),*);
+                #pyo3_path::impl_::wrap::converter(&r)
+                    .wrap(r)
+                    .map_err(::core::convert::Into::<#pyo3_path::PyErr>::into)?
+            }};
+            let output = quote_spanned! { *output_span => result.convert(py) };
+
+            let body = quote! {
+                use #pyo3_path::impl_::callback::IntoPyCallbackOutput;
+                #warnings
+                #arg_convert
+                let result = #call;
+                #output
+            };
+            (arg_idents, arg_types, body)
+        }
+        SlotCallingConvention::FixedArguments(arguments) => {
+            let arg_idents: Vec<_> = std::iter::once(format_ident!("_slf"))
+                .chain((0..arguments.len()).map(|i| format_ident!("arg{}", i)))
+                .collect();
+            let arg_types: Vec<_> = std::iter::once(quote! { *mut #pyo3_path::ffi::PyObject })
+                .chain(arguments.iter().map(|arg| arg.ffi_type(ctx)))
+                .collect();
+
+            let args = extract_proto_arguments(spec, arguments, extract_error_mode, holders, ctx)?;
+            let args = self_arg.into_iter().chain(args);
+            let call = quote! { #cls::#rust_name(#(#args),*) };
+            let result = if let Some(return_mode) = return_mode {
+                return_mode.return_call_output(call, ctx)
+            } else {
+                quote! {
+                    let result = #call;
+                    #pyo3_path::impl_::callback::convert(py, result)
+                }
+            };
+            let body = quote! {
+                #warnings
+                #result
+            };
+            (arg_idents, arg_types, body)
+        }
+    };
+
+    Ok(MethodBody {
+        arg_idents,
+        arg_types,
+        body,
     })
 }
 
@@ -1355,6 +1630,16 @@ struct SlotFragmentDef {
     arguments: &'static [Ty],
     extract_error_mode: ExtractErrorMode,
     ret_ty: Ty,
+    /// Self-conversion policy for this slot fragment.
+    ///
+    /// Most slot fragments are called by CPython with a receiver that is
+    /// guaranteed to be of the correct type (`Trusted`). However, binary
+    /// operator fragments are combined into a single slot (e.g. `nb_add`)
+    /// where the runtime helper may swap operands and call the reflected
+    /// fragment with a receiver of an unknown (potentially wrong) type.
+    /// Those fragments must use `Checked` so that a type mismatch returns
+    /// `NotImplemented` instead of causing undefined behaviour.
+    self_conversion: SelfConversionPolicy,
 }
 
 impl SlotFragmentDef {
@@ -1364,6 +1649,26 @@ impl SlotFragmentDef {
             arguments,
             extract_error_mode: ExtractErrorMode::Raise,
             ret_ty: Ty::Void,
+            self_conversion: SelfConversionPolicy::checked(),
+        }
+    }
+
+    const fn binary_operator(fragment: &'static str) -> Self {
+        // Binary operator fragments (`__add__`, `__radd__`, etc.) are combined
+        // into a shared slot (e.g. `nb_add`) that may call the forward fragment
+        // with a non-class receiver (e.g. `1 + MyClass()` → `nb_add(1, c)`).
+        // The runtime helper then tries the reflected fragment with the operands
+        // swapped, which can also produce a non-class `_slf`.  Both cases require
+        // a checked type conversion so that a mismatch gracefully returns
+        // `NotImplemented` rather than causing undefined behaviour.
+        // TODO: addressing #6024 could allow to simplify this by using type
+        // checks to directly dispatch to the right fragment.
+        SlotFragmentDef {
+            fragment,
+            arguments: &[Ty::Object],
+            extract_error_mode: ExtractErrorMode::NotImplemented,
+            ret_ty: Ty::Object,
+            self_conversion: SelfConversionPolicy::checked(),
         }
     }
 
@@ -1377,32 +1682,40 @@ impl SlotFragmentDef {
         self
     }
 
+    const fn self_conversion_policy(mut self, policy: SelfConversionPolicy) -> Self {
+        self.self_conversion = policy;
+        self
+    }
+
     fn generate_pyproto_fragment(
         &self,
         cls: &syn::Type,
         spec: &FnSpec<'_>,
         ctx: &Ctx,
     ) -> Result<TokenStream> {
-        let Ctx { pyo3_path } = ctx;
+        let Ctx { pyo3_path, .. } = ctx;
         let SlotFragmentDef {
             fragment,
             arguments,
             extract_error_mode,
             ret_ty,
+            self_conversion,
         } = self;
         let fragment_trait = format_ident!("PyClass{}SlotFragment", fragment);
         let method = syn::Ident::new(fragment, Span::call_site());
         let wrapper_ident = format_ident!("__pymethod_{}__", fragment);
-        let arg_types: &Vec<_> = &arguments.iter().map(|arg| arg.ffi_type(ctx)).collect();
-        let arg_idents: &Vec<_> = &(0..arguments.len())
-            .map(|i| format_ident!("arg{}", i))
-            .collect();
+
         let mut holders = Holders::new();
-        let body = generate_method_body(
+        let MethodBody {
+            arg_idents,
+            arg_types,
+            body,
+        } = generate_method_body(
             cls,
             spec,
-            arguments,
+            &SlotCallingConvention::FixedArguments(arguments),
             *extract_error_mode,
+            *self_conversion,
             &mut holders,
             None,
             ctx,
@@ -1411,12 +1724,11 @@ impl SlotFragmentDef {
         let holders = holders.init_holders(ctx);
         Ok(quote! {
             impl #cls {
+                #[allow(non_snake_case)]
                 unsafe fn #wrapper_ident(
                     py: #pyo3_path::Python,
-                    _raw_slf: *mut #pyo3_path::ffi::PyObject,
                     #(#arg_idents: #arg_types),*
                 ) -> #pyo3_path::PyResult<#ret_ty> {
-                    let _slf = _raw_slf;
                     #holders
                     #body
                 }
@@ -1428,63 +1740,77 @@ impl SlotFragmentDef {
                 unsafe fn #method(
                     self,
                     py: #pyo3_path::Python,
-                    _raw_slf: *mut #pyo3_path::ffi::PyObject,
                     #(#arg_idents: #arg_types),*
                 ) -> #pyo3_path::PyResult<#ret_ty> {
-                    #cls::#wrapper_ident(py, _raw_slf, #(#arg_idents),*)
+                    #cls::#wrapper_ident(py, #(#arg_idents),*)
                 }
             }
         })
     }
 }
 
-const __GETATTRIBUTE__: SlotFragmentDef =
-    SlotFragmentDef::new("__getattribute__", &[Ty::Object]).ret_ty(Ty::Object);
-const __GETATTR__: SlotFragmentDef =
-    SlotFragmentDef::new("__getattr__", &[Ty::Object]).ret_ty(Ty::Object);
-const __SETATTR__: SlotFragmentDef =
-    SlotFragmentDef::new("__setattr__", &[Ty::Object, Ty::NonNullObject]);
-const __DELATTR__: SlotFragmentDef = SlotFragmentDef::new("__delattr__", &[Ty::Object]);
-const __SET__: SlotFragmentDef = SlotFragmentDef::new("__set__", &[Ty::Object, Ty::NonNullObject]);
-const __DELETE__: SlotFragmentDef = SlotFragmentDef::new("__delete__", &[Ty::Object]);
-const __SETITEM__: SlotFragmentDef =
-    SlotFragmentDef::new("__setitem__", &[Ty::Object, Ty::NonNullObject]);
-const __DELITEM__: SlotFragmentDef = SlotFragmentDef::new("__delitem__", &[Ty::Object]);
-
-macro_rules! binary_num_slot_fragment_def {
-    ($ident:ident, $name:literal) => {
-        const $ident: SlotFragmentDef = SlotFragmentDef::new($name, &[Ty::Object])
-            .extract_error_mode(ExtractErrorMode::NotImplemented)
-            .ret_ty(Ty::Object);
-    };
+/// The reusable components of a method body.
+pub struct MethodBody {
+    pub arg_idents: Vec<Ident>,
+    pub arg_types: Vec<TokenStream>,
+    pub body: TokenStream,
 }
 
-binary_num_slot_fragment_def!(__ADD__, "__add__");
-binary_num_slot_fragment_def!(__RADD__, "__radd__");
-binary_num_slot_fragment_def!(__SUB__, "__sub__");
-binary_num_slot_fragment_def!(__RSUB__, "__rsub__");
-binary_num_slot_fragment_def!(__MUL__, "__mul__");
-binary_num_slot_fragment_def!(__RMUL__, "__rmul__");
-binary_num_slot_fragment_def!(__MATMUL__, "__matmul__");
-binary_num_slot_fragment_def!(__RMATMUL__, "__rmatmul__");
-binary_num_slot_fragment_def!(__FLOORDIV__, "__floordiv__");
-binary_num_slot_fragment_def!(__RFLOORDIV__, "__rfloordiv__");
-binary_num_slot_fragment_def!(__TRUEDIV__, "__truediv__");
-binary_num_slot_fragment_def!(__RTRUEDIV__, "__rtruediv__");
-binary_num_slot_fragment_def!(__DIVMOD__, "__divmod__");
-binary_num_slot_fragment_def!(__RDIVMOD__, "__rdivmod__");
-binary_num_slot_fragment_def!(__MOD__, "__mod__");
-binary_num_slot_fragment_def!(__RMOD__, "__rmod__");
-binary_num_slot_fragment_def!(__LSHIFT__, "__lshift__");
-binary_num_slot_fragment_def!(__RLSHIFT__, "__rlshift__");
-binary_num_slot_fragment_def!(__RSHIFT__, "__rshift__");
-binary_num_slot_fragment_def!(__RRSHIFT__, "__rrshift__");
-binary_num_slot_fragment_def!(__AND__, "__and__");
-binary_num_slot_fragment_def!(__RAND__, "__rand__");
-binary_num_slot_fragment_def!(__XOR__, "__xor__");
-binary_num_slot_fragment_def!(__RXOR__, "__rxor__");
-binary_num_slot_fragment_def!(__OR__, "__or__");
-binary_num_slot_fragment_def!(__ROR__, "__ror__");
+const __GETATTRIBUTE__: SlotFragmentDef = SlotFragmentDef::new("__getattribute__", &[Ty::Object])
+    .ret_ty(Ty::Object)
+    // SAFETY: `tp_getattro` is wrapped by CPython to guarantee correct receiver type
+    .self_conversion_policy(unsafe { SelfConversionPolicy::trusted() });
+const __GETATTR__: SlotFragmentDef = SlotFragmentDef::new("__getattr__", &[Ty::Object])
+    .ret_ty(Ty::Object)
+    // SAFETY: `tp_getattro` is wrapped by CPython to guarantee correct receiver type
+    .self_conversion_policy(unsafe { SelfConversionPolicy::trusted() });
+const __SETATTR__: SlotFragmentDef =
+    SlotFragmentDef::new("__setattr__", &[Ty::Object, Ty::NonNullObject])
+        // SAFETY: `tp_setattro` is wrapped by CPython to guarantee correct receiver type
+        .self_conversion_policy(unsafe { SelfConversionPolicy::trusted() });
+const __DELATTR__: SlotFragmentDef = SlotFragmentDef::new("__delattr__", &[Ty::Object])
+    // SAFETY: `tp_setattro` is wrapped by CPython to guarantee correct receiver type
+    .self_conversion_policy(unsafe { SelfConversionPolicy::trusted() });
+const __SET__: SlotFragmentDef = SlotFragmentDef::new("__set__", &[Ty::Object, Ty::NonNullObject])
+    // SAFETY: `tp_descr_set` is wrapped by CPython to guarantee correct receiver type
+    .self_conversion_policy(unsafe { SelfConversionPolicy::trusted() });
+const __DELETE__: SlotFragmentDef = SlotFragmentDef::new("__delete__", &[Ty::Object])
+    // SAFETY: `tp_descr_set` is wrapped by CPython to guarantee correct receiver type
+    .self_conversion_policy(unsafe { SelfConversionPolicy::trusted() });
+const __SETITEM__: SlotFragmentDef =
+    SlotFragmentDef::new("__setitem__", &[Ty::Object, Ty::NonNullObject])
+        // SAFETY: `mp_ass_subscript` is wrapped by CPython to guarantee correct receiver type
+        .self_conversion_policy(unsafe { SelfConversionPolicy::trusted() });
+const __DELITEM__: SlotFragmentDef = SlotFragmentDef::new("__delitem__", &[Ty::Object])
+    // SAFETY: `mp_ass_subscript` is wrapped by CPython to guarantee correct receiver type
+    .self_conversion_policy(unsafe { SelfConversionPolicy::trusted() });
+
+const __ADD__: SlotFragmentDef = SlotFragmentDef::binary_operator("__add__");
+const __RADD__: SlotFragmentDef = SlotFragmentDef::binary_operator("__radd__");
+const __SUB__: SlotFragmentDef = SlotFragmentDef::binary_operator("__sub__");
+const __RSUB__: SlotFragmentDef = SlotFragmentDef::binary_operator("__rsub__");
+const __MUL__: SlotFragmentDef = SlotFragmentDef::binary_operator("__mul__");
+const __RMUL__: SlotFragmentDef = SlotFragmentDef::binary_operator("__rmul__");
+const __MATMUL__: SlotFragmentDef = SlotFragmentDef::binary_operator("__matmul__");
+const __RMATMUL__: SlotFragmentDef = SlotFragmentDef::binary_operator("__rmatmul__");
+const __FLOORDIV__: SlotFragmentDef = SlotFragmentDef::binary_operator("__floordiv__");
+const __RFLOORDIV__: SlotFragmentDef = SlotFragmentDef::binary_operator("__rfloordiv__");
+const __TRUEDIV__: SlotFragmentDef = SlotFragmentDef::binary_operator("__truediv__");
+const __RTRUEDIV__: SlotFragmentDef = SlotFragmentDef::binary_operator("__rtruediv__");
+const __DIVMOD__: SlotFragmentDef = SlotFragmentDef::binary_operator("__divmod__");
+const __RDIVMOD__: SlotFragmentDef = SlotFragmentDef::binary_operator("__rdivmod__");
+const __MOD__: SlotFragmentDef = SlotFragmentDef::binary_operator("__mod__");
+const __RMOD__: SlotFragmentDef = SlotFragmentDef::binary_operator("__rmod__");
+const __LSHIFT__: SlotFragmentDef = SlotFragmentDef::binary_operator("__lshift__");
+const __RLSHIFT__: SlotFragmentDef = SlotFragmentDef::binary_operator("__rlshift__");
+const __RSHIFT__: SlotFragmentDef = SlotFragmentDef::binary_operator("__rshift__");
+const __RRSHIFT__: SlotFragmentDef = SlotFragmentDef::binary_operator("__rrshift__");
+const __AND__: SlotFragmentDef = SlotFragmentDef::binary_operator("__and__");
+const __RAND__: SlotFragmentDef = SlotFragmentDef::binary_operator("__rand__");
+const __XOR__: SlotFragmentDef = SlotFragmentDef::binary_operator("__xor__");
+const __RXOR__: SlotFragmentDef = SlotFragmentDef::binary_operator("__rxor__");
+const __OR__: SlotFragmentDef = SlotFragmentDef::binary_operator("__or__");
+const __ROR__: SlotFragmentDef = SlotFragmentDef::binary_operator("__ror__");
 
 const __POW__: SlotFragmentDef = SlotFragmentDef::new("__pow__", &[Ty::Object, Ty::Object])
     .extract_error_mode(ExtractErrorMode::NotImplemented)
@@ -1495,22 +1821,34 @@ const __RPOW__: SlotFragmentDef = SlotFragmentDef::new("__rpow__", &[Ty::Object,
 
 const __LT__: SlotFragmentDef = SlotFragmentDef::new("__lt__", &[Ty::Object])
     .extract_error_mode(ExtractErrorMode::NotImplemented)
-    .ret_ty(Ty::Object);
+    .ret_ty(Ty::Object)
+    // SAFETY: `tp_richcompare` is wrapped by CPython to guarantee correct receiver type
+    .self_conversion_policy(unsafe { SelfConversionPolicy::trusted() });
 const __LE__: SlotFragmentDef = SlotFragmentDef::new("__le__", &[Ty::Object])
     .extract_error_mode(ExtractErrorMode::NotImplemented)
-    .ret_ty(Ty::Object);
+    .ret_ty(Ty::Object)
+    // SAFETY: `tp_richcompare` is wrapped by CPython to guarantee correct receiver type
+    .self_conversion_policy(unsafe { SelfConversionPolicy::trusted() });
 const __EQ__: SlotFragmentDef = SlotFragmentDef::new("__eq__", &[Ty::Object])
     .extract_error_mode(ExtractErrorMode::NotImplemented)
-    .ret_ty(Ty::Object);
+    .ret_ty(Ty::Object)
+    // SAFETY: `tp_richcompare` is wrapped by CPython to guarantee correct receiver type
+    .self_conversion_policy(unsafe { SelfConversionPolicy::trusted() });
 const __NE__: SlotFragmentDef = SlotFragmentDef::new("__ne__", &[Ty::Object])
     .extract_error_mode(ExtractErrorMode::NotImplemented)
-    .ret_ty(Ty::Object);
+    .ret_ty(Ty::Object)
+    // SAFETY: `tp_richcompare` is wrapped by CPython to guarantee correct receiver type
+    .self_conversion_policy(unsafe { SelfConversionPolicy::trusted() });
 const __GT__: SlotFragmentDef = SlotFragmentDef::new("__gt__", &[Ty::Object])
     .extract_error_mode(ExtractErrorMode::NotImplemented)
-    .ret_ty(Ty::Object);
+    .ret_ty(Ty::Object)
+    // SAFETY: `tp_richcompare` is wrapped by CPython to guarantee correct receiver type
+    .self_conversion_policy(unsafe { SelfConversionPolicy::trusted() });
 const __GE__: SlotFragmentDef = SlotFragmentDef::new("__ge__", &[Ty::Object])
     .extract_error_mode(ExtractErrorMode::NotImplemented)
-    .ret_ty(Ty::Object);
+    .ret_ty(Ty::Object)
+    // SAFETY: `tp_richcompare` is wrapped by CPython to guarantee correct receiver type
+    .self_conversion_policy(unsafe { SelfConversionPolicy::trusted() });
 
 fn extract_proto_arguments(
     spec: &FnSpec<'_>,
@@ -1523,12 +1861,12 @@ fn extract_proto_arguments(
     let mut non_python_args = 0;
 
     for arg in &spec.signature.arguments {
-        if arg.py {
+        if let FnArg::Py(..) = arg {
             args.push(quote! { py });
         } else {
-            let ident = syn::Ident::new(&format!("arg{}", non_python_args), Span::call_site());
+            let ident = syn::Ident::new(&format!("arg{non_python_args}"), Span::call_site());
             let conversions = proto_args.get(non_python_args)
-                .ok_or_else(|| err_spanned!(arg.ty.span() => format!("Expected at most {} non-python arguments", proto_args.len())))?
+                .ok_or_else(|| err_spanned!(arg.ty().span() => format!("Expected at most {} non-python arguments", proto_args.len())))?
                 .extract(&ident, arg, extract_error_mode, holders, ctx);
             non_python_args += 1;
             args.push(conversions);
@@ -1541,14 +1879,6 @@ fn extract_proto_arguments(
     Ok(args)
 }
 
-struct StaticIdent(&'static str);
-
-impl ToTokens for StaticIdent {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        syn::Ident::new(self.0, Span::call_site()).to_tokens(tokens)
-    }
-}
-
 #[derive(Clone, Copy)]
 struct TokenGenerator(fn(&Ctx) -> TokenStream);
 
@@ -1559,4 +1889,31 @@ impl ToTokens for TokenGeneratorCtx<'_> {
         let Self(TokenGenerator(gen), ctx) = self;
         (gen)(ctx).to_tokens(tokens)
     }
+}
+
+pub fn field_python_name(
+    field: &Field,
+    name_attr: Option<&NameAttribute>,
+    renaming_rule: Option<RenamingRule>,
+) -> Result<String> {
+    if let Some(name_attr) = name_attr {
+        return Ok(name_attr.value.0.to_string());
+    }
+    let Some(ident) = &field.ident else {
+        bail_spanned!(field.span() => "`get` and `set` with tuple struct fields require `name`");
+    };
+    let mut name = ident.unraw().to_string();
+    if let Some(rule) = renaming_rule {
+        name = utils::apply_renaming_rule(rule, &name);
+    }
+    Ok(name)
+}
+
+fn doc_to_optional_cstr(doc: Option<&PythonDoc>, ctx: &Ctx) -> Result<TokenStream> {
+    Ok(if let Some(doc) = doc {
+        let doc = doc.to_cstr_stream(ctx)?;
+        quote!(::std::option::Option::Some(#doc))
+    } else {
+        quote!(::std::option::Option::None)
+    })
 }

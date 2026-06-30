@@ -1,5 +1,8 @@
 use crate::{PyGetSetDef, PyMethodDef, PyObject, PyTypeObject};
-use std::os::raw::{c_char, c_int, c_void};
+use core::ffi::{c_char, c_int, c_void};
+
+#[cfg(Py_3_11)]
+use crate::PyMemberDef;
 
 pub type wrapperfunc = Option<
     unsafe extern "C" fn(
@@ -46,14 +49,17 @@ pub struct PyDescrObject {
 pub struct PyMethodDescrObject {
     pub d_common: PyDescrObject,
     pub d_method: *mut PyMethodDef,
-    #[cfg(all(not(PyPy), Py_3_8))]
+    #[cfg(not(PyPy))]
     pub vectorcall: Option<crate::vectorcallfunc>,
 }
 
 #[repr(C)]
 pub struct PyMemberDescrObject {
     pub d_common: PyDescrObject,
+    #[cfg(not(Py_3_11))]
     pub d_member: *mut PyGetSetDef,
+    #[cfg(Py_3_11)]
+    pub d_member: *mut PyMemberDef,
 }
 
 #[repr(C)]
@@ -69,10 +75,7 @@ pub struct PyWrapperDescrObject {
     pub d_wrapped: *mut c_void,
 }
 
-#[cfg_attr(windows, link(name = "pythonXY"))]
-extern "C" {
-    pub static mut _PyMethodWrapper_Type: PyTypeObject;
-}
+// skipped _PyMethodWrapper_Type
 
 // skipped non-limited PyDescr_NewWrapper
 // skipped non-limited PyDescr_IsData

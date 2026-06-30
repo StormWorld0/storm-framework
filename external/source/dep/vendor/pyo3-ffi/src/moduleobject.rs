@@ -1,26 +1,39 @@
+#[cfg(not(all(Py_LIMITED_API, Py_GIL_DISABLED)))]
 use crate::methodobject::PyMethodDef;
 use crate::object::*;
 use crate::pyport::Py_ssize_t;
-use std::os::raw::{c_char, c_int, c_void};
-use std::ptr::addr_of_mut;
+// this is pub to avoid unnecessary churn elsewhere
+#[cfg(all(Py_LIMITED_API, Py_GIL_DISABLED))]
+pub use crate::pytypedefs::PyModuleDef;
+#[cfg(Py_3_15)]
+use crate::slots::PySlot;
+use core::ffi::{c_char, c_int, c_void};
 
-#[cfg_attr(windows, link(name = "pythonXY"))]
-extern "C" {
+#[cfg(not(RustPython))]
+extern_libpython! {
     #[cfg_attr(PyPy, link_name = "PyPyModule_Type")]
     pub static mut PyModule_Type: PyTypeObject;
 }
 
 #[inline]
+#[cfg(not(RustPython))]
 pub unsafe fn PyModule_Check(op: *mut PyObject) -> c_int {
-    PyObject_TypeCheck(op, addr_of_mut!(PyModule_Type))
+    PyObject_TypeCheck(op, &raw mut PyModule_Type)
 }
 
 #[inline]
+#[cfg(not(RustPython))]
 pub unsafe fn PyModule_CheckExact(op: *mut PyObject) -> c_int {
-    (Py_TYPE(op) == addr_of_mut!(PyModule_Type)) as c_int
+    Py_IS_TYPE(op, &raw mut PyModule_Type)
 }
 
-extern "C" {
+extern_libpython! {
+    #[cfg(RustPython)]
+    pub fn PyModule_Check(op: *mut PyObject) -> c_int;
+    #[cfg(RustPython)]
+    pub fn PyModule_CheckExact(op: *mut PyObject) -> c_int;
+
+    #[cfg_attr(PyPy, link_name = "PyPyModule_NewObject")]
     pub fn PyModule_NewObject(name: *mut PyObject) -> *mut PyObject;
     #[cfg_attr(PyPy, link_name = "PyPyModule_New")]
     pub fn PyModule_New(name: *const c_char) -> *mut PyObject;
@@ -44,27 +57,31 @@ extern "C" {
     pub fn PyModule_GetState(arg1: *mut PyObject) -> *mut c_void;
     #[cfg_attr(PyPy, link_name = "PyPyModuleDef_Init")]
     pub fn PyModuleDef_Init(arg1: *mut PyModuleDef) -> *mut PyObject;
-}
 
-#[cfg_attr(windows, link(name = "pythonXY"))]
-extern "C" {
+    #[cfg(not(RustPython))]
     pub static mut PyModuleDef_Type: PyTypeObject;
 }
 
+#[cfg(not(all(Py_LIMITED_API, Py_GIL_DISABLED)))]
 #[repr(C)]
-#[derive(Copy, Clone)]
 pub struct PyModuleDef_Base {
     pub ob_base: PyObject,
+    // Rust function pointers are non-null so an Option is needed here.
     pub m_init: Option<extern "C" fn() -> *mut PyObject>,
     pub m_index: Py_ssize_t,
     pub m_copy: *mut PyObject,
 }
 
+#[cfg(not(all(Py_LIMITED_API, Py_GIL_DISABLED)))]
+#[allow(
+    clippy::declare_interior_mutable_const,
+    reason = "contains atomic refcount on free-threaded builds"
+)]
 pub const PyModuleDef_HEAD_INIT: PyModuleDef_Base = PyModuleDef_Base {
     ob_base: PyObject_HEAD_INIT,
     m_init: None,
     m_index: 0,
-    m_copy: std::ptr::null_mut(),
+    m_copy: core::ptr::null_mut(),
 };
 
 #[repr(C)]
@@ -78,27 +95,46 @@ impl Default for PyModuleDef_Slot {
     fn default() -> PyModuleDef_Slot {
         PyModuleDef_Slot {
             slot: 0,
-            value: std::ptr::null_mut(),
+            value: core::ptr::null_mut(),
         }
     }
 }
 
-pub const Py_mod_create: c_int = 1;
-pub const Py_mod_exec: c_int = 2;
 #[cfg(Py_3_12)]
-pub const Py_mod_multiple_interpreters: c_int = 3;
-
-#[cfg(Py_3_12)]
+#[allow(
+    clippy::zero_ptr,
+    reason = "matches the way that the rest of these constants are defined"
+)]
 pub const Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED: *mut c_void = 0 as *mut c_void;
 #[cfg(Py_3_12)]
 pub const Py_MOD_MULTIPLE_INTERPRETERS_SUPPORTED: *mut c_void = 1 as *mut c_void;
 #[cfg(Py_3_12)]
 pub const Py_MOD_PER_INTERPRETER_GIL_SUPPORTED: *mut c_void = 2 as *mut c_void;
 
-// skipped non-limited _Py_mod_LAST_SLOT
+#[cfg(Py_3_13)]
+#[allow(
+    clippy::zero_ptr,
+    reason = "matches the way that the rest of these constants are defined"
+)]
+pub const Py_MOD_GIL_USED: *mut c_void = 0 as *mut c_void;
+#[cfg(Py_3_13)]
+pub const Py_MOD_GIL_NOT_USED: *mut c_void = 1 as *mut c_void;
 
+extern_libpython! {
+    #[cfg(all(not(Py_LIMITED_API), Py_GIL_DISABLED))]
+    pub fn PyUnstable_Module_SetGIL(module: *mut PyObject, gil: *mut c_void) -> c_int;
+}
+
+#[cfg(Py_3_15)]
+extern_libpython! {
+    pub fn PyModule_FromSlotsAndSpec(slots: *const PySlot, spec: *mut PyObject) -> *mut PyObject;
+    pub fn PyModule_Exec(_mod: *mut PyObject) -> c_int;
+    pub fn PyModule_GetStateSize(_mod: *mut PyObject, result: *mut Py_ssize_t) -> c_int;
+    pub fn PyModule_GetToken(module: *mut PyObject, result: *mut *mut c_void) -> c_int;
+}
+
+#[cfg(not(all(Py_LIMITED_API, Py_GIL_DISABLED)))]
 #[repr(C)]
-#[derive(Copy, Clone)]
 pub struct PyModuleDef {
     pub m_base: PyModuleDef_Base,
     pub m_name: *const c_char,
@@ -106,6 +142,7 @@ pub struct PyModuleDef {
     pub m_size: Py_ssize_t,
     pub m_methods: *mut PyMethodDef,
     pub m_slots: *mut PyModuleDef_Slot,
+    // Rust function pointers are non-null so an Option is needed here.
     pub m_traverse: Option<traverseproc>,
     pub m_clear: Option<inquiry>,
     pub m_free: Option<freefunc>,

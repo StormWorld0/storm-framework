@@ -1,18 +1,21 @@
-use crate::{types::any::PyAnyMethods, Bound, PyAny, PyResult, PyTypeCheck};
+// TODO https://github.com/PyO3/pyo3/issues/5487
+#![allow(clippy::undocumented_unsafe_blocks)]
+
+use crate::{Bound, PyAny, PyResult, PyTypeCheck};
 
 pub(crate) trait PyResultExt<'py>: crate::sealed::Sealed {
-    fn downcast_into<T: PyTypeCheck>(self) -> PyResult<Bound<'py, T>>;
-    unsafe fn downcast_into_unchecked<T>(self) -> PyResult<Bound<'py, T>>;
+    fn cast_into<T: PyTypeCheck>(self) -> PyResult<Bound<'py, T>>;
+    unsafe fn cast_into_unchecked<T>(self) -> PyResult<Bound<'py, T>>;
 }
 
 impl<'py> PyResultExt<'py> for PyResult<Bound<'py, PyAny>> {
     #[inline]
-    fn downcast_into<T: PyTypeCheck>(self) -> PyResult<Bound<'py, T>> where {
-        self.and_then(|instance| instance.downcast_into().map_err(Into::into))
+    fn cast_into<T: PyTypeCheck>(self) -> PyResult<Bound<'py, T>> where {
+        self.and_then(|instance| instance.cast_into().map_err(Into::into))
     }
 
     #[inline]
-    unsafe fn downcast_into_unchecked<T>(self) -> PyResult<Bound<'py, T>> {
-        self.map(|instance| instance.downcast_into_unchecked())
+    unsafe fn cast_into_unchecked<T>(self) -> PyResult<Bound<'py, T>> {
+        self.map(|instance| unsafe { instance.cast_into_unchecked() })
     }
 }

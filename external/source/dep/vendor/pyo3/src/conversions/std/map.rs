@@ -1,128 +1,172 @@
-use std::{cmp, collections, hash};
-
 #[cfg(feature = "experimental-inspect")]
-use crate::inspect::types::TypeInfo;
+use crate::inspect::{type_hint_subscript, PyStaticExpr};
+#[cfg(feature = "experimental-inspect")]
+use crate::type_object::PyTypeInfo;
 use crate::{
+    conversion::{FromPyObjectOwned, IntoPyObject},
     instance::Bound,
-    types::dict::PyDictMethods,
-    types::{any::PyAnyMethods, IntoPyDict, PyDict},
-    FromPyObject, IntoPy, PyAny, PyErr, PyObject, Python, ToPyObject,
+    types::{any::PyAnyMethods, dict::PyDictMethods, PyDict},
+    Borrowed, FromPyObject, PyAny, PyErr, Python,
 };
+use core::{cmp, hash};
+use std::collections;
 
-impl<K, V, H> ToPyObject for collections::HashMap<K, V, H>
+impl<'py, K, V, H> IntoPyObject<'py> for collections::HashMap<K, V, H>
 where
-    K: hash::Hash + cmp::Eq + ToPyObject,
-    V: ToPyObject,
+    K: IntoPyObject<'py> + cmp::Eq + hash::Hash,
+    V: IntoPyObject<'py>,
     H: hash::BuildHasher,
 {
-    fn to_object(&self, py: Python<'_>) -> PyObject {
-        IntoPyDict::into_py_dict_bound(self, py).into()
+    type Target = PyDict;
+    type Output = Bound<'py, Self::Target>;
+    type Error = PyErr;
+
+    #[cfg(feature = "experimental-inspect")]
+    const OUTPUT_TYPE: PyStaticExpr =
+        type_hint_subscript!(PyDict::TYPE_HINT, K::OUTPUT_TYPE, V::OUTPUT_TYPE);
+
+    fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
+        let dict = PyDict::new(py);
+        for (k, v) in self {
+            dict.set_item(k, v)?;
+        }
+        Ok(dict)
     }
 }
 
-impl<K, V> ToPyObject for collections::BTreeMap<K, V>
+impl<'a, 'py, K, V, H> IntoPyObject<'py> for &'a collections::HashMap<K, V, H>
 where
-    K: cmp::Eq + ToPyObject,
-    V: ToPyObject,
-{
-    fn to_object(&self, py: Python<'_>) -> PyObject {
-        IntoPyDict::into_py_dict_bound(self, py).into()
-    }
-}
-
-impl<K, V, H> IntoPy<PyObject> for collections::HashMap<K, V, H>
-where
-    K: hash::Hash + cmp::Eq + IntoPy<PyObject>,
-    V: IntoPy<PyObject>,
+    &'a K: IntoPyObject<'py> + cmp::Eq + hash::Hash,
+    &'a V: IntoPyObject<'py>,
     H: hash::BuildHasher,
 {
-    fn into_py(self, py: Python<'_>) -> PyObject {
-        let iter = self
-            .into_iter()
-            .map(|(k, v)| (k.into_py(py), v.into_py(py)));
-        IntoPyDict::into_py_dict_bound(iter, py).into()
-    }
+    type Target = PyDict;
+    type Output = Bound<'py, Self::Target>;
+    type Error = PyErr;
 
     #[cfg(feature = "experimental-inspect")]
-    fn type_output() -> TypeInfo {
-        TypeInfo::dict_of(K::type_output(), V::type_output())
+    const OUTPUT_TYPE: PyStaticExpr =
+        type_hint_subscript!(PyDict::TYPE_HINT, <&K>::OUTPUT_TYPE, <&V>::OUTPUT_TYPE);
+
+    fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
+        let dict = PyDict::new(py);
+        for (k, v) in self {
+            dict.set_item(k, v)?;
+        }
+        Ok(dict)
     }
 }
 
-impl<K, V> IntoPy<PyObject> for collections::BTreeMap<K, V>
+impl<'py, K, V> IntoPyObject<'py> for collections::BTreeMap<K, V>
 where
-    K: cmp::Eq + IntoPy<PyObject>,
-    V: IntoPy<PyObject>,
+    K: IntoPyObject<'py> + cmp::Eq,
+    V: IntoPyObject<'py>,
 {
-    fn into_py(self, py: Python<'_>) -> PyObject {
-        let iter = self
-            .into_iter()
-            .map(|(k, v)| (k.into_py(py), v.into_py(py)));
-        IntoPyDict::into_py_dict_bound(iter, py).into()
-    }
+    type Target = PyDict;
+    type Output = Bound<'py, Self::Target>;
+    type Error = PyErr;
 
     #[cfg(feature = "experimental-inspect")]
-    fn type_output() -> TypeInfo {
-        TypeInfo::dict_of(K::type_output(), V::type_output())
+    const OUTPUT_TYPE: PyStaticExpr =
+        type_hint_subscript!(PyDict::TYPE_HINT, K::OUTPUT_TYPE, V::OUTPUT_TYPE);
+
+    fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
+        let dict = PyDict::new(py);
+        for (k, v) in self {
+            dict.set_item(k, v)?;
+        }
+        Ok(dict)
     }
 }
 
-impl<'py, K, V, S> FromPyObject<'py> for collections::HashMap<K, V, S>
+impl<'a, 'py, K, V> IntoPyObject<'py> for &'a collections::BTreeMap<K, V>
 where
-    K: FromPyObject<'py> + cmp::Eq + hash::Hash,
-    V: FromPyObject<'py>,
+    &'a K: IntoPyObject<'py> + cmp::Eq,
+    &'a V: IntoPyObject<'py>,
+    K: 'a,
+    V: 'a,
+{
+    type Target = PyDict;
+    type Output = Bound<'py, Self::Target>;
+    type Error = PyErr;
+
+    #[cfg(feature = "experimental-inspect")]
+    const OUTPUT_TYPE: PyStaticExpr =
+        type_hint_subscript!(PyDict::TYPE_HINT, <&K>::OUTPUT_TYPE, <&V>::OUTPUT_TYPE);
+
+    fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
+        let dict = PyDict::new(py);
+        for (k, v) in self {
+            dict.set_item(k, v)?;
+        }
+        Ok(dict)
+    }
+}
+
+impl<'py, K, V, S> FromPyObject<'_, 'py> for collections::HashMap<K, V, S>
+where
+    K: FromPyObjectOwned<'py> + cmp::Eq + hash::Hash,
+    V: FromPyObjectOwned<'py>,
     S: hash::BuildHasher + Default,
 {
-    fn extract_bound(ob: &Bound<'py, PyAny>) -> Result<Self, PyErr> {
-        let dict = ob.downcast::<PyDict>()?;
-        let mut ret = collections::HashMap::with_capacity_and_hasher(dict.len(), S::default());
-        for (k, v) in dict {
-            ret.insert(k.extract()?, v.extract()?);
-        }
-        Ok(ret)
-    }
+    type Error = PyErr;
 
     #[cfg(feature = "experimental-inspect")]
-    fn type_input() -> TypeInfo {
-        TypeInfo::mapping_of(K::type_input(), V::type_input())
+    const INPUT_TYPE: PyStaticExpr =
+        type_hint_subscript!(&PyDict::TYPE_HINT, K::INPUT_TYPE, V::INPUT_TYPE);
+
+    fn extract(ob: Borrowed<'_, 'py, PyAny>) -> Result<Self, Self::Error> {
+        let dict = ob.cast::<PyDict>()?;
+        let mut ret = collections::HashMap::with_capacity_and_hasher(dict.len(), S::default());
+        for (k, v) in dict.iter() {
+            ret.insert(
+                k.extract().map_err(Into::into)?,
+                v.extract().map_err(Into::into)?,
+            );
+        }
+        Ok(ret)
     }
 }
 
-impl<'py, K, V> FromPyObject<'py> for collections::BTreeMap<K, V>
+impl<'py, K, V> FromPyObject<'_, 'py> for collections::BTreeMap<K, V>
 where
-    K: FromPyObject<'py> + cmp::Ord,
-    V: FromPyObject<'py>,
+    K: FromPyObjectOwned<'py> + cmp::Ord,
+    V: FromPyObjectOwned<'py>,
 {
-    fn extract_bound(ob: &Bound<'py, PyAny>) -> Result<Self, PyErr> {
-        let dict = ob.downcast::<PyDict>()?;
-        let mut ret = collections::BTreeMap::new();
-        for (k, v) in dict {
-            ret.insert(k.extract()?, v.extract()?);
-        }
-        Ok(ret)
-    }
+    type Error = PyErr;
 
     #[cfg(feature = "experimental-inspect")]
-    fn type_input() -> TypeInfo {
-        TypeInfo::mapping_of(K::type_input(), V::type_input())
+    const INPUT_TYPE: PyStaticExpr =
+        type_hint_subscript!(PyDict::TYPE_HINT, K::INPUT_TYPE, V::INPUT_TYPE);
+
+    fn extract(ob: Borrowed<'_, 'py, PyAny>) -> Result<Self, PyErr> {
+        let dict = ob.cast::<PyDict>()?;
+        let mut ret = collections::BTreeMap::new();
+        for (k, v) in dict.iter() {
+            ret.insert(
+                k.extract().map_err(Into::into)?,
+                v.extract().map_err(Into::into)?,
+            );
+        }
+        Ok(ret)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::{BTreeMap, HashMap};
+    use alloc::collections::BTreeMap;
+    use std::collections::HashMap;
 
     #[test]
     fn test_hashmap_to_python() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut map = HashMap::<i32, i32>::new();
             map.insert(1, 1);
 
-            let m = map.to_object(py);
-            let py_map = m.downcast_bound::<PyDict>(py).unwrap();
+            let py_map = (&map).into_pyobject(py).unwrap();
 
-            assert!(py_map.len() == 1);
+            assert_eq!(py_map.len(), 1);
             assert!(
                 py_map
                     .get_item(1)
@@ -138,14 +182,13 @@ mod tests {
 
     #[test]
     fn test_btreemap_to_python() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut map = BTreeMap::<i32, i32>::new();
             map.insert(1, 1);
 
-            let m = map.to_object(py);
-            let py_map = m.downcast_bound::<PyDict>(py).unwrap();
+            let py_map = (&map).into_pyobject(py).unwrap();
 
-            assert!(py_map.len() == 1);
+            assert_eq!(py_map.len(), 1);
             assert!(
                 py_map
                     .get_item(1)
@@ -161,14 +204,13 @@ mod tests {
 
     #[test]
     fn test_hashmap_into_python() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut map = HashMap::<i32, i32>::new();
             map.insert(1, 1);
 
-            let m: PyObject = map.into_py(py);
-            let py_map = m.downcast_bound::<PyDict>(py).unwrap();
+            let py_map = map.into_pyobject(py).unwrap();
 
-            assert!(py_map.len() == 1);
+            assert_eq!(py_map.len(), 1);
             assert!(
                 py_map
                     .get_item(1)
@@ -183,14 +225,13 @@ mod tests {
 
     #[test]
     fn test_btreemap_into_py() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut map = BTreeMap::<i32, i32>::new();
             map.insert(1, 1);
 
-            let m: PyObject = map.into_py(py);
-            let py_map = m.downcast_bound::<PyDict>(py).unwrap();
+            let py_map = map.into_pyobject(py).unwrap();
 
-            assert!(py_map.len() == 1);
+            assert_eq!(py_map.len(), 1);
             assert!(
                 py_map
                     .get_item(1)

@@ -1,35 +1,154 @@
+use std::borrow::Cow;
+use std::ffi::CString;
 use std::fmt::Display;
 
 use proc_macro2::{Span, TokenStream};
-use quote::{format_ident, quote, quote_spanned, ToTokens};
+use quote::{quote, quote_spanned, ToTokens};
+use syn::LitCStr;
 use syn::{ext::IdentExt, spanned::Spanned, Ident, Result};
 
+use crate::params::is_forwarded_args;
+#[cfg(feature = "experimental-inspect")]
+use crate::py_expr::PyExpr;
+use crate::pyfunction::{PyFunctionWarning, WarningFactory};
 use crate::utils::Ctx;
 use crate::{
-    attributes::{TextSignatureAttribute, TextSignatureAttributeValue},
-    deprecations::{Deprecation, Deprecations},
+    attributes::{FromPyWithAttribute, TextSignatureAttribute, TextSignatureAttributeValue},
     params::{impl_arg_params, Holders},
     pyfunction::{
         FunctionSignature, PyFunctionArgPyO3Attributes, PyFunctionOptions, SignatureAttribute,
     },
     quotes,
-    utils::{self, is_abi3, PythonDoc},
+    utils::{self, PythonDoc},
 };
 
 #[derive(Clone, Debug)]
-pub struct FnArg<'a> {
+pub struct RegularArg<'a> {
+    pub name: Cow<'a, syn::Ident>,
+    pub ty: &'a syn::Type,
+    pub from_py_with: Option<Box<FromPyWithAttribute>>,
+    pub default_value: Option<Box<syn::Expr>>,
+    pub option_wrapped_type: Option<&'a syn::Type>,
+    #[cfg(feature = "experimental-inspect")]
+    pub annotation: Option<PyExpr>,
+}
+
+/// Pythons *args argument
+#[derive(Clone, Debug)]
+pub struct VarargsArg<'a> {
+    pub name: Cow<'a, syn::Ident>,
+    pub ty: &'a syn::Type,
+    #[cfg(feature = "experimental-inspect")]
+    pub annotation: Option<PyExpr>,
+}
+
+/// Pythons **kwarg argument
+#[derive(Clone, Debug)]
+pub struct KwargsArg<'a> {
+    pub name: Cow<'a, syn::Ident>,
+    pub ty: &'a syn::Type,
+    #[cfg(feature = "experimental-inspect")]
+    pub annotation: Option<PyExpr>,
+}
+
+#[derive(Clone, Debug)]
+pub struct CancelHandleArg<'a> {
     pub name: &'a syn::Ident,
     pub ty: &'a syn::Type,
-    pub optional: Option<&'a syn::Type>,
-    pub default: Option<syn::Expr>,
-    pub py: bool,
-    pub attrs: PyFunctionArgPyO3Attributes,
-    pub is_varargs: bool,
-    pub is_kwargs: bool,
-    pub is_cancel_handle: bool,
+}
+
+#[derive(Clone, Debug)]
+pub struct PyArg<'a> {
+    pub name: &'a syn::Ident,
+    pub ty: &'a syn::Type,
+}
+
+#[derive(Clone, Debug)]
+pub enum FnArg<'a> {
+    Regular(RegularArg<'a>),
+    VarArgs(VarargsArg<'a>),
+    KwArgs(KwargsArg<'a>),
+    Py(PyArg<'a>),
+    CancelHandle(CancelHandleArg<'a>),
 }
 
 impl<'a> FnArg<'a> {
+    pub fn name(&self) -> &syn::Ident {
+        match self {
+            FnArg::Regular(RegularArg { name, .. }) => name,
+            FnArg::VarArgs(VarargsArg { name, .. }) => name,
+            FnArg::KwArgs(KwargsArg { name, .. }) => name,
+            FnArg::Py(PyArg { name, .. }) => name,
+            FnArg::CancelHandle(CancelHandleArg { name, .. }) => name,
+        }
+    }
+
+    pub fn ty(&self) -> &'a syn::Type {
+        match self {
+            FnArg::Regular(RegularArg { ty, .. }) => ty,
+            FnArg::VarArgs(VarargsArg { ty, .. }) => ty,
+            FnArg::KwArgs(KwargsArg { ty, .. }) => ty,
+            FnArg::Py(PyArg { ty, .. }) => ty,
+            FnArg::CancelHandle(CancelHandleArg { ty, .. }) => ty,
+        }
+    }
+
+    #[expect(
+        clippy::wrong_self_convention,
+        reason = "called `from_` but not a constructor"
+    )]
+    pub fn from_py_with(&self) -> Option<&FromPyWithAttribute> {
+        if let FnArg::Regular(RegularArg { from_py_with, .. }) = self {
+            from_py_with.as_deref()
+        } else {
+            None
+        }
+    }
+
+    pub fn to_varargs_mut(&mut self) -> Result<&mut Self> {
+        if let Self::Regular(RegularArg {
+            name,
+            ty,
+            option_wrapped_type: None,
+            #[cfg(feature = "experimental-inspect")]
+            annotation,
+            ..
+        }) = self
+        {
+            *self = Self::VarArgs(VarargsArg {
+                name: name.clone(),
+                ty,
+                #[cfg(feature = "experimental-inspect")]
+                annotation: annotation.clone(),
+            });
+            Ok(self)
+        } else {
+            bail_spanned!(self.name().span() => "args cannot be optional")
+        }
+    }
+
+    pub fn to_kwargs_mut(&mut self) -> Result<&mut Self> {
+        if let Self::Regular(RegularArg {
+            name,
+            ty,
+            option_wrapped_type: Some(..),
+            #[cfg(feature = "experimental-inspect")]
+            annotation,
+            ..
+        }) = self
+        {
+            *self = Self::KwArgs(KwargsArg {
+                name: name.clone(),
+                ty,
+                #[cfg(feature = "experimental-inspect")]
+                annotation: annotation.clone(),
+            });
+            Ok(self)
+        } else {
+            bail_spanned!(self.name().span() => "kwargs must be Option<_>")
+        }
+    }
+
     /// Transforms a rust fn arg parsed with syn into a method::FnArg
     pub fn parse(arg: &'a mut syn::FnArg) -> Result<Self> {
         match arg {
@@ -41,31 +160,44 @@ impl<'a> FnArg<'a> {
                     bail_spanned!(cap.ty.span() => IMPL_TRAIT_ERR);
                 }
 
-                let arg_attrs = PyFunctionArgPyO3Attributes::from_attrs(&mut cap.attrs)?;
+                let PyFunctionArgPyO3Attributes {
+                    from_py_with,
+                    cancel_handle,
+                } = PyFunctionArgPyO3Attributes::from_attrs(&mut cap.attrs)?;
                 let ident = match &*cap.pat {
                     syn::Pat::Ident(syn::PatIdent { ident, .. }) => ident,
                     other => return Err(handle_argument_error(other)),
                 };
 
-                let is_cancel_handle = arg_attrs.cancel_handle.is_some();
+                if utils::is_python(&cap.ty) {
+                    return Ok(Self::Py(PyArg {
+                        name: ident,
+                        ty: &cap.ty,
+                    }));
+                }
 
-                Ok(FnArg {
-                    name: ident,
+                if cancel_handle.is_some() {
+                    // `PyFunctionArgPyO3Attributes::from_attrs` validates that
+                    // only compatible attributes are specified, either
+                    // `cancel_handle` or `from_py_with`, duplicates and any
+                    // combination of the two are already rejected.
+                    return Ok(Self::CancelHandle(CancelHandleArg {
+                        name: ident,
+                        ty: &cap.ty,
+                    }));
+                }
+
+                Ok(Self::Regular(RegularArg {
+                    name: Cow::Borrowed(ident),
                     ty: &cap.ty,
-                    optional: utils::option_type_argument(&cap.ty),
-                    default: None,
-                    py: utils::is_python(&cap.ty),
-                    attrs: arg_attrs,
-                    is_varargs: false,
-                    is_kwargs: false,
-                    is_cancel_handle,
-                })
+                    from_py_with: from_py_with.map(Box::new),
+                    default_value: None,
+                    option_wrapped_type: utils::option_type_argument(&cap.ty),
+                    #[cfg(feature = "experimental-inspect")]
+                    annotation: None,
+                }))
             }
         }
-    }
-
-    pub fn is_regular(&self) -> bool {
-        !self.py && !self.is_cancel_handle && !self.is_kwargs && !self.is_varargs
     }
 }
 
@@ -82,16 +214,24 @@ fn handle_argument_error(pat: &syn::Pat) -> syn::Error {
     syn::Error::new(span, msg)
 }
 
+/// Represents what kind of a function a pyfunction or pymethod is
 #[derive(Clone, Debug)]
 pub enum FnType {
+    /// Represents a pymethod annotated with `#[getter]`
     Getter(SelfType),
+    /// Represents a pymethod annotated with `#[setter]`
     Setter(SelfType),
+    /// Represents a pymethod annotated with `#[deleter]`
+    Deleter(SelfType),
+    /// Represents a regular pymethod
     Fn(SelfType),
-    FnNew,
-    FnNewClass(Span),
+    /// Represents a pymethod annotated with `#[classmethod]`, like a `@classmethod`
     FnClass(Span),
+    /// Represents a pyfunction or a pymethod annotated with `#[staticmethod]`, like a `@staticmethod`
     FnStatic,
+    /// Represents a pyfunction annotated with `#[pyo3(pass_module)]
     FnModule(Span),
+    /// Represents a pymethod or associated constant annotated with `#[classattr]`
     ClassAttribute,
 }
 
@@ -100,11 +240,22 @@ impl FnType {
         match self {
             FnType::Getter(_)
             | FnType::Setter(_)
+            | FnType::Deleter(_)
             | FnType::Fn(_)
             | FnType::FnClass(_)
-            | FnType::FnNewClass(_)
             | FnType::FnModule(_) => true,
-            FnType::FnNew | FnType::FnStatic | FnType::ClassAttribute => false,
+            FnType::FnStatic | FnType::ClassAttribute => false,
+        }
+    }
+
+    pub fn signature_attribute_allowed(&self) -> bool {
+        match self {
+            FnType::Fn(_) | FnType::FnStatic | FnType::FnClass(_) | FnType::FnModule(_) => true,
+            // Getter, Setter and Deleter and ClassAttribute all have fixed signatures (either take 0 or 1
+            // arguments) so cannot have a `signature = (...)` attribute.
+            FnType::Getter(_) | FnType::Setter(_) | FnType::Deleter(_) | FnType::ClassAttribute => {
+                false
+            }
         }
     }
 
@@ -112,56 +263,113 @@ impl FnType {
         &self,
         cls: Option<&syn::Type>,
         error_mode: ExtractErrorMode,
+        self_conversion: SelfConversionPolicy,
         holders: &mut Holders,
         ctx: &Ctx,
-    ) -> TokenStream {
-        let Ctx { pyo3_path } = ctx;
+    ) -> Option<TokenStream> {
+        let Ctx { pyo3_path, .. } = ctx;
         match self {
-            FnType::Getter(st) | FnType::Setter(st) | FnType::Fn(st) => {
-                let mut receiver = st.receiver(
+            FnType::Getter(st) | FnType::Setter(st) | FnType::Deleter(st) | FnType::Fn(st) => {
+                Some(st.receiver(
                     cls.expect("no class given for Fn with a \"self\" receiver"),
                     error_mode,
+                    self_conversion,
                     holders,
                     ctx,
-                );
-                syn::Token![,](Span::call_site()).to_tokens(&mut receiver);
-                receiver
+                ))
             }
-            FnType::FnNew | FnType::FnStatic | FnType::ClassAttribute => {
-                quote!()
-            }
-            FnType::FnClass(span) | FnType::FnNewClass(span) => {
+            FnType::FnClass(span) => {
                 let py = syn::Ident::new("py", Span::call_site());
-                let slf: Ident = syn::Ident::new("_slf_ref", Span::call_site());
+                let slf: Ident = syn::Ident::new("_slf", Span::call_site());
                 let pyo3_path = pyo3_path.to_tokens_spanned(*span);
-                quote_spanned! { *span =>
-                    #[allow(clippy::useless_conversion)]
+                let ret = quote_spanned! { *span =>
+                    #[allow(clippy::useless_conversion, reason = "#[classmethod] accepts anything which implements `From<&Bound<PyType>>`")]
                     ::std::convert::Into::into(
-                        #pyo3_path::impl_::pymethods::BoundRef::ref_from_ptr(#py, &*(#slf as *const _ as *const *mut _))
-                            .downcast_unchecked::<#pyo3_path::types::PyType>()
-                    ),
-                }
+                        #pyo3_path::Bound::ref_from_ptr(#py, &#slf.cast())
+                            .cast_unchecked::<#pyo3_path::types::PyType>()
+                    )
+                };
+                Some(quote! { unsafe { #ret } })
             }
             FnType::FnModule(span) => {
                 let py = syn::Ident::new("py", Span::call_site());
-                let slf: Ident = syn::Ident::new("_slf_ref", Span::call_site());
+                let slf: Ident = syn::Ident::new("_slf", Span::call_site());
                 let pyo3_path = pyo3_path.to_tokens_spanned(*span);
-                quote_spanned! { *span =>
-                    #[allow(clippy::useless_conversion)]
+                let ret = quote_spanned! { *span =>
+                    #[allow(clippy::useless_conversion, reason = "`pass_module` accepts anything which implements `From<&Bound<PyModule>>`")]
                     ::std::convert::Into::into(
-                        #pyo3_path::impl_::pymethods::BoundRef::ref_from_ptr(#py, &*(#slf as *const _ as *const *mut _))
-                            .downcast_unchecked::<#pyo3_path::types::PyModule>()
-                    ),
-                }
+                        #pyo3_path::Bound::ref_from_ptr(#py, &#slf.cast())
+                            .cast_unchecked::<#pyo3_path::types::PyModule>()
+                    )
+                };
+                Some(quote! { unsafe { #ret } })
             }
+            FnType::FnStatic | FnType::ClassAttribute => None,
         }
     }
 }
 
 #[derive(Clone, Debug)]
 pub enum SelfType {
-    Receiver { mutable: bool, span: Span },
-    TryFromBoundRef(Span),
+    Receiver {
+        mutable: bool,
+        non_null: bool,
+        span: Span,
+    },
+    TryFromBoundRef {
+        span: Span,
+        non_null: bool,
+    },
+}
+
+#[derive(Clone, Copy, Debug)]
+enum SelfConversionPolicyInner {
+    /// The receiver's type is guaranteed by CPython's slot/method dispatch contract.
+    /// Used for all extension-type method and slot entrypoints.
+    Trusted,
+    /// The receiver's type is verified at runtime. Used for number-protocol
+    /// binary operator fragments where the CPython dispatch contract does not
+    /// guarantee the receiver type.
+    Checked,
+}
+
+/// Receiver conversion policy for extension-type method wrappers.
+///
+/// Controls whether the `self` receiver is validated with a runtime type check
+/// (`Checked`) or treated as trusted and cast directly without checking
+/// (`Trusted`).
+///
+/// # Invariant
+///
+/// The `Trusted` path is valid due to CPython's slot/method receiver contract:
+/// when CPython dispatches a method call on an extension type — whether through
+/// a type slot or through `tp_methods` — the receiver is guaranteed to be an
+/// instance of the owning type (or a compatible subtype).  For `tp_methods`
+/// entries, CPython's method-wrapper descriptor enforces this before the C
+/// function is reached.
+///
+/// `Checked` should be used in cases where that guarantee does not hold:
+/// - Number-protocol binary operator fragments (`__add__`, `__radd__`, …,
+///   `__pow__`, `__rpow__`): CPython combines the forward and reflected
+///   fragments into a single `nb_add`/`nb_power` slot, and the runtime helper
+///   may call the reflected fragment with the operands swapped, meaning `_slf`
+///   can arrive with a non-class type.  The existing
+///   `ExtractErrorMode::NotImplemented` behavior on type mismatch is preserved
+///   by using `Checked` for those fragments.
+#[derive(Clone, Copy, Debug)]
+pub struct SelfConversionPolicy(SelfConversionPolicyInner);
+
+impl SelfConversionPolicy {
+    pub const fn checked() -> Self {
+        Self(SelfConversionPolicyInner::Checked)
+    }
+
+    // Using the trusted conversion incorrectly can lead to incorrect runtime
+    // behavior and memory safety issues, so this is marked `unsafe` and usage
+    // should be justified by the caller.
+    pub const unsafe fn trusted() -> Self {
+        Self(SelfConversionPolicyInner::Trusted)
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -172,13 +380,13 @@ pub enum ExtractErrorMode {
 
 impl ExtractErrorMode {
     pub fn handle_error(self, extract: TokenStream, ctx: &Ctx) -> TokenStream {
-        let Ctx { pyo3_path } = ctx;
+        let Ctx { pyo3_path, .. } = ctx;
         match self {
             ExtractErrorMode::Raise => quote! { #extract? },
             ExtractErrorMode::NotImplemented => quote! {
                 match #extract {
                     ::std::result::Result::Ok(value) => value,
-                    ::std::result::Result::Err(_) => { return #pyo3_path::callback::convert(py, py.NotImplemented()); },
+                    ::std::result::Result::Err(_) => { return #pyo3_path::impl_::callback::convert(py, py.NotImplemented()); },
                 }
             },
         }
@@ -190,6 +398,7 @@ impl SelfType {
         &self,
         cls: &syn::Type,
         error_mode: ExtractErrorMode,
+        self_conversion: SelfConversionPolicy,
         holders: &mut Holders,
         ctx: &Ctx,
     ) -> TokenStream {
@@ -197,34 +406,101 @@ impl SelfType {
         // main macro callsite.
         let py = syn::Ident::new("py", Span::call_site());
         let slf = syn::Ident::new("_slf", Span::call_site());
-        let Ctx { pyo3_path } = ctx;
+        let Ctx { pyo3_path, .. } = ctx;
         match self {
-            SelfType::Receiver { span, mutable } => {
-                let method = if *mutable {
-                    syn::Ident::new("extract_pyclass_ref_mut", *span)
+            SelfType::Receiver {
+                span,
+                mutable,
+                non_null,
+            } => {
+                let cast_fn = if *non_null {
+                    quote!(cast_non_null_function_argument)
                 } else {
-                    syn::Ident::new("extract_pyclass_ref", *span)
+                    quote!(cast_function_argument)
                 };
+                let arg =
+                    quote! { unsafe { #pyo3_path::impl_::extract_argument::#cast_fn(#py, #slf) } };
                 let holder = holders.push_holder(*span);
                 let pyo3_path = pyo3_path.to_tokens_spanned(*span);
-                error_mode.handle_error(
-                    quote_spanned! { *span =>
-                        #pyo3_path::impl_::extract_argument::#method::<#cls>(
-                            #pyo3_path::impl_::pymethods::BoundRef::ref_from_ptr(#py, &#slf).0,
-                            &mut #holder,
+                match self_conversion.0 {
+                    SelfConversionPolicyInner::Trusted => {
+                        let method = if *mutable {
+                            syn::Ident::new("extract_pyclass_ref_mut_trusted", *span)
+                        } else {
+                            syn::Ident::new("extract_pyclass_ref_trusted", *span)
+                        };
+                        // Safety: slot wrappers are only installed on the extension type itself.
+                        // CPython's slot dispatch contract ensures the receiver is an instance
+                        // of the correct type before invoking the slot.
+                        //
+                        // The trailing `?` exists because if the extraction fails here it represents
+                        // a genuine type error, should not fall back to e.g. `ExtractErrorMode::NotImplemented`.
+                        quote! {
+                            unsafe { #pyo3_path::impl_::extract_argument::#method::<#cls>(
+                                #arg,
+                                &mut #holder,
+                            ) }?
+                        }
+                    }
+                    SelfConversionPolicyInner::Checked => {
+                        let method = if *mutable {
+                            syn::Ident::new("extract_pyclass_ref_mut", *span)
+                        } else {
+                            syn::Ident::new("extract_pyclass_ref", *span)
+                        };
+                        error_mode.handle_error(
+                            quote_spanned! { *span =>
+                                #pyo3_path::impl_::extract_argument::#method::<#cls>(
+                                    #arg,
+                                    &mut #holder,
+                                )
+                            },
+                            ctx,
                         )
-                    },
-                    ctx,
-                )
+                    }
+                }
             }
-            SelfType::TryFromBoundRef(span) => {
+            SelfType::TryFromBoundRef { span, non_null } => {
+                let bound_ref = if *non_null {
+                    quote! { unsafe { #pyo3_path::Bound::ref_from_non_null(#py, &#slf) } }
+                } else {
+                    quote! { unsafe { #pyo3_path::Bound::ref_from_ptr(#py, &#slf) } }
+                };
                 let pyo3_path = pyo3_path.to_tokens_spanned(*span);
+                let receiver = match self_conversion.0 {
+                    SelfConversionPolicyInner::Trusted => {
+                        // Safety: slot wrappers are only installed on the extension type
+                        // itself. CPython's slot dispatch contract ensures the receiver is
+                        // an instance of the correct type (or a compatible subtype) before
+                        // invoking the slot.
+                        //
+                        // The wrapping `Ok(...?)` here is because an error here should not
+                        // be treated by e.g. `ExtractErrorMode::NotImplemented` as falling
+                        // back to the default, but instead a genuine type error.
+                        quote! {
+                            unsafe {
+                                #pyo3_path::PyResult::Ok(
+                                    #pyo3_path::impl_::extract_argument::cast_bound_ref_trusted::<#cls>(#bound_ref)?
+                                )
+                            }
+                        }
+                    }
+                    SelfConversionPolicyInner::Checked => {
+                        quote_spanned! { *span =>
+                            #bound_ref.cast::<#cls>()
+                                .map_err(::std::convert::Into::<#pyo3_path::PyErr>::into)
+                        }
+                    }
+                };
                 error_mode.handle_error(
                     quote_spanned! { *span =>
-                        #pyo3_path::impl_::pymethods::BoundRef::ref_from_ptr(#py, &#slf).downcast::<#cls>()
-                            .map_err(::std::convert::Into::<#pyo3_path::PyErr>::into)
+                        #receiver
                             .and_then(
-                                #[allow(unknown_lints, clippy::unnecessary_fallible_conversions)]  // In case slf is Py<Self> (unknown_lints can be removed when MSRV is 1.75+)
+                                #[allow(
+                                    clippy::unnecessary_fallible_conversions,
+                                    clippy::useless_conversion,
+                                    reason = "anything implementing `TryFrom<&Bound>` is permitted"
+                                )]
                                 |bound| ::std::convert::TryFrom::try_from(bound).map_err(::std::convert::Into::into)
                             )
 
@@ -237,12 +513,11 @@ impl SelfType {
 }
 
 /// Determines which CPython calling convention a given FnSpec uses.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Copy)]
 pub enum CallingConvention {
     Noargs,   // METH_NOARGS
     Varargs,  // METH_VARARGS | METH_KEYWORDS
-    Fastcall, // METH_FASTCALL | METH_KEYWORDS (not compatible with `abi3` feature)
-    TpNew,    // special convention for tp_new
+    Fastcall, // METH_FASTCALL | METH_KEYWORDS
 }
 
 impl CallingConvention {
@@ -253,11 +528,7 @@ impl CallingConvention {
     pub fn from_signature(signature: &FunctionSignature<'_>) -> Self {
         if signature.python_signature.has_no_args() {
             Self::Noargs
-        } else if signature.python_signature.kwargs.is_some() {
-            // for functions that accept **kwargs, always prefer varargs
-            Self::Varargs
-        } else if !is_abi3() {
-            // FIXME: available in the stable ABI since 3.10
+        } else if signature.python_signature.kwargs.is_none() {
             Self::Fastcall
         } else {
             Self::Varargs
@@ -265,6 +536,7 @@ impl CallingConvention {
     }
 }
 
+#[derive(Clone)]
 pub struct FnSpec<'a> {
     pub tp: FnType,
     // Rust function name
@@ -273,14 +545,15 @@ pub struct FnSpec<'a> {
     // r# can be removed by syn::ext::IdentExt::unraw()
     pub python_name: syn::Ident,
     pub signature: FunctionSignature<'a>,
-    pub convention: CallingConvention,
     pub text_signature: Option<TextSignatureAttribute>,
     pub asyncness: Option<syn::Token![async]>,
     pub unsafety: Option<syn::Token![unsafe]>,
-    pub deprecations: Deprecations<'a>,
+    pub warnings: Vec<PyFunctionWarning>,
+    #[cfg_attr(not(feature = "experimental-inspect"), expect(dead_code))]
+    pub output: syn::ReturnType,
 }
 
-pub fn parse_method_receiver(arg: &syn::FnArg) -> Result<SelfType> {
+pub fn parse_method_receiver(arg: &syn::FnArg, non_null: bool) -> Result<SelfType> {
     match arg {
         syn::FnArg::Receiver(
             recv @ syn::Receiver {
@@ -292,12 +565,16 @@ pub fn parse_method_receiver(arg: &syn::FnArg) -> Result<SelfType> {
         syn::FnArg::Receiver(recv @ syn::Receiver { mutability, .. }) => Ok(SelfType::Receiver {
             mutable: mutability.is_some(),
             span: recv.span(),
+            non_null,
         }),
         syn::FnArg::Typed(syn::PatType { ty, .. }) => {
             if let syn::Type::ImplTrait(_) = &**ty {
                 bail_spanned!(ty.span() => IMPL_TRAIT_ERR);
             }
-            Ok(SelfType::TryFromBoundRef(ty.span()))
+            Ok(SelfType::TryFromBoundRef {
+                span: ty.span(),
+                non_null,
+            })
         }
     }
 }
@@ -309,19 +586,18 @@ impl<'a> FnSpec<'a> {
         sig: &'a mut syn::Signature,
         meth_attrs: &mut Vec<syn::Attribute>,
         options: PyFunctionOptions,
-        ctx: &'a Ctx,
     ) -> Result<FnSpec<'a>> {
         let PyFunctionOptions {
             text_signature,
             name,
             signature,
+            warnings,
             ..
         } = options;
 
         let mut python_name = name.map(|name| name.value.0);
-        let mut deprecations = Deprecations::new(ctx);
 
-        let fn_type = Self::parse_fn_type(sig, meth_attrs, &mut python_name, &mut deprecations)?;
+        let fn_type = Self::parse_fn_type(sig, meth_attrs, &mut python_name)?;
         ensure_signatures_on_valid_method(&fn_type, signature.as_ref(), text_signature.as_ref())?;
 
         let name = &sig.ident;
@@ -341,39 +617,42 @@ impl<'a> FnSpec<'a> {
         let signature = if let Some(signature) = signature {
             FunctionSignature::from_arguments_and_attribute(arguments, signature)?
         } else {
-            FunctionSignature::from_arguments(arguments)?
-        };
-
-        let convention = if matches!(fn_type, FnType::FnNew | FnType::FnNewClass(_)) {
-            CallingConvention::TpNew
-        } else {
-            CallingConvention::from_signature(&signature)
+            FunctionSignature::from_arguments(arguments)
         };
 
         Ok(FnSpec {
             tp: fn_type,
             name,
-            convention,
             python_name,
             signature,
             text_signature,
             asyncness: sig.asyncness,
             unsafety: sig.unsafety,
-            deprecations,
+            warnings,
+            output: sig.output.clone(),
         })
     }
 
-    pub fn null_terminated_python_name(&self) -> syn::LitStr {
-        syn::LitStr::new(&format!("{}\0", self.python_name), self.python_name.span())
+    pub fn null_terminated_python_name(&self) -> LitCStr {
+        let name = self.python_name.to_string();
+        let name = CString::new(name).unwrap();
+        LitCStr::new(&name, self.python_name.span())
     }
 
     fn parse_fn_type(
         sig: &syn::Signature,
         meth_attrs: &mut Vec<syn::Attribute>,
         python_name: &mut Option<syn::Ident>,
-        deprecations: &mut Deprecations<'_>,
     ) -> Result<FnType> {
-        let mut method_attributes = parse_method_attributes(meth_attrs, deprecations)?;
+        let mut method_attributes = parse_method_attributes(meth_attrs)?;
+        let receiver_non_null = method_attributes.iter().any(|attr| {
+            matches!(
+                attr,
+                MethodTypeAttribute::Getter(_, _)
+                    | MethodTypeAttribute::Setter(_, _)
+                    | MethodTypeAttribute::Deleter(_, _)
+            )
+        });
 
         let name = &sig.ident;
         let parse_receiver = |msg: &'static str| {
@@ -381,7 +660,7 @@ impl<'a> FnSpec<'a> {
                 .inputs
                 .first()
                 .ok_or_else(|| err_spanned!(sig.span() => msg))?;
-            parse_method_receiver(first_arg)
+            parse_method_receiver(first_arg, receiver_non_null)
         };
 
         // strip get_ or set_
@@ -408,12 +687,12 @@ impl<'a> FnSpec<'a> {
             [MethodTypeAttribute::ClassAttribute(_)] => FnType::ClassAttribute,
             [MethodTypeAttribute::New(_)] => {
                 set_name_to_new()?;
-                FnType::FnNew
+                FnType::FnStatic
             }
             [MethodTypeAttribute::New(_), MethodTypeAttribute::ClassMethod(span)]
             | [MethodTypeAttribute::ClassMethod(span), MethodTypeAttribute::New(_)] => {
                 set_name_to_new()?;
-                FnType::FnNewClass(*span)
+                FnType::FnClass(*span)
             }
             [MethodTypeAttribute::ClassMethod(_)] => {
                 // Add a helpful hint if the classmethod doesn't look like a classmethod
@@ -453,6 +732,19 @@ impl<'a> FnSpec<'a> {
 
                 FnType::Setter(parse_receiver("expected receiver for `#[setter]`")?)
             }
+            [MethodTypeAttribute::Deleter(_, name)] => {
+                if let Some(name) = name.take() {
+                    ensure_spanned!(
+                        python_name.replace(name).is_none(),
+                        python_name.span() => "`name` may only be specified once"
+                    );
+                } else if python_name.is_none() {
+                    // Strip off "delete_" prefix if needed
+                    *python_name = strip_fn_name("delete_");
+                }
+
+                FnType::Deleter(parse_receiver("expected receiver for `#[deleter]`")?)
+            }
             [first, rest @ .., last] => {
                 // Join as many of the spans together as possible
                 let span = rest
@@ -460,10 +752,10 @@ impl<'a> FnSpec<'a> {
                     .fold(first.span(), |s, next| s.join(next.span()).unwrap_or(s));
                 let span = span.join(last.span()).unwrap_or(span);
                 // List all the attributes in the error message
-                let mut msg = format!("`{}` may not be combined with", first);
+                let mut msg = format!("`{first}` may not be combined with");
                 let mut is_first = true;
                 for attr in &*rest {
-                    msg.push_str(&format!(" `{}`", attr));
+                    msg.push_str(&format!(" `{attr}`"));
                     if is_first {
                         is_first = false;
                     } else {
@@ -473,7 +765,7 @@ impl<'a> FnSpec<'a> {
                 if !rest.is_empty() {
                     msg.push_str(" and");
                 }
-                msg.push_str(&format!(" `{}`", last));
+                msg.push_str(&format!(" `{last}`"));
                 bail_spanned!(span => msg)
             }
         };
@@ -485,110 +777,177 @@ impl<'a> FnSpec<'a> {
         &self,
         ident: &proc_macro2::Ident,
         cls: Option<&syn::Type>,
+        convention: CallingConvention,
+        self_conversion: SelfConversionPolicy,
         ctx: &Ctx,
     ) -> Result<TokenStream> {
-        let Ctx { pyo3_path } = ctx;
+        let Ctx {
+            pyo3_path,
+            output_span,
+        } = ctx;
         let mut cancel_handle_iter = self
             .signature
             .arguments
             .iter()
-            .filter(|arg| arg.is_cancel_handle);
+            .filter(|arg| matches!(arg, FnArg::CancelHandle(..)));
         let cancel_handle = cancel_handle_iter.next();
-        if let Some(arg) = cancel_handle {
-            ensure_spanned!(self.asyncness.is_some(), arg.name.span() => "`cancel_handle` attribute can only be used with `async fn`");
-            if let Some(arg2) = cancel_handle_iter.next() {
-                bail_spanned!(arg2.name.span() => "`cancel_handle` may only be specified once");
+        if let Some(FnArg::CancelHandle(CancelHandleArg { name, .. })) = cancel_handle {
+            ensure_spanned!(self.asyncness.is_some(), name.span() => "`cancel_handle` attribute can only be used with `async fn`");
+            if let Some(FnArg::CancelHandle(CancelHandleArg { name, .. })) =
+                cancel_handle_iter.next()
+            {
+                bail_spanned!(name.span() => "`cancel_handle` may only be specified once");
             }
         }
 
-        if self.asyncness.is_some() {
-            ensure_spanned!(
-                cfg!(feature = "experimental-async"),
-                self.asyncness.span() => "async functions are only supported with the `experimental-async` feature"
+        let rust_call = |args: Vec<TokenStream>, mut holders: Holders| {
+            let self_arg = self.tp.self_arg(
+                cls,
+                ExtractErrorMode::Raise,
+                self_conversion,
+                &mut holders,
+                ctx,
             );
-        }
+            let init_holders = holders.init_holders(ctx);
 
-        let rust_call = |args: Vec<TokenStream>, holders: &mut Holders| {
-            let mut self_arg = || self.tp.self_arg(cls, ExtractErrorMode::Raise, holders, ctx);
+            // We must assign the output_span to the return value of the call,
+            // but *not* of the call itself otherwise the spans get really weird
+            let ret_ident = Ident::new("ret", *output_span);
 
-            let call = if self.asyncness.is_some() {
-                let throw_callback = if cancel_handle.is_some() {
-                    quote! { Some(__throw_callback) }
+            if self.asyncness.is_some() {
+                // For async functions, we need to build up a coroutine object to return from the initial function call.
+                //
+                // Extraction of the call signature (positional & keyword arguments) happens as part of the initial function
+                // call. The Python objects are then moved into the Rust future that will be executed when the coroutine is
+                // awaited.
+                //
+                // The argument extraction from Python objects to Rust values then happens inside the future, this allows
+                // things like extraction to `&MyClass` which needs a holder (for the class guard) to work properly inside
+                // async code.
+                //
+                // It *might* be possible in the future to do the extraction before the coroutine is created, but that would require
+                // changing argument extraction code to first create holders and then read the values from them later.
+                let (throw_callback, init_throw_callback) = if cancel_handle.is_some() {
+                    (
+                        quote! { Some(__throw_callback) },
+                        Some(
+                            quote! { let __cancel_handle = #pyo3_path::coroutine::CancelHandle::new();
+                            let __throw_callback = __cancel_handle.throw_callback(); },
+                        ),
+                    )
                 } else {
-                    quote! { None }
+                    (quote! { None }, None)
                 };
                 let python_name = &self.python_name;
                 let qualname_prefix = match cls {
-                    Some(cls) => quote!(Some(<#cls as #pyo3_path::PyTypeInfo>::NAME)),
+                    Some(cls) => quote!(Some(<#cls as #pyo3_path::PyClass>::NAME)),
                     None => quote!(None),
                 };
-                let arg_names = (0..args.len())
-                    .map(|i| format_ident!("arg_{}", i))
-                    .collect::<Vec<_>>();
-                let future = match self.tp {
-                    FnType::Fn(SelfType::Receiver { mutable: false, .. }) => {
-                        quote! {{
-                            #(let #arg_names = #args;)*
-                            let __guard = #pyo3_path::impl_::coroutine::RefGuard::<#cls>::new(&#pyo3_path::impl_::pymethods::BoundRef::ref_from_ptr(py, &_slf))?;
-                            async move { function(&__guard, #(#arg_names),*).await }
-                        }}
-                    }
-                    FnType::Fn(SelfType::Receiver { mutable: true, .. }) => {
-                        quote! {{
-                            #(let #arg_names = #args;)*
-                            let mut __guard = #pyo3_path::impl_::coroutine::RefMutGuard::<#cls>::new(&#pyo3_path::impl_::pymethods::BoundRef::ref_from_ptr(py, &_slf))?;
-                            async move { function(&mut __guard, #(#arg_names),*).await }
-                        }}
-                    }
-                    _ => {
-                        let self_arg = self_arg();
-                        if self_arg.is_empty() {
-                            quote! { function(#(#args),*) }
-                        } else {
-                            let self_checker = holders.push_gil_refs_checker(self_arg.span());
-                            quote! {
-                                function(
-                                    // NB #self_arg includes a comma, so none inserted here
-                                    #pyo3_path::impl_::deprecations::inspect_type(#self_arg &#self_checker),
-                                    #(#args),*
-                                )
-                            }
-                        }
-                    }
-                };
-                let mut call = quote! {{
-                    let future = #future;
-                    #pyo3_path::impl_::coroutine::new_coroutine(
-                        #pyo3_path::intern!(py, stringify!(#python_name)),
-                        #qualname_prefix,
-                        #throw_callback,
-                        async move { #pyo3_path::impl_::wrap::OkWrap::wrap(future.await) },
+                // copy self arg into async block
+                // slf_py will create the owned value to store in the future
+                // slf_ptr recreates the raw pointer temporarily when building the future
+                let (slf_py, slf_ptr) = if self_arg.is_some() {
+                    (
+                        Some(
+                            quote! { let _slf = #pyo3_path::Borrowed::from_ptr(py, _slf).to_owned().unbind(); },
+                        ),
+                        Some(quote! { let _slf = _slf.as_ptr(); }),
                     )
-                }};
-                if cancel_handle.is_some() {
-                    call = quote! {{
-                        let __cancel_handle = #pyo3_path::coroutine::CancelHandle::new();
-                        let __throw_callback = __cancel_handle.throw_callback();
-                        #call
-                    }};
-                }
-                call
-            } else {
-                let self_arg = self_arg();
-                if self_arg.is_empty() {
-                    quote! { function(#(#args),*) }
                 } else {
-                    let self_checker = holders.push_gil_refs_checker(self_arg.span());
-                    quote! {
-                        function(
-                            // NB #self_arg includes a comma, so none inserted here
-                            #pyo3_path::impl_::deprecations::inspect_type(#self_arg &#self_checker),
-                            #(#args),*
-                        )
+                    (None, None)
+                };
+                // copy extracted arguments into async block
+                // output_py will create the owned arguments to store in the future
+                // output_args recreates the borrowed objects temporarily when building the future
+                let (output_py, output_args) = if !matches!(convention, CallingConvention::Noargs)
+                    && !is_forwarded_args(&self.signature)
+                {
+                    (
+                        Some(quote! {
+                            let output = output.map(|o| o.map(Py::from));
+                        }),
+                        Some(quote! {
+                            let output = output.each_ref().map(|o| o.as_ref().map(|obj| obj.bind_borrowed(assume_attached.py())));
+                        }),
+                    )
+                } else {
+                    (None, None)
+                };
+                // if *args / **kwargs are present, treat the `Bound<'_, PyTuple>` / `Option<Bound<'_, PyDict>>` similarly
+                let (varargs_py, varargs_ptr) = if self.signature.python_signature.varargs.is_some()
+                {
+                    (
+                        Some(quote! {
+                            let _args = _args.to_owned().unbind();
+                        }),
+                        Some(quote! {
+                            let _args = _args.bind_borrowed(assume_attached.py());
+                        }),
+                    )
+                } else {
+                    (None, None)
+                };
+                let (kwargs_py, kwargs_ptr) = if self.signature.python_signature.kwargs.is_some() {
+                    (
+                        Some(quote! {
+                            let _kwargs = _kwargs.map(|k| k.to_owned().unbind());
+                        }),
+                        Some(quote! {
+                            let _kwargs = _kwargs.as_ref().map(|k| k.bind_borrowed(assume_attached.py()));
+                        }),
+                    )
+                } else {
+                    (None, None)
+                };
+                let args = self_arg.into_iter().chain(args);
+                let ok_wrap = quotes::ok_wrap(ret_ident.to_token_stream(), ctx);
+                quote! {
+                    {
+                        let coroutine = {
+                            #slf_py
+                            #output_py
+                            #varargs_py
+                            #kwargs_py
+                            #init_throw_callback
+                            #pyo3_path::impl_::coroutine::new_coroutine(
+                                #pyo3_path::intern!(py, stringify!(#python_name)),
+                                #qualname_prefix,
+                                #throw_callback,
+                                async move {
+                                    // SAFETY: attached when future is polled (see `Coroutine::poll`)
+                                    let assume_attached = unsafe { #pyo3_path::impl_::coroutine::AssumeAttachedInCoroutine::new() };
+                                    #init_holders
+                                    let future = {
+                                        let py = assume_attached.py();
+                                        #slf_ptr
+                                        #output_args
+                                        #varargs_ptr
+                                        #kwargs_ptr
+                                        function(#(#args),*)
+                                    };
+                                    let #ret_ident = future.await;
+                                    let #ret_ident = #ok_wrap;
+                                    #pyo3_path::impl_::wrap::converter(&#ret_ident).map_into_pyobject(assume_attached.py(), #ret_ident)
+                                },
+                            )
+                        };
+                        #pyo3_path::Py::new(py, coroutine).map(#pyo3_path::Py::into_ptr)
                     }
                 }
-            };
-            quotes::map_result_into_ptr(quotes::ok_wrap(call, ctx), ctx)
+            } else {
+                let args = self_arg.into_iter().chain(args);
+                let return_conversion = quotes::map_result_into_ptr(
+                    quotes::ok_wrap(ret_ident.to_token_stream(), ctx),
+                    ctx,
+                );
+                quote! {
+                    {
+                        #init_holders
+                        let #ret_ident = function(#(#args),*);
+                        #return_conversion
+                    }
+                }
+            }
         };
 
         let func_name = &self.name;
@@ -598,72 +957,59 @@ impl<'a> FnSpec<'a> {
             quote!(#func_name)
         };
 
-        Ok(match self.convention {
+        let warnings = self.warnings.build_py_warning(ctx);
+        let mut holders = Holders::new();
+
+        Ok(match convention {
             CallingConvention::Noargs => {
-                let mut holders = Holders::new();
                 let args = self
                     .signature
                     .arguments
                     .iter()
-                    .map(|arg| {
-                        if arg.py {
-                            quote!(py)
-                        } else if arg.is_cancel_handle {
-                            quote!(__cancel_handle)
-                        } else {
-                            unreachable!()
+                    .map(|arg| match arg {
+                        FnArg::Py(arg) => {
+                            let span = Span::call_site().located_at(arg.ty.span());
+                            quote_spanned!( span => py)
                         }
+                        FnArg::CancelHandle(arg) => {
+                            let span = Span::call_site().located_at(arg.ty.span());
+                            quote_spanned!(span => __cancel_handle)
+                        }
+                        _ => unreachable!("`CallingConvention::Noargs` should not contain any arguments (reaching Python) except for `self`, which is handled below."),
                     })
                     .collect();
-                let call = rust_call(args, &mut holders);
-                let check_gil_refs = holders.check_gil_refs();
-                let init_holders = holders.init_holders(ctx);
-
+                let call = rust_call(args, holders);
                 quote! {
                     unsafe fn #ident<'py>(
                         py: #pyo3_path::Python<'py>,
                         _slf: *mut #pyo3_path::ffi::PyObject,
                     ) -> #pyo3_path::PyResult<*mut #pyo3_path::ffi::PyObject> {
-                        let _slf_ref = &_slf;
                         let function = #rust_name; // Shadow the function name to avoid #3017
-                        #init_holders
+                        #warnings
                         let result = #call;
-                        #check_gil_refs
                         result
                     }
                 }
             }
             CallingConvention::Fastcall => {
-                let mut holders = Holders::new();
-                let (arg_convert, args) = impl_arg_params(self, cls, true, &mut holders, ctx)?;
-                let call = rust_call(args, &mut holders);
-                let init_holders = holders.init_holders(ctx);
-                let check_gil_refs = holders.check_gil_refs();
+                let (arg_convert, args) = impl_arg_params(self, cls, true, &mut holders, ctx);
+                let call = rust_call(args, holders);
 
                 quote! {
-                    unsafe fn #ident<'py>(
-                        py: #pyo3_path::Python<'py>,
-                        _slf: *mut #pyo3_path::ffi::PyObject,
-                        _args: *const *mut #pyo3_path::ffi::PyObject,
-                        _nargs: #pyo3_path::ffi::Py_ssize_t,
-                        _kwnames: *mut #pyo3_path::ffi::PyObject
-                    ) -> #pyo3_path::PyResult<*mut #pyo3_path::ffi::PyObject> {
-                        let _slf_ref = &_slf;
-                        let function = #rust_name; // Shadow the function name to avoid #3017
-                        #arg_convert
-                        #init_holders
-                        let result = #call;
-                        #check_gil_refs
-                        result
-                    }
+                    #pyo3_path::impl_::pymethods::maybe_define_fastcall_function_with_keywords!(
+                        #ident, py, _slf, _args, _nargs, _kwargs, {
+                            let function = #rust_name; // Shadow the function name to avoid #3017
+                            #arg_convert
+                            #warnings
+                            let result = #call;
+                            result
+                        }
+                    );
                 }
             }
             CallingConvention::Varargs => {
-                let mut holders = Holders::new();
-                let (arg_convert, args) = impl_arg_params(self, cls, false, &mut holders, ctx)?;
-                let call = rust_call(args, &mut holders);
-                let init_holders = holders.init_holders(ctx);
-                let check_gil_refs = holders.check_gil_refs();
+                let (arg_convert, args) = impl_arg_params(self, cls, false, &mut holders, ctx);
+                let call = rust_call(args, holders);
 
                 quote! {
                     unsafe fn #ident<'py>(
@@ -672,41 +1018,11 @@ impl<'a> FnSpec<'a> {
                         _args: *mut #pyo3_path::ffi::PyObject,
                         _kwargs: *mut #pyo3_path::ffi::PyObject
                     ) -> #pyo3_path::PyResult<*mut #pyo3_path::ffi::PyObject> {
-                        let _slf_ref = &_slf;
                         let function = #rust_name; // Shadow the function name to avoid #3017
                         #arg_convert
-                        #init_holders
+                        #warnings
                         let result = #call;
-                        #check_gil_refs
                         result
-                    }
-                }
-            }
-            CallingConvention::TpNew => {
-                let mut holders = Holders::new();
-                let (arg_convert, args) = impl_arg_params(self, cls, false, &mut holders, ctx)?;
-                let self_arg = self
-                    .tp
-                    .self_arg(cls, ExtractErrorMode::Raise, &mut holders, ctx);
-                let call = quote! { #rust_name(#self_arg #(#args),*) };
-                let init_holders = holders.init_holders(ctx);
-                let check_gil_refs = holders.check_gil_refs();
-                quote! {
-                    unsafe fn #ident(
-                        py: #pyo3_path::Python<'_>,
-                        _slf: *mut #pyo3_path::ffi::PyTypeObject,
-                        _args: *mut #pyo3_path::ffi::PyObject,
-                        _kwargs: *mut #pyo3_path::ffi::PyObject
-                    ) -> #pyo3_path::PyResult<*mut #pyo3_path::ffi::PyObject> {
-                        use #pyo3_path::callback::IntoPyCallbackOutput;
-                        let _slf_ref = &_slf;
-                        let function = #rust_name; // Shadow the function name to avoid #3017
-                        #arg_convert
-                        #init_holders
-                        let result = #call;
-                        let initializer: #pyo3_path::PyClassInitializer::<#cls> = result.convert(py)?;
-                        #check_gil_refs
-                        #pyo3_path::impl_::pymethods::tp_new_impl(py, initializer, _slf)
                     }
                 }
             }
@@ -715,82 +1031,43 @@ impl<'a> FnSpec<'a> {
 
     /// Return a `PyMethodDef` constructor for this function, matching the selected
     /// calling convention.
-    pub fn get_methoddef(&self, wrapper: impl ToTokens, doc: &PythonDoc, ctx: &Ctx) -> TokenStream {
-        let Ctx { pyo3_path } = ctx;
+    pub fn get_methoddef(
+        &self,
+        wrapper: impl ToTokens,
+        doc: Option<&PythonDoc>,
+        convention: CallingConvention,
+        ctx: &Ctx,
+    ) -> Result<TokenStream> {
+        let Ctx { pyo3_path, .. } = ctx;
         let python_name = self.null_terminated_python_name();
-        match self.convention {
-            CallingConvention::Noargs => quote! {
-                #pyo3_path::impl_::pymethods::PyMethodDef::noargs(
-                    #python_name,
-                    #pyo3_path::impl_::pymethods::PyCFunction({
-                        unsafe extern "C" fn trampoline(
-                            _slf: *mut #pyo3_path::ffi::PyObject,
-                            _args: *mut #pyo3_path::ffi::PyObject,
-                        ) -> *mut #pyo3_path::ffi::PyObject
-                        {
-                            #pyo3_path::impl_::trampoline::noargs(
-                                _slf,
-                                _args,
-                                #wrapper
-                            )
-                        }
-                        trampoline
-                    }),
-                    #doc,
-                )
-            },
-            CallingConvention::Fastcall => quote! {
-                #pyo3_path::impl_::pymethods::PyMethodDef::fastcall_cfunction_with_keywords(
-                    #python_name,
-                    #pyo3_path::impl_::pymethods::PyCFunctionFastWithKeywords({
-                        unsafe extern "C" fn trampoline(
-                            _slf: *mut #pyo3_path::ffi::PyObject,
-                            _args: *const *mut #pyo3_path::ffi::PyObject,
-                            _nargs: #pyo3_path::ffi::Py_ssize_t,
-                            _kwnames: *mut #pyo3_path::ffi::PyObject
-                        ) -> *mut #pyo3_path::ffi::PyObject
-                        {
-                            #pyo3_path::impl_::trampoline::fastcall_with_keywords(
-                                _slf,
-                                _args,
-                                _nargs,
-                                _kwnames,
-                                #wrapper
-                            )
-                        }
-                        trampoline
-                    }),
-                    #doc,
-                )
-            },
-            CallingConvention::Varargs => quote! {
-                #pyo3_path::impl_::pymethods::PyMethodDef::cfunction_with_keywords(
-                    #python_name,
-                    #pyo3_path::impl_::pymethods::PyCFunctionWithKeywords({
-                        unsafe extern "C" fn trampoline(
-                            _slf: *mut #pyo3_path::ffi::PyObject,
-                            _args: *mut #pyo3_path::ffi::PyObject,
-                            _kwargs: *mut #pyo3_path::ffi::PyObject,
-                        ) -> *mut #pyo3_path::ffi::PyObject
-                        {
-                            #pyo3_path::impl_::trampoline::cfunction_with_keywords(
-                                _slf,
-                                _args,
-                                _kwargs,
-                                #wrapper
-                            )
-                        }
-                        trampoline
-                    }),
-                    #doc,
-                )
-            },
-            CallingConvention::TpNew => unreachable!("tp_new cannot get a methoddef"),
-        }
+        let flags = match self.tp {
+            FnType::FnClass(_) => quote! { .flags(#pyo3_path::ffi::METH_CLASS) },
+            FnType::FnStatic => quote! { .flags(#pyo3_path::ffi::METH_STATIC) },
+            _ => quote! {},
+        };
+        let trampoline = match convention {
+            CallingConvention::Noargs => Ident::new("noargs", Span::call_site()),
+            CallingConvention::Fastcall => {
+                Ident::new("maybe_fastcall_cfunction_with_keywords", Span::call_site())
+            }
+            CallingConvention::Varargs => Ident::new("cfunction_with_keywords", Span::call_site()),
+        };
+        let doc = if let Some(doc) = doc {
+            doc.to_cstr_stream(ctx)?
+        } else {
+            c"".to_token_stream()
+        };
+        Ok(quote! {
+            #pyo3_path::impl_::pymethods::PyMethodDef::#trampoline(
+                #python_name,
+                #pyo3_path::impl_::trampoline::get_trampoline_function!(#trampoline, #wrapper),
+                #doc,
+            ) #flags
+        })
     }
 
     /// Forwards to [utils::get_doc] with the text signature of this spec.
-    pub fn get_doc(&self, attrs: &[syn::Attribute]) -> PythonDoc {
+    pub fn get_doc(&self, attrs: &[syn::Attribute]) -> Option<PythonDoc> {
         let text_signature = self
             .text_signature_call_signature()
             .map(|sig| format!("{}{}", self.python_name, sig));
@@ -801,12 +1078,14 @@ impl<'a> FnSpec<'a> {
     /// and/or attributes. Prepend the callable name to make a complete `__text_signature__`.
     pub fn text_signature_call_signature(&self) -> Option<String> {
         let self_argument = match &self.tp {
-            // Getters / Setters / ClassAttribute are not callables on the Python side
-            FnType::Getter(_) | FnType::Setter(_) | FnType::ClassAttribute => return None,
+            // Getters / Setters / deleter / ClassAttribute are not callables on the Python side
+            FnType::Getter(_) | FnType::Setter(_) | FnType::Deleter(_) | FnType::ClassAttribute => {
+                return None
+            }
             FnType::Fn(_) => Some("self"),
             FnType::FnModule(_) => Some("module"),
-            FnType::FnClass(_) | FnType::FnNewClass(_) => Some("cls"),
-            FnType::FnStatic | FnType::FnNew => None,
+            FnType::FnClass(_) => Some("cls"),
+            FnType::FnStatic => None,
         };
 
         match self.text_signature.as_ref().map(|attr| &attr.value) {
@@ -823,6 +1102,7 @@ enum MethodTypeAttribute {
     StaticMethod(Span),
     Getter(Span, Option<Ident>),
     Setter(Span, Option<Ident>),
+    Deleter(Span, Option<Ident>),
     ClassAttribute(Span),
 }
 
@@ -834,6 +1114,7 @@ impl MethodTypeAttribute {
             | MethodTypeAttribute::StaticMethod(span)
             | MethodTypeAttribute::Getter(span, _)
             | MethodTypeAttribute::Setter(span, _)
+            | MethodTypeAttribute::Deleter(span, _)
             | MethodTypeAttribute::ClassAttribute(span) => *span,
         }
     }
@@ -843,10 +1124,7 @@ impl MethodTypeAttribute {
     /// If the attribute does not match one of the attribute names, returns `Ok(None)`.
     ///
     /// Otherwise will either return a parse error or the attribute.
-    fn parse_if_matching_attribute(
-        attr: &syn::Attribute,
-        deprecations: &mut Deprecations<'_>,
-    ) -> Result<Option<Self>> {
+    fn parse_if_matching_attribute(attr: &syn::Attribute) -> Result<Option<Self>> {
         fn ensure_no_arguments(meta: &syn::Meta, ident: &str) -> syn::Result<()> {
             match meta {
                 syn::Meta::Path(_) => Ok(()),
@@ -890,11 +1168,6 @@ impl MethodTypeAttribute {
         if path.is_ident("new") {
             ensure_no_arguments(meta, "new")?;
             Ok(Some(MethodTypeAttribute::New(path.span())))
-        } else if path.is_ident("__new__") {
-            let span = path.span();
-            deprecations.push(Deprecation::PyMethodsNewDeprecatedForm, span);
-            ensure_no_arguments(meta, "__new__")?;
-            Ok(Some(MethodTypeAttribute::New(span)))
         } else if path.is_ident("classmethod") {
             ensure_no_arguments(meta, "classmethod")?;
             Ok(Some(MethodTypeAttribute::ClassMethod(path.span())))
@@ -910,6 +1183,9 @@ impl MethodTypeAttribute {
         } else if path.is_ident("setter") {
             let name = extract_name(meta, "setter")?;
             Ok(Some(MethodTypeAttribute::Setter(path.span(), name)))
+        } else if path.is_ident("deleter") {
+            let name = extract_name(meta, "deleter")?;
+            Ok(Some(MethodTypeAttribute::Deleter(path.span(), name)))
         } else {
             Ok(None)
         }
@@ -918,26 +1194,24 @@ impl MethodTypeAttribute {
 
 impl Display for MethodTypeAttribute {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            MethodTypeAttribute::New(_) => "#[new]".fmt(f),
-            MethodTypeAttribute::ClassMethod(_) => "#[classmethod]".fmt(f),
-            MethodTypeAttribute::StaticMethod(_) => "#[staticmethod]".fmt(f),
-            MethodTypeAttribute::Getter(_, _) => "#[getter]".fmt(f),
-            MethodTypeAttribute::Setter(_, _) => "#[setter]".fmt(f),
-            MethodTypeAttribute::ClassAttribute(_) => "#[classattr]".fmt(f),
-        }
+        f.write_str(match self {
+            MethodTypeAttribute::New(_) => "#[new]",
+            MethodTypeAttribute::ClassMethod(_) => "#[classmethod]",
+            MethodTypeAttribute::StaticMethod(_) => "#[staticmethod]",
+            MethodTypeAttribute::Getter(_, _) => "#[getter]",
+            MethodTypeAttribute::Setter(_, _) => "#[setter]",
+            MethodTypeAttribute::Deleter(_, _) => "#[deleter]",
+            MethodTypeAttribute::ClassAttribute(_) => "#[classattr]",
+        })
     }
 }
 
-fn parse_method_attributes(
-    attrs: &mut Vec<syn::Attribute>,
-    deprecations: &mut Deprecations<'_>,
-) -> Result<Vec<MethodTypeAttribute>> {
+fn parse_method_attributes(attrs: &mut Vec<syn::Attribute>) -> Result<Vec<MethodTypeAttribute>> {
     let mut new_attrs = Vec::new();
     let mut found_attrs = Vec::new();
 
     for attr in attrs.drain(..) {
-        match MethodTypeAttribute::parse_if_matching_attribute(&attr, deprecations)? {
+        match MethodTypeAttribute::parse_if_matching_attribute(&attr)? {
             Some(attr) => found_attrs.push(attr),
             None => new_attrs.push(attr),
         }
@@ -951,7 +1225,7 @@ fn parse_method_attributes(
 const IMPL_TRAIT_ERR: &str = "Python functions cannot have `impl Trait` arguments";
 const RECEIVER_BY_VALUE_ERR: &str =
     "Python objects are shared, so 'self' cannot be moved out of the Python interpreter.
-Try `&self`, `&mut self, `slf: PyRef<'_, Self>` or `slf: PyRefMut<'_, Self>`.";
+Try `&self`, `&mut self, `slf: PyClassGuard<'_, Self>` or `slf: PyClassGuardMut<'_, Self>`.";
 
 fn ensure_signatures_on_valid_method(
     fn_type: &FnType,
@@ -961,15 +1235,22 @@ fn ensure_signatures_on_valid_method(
     if let Some(signature) = signature {
         match fn_type {
             FnType::Getter(_) => {
+                debug_assert!(!fn_type.signature_attribute_allowed());
                 bail_spanned!(signature.kw.span() => "`signature` not allowed with `getter`")
             }
             FnType::Setter(_) => {
+                debug_assert!(!fn_type.signature_attribute_allowed());
                 bail_spanned!(signature.kw.span() => "`signature` not allowed with `setter`")
             }
+            FnType::Deleter(_) => {
+                debug_assert!(!fn_type.signature_attribute_allowed());
+                bail_spanned!(signature.kw.span() => "`signature` not allowed with `deleter`")
+            }
             FnType::ClassAttribute => {
+                debug_assert!(!fn_type.signature_attribute_allowed());
                 bail_spanned!(signature.kw.span() => "`signature` not allowed with `classattr`")
             }
-            _ => {}
+            _ => debug_assert!(fn_type.signature_attribute_allowed()),
         }
     }
     if let Some(text_signature) = text_signature {
@@ -979,6 +1260,9 @@ fn ensure_signatures_on_valid_method(
             }
             FnType::Setter(_) => {
                 bail_spanned!(text_signature.kw.span() => "`text_signature` not allowed with `setter`")
+            }
+            FnType::Deleter(_) => {
+                bail_spanned!(text_signature.kw.span() => "`text_signature` not allowed with `deleter`")
             }
             FnType::ClassAttribute => {
                 bail_spanned!(text_signature.kw.span() => "`text_signature` not allowed with `classattr`")

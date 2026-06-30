@@ -1,91 +1,98 @@
-use super::PyMapping;
 use crate::err::{self, PyErr, PyResult};
 use crate::ffi::Py_ssize_t;
 use crate::ffi_ptr_ext::FfiPtrExt;
 use crate::instance::{Borrowed, Bound};
 use crate::py_result_ext::PyResultExt;
-use crate::types::any::PyAnyMethods;
-use crate::types::{PyAny, PyList};
-use crate::{ffi, PyNativeType, Python, ToPyObject};
+use crate::types::{PyAny, PyList, PyMapping};
+use crate::{ffi, BoundObject, IntoPyObject, IntoPyObjectExt, Python};
+#[cfg(RustPython)]
+use crate::{
+    sync::PyOnceLock,
+    types::{PyType, PyTypeMethods},
+    Py,
+};
 
 /// Represents a Python `dict`.
+///
+/// Values of this type are accessed via PyO3's smart pointers, e.g. as
+/// [`Py<PyDict>`][crate::Py] or [`Bound<'py, PyDict>`][Bound].
+///
+/// For APIs available on `dict` objects, see the [`PyDictMethods`] trait which is implemented for
+/// [`Bound<'py, PyDict>`][Bound].
 #[repr(transparent)]
 pub struct PyDict(PyAny);
 
+#[cfg(not(GraalPy))]
+pyobject_subclassable_native_type!(PyDict, crate::ffi::PyDictObject);
+
+#[cfg(not(RustPython))]
 pyobject_native_type!(
     PyDict,
     ffi::PyDictObject,
     pyobject_native_static_type_object!(ffi::PyDict_Type),
+    "builtins",
+    "dict",
+    #checkfunction=ffi::PyDict_Check
+);
+
+#[cfg(RustPython)]
+pyobject_native_type_core!(
+    PyDict,
+    |py| {
+        static TYPE: PyOnceLock<Py<PyType>> = PyOnceLock::new();
+        TYPE.import(py, "builtins", "dict").unwrap().as_type_ptr()
+    },
+    "builtins",
+    "dict",
     #checkfunction=ffi::PyDict_Check
 );
 
 /// Represents a Python `dict_keys`.
-#[cfg(not(any(PyPy, GraalPy)))]
+#[cfg(not(any(PyPy, GraalPy, RustPython)))]
 #[repr(transparent)]
 pub struct PyDictKeys(PyAny);
 
-#[cfg(not(any(PyPy, GraalPy)))]
+#[cfg(not(any(PyPy, GraalPy, RustPython)))]
 pyobject_native_type_core!(
     PyDictKeys,
     pyobject_native_static_type_object!(ffi::PyDictKeys_Type),
+    "builtins",
+    "dict_keys",
     #checkfunction=ffi::PyDictKeys_Check
 );
 
 /// Represents a Python `dict_values`.
-#[cfg(not(any(PyPy, GraalPy)))]
+#[cfg(not(any(PyPy, GraalPy, RustPython)))]
 #[repr(transparent)]
 pub struct PyDictValues(PyAny);
 
-#[cfg(not(any(PyPy, GraalPy)))]
+#[cfg(not(any(PyPy, GraalPy, RustPython)))]
 pyobject_native_type_core!(
     PyDictValues,
     pyobject_native_static_type_object!(ffi::PyDictValues_Type),
+    "builtins",
+    "dict_values",
     #checkfunction=ffi::PyDictValues_Check
 );
 
 /// Represents a Python `dict_items`.
-#[cfg(not(any(PyPy, GraalPy)))]
+#[cfg(not(any(PyPy, GraalPy, RustPython)))]
 #[repr(transparent)]
 pub struct PyDictItems(PyAny);
 
-#[cfg(not(any(PyPy, GraalPy)))]
+#[cfg(not(any(PyPy, GraalPy, RustPython)))]
 pyobject_native_type_core!(
     PyDictItems,
     pyobject_native_static_type_object!(ffi::PyDictItems_Type),
+    "builtins",
+    "dict_items",
     #checkfunction=ffi::PyDictItems_Check
 );
 
 impl PyDict {
-    /// Deprecated form of [`new_bound`][PyDict::new_bound].
-    #[cfg_attr(
-        not(feature = "gil-refs"),
-        deprecated(
-            since = "0.21.0",
-            note = "`PyDict::new` will be replaced by `PyDict::new_bound` in a future PyO3 version"
-        )
-    )]
-    #[inline]
-    pub fn new(py: Python<'_>) -> &PyDict {
-        Self::new_bound(py).into_gil_ref()
-    }
-
     /// Creates a new empty dictionary.
-    pub fn new_bound(py: Python<'_>) -> Bound<'_, PyDict> {
-        unsafe { ffi::PyDict_New().assume_owned(py).downcast_into_unchecked() }
-    }
-
-    /// Deprecated form of [`from_sequence_bound`][PyDict::from_sequence_bound].
-    #[cfg_attr(
-        all(not(any(PyPy, GraalPy)), not(feature = "gil-refs")),
-        deprecated(
-            since = "0.21.0",
-            note = "`PyDict::from_sequence` will be replaced by `PyDict::from_sequence_bound` in a future PyO3 version"
-        )
-    )]
-    #[inline]
-    #[cfg(not(any(PyPy, GraalPy)))]
-    pub fn from_sequence(seq: &PyAny) -> PyResult<&PyDict> {
-        Self::from_sequence_bound(&seq.as_borrowed()).map(Bound::into_gil_ref)
+    pub fn new(py: Python<'_>) -> Bound<'_, PyDict> {
+        unsafe { ffi::PyDict_New().assume_owned(py).cast_into_unchecked() }
     }
 
     /// Creates a new dictionary from the sequence given.
@@ -96,191 +103,13 @@ impl PyDict {
     /// Returns an error on invalid input. In the case of key collisions,
     /// this keeps the last entry seen.
     #[cfg(not(any(PyPy, GraalPy)))]
-    pub fn from_sequence_bound<'py>(seq: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyDict>> {
+    pub fn from_sequence<'py>(seq: &Bound<'py, PyAny>) -> PyResult<Bound<'py, PyDict>> {
         let py = seq.py();
-        let dict = Self::new_bound(py);
+        let dict = Self::new(py);
         err::error_on_minusone(py, unsafe {
             ffi::PyDict_MergeFromSeq2(dict.as_ptr(), seq.as_ptr(), 1)
         })?;
         Ok(dict)
-    }
-
-    /// Returns a new dictionary that contains the same key-value pairs as self.
-    ///
-    /// This is equivalent to the Python expression `self.copy()`.
-    pub fn copy(&self) -> PyResult<&PyDict> {
-        self.as_borrowed().copy().map(Bound::into_gil_ref)
-    }
-
-    /// Empties an existing dictionary of all key-value pairs.
-    pub fn clear(&self) {
-        self.as_borrowed().clear()
-    }
-
-    /// Return the number of items in the dictionary.
-    ///
-    /// This is equivalent to the Python expression `len(self)`.
-    pub fn len(&self) -> usize {
-        self.as_borrowed().len()
-    }
-
-    /// Checks if the dict is empty, i.e. `len(self) == 0`.
-    pub fn is_empty(&self) -> bool {
-        self.as_borrowed().is_empty()
-    }
-
-    /// Determines if the dictionary contains the specified key.
-    ///
-    /// This is equivalent to the Python expression `key in self`.
-    pub fn contains<K>(&self, key: K) -> PyResult<bool>
-    where
-        K: ToPyObject,
-    {
-        self.as_borrowed().contains(key)
-    }
-
-    /// Gets an item from the dictionary.
-    ///
-    /// Returns `Ok(None)` if the item is not present. To get a `KeyError` for
-    /// non-existing keys, use [`PyAny::get_item`].
-    ///
-    /// Returns `Err(PyErr)` if Python magic methods `__hash__` or `__eq__` used in dictionary
-    /// lookup raise an exception, for example if the key `K` is not hashable. Usually it is
-    /// best to bubble this error up to the caller using the `?` operator.
-    ///
-    /// # Examples
-    ///
-    /// The following example calls `get_item` for the dictionary `{"a": 1}` with various
-    /// keys.
-    /// - `get_item("a")` returns `Ok(Some(...))`, with the `PyAny` being a reference to the Python
-    ///   int `1`.
-    /// - `get_item("b")` returns `Ok(None)`, because "b" is not in the dictionary.
-    /// - `get_item(dict)` returns an `Err(PyErr)`. The error will be a `TypeError` because a dict is not
-    ///   hashable.
-    ///
-    /// ```rust
-    /// use pyo3::prelude::*;
-    /// use pyo3::types::{IntoPyDict};
-    /// use pyo3::exceptions::{PyTypeError, PyKeyError};
-    ///
-    /// # fn main() {
-    /// # let _ =
-    /// Python::with_gil(|py| -> PyResult<()> {
-    ///     let dict = &[("a", 1)].into_py_dict_bound(py);
-    ///     // `a` is in the dictionary, with value 1
-    ///     assert!(dict.get_item("a")?.map_or(Ok(false), |x| x.eq(1))?);
-    ///     // `b` is not in the dictionary
-    ///     assert!(dict.get_item("b")?.is_none());
-    ///     // `dict` is not hashable, so this returns an error
-    ///     assert!(dict.get_item(dict).unwrap_err().is_instance_of::<PyTypeError>(py));
-    ///
-    ///     // `PyAny::get_item("b")` will raise a `KeyError` instead of returning `None`
-    ///     let any = dict.as_any();
-    ///     assert!(any.get_item("b").unwrap_err().is_instance_of::<PyKeyError>(py));
-    ///     Ok(())
-    /// });
-    /// # }
-    /// ```
-    pub fn get_item<K>(&self, key: K) -> PyResult<Option<&PyAny>>
-    where
-        K: ToPyObject,
-    {
-        match self.as_borrowed().get_item(key) {
-            Ok(Some(item)) => Ok(Some(item.into_gil_ref())),
-            Ok(None) => Ok(None),
-            Err(e) => Err(e),
-        }
-    }
-
-    /// Deprecated version of `get_item`.
-    #[deprecated(
-        since = "0.20.0",
-        note = "this is now equivalent to `PyDict::get_item`"
-    )]
-    #[inline]
-    pub fn get_item_with_error<K>(&self, key: K) -> PyResult<Option<&PyAny>>
-    where
-        K: ToPyObject,
-    {
-        self.get_item(key)
-    }
-
-    /// Sets an item value.
-    ///
-    /// This is equivalent to the Python statement `self[key] = value`.
-    pub fn set_item<K, V>(&self, key: K, value: V) -> PyResult<()>
-    where
-        K: ToPyObject,
-        V: ToPyObject,
-    {
-        self.as_borrowed().set_item(key, value)
-    }
-
-    /// Deletes an item.
-    ///
-    /// This is equivalent to the Python statement `del self[key]`.
-    pub fn del_item<K>(&self, key: K) -> PyResult<()>
-    where
-        K: ToPyObject,
-    {
-        self.as_borrowed().del_item(key)
-    }
-
-    /// Returns a list of dict keys.
-    ///
-    /// This is equivalent to the Python expression `list(dict.keys())`.
-    pub fn keys(&self) -> &PyList {
-        self.as_borrowed().keys().into_gil_ref()
-    }
-
-    /// Returns a list of dict values.
-    ///
-    /// This is equivalent to the Python expression `list(dict.values())`.
-    pub fn values(&self) -> &PyList {
-        self.as_borrowed().values().into_gil_ref()
-    }
-
-    /// Returns a list of dict items.
-    ///
-    /// This is equivalent to the Python expression `list(dict.items())`.
-    pub fn items(&self) -> &PyList {
-        self.as_borrowed().items().into_gil_ref()
-    }
-
-    /// Returns an iterator of `(key, value)` pairs in this dictionary.
-    ///
-    /// # Panics
-    ///
-    /// If PyO3 detects that the dictionary is mutated during iteration, it will panic.
-    /// It is allowed to modify values as you iterate over the dictionary, but only
-    /// so long as the set of keys does not change.
-    pub fn iter(&self) -> PyDictIterator<'_> {
-        PyDictIterator(self.as_borrowed().iter())
-    }
-
-    /// Returns `self` cast as a `PyMapping`.
-    pub fn as_mapping(&self) -> &PyMapping {
-        unsafe { self.downcast_unchecked() }
-    }
-
-    /// Update this dictionary with the key/value pairs from another.
-    ///
-    /// This is equivalent to the Python expression `self.update(other)`. If `other` is a `PyDict`, you may want
-    /// to use `self.update(other.as_mapping())`, note: `PyDict::as_mapping` is a zero-cost conversion.
-    pub fn update(&self, other: &PyMapping) -> PyResult<()> {
-        self.as_borrowed().update(&other.as_borrowed())
-    }
-
-    /// Add key/value pairs from another dictionary to this one only when they do not exist in this.
-    ///
-    /// This is equivalent to the Python expression `self.update({k: v for k, v in other.items() if k not in self})`.
-    /// If `other` is a `PyDict`, you may want to use `self.update_if_missing(other.as_mapping())`,
-    /// note: `PyDict::as_mapping` is a zero-cost conversion.
-    ///
-    /// This method uses [`PyDict_Merge`](https://docs.python.org/3/c-api/dict.html#c.PyDict_Merge) internally,
-    /// so should have the same performance as `update`.
-    pub fn update_if_missing(&self, other: &PyMapping) -> PyResult<()> {
-        self.as_borrowed().update_if_missing(&other.as_borrowed())
     }
 }
 
@@ -312,7 +141,7 @@ pub trait PyDictMethods<'py>: crate::sealed::Sealed {
     /// This is equivalent to the Python expression `key in self`.
     fn contains<K>(&self, key: K) -> PyResult<bool>
     where
-        K: ToPyObject;
+        K: IntoPyObject<'py>;
 
     /// Gets an item from the dictionary.
     ///
@@ -321,22 +150,22 @@ pub trait PyDictMethods<'py>: crate::sealed::Sealed {
     /// To get a `KeyError` for non-existing keys, use `PyAny::get_item`.
     fn get_item<K>(&self, key: K) -> PyResult<Option<Bound<'py, PyAny>>>
     where
-        K: ToPyObject;
+        K: IntoPyObject<'py>;
 
     /// Sets an item value.
     ///
     /// This is equivalent to the Python statement `self[key] = value`.
     fn set_item<K, V>(&self, key: K, value: V) -> PyResult<()>
     where
-        K: ToPyObject,
-        V: ToPyObject;
+        K: IntoPyObject<'py>,
+        V: IntoPyObject<'py>;
 
     /// Deletes an item.
     ///
     /// This is equivalent to the Python statement `del self[key]`.
     fn del_item<K>(&self, key: K) -> PyResult<()>
     where
-        K: ToPyObject;
+        K: IntoPyObject<'py>;
 
     /// Returns a list of dict keys.
     ///
@@ -362,6 +191,20 @@ pub trait PyDictMethods<'py>: crate::sealed::Sealed {
     /// so long as the set of keys does not change.
     fn iter(&self) -> BoundDictIterator<'py>;
 
+    /// Iterates over the contents of this dictionary while holding a critical section on the dict.
+    /// This is useful when the GIL is disabled and the dictionary is shared between threads.
+    /// It is not guaranteed that the dictionary will not be modified during iteration when the
+    /// closure calls arbitrary Python code that releases the critical section held by the
+    /// iterator. Otherwise, the dictionary will not be modified during iteration.
+    ///
+    /// This method is a small performance optimization over `.iter().try_for_each()` when the
+    /// nightly feature is not enabled because we cannot implement an optimised version of
+    /// `iter().try_fold()` on stable yet. If your iteration is infallible then this method has the
+    /// same performance as `.iter().for_each()`.
+    fn locked_for_each<F>(&self, closure: F) -> PyResult<()>
+    where
+        F: Fn(Bound<'py, PyAny>, Bound<'py, PyAny>) -> PyResult<()>;
+
     /// Returns `self` cast as a `PyMapping`.
     fn as_mapping(&self) -> &Bound<'py, PyMapping>;
 
@@ -383,6 +226,29 @@ pub trait PyDictMethods<'py>: crate::sealed::Sealed {
     /// This method uses [`PyDict_Merge`](https://docs.python.org/3/c-api/dict.html#c.PyDict_Merge) internally,
     /// so should have the same performance as `update`.
     fn update_if_missing(&self, other: &Bound<'_, PyMapping>) -> PyResult<()>;
+
+    /// Inserts `default_value` into this dictionary with a key of `key` if the key is not already present in the
+    /// dictionary. If the key was inserted, returns Ok(true), otherwise returns Ok(false), indicating the key was
+    /// already present. If an error happens, returns PyErr. This function uses
+    /// [`PyDict_SetDefaultRef`](https://docs.python.org/3/c-api/dict.html#c.PyDict_SetDefaultRef) internally.
+    fn set_default<K, V>(&self, key: K, default_value: V) -> PyResult<bool>
+    where
+        K: IntoPyObject<'py>,
+        V: IntoPyObject<'py>;
+
+    /// Inserts `default_value` into this dictionary with a key of `key` if the key is not already present in the
+    /// dictionary. If the key was inserted, returns Ok((true, result)), otherwise returns Ok((false, result)) where
+    /// `result` is the `value` associated with `key` after this function finishes. If an error happens, returns
+    /// PyErr. This function uses
+    /// [`PyDict_SetDefaultRef`](https://docs.python.org/3/c-api/dict.html#c.PyDict_SetDefaultRef) internally.
+    fn set_default_with_result<K, V>(
+        &self,
+        key: K,
+        default_value: V,
+    ) -> PyResult<(bool, Bound<'py, PyAny>)>
+    where
+        K: IntoPyObject<'py>,
+        V: IntoPyObject<'py>;
 }
 
 impl<'py> PyDictMethods<'py> for Bound<'py, PyDict> {
@@ -390,7 +256,7 @@ impl<'py> PyDictMethods<'py> for Bound<'py, PyDict> {
         unsafe {
             ffi::PyDict_Copy(self.as_ptr())
                 .assume_owned_or_err(self.py())
-                .downcast_into_unchecked()
+                .cast_into_unchecked()
         }
     }
 
@@ -408,9 +274,9 @@ impl<'py> PyDictMethods<'py> for Bound<'py, PyDict> {
 
     fn contains<K>(&self, key: K) -> PyResult<bool>
     where
-        K: ToPyObject,
+        K: IntoPyObject<'py>,
     {
-        fn inner(dict: &Bound<'_, PyDict>, key: Bound<'_, PyAny>) -> PyResult<bool> {
+        fn inner(dict: &Bound<'_, PyDict>, key: Borrowed<'_, '_, PyAny>) -> PyResult<bool> {
             match unsafe { ffi::PyDict_Contains(dict.as_ptr(), key.as_ptr()) } {
                 1 => Ok(true),
                 0 => Ok(false),
@@ -419,41 +285,51 @@ impl<'py> PyDictMethods<'py> for Bound<'py, PyDict> {
         }
 
         let py = self.py();
-        inner(self, key.to_object(py).into_bound(py))
+        inner(
+            self,
+            key.into_pyobject_or_pyerr(py)?.into_any().as_borrowed(),
+        )
     }
 
     fn get_item<K>(&self, key: K) -> PyResult<Option<Bound<'py, PyAny>>>
     where
-        K: ToPyObject,
+        K: IntoPyObject<'py>,
     {
         fn inner<'py>(
             dict: &Bound<'py, PyDict>,
-            key: Bound<'_, PyAny>,
+            key: Borrowed<'_, '_, PyAny>,
         ) -> PyResult<Option<Bound<'py, PyAny>>> {
             let py = dict.py();
+            let mut result: *mut ffi::PyObject = core::ptr::null_mut();
             match unsafe {
-                ffi::PyDict_GetItemWithError(dict.as_ptr(), key.as_ptr())
-                    .assume_borrowed_or_opt(py)
-                    .map(Borrowed::to_owned)
+                ffi::compat::PyDict_GetItemRef(dict.as_ptr(), key.as_ptr(), &mut result)
             } {
-                some @ Some(_) => Ok(some),
-                None => PyErr::take(py).map(Err).transpose(),
+                core::ffi::c_int::MIN..=-1 => Err(PyErr::fetch(py)),
+                0 => Ok(None),
+                1..=core::ffi::c_int::MAX => {
+                    // Safety: PyDict_GetItemRef positive return value means the result is a valid
+                    // owned reference
+                    Ok(Some(unsafe { result.assume_owned_unchecked(py) }))
+                }
             }
         }
 
         let py = self.py();
-        inner(self, key.to_object(py).into_bound(py))
+        inner(
+            self,
+            key.into_pyobject_or_pyerr(py)?.into_any().as_borrowed(),
+        )
     }
 
     fn set_item<K, V>(&self, key: K, value: V) -> PyResult<()>
     where
-        K: ToPyObject,
-        V: ToPyObject,
+        K: IntoPyObject<'py>,
+        V: IntoPyObject<'py>,
     {
         fn inner(
             dict: &Bound<'_, PyDict>,
-            key: Bound<'_, PyAny>,
-            value: Bound<'_, PyAny>,
+            key: Borrowed<'_, '_, PyAny>,
+            value: Borrowed<'_, '_, PyAny>,
         ) -> PyResult<()> {
             err::error_on_minusone(dict.py(), unsafe {
                 ffi::PyDict_SetItem(dict.as_ptr(), key.as_ptr(), value.as_ptr())
@@ -463,30 +339,33 @@ impl<'py> PyDictMethods<'py> for Bound<'py, PyDict> {
         let py = self.py();
         inner(
             self,
-            key.to_object(py).into_bound(py),
-            value.to_object(py).into_bound(py),
+            key.into_pyobject_or_pyerr(py)?.into_any().as_borrowed(),
+            value.into_pyobject_or_pyerr(py)?.into_any().as_borrowed(),
         )
     }
 
     fn del_item<K>(&self, key: K) -> PyResult<()>
     where
-        K: ToPyObject,
+        K: IntoPyObject<'py>,
     {
-        fn inner(dict: &Bound<'_, PyDict>, key: Bound<'_, PyAny>) -> PyResult<()> {
+        fn inner(dict: &Bound<'_, PyDict>, key: Borrowed<'_, '_, PyAny>) -> PyResult<()> {
             err::error_on_minusone(dict.py(), unsafe {
                 ffi::PyDict_DelItem(dict.as_ptr(), key.as_ptr())
             })
         }
 
         let py = self.py();
-        inner(self, key.to_object(py).into_bound(py))
+        inner(
+            self,
+            key.into_pyobject_or_pyerr(py)?.into_any().as_borrowed(),
+        )
     }
 
     fn keys(&self) -> Bound<'py, PyList> {
         unsafe {
             ffi::PyDict_Keys(self.as_ptr())
                 .assume_owned(self.py())
-                .downcast_into_unchecked()
+                .cast_into_unchecked()
         }
     }
 
@@ -494,7 +373,7 @@ impl<'py> PyDictMethods<'py> for Bound<'py, PyDict> {
         unsafe {
             ffi::PyDict_Values(self.as_ptr())
                 .assume_owned(self.py())
-                .downcast_into_unchecked()
+                .cast_into_unchecked()
         }
     }
 
@@ -502,7 +381,7 @@ impl<'py> PyDictMethods<'py> for Bound<'py, PyDict> {
         unsafe {
             ffi::PyDict_Items(self.as_ptr())
                 .assume_owned(self.py())
-                .downcast_into_unchecked()
+                .cast_into_unchecked()
         }
     }
 
@@ -510,12 +389,31 @@ impl<'py> PyDictMethods<'py> for Bound<'py, PyDict> {
         BoundDictIterator::new(self.clone())
     }
 
+    fn locked_for_each<F>(&self, f: F) -> PyResult<()>
+    where
+        F: Fn(Bound<'py, PyAny>, Bound<'py, PyAny>) -> PyResult<()>,
+    {
+        #[cfg(feature = "nightly")]
+        {
+            // We don't need a critical section when the nightly feature is enabled because
+            // try_for_each is locked by the implementation of try_fold.
+            self.iter().try_for_each(|(key, value)| f(key, value))
+        }
+
+        #[cfg(not(feature = "nightly"))]
+        {
+            crate::sync::critical_section::with_critical_section(self, || {
+                self.iter().try_for_each(|(key, value)| f(key, value))
+            })
+        }
+    }
+
     fn as_mapping(&self) -> &Bound<'py, PyMapping> {
-        unsafe { self.downcast_unchecked() }
+        unsafe { self.cast_unchecked() }
     }
 
     fn into_mapping(self) -> Bound<'py, PyMapping> {
-        unsafe { self.into_any().downcast_into_unchecked() }
+        unsafe { self.cast_into_unchecked() }
     }
 
     fn update(&self, other: &Bound<'_, PyMapping>) -> PyResult<()> {
@@ -529,69 +427,204 @@ impl<'py> PyDictMethods<'py> for Bound<'py, PyDict> {
             ffi::PyDict_Merge(self.as_ptr(), other.as_ptr(), 0)
         })
     }
+
+    fn set_default<K, V>(&self, key: K, default_value: V) -> PyResult<bool>
+    where
+        K: IntoPyObject<'py>,
+        V: IntoPyObject<'py>,
+    {
+        fn inner(
+            dict: &Bound<'_, PyDict>,
+            key: Borrowed<'_, '_, PyAny>,
+            value: Borrowed<'_, '_, PyAny>,
+        ) -> PyResult<bool> {
+            setdefault_result_from_nonerror_return_code(err::error_on_minusone_with_result(
+                dict.py(),
+                unsafe {
+                    ffi::compat::PyDict_SetDefaultRef(
+                        dict.as_ptr(),
+                        key.as_ptr(),
+                        value.as_ptr(),
+                        core::ptr::null_mut(),
+                    )
+                },
+            ))
+        }
+        let py = self.py();
+
+        inner(
+            self,
+            key.into_pyobject_or_pyerr(py)?.into_any().as_borrowed(),
+            default_value
+                .into_pyobject_or_pyerr(py)?
+                .into_any()
+                .as_borrowed(),
+        )
+    }
+
+    fn set_default_with_result<K, V>(
+        &self,
+        key: K,
+        default_value: V,
+    ) -> PyResult<(bool, Bound<'py, PyAny>)>
+    where
+        K: IntoPyObject<'py>,
+        V: IntoPyObject<'py>,
+    {
+        fn inner<'py>(
+            dict: &Bound<'_, PyDict>,
+            key: Borrowed<'_, '_, PyAny>,
+            value: Borrowed<'_, '_, PyAny>,
+            py: Python<'py>,
+        ) -> PyResult<(bool, Bound<'py, PyAny>)> {
+            let mut result = core::ptr::NonNull::dangling().as_ptr();
+            let code = setdefault_result_from_nonerror_return_code(
+                err::error_on_minusone_with_result(dict.py(), unsafe {
+                    ffi::compat::PyDict_SetDefaultRef(
+                        dict.as_ptr(),
+                        key.as_ptr(),
+                        value.as_ptr(),
+                        &mut result,
+                    )
+                }),
+            )?;
+            // SAFETY: the interpreter should have set this to a valid owned PyObject pointer
+            let out_result = unsafe { result.assume_owned_unchecked(py) };
+            Ok((code, out_result))
+        }
+        let py = self.py();
+        inner(
+            self,
+            key.into_pyobject_or_pyerr(py)?.into_any().as_borrowed(),
+            default_value
+                .into_pyobject_or_pyerr(py)?
+                .into_any()
+                .as_borrowed(),
+            py,
+        )
+    }
+}
+
+fn setdefault_result_from_nonerror_return_code(code: PyResult<core::ffi::c_int>) -> PyResult<bool> {
+    match code? {
+        // inserted
+        0 => Ok(true),
+        // not inserted
+        1 => Ok(false),
+        x => panic!("Unknown return value from PyDict_SetDefaultRef: {x}"),
+    }
 }
 
 impl<'a, 'py> Borrowed<'a, 'py, PyDict> {
     /// Iterates over the contents of this dictionary without incrementing reference counts.
     ///
     /// # Safety
-    /// It must be known that this dictionary will not be modified during iteration.
+    /// It must be known that this dictionary will not be modified during iteration,
+    /// for example, when parsing arguments in a keyword arguments dictionary.
     pub(crate) unsafe fn iter_borrowed(self) -> BorrowedDictIter<'a, 'py> {
         BorrowedDictIter::new(self)
     }
 }
 
 fn dict_len(dict: &Bound<'_, PyDict>) -> Py_ssize_t {
-    #[cfg(any(not(Py_3_8), PyPy, GraalPy, Py_LIMITED_API))]
+    #[cfg(any(PyPy, GraalPy, Py_LIMITED_API, Py_GIL_DISABLED))]
     unsafe {
         ffi::PyDict_Size(dict.as_ptr())
     }
 
-    #[cfg(all(Py_3_8, not(PyPy), not(GraalPy), not(Py_LIMITED_API)))]
+    #[cfg(not(any(PyPy, GraalPy, Py_LIMITED_API, Py_GIL_DISABLED)))]
     unsafe {
         (*dict.as_ptr().cast::<ffi::PyDictObject>()).ma_used
     }
 }
 
 /// PyO3 implementation of an iterator for a Python `dict` object.
-pub struct PyDictIterator<'py>(BoundDictIterator<'py>);
-
-impl<'py> Iterator for PyDictIterator<'py> {
-    type Item = (&'py PyAny, &'py PyAny);
-
-    #[inline]
-    fn next(&mut self) -> Option<Self::Item> {
-        let (key, value) = self.0.next()?;
-        Some((key.into_gil_ref(), value.into_gil_ref()))
-    }
-
-    #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.0.size_hint()
-    }
-}
-
-impl<'py> ExactSizeIterator for PyDictIterator<'py> {
-    fn len(&self) -> usize {
-        self.0.len()
-    }
-}
-
-impl<'a> IntoIterator for &'a PyDict {
-    type Item = (&'a PyAny, &'a PyAny);
-    type IntoIter = PyDictIterator<'a>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter()
-    }
-}
-
-/// PyO3 implementation of an iterator for a Python `dict` object.
 pub struct BoundDictIterator<'py> {
     dict: Bound<'py, PyDict>,
-    ppos: ffi::Py_ssize_t,
-    di_used: ffi::Py_ssize_t,
-    len: ffi::Py_ssize_t,
+    inner: DictIterImpl,
+}
+
+enum DictIterImpl {
+    DictIter {
+        ppos: ffi::Py_ssize_t,
+        di_used: ffi::Py_ssize_t,
+        remaining: ffi::Py_ssize_t,
+    },
+}
+
+impl DictIterImpl {
+    #[inline]
+    /// Safety: the dict should be locked with a critical section on the free-threaded build
+    /// and otherwise not shared between threads in code that releases the GIL.
+    unsafe fn next_unchecked<'py>(
+        &mut self,
+        dict: &Bound<'py, PyDict>,
+    ) -> Option<(Bound<'py, PyAny>, Bound<'py, PyAny>)> {
+        match self {
+            Self::DictIter {
+                di_used,
+                remaining,
+                ppos,
+                ..
+            } => {
+                let ma_used = dict_len(dict);
+
+                // These checks are similar to what CPython does.
+                //
+                // If the dimension of the dict changes e.g. key-value pairs are removed
+                // or added during iteration, this will panic next time when `next` is called
+                if *di_used != ma_used {
+                    *di_used = -1;
+                    panic!("dictionary changed size during iteration");
+                };
+
+                // If the dict is changed in such a way that the length remains constant
+                // then this will panic at the end of iteration - similar to this:
+                //
+                // d = {"a":1, "b":2, "c": 3}
+                //
+                // for k, v in d.items():
+                //     d[f"{k}_"] = 4
+                //     del d[k]
+                //     print(k)
+                //
+                if *remaining == -1 {
+                    *di_used = -1;
+                    panic!("dictionary keys changed during iteration");
+                };
+
+                let mut key: *mut ffi::PyObject = core::ptr::null_mut();
+                let mut value: *mut ffi::PyObject = core::ptr::null_mut();
+
+                if unsafe { ffi::PyDict_Next(dict.as_ptr(), ppos, &mut key, &mut value) != 0 } {
+                    *remaining -= 1;
+                    let py = dict.py();
+                    // Safety:
+                    // - PyDict_Next returns borrowed values
+                    // - we have already checked that `PyDict_Next` succeeded, so we can assume these to be non-null
+                    Some((
+                        unsafe { key.assume_borrowed_unchecked(py).to_owned() },
+                        unsafe { value.assume_borrowed_unchecked(py).to_owned() },
+                    ))
+                } else {
+                    None
+                }
+            }
+        }
+    }
+
+    #[cfg(Py_GIL_DISABLED)]
+    #[inline]
+    fn with_critical_section<F, R>(&mut self, dict: &Bound<'_, PyDict>, f: F) -> R
+    where
+        F: FnOnce(&mut Self) -> R,
+    {
+        match self {
+            Self::DictIter { .. } => {
+                crate::sync::critical_section::with_critical_section(dict, || f(self))
+            }
+        }
+    }
 }
 
 impl<'py> Iterator for BoundDictIterator<'py> {
@@ -599,49 +632,16 @@ impl<'py> Iterator for BoundDictIterator<'py> {
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        let ma_used = dict_len(&self.dict);
-
-        // These checks are similar to what CPython does.
-        //
-        // If the dimension of the dict changes e.g. key-value pairs are removed
-        // or added during iteration, this will panic next time when `next` is called
-        if self.di_used != ma_used {
-            self.di_used = -1;
-            panic!("dictionary changed size during iteration");
-        };
-
-        // If the dict is changed in such a way that the length remains constant
-        // then this will panic at the end of iteration - similar to this:
-        //
-        // d = {"a":1, "b":2, "c": 3}
-        //
-        // for k, v in d.items():
-        //     d[f"{k}_"] = 4
-        //     del d[k]
-        //     print(k)
-        //
-        if self.len == -1 {
-            self.di_used = -1;
-            panic!("dictionary keys changed during iteration");
-        };
-
-        let mut key: *mut ffi::PyObject = std::ptr::null_mut();
-        let mut value: *mut ffi::PyObject = std::ptr::null_mut();
-
-        if unsafe { ffi::PyDict_Next(self.dict.as_ptr(), &mut self.ppos, &mut key, &mut value) }
-            != 0
+        #[cfg(Py_GIL_DISABLED)]
         {
-            self.len -= 1;
-            let py = self.dict.py();
-            // Safety:
-            // - PyDict_Next returns borrowed values
-            // - we have already checked that `PyDict_Next` succeeded, so we can assume these to be non-null
-            Some((
-                unsafe { key.assume_borrowed_unchecked(py) }.to_owned(),
-                unsafe { value.assume_borrowed_unchecked(py) }.to_owned(),
-            ))
-        } else {
-            None
+            self.inner
+                .with_critical_section(&self.dict, |inner| unsafe {
+                    inner.next_unchecked(&self.dict)
+                })
+        }
+        #[cfg(not(Py_GIL_DISABLED))]
+        {
+            unsafe { self.inner.next_unchecked(&self.dict) }
         }
     }
 
@@ -650,22 +650,155 @@ impl<'py> Iterator for BoundDictIterator<'py> {
         let len = self.len();
         (len, Some(len))
     }
+
+    #[inline]
+    fn count(self) -> usize
+    where
+        Self: Sized,
+    {
+        self.len()
+    }
+
+    #[inline]
+    #[cfg(Py_GIL_DISABLED)]
+    fn fold<B, F>(mut self, init: B, mut f: F) -> B
+    where
+        Self: Sized,
+        F: FnMut(B, Self::Item) -> B,
+    {
+        self.inner.with_critical_section(&self.dict, |inner| {
+            let mut accum = init;
+            while let Some(x) = unsafe { inner.next_unchecked(&self.dict) } {
+                accum = f(accum, x);
+            }
+            accum
+        })
+    }
+
+    #[inline]
+    #[cfg(all(Py_GIL_DISABLED, feature = "nightly"))]
+    fn try_fold<B, F, R>(&mut self, init: B, mut f: F) -> R
+    where
+        Self: Sized,
+        F: FnMut(B, Self::Item) -> R,
+        R: core::ops::Try<Output = B>,
+    {
+        self.inner.with_critical_section(&self.dict, |inner| {
+            let mut accum = init;
+            while let Some(x) = unsafe { inner.next_unchecked(&self.dict) } {
+                accum = f(accum, x)?
+            }
+            R::from_output(accum)
+        })
+    }
+
+    #[inline]
+    #[cfg(all(Py_GIL_DISABLED, not(feature = "nightly")))]
+    fn all<F>(&mut self, mut f: F) -> bool
+    where
+        Self: Sized,
+        F: FnMut(Self::Item) -> bool,
+    {
+        self.inner.with_critical_section(&self.dict, |inner| {
+            while let Some(x) = unsafe { inner.next_unchecked(&self.dict) } {
+                if !f(x) {
+                    return false;
+                }
+            }
+            true
+        })
+    }
+
+    #[inline]
+    #[cfg(all(Py_GIL_DISABLED, not(feature = "nightly")))]
+    fn any<F>(&mut self, mut f: F) -> bool
+    where
+        Self: Sized,
+        F: FnMut(Self::Item) -> bool,
+    {
+        self.inner.with_critical_section(&self.dict, |inner| {
+            while let Some(x) = unsafe { inner.next_unchecked(&self.dict) } {
+                if f(x) {
+                    return true;
+                }
+            }
+            false
+        })
+    }
+
+    #[inline]
+    #[cfg(all(Py_GIL_DISABLED, not(feature = "nightly")))]
+    fn find<P>(&mut self, mut predicate: P) -> Option<Self::Item>
+    where
+        Self: Sized,
+        P: FnMut(&Self::Item) -> bool,
+    {
+        self.inner.with_critical_section(&self.dict, |inner| {
+            while let Some(x) = unsafe { inner.next_unchecked(&self.dict) } {
+                if predicate(&x) {
+                    return Some(x);
+                }
+            }
+            None
+        })
+    }
+
+    #[inline]
+    #[cfg(all(Py_GIL_DISABLED, not(feature = "nightly")))]
+    fn find_map<B, F>(&mut self, mut f: F) -> Option<B>
+    where
+        Self: Sized,
+        F: FnMut(Self::Item) -> Option<B>,
+    {
+        self.inner.with_critical_section(&self.dict, |inner| {
+            while let Some(x) = unsafe { inner.next_unchecked(&self.dict) } {
+                if let found @ Some(_) = f(x) {
+                    return found;
+                }
+            }
+            None
+        })
+    }
+
+    #[inline]
+    #[cfg(all(Py_GIL_DISABLED, not(feature = "nightly")))]
+    fn position<P>(&mut self, mut predicate: P) -> Option<usize>
+    where
+        Self: Sized,
+        P: FnMut(Self::Item) -> bool,
+    {
+        self.inner.with_critical_section(&self.dict, |inner| {
+            let mut acc = 0;
+            while let Some(x) = unsafe { inner.next_unchecked(&self.dict) } {
+                if predicate(x) {
+                    return Some(acc);
+                }
+                acc += 1;
+            }
+            None
+        })
+    }
 }
 
-impl<'py> ExactSizeIterator for BoundDictIterator<'py> {
+impl ExactSizeIterator for BoundDictIterator<'_> {
     fn len(&self) -> usize {
-        self.len as usize
+        match self.inner {
+            DictIterImpl::DictIter { remaining, .. } => remaining as usize,
+        }
     }
 }
 
 impl<'py> BoundDictIterator<'py> {
     fn new(dict: Bound<'py, PyDict>) -> Self {
-        let len = dict_len(&dict);
-        BoundDictIterator {
+        let remaining = dict_len(&dict);
+
+        Self {
             dict,
-            ppos: 0,
-            di_used: len,
-            len,
+            inner: DictIterImpl::DictIter {
+                ppos: 0,
+                di_used: remaining,
+                remaining,
+            },
         }
     }
 }
@@ -705,8 +838,8 @@ mod borrowed_iter {
 
         #[inline]
         fn next(&mut self) -> Option<Self::Item> {
-            let mut key: *mut ffi::PyObject = std::ptr::null_mut();
-            let mut value: *mut ffi::PyObject = std::ptr::null_mut();
+            let mut key: *mut ffi::PyObject = core::ptr::null_mut();
+            let mut value: *mut ffi::PyObject = core::ptr::null_mut();
 
             // Safety: self.dict lives sufficiently long that the pointer is not dangling
             if unsafe { ffi::PyDict_Next(self.dict.as_ptr(), &mut self.ppos, &mut key, &mut value) }
@@ -717,7 +850,12 @@ mod borrowed_iter {
                 // Safety:
                 // - PyDict_Next returns borrowed values
                 // - we have already checked that `PyDict_Next` succeeded, so we can assume these to be non-null
-                Some(unsafe { (key.assume_borrowed(py), value.assume_borrowed(py)) })
+                Some(unsafe {
+                    (
+                        key.assume_borrowed_unchecked(py),
+                        value.assume_borrowed_unchecked(py),
+                    )
+                })
             } else {
                 None
             }
@@ -727,6 +865,14 @@ mod borrowed_iter {
         fn size_hint(&self) -> (usize, Option<usize>) {
             let len = self.len();
             (len, Some(len))
+        }
+
+        #[inline]
+        fn count(self) -> usize
+        where
+            Self: Sized,
+        {
+            self.len()
         }
     }
 
@@ -748,91 +894,71 @@ pub(crate) use borrowed_iter::BorrowedDictIter;
 
 /// Conversion trait that allows a sequence of tuples to be converted into `PyDict`
 /// Primary use case for this trait is `call` and `call_method` methods as keywords argument.
-pub trait IntoPyDict: Sized {
+pub trait IntoPyDict<'py>: Sized {
     /// Converts self into a `PyDict` object pointer. Whether pointer owned or borrowed
     /// depends on implementation.
-    #[cfg_attr(
-        not(feature = "gil-refs"),
-        deprecated(
-            since = "0.21.0",
-            note = "`IntoPyDict::into_py_dict` will be replaced by `IntoPyDict::into_py_dict_bound` in a future PyO3 version"
-        )
-    )]
-    fn into_py_dict(self, py: Python<'_>) -> &PyDict {
-        Self::into_py_dict_bound(self, py).into_gil_ref()
-    }
-
-    /// Converts self into a `PyDict` object pointer. Whether pointer owned or borrowed
-    /// depends on implementation.
-    fn into_py_dict_bound(self, py: Python<'_>) -> Bound<'_, PyDict>;
+    fn into_py_dict(self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>>;
 }
 
-impl<T, I> IntoPyDict for I
+impl<'py, T, I> IntoPyDict<'py> for I
 where
-    T: PyDictItem,
+    T: PyDictItem<'py>,
     I: IntoIterator<Item = T>,
 {
-    fn into_py_dict_bound(self, py: Python<'_>) -> Bound<'_, PyDict> {
-        let dict = PyDict::new_bound(py);
-        for item in self {
-            dict.set_item(item.key(), item.value())
-                .expect("Failed to set_item on dict");
-        }
-        dict
+    fn into_py_dict(self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
+        let dict = PyDict::new(py);
+        self.into_iter().try_for_each(|item| {
+            let (key, value) = item.unpack();
+            dict.set_item(key, value)
+        })?;
+        Ok(dict)
     }
 }
 
 /// Represents a tuple which can be used as a PyDict item.
-pub trait PyDictItem {
-    type K: ToPyObject;
-    type V: ToPyObject;
-    fn key(&self) -> &Self::K;
-    fn value(&self) -> &Self::V;
+trait PyDictItem<'py> {
+    type K: IntoPyObject<'py>;
+    type V: IntoPyObject<'py>;
+    fn unpack(self) -> (Self::K, Self::V);
 }
 
-impl<K, V> PyDictItem for (K, V)
+impl<'py, K, V> PyDictItem<'py> for (K, V)
 where
-    K: ToPyObject,
-    V: ToPyObject,
+    K: IntoPyObject<'py>,
+    V: IntoPyObject<'py>,
 {
     type K = K;
     type V = V;
-    fn key(&self) -> &Self::K {
-        &self.0
-    }
-    fn value(&self) -> &Self::V {
-        &self.1
+
+    fn unpack(self) -> (Self::K, Self::V) {
+        (self.0, self.1)
     }
 }
 
-impl<K, V> PyDictItem for &(K, V)
+impl<'a, 'py, K, V> PyDictItem<'py> for &'a (K, V)
 where
-    K: ToPyObject,
-    V: ToPyObject,
+    &'a K: IntoPyObject<'py>,
+    &'a V: IntoPyObject<'py>,
 {
-    type K = K;
-    type V = V;
-    fn key(&self) -> &Self::K {
-        &self.0
-    }
-    fn value(&self) -> &Self::V {
-        &self.1
+    type K = &'a K;
+    type V = &'a V;
+
+    fn unpack(self) -> (Self::K, Self::V) {
+        (&self.0, &self.1)
     }
 }
 
 #[cfg(test)]
-#[cfg_attr(not(feature = "gil-refs"), allow(deprecated))]
 mod tests {
     use super::*;
-    #[cfg(not(any(PyPy, GraalPy)))]
-    use crate::exceptions;
-    use crate::types::PyTuple;
-    use std::collections::{BTreeMap, HashMap};
+    use crate::platform::HashMap;
+    use crate::types::{PyAnyMethods as _, PyTuple};
+    use alloc::collections::BTreeMap;
 
     #[test]
     fn test_new() {
-        Python::with_gil(|py| {
-            let dict = [(7, 32)].into_py_dict_bound(py);
+        Python::attach(|py| {
+            let dict = [(7, 32)].into_py_dict(py).unwrap();
             assert_eq!(
                 32,
                 dict.get_item(7i32)
@@ -852,9 +978,9 @@ mod tests {
     #[test]
     #[cfg(not(any(PyPy, GraalPy)))]
     fn test_from_sequence() {
-        Python::with_gil(|py| {
-            let items = PyList::new(py, &vec![("a", 1), ("b", 2)]);
-            let dict = PyDict::from_sequence(items).unwrap();
+        Python::attach(|py| {
+            let items = PyList::new(py, vec![("a", 1), ("b", 2)]).unwrap();
+            let dict = PyDict::from_sequence(&items).unwrap();
             assert_eq!(
                 1,
                 dict.get_item("a")
@@ -883,16 +1009,16 @@ mod tests {
     #[test]
     #[cfg(not(any(PyPy, GraalPy)))]
     fn test_from_sequence_err() {
-        Python::with_gil(|py| {
-            let items = PyList::new(py, &vec!["a", "b"]);
-            assert!(PyDict::from_sequence(items).is_err());
+        Python::attach(|py| {
+            let items = PyList::new(py, vec!["a", "b"]).unwrap();
+            assert!(PyDict::from_sequence(&items).is_err());
         });
     }
 
     #[test]
     fn test_copy() {
-        Python::with_gil(|py| {
-            let dict = [(7, 32)].into_py_dict_bound(py);
+        Python::attach(|py| {
+            let dict = [(7, 32)].into_py_dict(py).unwrap();
 
             let ndict = dict.copy().unwrap();
             assert_eq!(
@@ -910,25 +1036,22 @@ mod tests {
 
     #[test]
     fn test_len() {
-        Python::with_gil(|py| {
-            let mut v = HashMap::new();
-            let ob = v.to_object(py);
-            let dict: &PyDict = ob.downcast(py).unwrap();
+        Python::attach(|py| {
+            let mut v = HashMap::<i32, i32>::new();
+            let dict = (&v).into_pyobject(py).unwrap();
             assert_eq!(0, dict.len());
             v.insert(7, 32);
-            let ob = v.to_object(py);
-            let dict2: &PyDict = ob.downcast(py).unwrap();
+            let dict2 = v.into_pyobject(py).unwrap();
             assert_eq!(1, dict2.len());
         });
     }
 
     #[test]
     fn test_contains() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut v = HashMap::new();
             v.insert(7, 32);
-            let ob = v.to_object(py);
-            let dict: &PyDict = ob.downcast(py).unwrap();
+            let dict = v.into_pyobject(py).unwrap();
             assert!(dict.contains(7i32).unwrap());
             assert!(!dict.contains(8i32).unwrap());
         });
@@ -936,11 +1059,10 @@ mod tests {
 
     #[test]
     fn test_get_item() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut v = HashMap::new();
             v.insert(7, 32);
-            let ob = v.to_object(py);
-            let dict: &PyDict = ob.downcast(py).unwrap();
+            let dict = v.into_pyobject(py).unwrap();
             assert_eq!(
                 32,
                 dict.get_item(7i32)
@@ -953,38 +1075,48 @@ mod tests {
         });
     }
 
+    #[cfg(feature = "macros")]
     #[test]
-    #[allow(deprecated)]
-    #[cfg(not(any(PyPy, GraalPy)))]
-    fn test_get_item_with_error() {
-        Python::with_gil(|py| {
-            let mut v = HashMap::new();
-            v.insert(7, 32);
-            let ob = v.to_object(py);
-            let dict: &PyDict = ob.downcast(py).unwrap();
-            assert_eq!(
-                32,
-                dict.get_item_with_error(7i32)
-                    .unwrap()
-                    .unwrap()
-                    .extract::<i32>()
-                    .unwrap()
-            );
-            assert!(dict.get_item_with_error(8i32).unwrap().is_none());
-            assert!(dict
-                .get_item_with_error(dict)
-                .unwrap_err()
-                .is_instance_of::<exceptions::PyTypeError>(py));
-        });
+    fn test_get_item_error_path() {
+        use crate::exceptions::PyTypeError;
+
+        #[crate::pyclass(crate = "crate")]
+        struct HashErrors;
+
+        #[crate::pymethods(crate = "crate")]
+        impl HashErrors {
+            #[new]
+            fn new() -> Self {
+                HashErrors {}
+            }
+
+            fn __hash__(&self) -> PyResult<isize> {
+                Err(PyTypeError::new_err("Error from __hash__"))
+            }
+        }
+
+        Python::attach(|py| {
+            let class = py.get_type::<HashErrors>();
+            let instance = class.call0().unwrap();
+            let d = PyDict::new(py);
+            match d.get_item(instance) {
+                Ok(_) => {
+                    panic!("this get_item call should always error")
+                }
+                Err(err) => {
+                    assert!(err.is_instance_of::<PyTypeError>(py));
+                    assert!(err.value(py).to_string().contains("Error from __hash__"));
+                }
+            }
+        })
     }
 
     #[test]
     fn test_set_item() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut v = HashMap::new();
             v.insert(7, 32);
-            let ob = v.to_object(py);
-            let dict: &PyDict = ob.downcast(py).unwrap();
+            let dict = v.into_pyobject(py).unwrap();
             assert!(dict.set_item(7i32, 42i32).is_ok()); // change
             assert!(dict.set_item(8i32, 123i32).is_ok()); // insert
             assert_eq!(
@@ -1008,27 +1140,25 @@ mod tests {
 
     #[test]
     fn test_set_item_refcnt() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let cnt;
-            let obj = py.eval("object()", None, None).unwrap();
+            let obj = py.eval(c"object()", None, None).unwrap();
             {
-                let _pool = unsafe { crate::GILPool::new() };
-                cnt = obj.get_refcnt();
-                let _dict = [(10, obj)].into_py_dict_bound(py);
+                cnt = obj._get_refcnt();
+                let _dict = [(10, &obj)].into_py_dict(py);
             }
             {
-                assert_eq!(cnt, obj.get_refcnt());
+                assert_eq!(cnt, obj._get_refcnt());
             }
         });
     }
 
     #[test]
     fn test_set_item_does_not_update_original_object() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut v = HashMap::new();
             v.insert(7, 32);
-            let ob = v.to_object(py);
-            let dict: &PyDict = ob.downcast(py).unwrap();
+            let dict = (&v).into_pyobject(py).unwrap();
             assert!(dict.set_item(7i32, 42i32).is_ok()); // change
             assert!(dict.set_item(8i32, 123i32).is_ok()); // insert
             assert_eq!(32i32, v[&7i32]); // not updated!
@@ -1038,11 +1168,10 @@ mod tests {
 
     #[test]
     fn test_del_item() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut v = HashMap::new();
             v.insert(7, 32);
-            let ob = v.to_object(py);
-            let dict: &PyDict = ob.downcast(py).unwrap();
+            let dict = v.into_pyobject(py).unwrap();
             assert!(dict.del_item(7i32).is_ok());
             assert_eq!(0, dict.len());
             assert!(dict.get_item(7i32).unwrap().is_none());
@@ -1051,11 +1180,10 @@ mod tests {
 
     #[test]
     fn test_del_item_does_not_update_original_object() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut v = HashMap::new();
             v.insert(7, 32);
-            let ob = v.to_object(py);
-            let dict: &PyDict = ob.downcast(py).unwrap();
+            let dict = (&v).into_pyobject(py).unwrap();
             assert!(dict.del_item(7i32).is_ok()); // change
             assert_eq!(32i32, *v.get(&7i32).unwrap()); // not updated!
         });
@@ -1063,18 +1191,17 @@ mod tests {
 
     #[test]
     fn test_items() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut v = HashMap::new();
             v.insert(7, 32);
             v.insert(8, 42);
             v.insert(9, 123);
-            let ob = v.to_object(py);
-            let dict: &PyDict = ob.downcast(py).unwrap();
+            let dict = v.into_pyobject(py).unwrap();
             // Can't just compare against a vector of tuples since we don't have a guaranteed ordering.
             let mut key_sum = 0;
             let mut value_sum = 0;
             for el in dict.items() {
-                let tuple = el.downcast::<PyTuple>().unwrap();
+                let tuple = el.cast::<PyTuple>().unwrap();
                 key_sum += tuple.get_item(0).unwrap().extract::<i32>().unwrap();
                 value_sum += tuple.get_item(1).unwrap().extract::<i32>().unwrap();
             }
@@ -1085,13 +1212,12 @@ mod tests {
 
     #[test]
     fn test_keys() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut v = HashMap::new();
             v.insert(7, 32);
             v.insert(8, 42);
             v.insert(9, 123);
-            let ob = v.to_object(py);
-            let dict: &PyDict = ob.downcast(py).unwrap();
+            let dict = v.into_pyobject(py).unwrap();
             // Can't just compare against a vector of tuples since we don't have a guaranteed ordering.
             let mut key_sum = 0;
             for el in dict.keys() {
@@ -1103,13 +1229,12 @@ mod tests {
 
     #[test]
     fn test_values() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut v = HashMap::new();
             v.insert(7, 32);
             v.insert(8, 42);
             v.insert(9, 123);
-            let ob = v.to_object(py);
-            let dict: &PyDict = ob.downcast(py).unwrap();
+            let dict = v.into_pyobject(py).unwrap();
             // Can't just compare against a vector of tuples since we don't have a guaranteed ordering.
             let mut values_sum = 0;
             for el in dict.values() {
@@ -1121,13 +1246,12 @@ mod tests {
 
     #[test]
     fn test_iter() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut v = HashMap::new();
             v.insert(7, 32);
             v.insert(8, 42);
             v.insert(9, 123);
-            let ob = v.to_object(py);
-            let dict: &PyDict = ob.downcast(py).unwrap();
+            let dict = v.into_pyobject(py).unwrap();
             let mut key_sum = 0;
             let mut value_sum = 0;
             for (key, value) in dict {
@@ -1141,13 +1265,12 @@ mod tests {
 
     #[test]
     fn test_iter_bound() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut v = HashMap::new();
             v.insert(7, 32);
             v.insert(8, 42);
             v.insert(9, 123);
-            let ob = v.to_object(py);
-            let dict: &Bound<'_, PyDict> = ob.downcast_bound(py).unwrap();
+            let dict = v.into_pyobject(py).unwrap();
             let mut key_sum = 0;
             let mut value_sum = 0;
             for (key, value) in dict {
@@ -1161,16 +1284,15 @@ mod tests {
 
     #[test]
     fn test_iter_value_mutated() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut v = HashMap::new();
             v.insert(7, 32);
             v.insert(8, 42);
             v.insert(9, 123);
 
-            let ob = v.to_object(py);
-            let dict: &PyDict = ob.downcast(py).unwrap();
+            let dict = (&v).into_pyobject(py).unwrap();
 
-            for (key, value) in dict {
+            for (key, value) in &dict {
                 dict.set_item(key, value.extract::<i32>().unwrap() + 7)
                     .unwrap();
             }
@@ -1180,13 +1302,12 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_iter_key_mutated() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut v = HashMap::new();
             for i in 0..10 {
                 v.insert(i * 2, i * 2);
             }
-            let ob = v.to_object(py);
-            let dict: &PyDict = ob.downcast(py).unwrap();
+            let dict = v.into_pyobject(py).unwrap();
 
             for (i, (key, value)) in dict.iter().enumerate() {
                 let key = key.extract::<i32>().unwrap();
@@ -1205,13 +1326,12 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_iter_key_mutated_constant_len() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut v = HashMap::new();
             for i in 0..10 {
                 v.insert(i * 2, i * 2);
             }
-            let ob = v.to_object(py);
-            let dict: &PyDict = ob.downcast(py).unwrap();
+            let dict = v.into_pyobject(py).unwrap();
 
             for (i, (key, value)) in dict.iter().enumerate() {
                 let key = key.extract::<i32>().unwrap();
@@ -1229,13 +1349,12 @@ mod tests {
 
     #[test]
     fn test_iter_size_hint() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut v = HashMap::new();
             v.insert(7, 32);
             v.insert(8, 42);
             v.insert(9, 123);
-            let ob = v.to_object(py);
-            let dict: &PyDict = ob.downcast(py).unwrap();
+            let dict = (&v).into_pyobject(py).unwrap();
 
             let mut iter = dict.iter();
             assert_eq!(iter.size_hint(), (v.len(), Some(v.len())));
@@ -1255,13 +1374,12 @@ mod tests {
 
     #[test]
     fn test_into_iter() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut v = HashMap::new();
             v.insert(7, 32);
             v.insert(8, 42);
             v.insert(9, 123);
-            let ob = v.to_object(py);
-            let dict: &PyDict = ob.downcast(py).unwrap();
+            let dict = v.into_pyobject(py).unwrap();
             let mut key_sum = 0;
             let mut value_sum = 0;
             for (key, value) in dict {
@@ -1275,11 +1393,11 @@ mod tests {
 
     #[test]
     fn test_hashmap_into_dict() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut map = HashMap::<i32, i32>::new();
             map.insert(1, 1);
 
-            let py_map = map.into_py_dict_bound(py);
+            let py_map = map.into_py_dict(py).unwrap();
 
             assert_eq!(py_map.len(), 1);
             assert_eq!(
@@ -1296,11 +1414,11 @@ mod tests {
 
     #[test]
     fn test_btreemap_into_dict() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut map = BTreeMap::<i32, i32>::new();
             map.insert(1, 1);
 
-            let py_map = map.into_py_dict_bound(py);
+            let py_map = map.into_py_dict(py).unwrap();
 
             assert_eq!(py_map.len(), 1);
             assert_eq!(
@@ -1317,9 +1435,9 @@ mod tests {
 
     #[test]
     fn test_vec_into_dict() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let vec = vec![("a", 1), ("b", 2), ("c", 3)];
-            let py_map = vec.into_py_dict_bound(py);
+            let py_map = vec.into_py_dict(py).unwrap();
 
             assert_eq!(py_map.len(), 3);
             assert_eq!(
@@ -1336,9 +1454,9 @@ mod tests {
 
     #[test]
     fn test_slice_into_dict() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let arr = [("a", 1), ("b", 2), ("c", 3)];
-            let py_map = arr.into_py_dict_bound(py);
+            let py_map = arr.into_py_dict(py).unwrap();
 
             assert_eq!(py_map.len(), 3);
             assert_eq!(
@@ -1355,11 +1473,11 @@ mod tests {
 
     #[test]
     fn dict_as_mapping() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut map = HashMap::<i32, i32>::new();
             map.insert(1, 1);
 
-            let py_map = map.into_py_dict_bound(py);
+            let py_map = map.into_py_dict(py).unwrap();
 
             assert_eq!(py_map.as_mapping().len().unwrap(), 1);
             assert_eq!(
@@ -1376,11 +1494,11 @@ mod tests {
 
     #[test]
     fn dict_into_mapping() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let mut map = HashMap::<i32, i32>::new();
             map.insert(1, 1);
 
-            let py_map = map.into_py_dict_bound(py);
+            let py_map = map.into_py_dict(py).unwrap();
 
             let py_mapping = py_map.into_mapping();
             assert_eq!(py_mapping.len().unwrap(), 1);
@@ -1388,56 +1506,50 @@ mod tests {
         });
     }
 
-    #[cfg(not(any(PyPy, GraalPy)))]
+    #[cfg(not(any(PyPy, GraalPy, RustPython)))]
     fn abc_dict(py: Python<'_>) -> Bound<'_, PyDict> {
         let mut map = HashMap::<&'static str, i32>::new();
         map.insert("a", 1);
         map.insert("b", 2);
         map.insert("c", 3);
-        map.into_py_dict_bound(py)
+        map.into_py_dict(py).unwrap()
     }
 
     #[test]
-    #[cfg(not(any(PyPy, GraalPy)))]
+    #[cfg(not(any(PyPy, GraalPy, RustPython)))]
     fn dict_keys_view() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let dict = abc_dict(py);
             let keys = dict.call_method0("keys").unwrap();
-            assert!(keys
-                .is_instance(&py.get_type::<PyDictKeys>().as_borrowed())
-                .unwrap());
+            assert!(keys.is_instance(&py.get_type::<PyDictKeys>()).unwrap());
         })
     }
 
     #[test]
-    #[cfg(not(any(PyPy, GraalPy)))]
+    #[cfg(not(any(PyPy, GraalPy, RustPython)))]
     fn dict_values_view() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let dict = abc_dict(py);
             let values = dict.call_method0("values").unwrap();
-            assert!(values
-                .is_instance(&py.get_type::<PyDictValues>().as_borrowed())
-                .unwrap());
+            assert!(values.is_instance(&py.get_type::<PyDictValues>()).unwrap());
         })
     }
 
     #[test]
-    #[cfg(not(any(PyPy, GraalPy)))]
+    #[cfg(not(any(PyPy, GraalPy, RustPython)))]
     fn dict_items_view() {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let dict = abc_dict(py);
             let items = dict.call_method0("items").unwrap();
-            assert!(items
-                .is_instance(&py.get_type::<PyDictItems>().as_borrowed())
-                .unwrap());
+            assert!(items.is_instance(&py.get_type::<PyDictItems>()).unwrap());
         })
     }
 
     #[test]
     fn dict_update() {
-        Python::with_gil(|py| {
-            let dict = [("a", 1), ("b", 2), ("c", 3)].into_py_dict_bound(py);
-            let other = [("b", 4), ("c", 5), ("d", 6)].into_py_dict_bound(py);
+        Python::attach(|py| {
+            let dict = [("a", 1), ("b", 2), ("c", 3)].into_py_dict(py).unwrap();
+            let other = [("b", 4), ("c", 5), ("d", 6)].into_py_dict(py).unwrap();
             dict.update(other.as_mapping()).unwrap();
             assert_eq!(dict.len(), 4);
             assert_eq!(
@@ -1506,9 +1618,9 @@ mod tests {
 
     #[test]
     fn dict_update_if_missing() {
-        Python::with_gil(|py| {
-            let dict = [("a", 1), ("b", 2), ("c", 3)].into_py_dict_bound(py);
-            let other = [("b", 4), ("c", 5), ("d", 6)].into_py_dict_bound(py);
+        Python::attach(|py| {
+            let dict = [("a", 1), ("b", 2), ("c", 3)].into_py_dict(py).unwrap();
+            let other = [("b", 4), ("c", 5), ("d", 6)].into_py_dict(py).unwrap();
             dict.update_if_missing(other.as_mapping()).unwrap();
             assert_eq!(dict.len(), 4);
             assert_eq!(
@@ -1572,6 +1684,167 @@ mod tests {
                     .unwrap(),
                 6
             );
+        })
+    }
+
+    #[test]
+    fn test_iter_all() {
+        Python::attach(|py| {
+            let dict = [(1, true), (2, true), (3, true)].into_py_dict(py).unwrap();
+            assert!(dict.iter().all(|(_, v)| v.extract::<bool>().unwrap()));
+
+            let dict = [(1, true), (2, false), (3, true)].into_py_dict(py).unwrap();
+            assert!(!dict.iter().all(|(_, v)| v.extract::<bool>().unwrap()));
+        });
+    }
+
+    #[test]
+    fn test_iter_any() {
+        Python::attach(|py| {
+            let dict = [(1, true), (2, false), (3, false)]
+                .into_py_dict(py)
+                .unwrap();
+            assert!(dict.iter().any(|(_, v)| v.extract::<bool>().unwrap()));
+
+            let dict = [(1, false), (2, false), (3, false)]
+                .into_py_dict(py)
+                .unwrap();
+            assert!(!dict.iter().any(|(_, v)| v.extract::<bool>().unwrap()));
+        });
+    }
+
+    #[test]
+    #[allow(clippy::search_is_some)]
+    fn test_iter_find() {
+        Python::attach(|py| {
+            let dict = [(1, false), (2, true), (3, false)]
+                .into_py_dict(py)
+                .unwrap();
+
+            assert_eq!(
+                Some((2, true)),
+                dict.iter()
+                    .find(|(_, v)| v.extract::<bool>().unwrap())
+                    .map(|(k, v)| (k.extract().unwrap(), v.extract().unwrap()))
+            );
+
+            let dict = [(1, false), (2, false), (3, false)]
+                .into_py_dict(py)
+                .unwrap();
+
+            assert!(dict
+                .iter()
+                .find(|(_, v)| v.extract::<bool>().unwrap())
+                .is_none());
+        });
+    }
+
+    #[test]
+    #[allow(clippy::search_is_some)]
+    fn test_iter_position() {
+        Python::attach(|py| {
+            let dict = [(1, false), (2, false), (3, true)]
+                .into_py_dict(py)
+                .unwrap();
+            assert_eq!(
+                Some(2),
+                dict.iter().position(|(_, v)| v.extract::<bool>().unwrap())
+            );
+
+            let dict = [(1, false), (2, false), (3, false)]
+                .into_py_dict(py)
+                .unwrap();
+            assert!(dict
+                .iter()
+                .position(|(_, v)| v.extract::<bool>().unwrap())
+                .is_none());
+        });
+    }
+
+    #[test]
+    fn test_iter_fold() {
+        Python::attach(|py| {
+            let dict = [(1, 1), (2, 2), (3, 3)].into_py_dict(py).unwrap();
+            let sum = dict
+                .iter()
+                .fold(0, |acc, (_, v)| acc + v.extract::<i32>().unwrap());
+            assert_eq!(sum, 6);
+        });
+    }
+
+    #[test]
+    fn test_iter_try_fold() {
+        Python::attach(|py| {
+            let dict = [(1, 1), (2, 2), (3, 3)].into_py_dict(py).unwrap();
+            let sum = dict
+                .iter()
+                .try_fold(0, |acc, (_, v)| PyResult::Ok(acc + v.extract::<i32>()?))
+                .unwrap();
+            assert_eq!(sum, 6);
+
+            let dict = [(1, "foo"), (2, "bar")].into_py_dict(py).unwrap();
+            assert!(dict
+                .iter()
+                .try_fold(0, |acc, (_, v)| PyResult::Ok(acc + v.extract::<i32>()?))
+                .is_err());
+        });
+    }
+
+    #[test]
+    fn test_iter_count() {
+        Python::attach(|py| {
+            let dict = [(1, 1), (2, 2), (3, 3)].into_py_dict(py).unwrap();
+            assert_eq!(dict.iter().count(), 3);
+        })
+    }
+
+    #[test]
+    fn test_set_default() {
+        Python::attach(|py| {
+            let dict = PyDict::new(py);
+            assert!(matches!(dict.set_default("hello", "world"), Ok(true)));
+            assert_eq!(
+                dict.get_item("hello")
+                    .unwrap()
+                    .unwrap()
+                    .extract::<String>()
+                    .unwrap(),
+                "world"
+            );
+
+            assert!(matches!(dict.set_default("hello", "foobar"), Ok(false)));
+
+            // unhashable
+            let invalid_key = PyList::new(py, vec![0]).unwrap();
+            assert!(dict.set_default(invalid_key, "foobar").is_err());
+        })
+    }
+
+    #[test]
+    fn test_set_default_with_result() {
+        Python::attach(|py| {
+            let dict = PyDict::new(py);
+            let res = dict.set_default_with_result("hello", "world");
+            assert!(res.is_ok());
+            let (inserted, value) = res.unwrap();
+            assert!(inserted);
+            assert!(value.extract::<String>().unwrap() == "world");
+            assert!(
+                dict.get_item("hello")
+                    .unwrap()
+                    .unwrap()
+                    .extract::<String>()
+                    .unwrap()
+                    == "world"
+            );
+
+            let (inserted, value) = dict.set_default_with_result("hello", "foobar").unwrap();
+            assert!(!inserted);
+            assert_eq!(value.extract::<String>().unwrap(), "world");
+
+            // unhashable
+            let invalid_key = PyList::new(py, vec![0]).unwrap();
+            assert!(dict.set_default_with_result(invalid_key, "foobar").is_err());
         })
     }
 }

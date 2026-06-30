@@ -1,16 +1,46 @@
+// TODO https://github.com/PyO3/pyo3/issues/5487
+#![allow(clippy::undocumented_unsafe_blocks)]
+
+use core::ptr::NonNull;
+
+#[cfg(feature = "experimental-inspect")]
+use crate::inspect::{type_hint_union, PyStaticExpr};
+#[cfg(feature = "experimental-inspect")]
+use crate::types::PyNone;
+#[cfg(any(Py_3_10, not(Py_LIMITED_API), feature = "experimental-inspect"))]
+use crate::types::PyString;
 use crate::{
-    conversion::FromPyObjectBound,
     exceptions::PyTypeError,
     ffi,
     pyclass::boolean_struct::False,
     types::{any::PyAnyMethods, dict::PyDictMethods, tuple::PyTupleMethods, PyDict, PyTuple},
-    Borrowed, Bound, PyAny, PyClass, PyErr, PyRef, PyRefMut, PyResult, PyTypeCheck, Python,
+    Borrowed, Bound, CastError, FromPyObject, PyAny, PyClass, PyClassGuard, PyClassGuardMut, PyErr,
+    PyResult, PyTypeCheck, Python,
 };
 
 /// Helper type used to keep implementation more concise.
 ///
 /// (Function argument extraction borrows input arguments.)
 type PyArg<'py> = Borrowed<'py, 'py, PyAny>;
+
+/// Seals `PyFunctionArgument` so that types outside PyO3 cannot implement it.
+///
+/// The public API is `FromPyObject`.
+mod function_argument {
+    use crate::{
+        impl_::extract_argument::PyFunctionArgument, pyclass::boolean_struct::False, FromPyObject,
+        PyClass, PyTypeCheck,
+    };
+
+    pub trait Sealed<const IMPLEMENTS_FROMPYOBJECT: bool> {}
+    impl<'a, 'py, T: FromPyObject<'a, 'py>> Sealed<true> for T {}
+    impl<'py, T: PyTypeCheck + 'py> Sealed<false> for &'_ crate::Bound<'py, T> {}
+    impl<'a, 'holder, 'py, T: PyFunctionArgument<'a, 'holder, 'py, false>> Sealed<false> for Option<T> {}
+    #[cfg(all(Py_LIMITED_API, not(Py_3_10)))]
+    impl Sealed<false> for &'_ str {}
+    impl<T: PyClass> Sealed<false> for &'_ T {}
+    impl<T: PyClass<Frozen = False>> Sealed<false> for &'_ mut T {}
+}
 
 /// A trait which is used to help PyO3 macros extract function arguments.
 ///
@@ -20,67 +50,120 @@ type PyArg<'py> = Borrowed<'py, 'py, PyAny>;
 /// will be dropped as soon as the pyfunction call ends.
 ///
 /// There exists a trivial blanket implementation for `T: FromPyObject` with `Holder = ()`.
-pub trait PyFunctionArgument<'a, 'py>: Sized + 'a {
+///
+/// The const generic arg `IMPLEMENTS_FROMPYOBJECT` allows for const generic specialization of
+/// some additional types which don't implement `FromPyObject`, such as `&T` for `#[pyclass]` types.
+/// All types should only implement this trait once; either by the `FromPyObject` blanket or one
+/// of the specialized implementations which needs a `Holder`.
+#[diagnostic::on_unimplemented(
+    message = "`{Self}` cannot be used as a Python function argument",
+    note = "implement `FromPyObject` to enable using `{Self}` as a function argument",
+    note = "`Python<'py>` is also a valid argument type to pass the Python token into `#[pyfunction]`s and `#[pymethods]`"
+)]
+pub trait PyFunctionArgument<'a, 'holder, 'py, const IMPLEMENTS_FROMPYOBJECT: bool>:
+    Sized + function_argument::Sealed<IMPLEMENTS_FROMPYOBJECT>
+{
     type Holder: FunctionArgumentHolder;
-    fn extract(obj: &'a Bound<'py, PyAny>, holder: &'a mut Self::Holder) -> PyResult<Self>;
+    type Error: Into<PyErr>;
+
+    /// Provides the type hint information for which Python types are allowed.
+    #[cfg(feature = "experimental-inspect")]
+    const INPUT_TYPE: PyStaticExpr;
+
+    fn extract(
+        obj: Borrowed<'a, 'py, PyAny>,
+        holder: &'holder mut Self::Holder,
+    ) -> Result<Self, Self::Error>;
 }
 
-impl<'a, 'py, T> PyFunctionArgument<'a, 'py> for T
+impl<'a, 'py, T> PyFunctionArgument<'a, '_, 'py, true> for T
 where
-    T: FromPyObjectBound<'a, 'py> + 'a,
+    T: FromPyObject<'a, 'py>,
 {
     type Holder = ();
+    type Error = T::Error;
+
+    #[cfg(feature = "experimental-inspect")]
+    const INPUT_TYPE: PyStaticExpr = T::INPUT_TYPE;
 
     #[inline]
-    fn extract(obj: &'a Bound<'py, PyAny>, _: &'a mut ()) -> PyResult<Self> {
+    fn extract(obj: Borrowed<'a, 'py, PyAny>, _: &'_ mut ()) -> Result<Self, Self::Error> {
         obj.extract()
     }
 }
 
-impl<'a, 'py, T: 'py> PyFunctionArgument<'a, 'py> for &'a Bound<'py, T>
+impl<'a, 'holder, 'py, T: 'a + 'py> PyFunctionArgument<'a, 'holder, 'py, false>
+    for &'holder Bound<'py, T>
 where
     T: PyTypeCheck,
 {
-    type Holder = Option<()>;
+    type Holder = Option<Borrowed<'a, 'py, T>>;
+    type Error = CastError<'a, 'py>;
+
+    #[cfg(feature = "experimental-inspect")]
+    const INPUT_TYPE: PyStaticExpr = T::TYPE_HINT;
 
     #[inline]
-    fn extract(obj: &'a Bound<'py, PyAny>, _: &'a mut Option<()>) -> PyResult<Self> {
-        obj.downcast().map_err(Into::into)
+    fn extract(
+        obj: Borrowed<'a, 'py, PyAny>,
+        holder: &'holder mut Self::Holder,
+    ) -> Result<Self, Self::Error> {
+        Ok(holder.insert(obj.cast()?))
     }
 }
 
-impl<'a, 'py, T: 'py> PyFunctionArgument<'a, 'py> for Option<&'a Bound<'py, T>>
+/// Allow `Option<T>` to be a function argument also for types which don't implement `FromPyObject`
+impl<'a, 'holder, 'py, T> PyFunctionArgument<'a, 'holder, 'py, false> for Option<T>
 where
-    T: PyTypeCheck,
+    T: PyFunctionArgument<'a, 'holder, 'py, false>,
 {
-    type Holder = ();
+    type Holder = T::Holder;
+    type Error = T::Error;
+
+    #[cfg(feature = "experimental-inspect")]
+    const INPUT_TYPE: PyStaticExpr = type_hint_union!(T::INPUT_TYPE, PyNone::TYPE_HINT);
 
     #[inline]
-    fn extract(obj: &'a Bound<'py, PyAny>, _: &'a mut ()) -> PyResult<Self> {
+    fn extract(
+        obj: Borrowed<'a, 'py, PyAny>,
+        holder: &'holder mut T::Holder,
+    ) -> Result<Self, Self::Error> {
         if obj.is_none() {
             Ok(None)
         } else {
-            Ok(Some(obj.downcast()?))
+            Ok(Some(T::extract(obj, holder)?))
         }
     }
 }
 
-#[cfg(all(Py_LIMITED_API, not(any(feature = "gil-refs", Py_3_10))))]
-impl<'a> PyFunctionArgument<'a, '_> for &'a str {
-    type Holder = Option<std::borrow::Cow<'a, str>>;
+#[cfg(all(Py_LIMITED_API, not(Py_3_10)))]
+impl<'a, 'holder, 'py> PyFunctionArgument<'a, 'holder, 'py, false> for &'holder str {
+    type Holder = Option<alloc::borrow::Cow<'a, str>>;
+    type Error = <alloc::borrow::Cow<'a, str> as FromPyObject<'a, 'py>>::Error;
+
+    #[cfg(feature = "experimental-inspect")]
+    const INPUT_TYPE: PyStaticExpr = PyString::TYPE_HINT;
 
     #[inline]
     fn extract(
-        obj: &'a Bound<'_, PyAny>,
-        holder: &'a mut Option<std::borrow::Cow<'a, str>>,
+        obj: Borrowed<'a, 'py, PyAny>,
+        holder: &'holder mut Option<alloc::borrow::Cow<'a, str>>,
     ) -> PyResult<Self> {
         Ok(holder.insert(obj.extract()?))
     }
 }
 
+/// Seals `FunctionArgumentHolder` so that types outside PyO3 cannot implement it.
+mod function_argument_holder {
+    pub trait Sealed {}
+
+    impl Sealed for () {}
+    impl<T> Sealed for Option<T> {}
+}
+
 /// Trait for types which can be a function argument holder - they should
 /// to be able to const-initialize to an empty value.
-pub trait FunctionArgumentHolder: Sized {
+pub trait FunctionArgumentHolder: Sized + function_argument_holder::Sealed {
     const INIT: Self;
 }
 
@@ -92,73 +175,146 @@ impl<T> FunctionArgumentHolder for Option<T> {
     const INIT: Self = None;
 }
 
-#[inline]
-pub fn extract_pyclass_ref<'a, 'py: 'a, T: PyClass>(
-    obj: &'a Bound<'py, PyAny>,
-    holder: &'a mut Option<PyRef<'py, T>>,
-) -> PyResult<&'a T> {
-    Ok(&*holder.insert(obj.extract()?))
-}
+impl<'a, 'holder, T: PyClass> PyFunctionArgument<'a, 'holder, '_, false> for &'holder T {
+    type Holder = ::core::option::Option<PyClassGuard<'a, T>>;
+    type Error = PyErr;
 
-#[inline]
-pub fn extract_pyclass_ref_mut<'a, 'py: 'a, T: PyClass<Frozen = False>>(
-    obj: &'a Bound<'py, PyAny>,
-    holder: &'a mut Option<PyRefMut<'py, T>>,
-) -> PyResult<&'a mut T> {
-    Ok(&mut *holder.insert(obj.extract()?))
-}
+    #[cfg(feature = "experimental-inspect")]
+    const INPUT_TYPE: PyStaticExpr = T::TYPE_HINT;
 
-/// The standard implementation of how PyO3 extracts a `#[pyfunction]` or `#[pymethod]` function argument.
-#[doc(hidden)]
-pub fn extract_argument<'a, 'py, T>(
-    obj: &'a Bound<'py, PyAny>,
-    holder: &'a mut T::Holder,
-    arg_name: &str,
-) -> PyResult<T>
-where
-    T: PyFunctionArgument<'a, 'py>,
-{
-    match PyFunctionArgument::extract(obj, holder) {
-        Ok(value) => Ok(value),
-        Err(e) => Err(argument_extraction_error(obj.py(), arg_name, e)),
+    #[inline]
+    fn extract(obj: Borrowed<'a, '_, PyAny>, holder: &'holder mut Self::Holder) -> PyResult<Self> {
+        extract_pyclass_ref(obj, holder)
     }
 }
 
-/// Alternative to [`extract_argument`] used for `Option<T>` arguments. This is necessary because Option<&T>
-/// does not implement `PyFunctionArgument` for `T: PyClass`.
-#[doc(hidden)]
-pub fn extract_optional_argument<'a, 'py, T>(
-    obj: Option<&'a Bound<'py, PyAny>>,
-    holder: &'a mut T::Holder,
-    arg_name: &str,
-    default: fn() -> Option<T>,
-) -> PyResult<Option<T>>
-where
-    T: PyFunctionArgument<'a, 'py>,
+impl<'a, 'holder, T: PyClass<Frozen = False>> PyFunctionArgument<'a, 'holder, '_, false>
+    for &'holder mut T
 {
-    match obj {
-        Some(obj) => {
-            if obj.is_none() {
-                // Explicit `None` will result in None being used as the function argument
-                Ok(None)
-            } else {
-                extract_argument(obj, holder, arg_name).map(Some)
-            }
+    type Holder = ::core::option::Option<PyClassGuardMut<'a, T>>;
+    type Error = PyErr;
+
+    #[cfg(feature = "experimental-inspect")]
+    const INPUT_TYPE: PyStaticExpr = T::TYPE_HINT;
+
+    #[inline]
+    fn extract(obj: Borrowed<'a, '_, PyAny>, holder: &'holder mut Self::Holder) -> PyResult<Self> {
+        extract_pyclass_ref_mut(obj, holder)
+    }
+}
+
+#[inline]
+pub fn extract_pyclass_ref<'a, 'holder, T: PyClass>(
+    obj: Borrowed<'a, '_, PyAny>,
+    holder: &'holder mut Option<PyClassGuard<'a, T>>,
+) -> PyResult<&'holder T> {
+    Ok(&*holder.insert(PyClassGuard::try_borrow_from_borrowed(obj.cast()?)?))
+}
+
+#[inline]
+pub fn extract_pyclass_ref_mut<'a, 'holder, T: PyClass<Frozen = False>>(
+    obj: Borrowed<'a, '_, PyAny>,
+    holder: &'holder mut Option<PyClassGuardMut<'a, T>>,
+) -> PyResult<&'holder mut T> {
+    Ok(&mut *holder.insert(PyClassGuardMut::try_borrow_mut_from_borrowed(obj.cast()?)?))
+}
+
+/// Trusted variant of [`extract_pyclass_ref`]: performs an unchecked cast for
+/// extension-type slot receivers where CPython guarantees the receiver type.
+///
+/// This is valid when called from generated slot wrappers installed on a specific
+/// extension type, because CPython's slot dispatch contract ensures the receiver
+/// is an instance of that type (or a compatible subtype) before invoking the slot.
+///
+/// # Safety
+/// The caller must ensure that `obj` is an instance of `T`. This invariant is
+/// upheld by CPython when dispatching through type slots.
+#[inline]
+pub unsafe fn extract_pyclass_ref_trusted<'a, 'holder, T: PyClass>(
+    obj: Borrowed<'a, '_, PyAny>,
+    holder: &'holder mut Option<PyClassGuard<'a, T>>,
+) -> PyResult<&'holder T> {
+    cfg_select! {
+        // PyPy does not appear to perform the same type checking as CPython
+        PyPy => extract_pyclass_ref(obj, holder),
+        not(PyPy) => {
+            Ok(
+                holder.insert(PyClassGuard::try_borrow_from_borrowed(
+                    // Safety: caller guarantees obj is of type T via CPython slot receiver contract
+                    unsafe { obj.cast_unchecked::<T>() }
+                )?),
+            )
         }
-        _ => Ok(default()),
+    }
+}
+
+/// Trusted variant of [`extract_pyclass_ref_mut`]: performs an unchecked cast for
+/// extension-type slot receivers where CPython guarantees the receiver type.
+///
+/// # Safety
+/// Same as [`extract_pyclass_ref_trusted`].
+#[inline]
+pub unsafe fn extract_pyclass_ref_mut_trusted<'a, 'holder, T: PyClass<Frozen = False>>(
+    obj: Borrowed<'a, '_, PyAny>,
+    holder: &'holder mut Option<PyClassGuardMut<'a, T>>,
+) -> PyResult<&'holder mut T> {
+    cfg_select! {
+        // PyPy does not appear to perform the same type checking as CPython
+        PyPy => extract_pyclass_ref_mut(obj, holder),
+        not(PyPy) => {
+            Ok(
+                holder.insert(PyClassGuardMut::try_borrow_mut_from_borrowed(
+                    // Safety: caller guarantees obj is of type T via CPython slot receiver contract
+                    unsafe { obj.cast_unchecked::<T>() }
+                )?),
+            )
+        }
+    }
+}
+
+/// Indirection around `Bound::cast_unchecked` which performs checks on PyPy, to be used
+/// in contexts where CPython has already performed the check.
+///
+/// # Safety
+///
+/// `bound_ref` must be of type `T`
+#[inline]
+pub unsafe fn cast_bound_ref_trusted<'a, 'py, T: PyTypeCheck>(
+    bound_ref: &'a Bound<'py, PyAny>,
+) -> PyResult<&'a Bound<'py, T>> {
+    cfg_select! {
+        // PyPy does not appear to perform the same type checking as CPython
+        PyPy => bound_ref.cast().map_err(Into::into),
+        // SAFETY: caller guarantees correct type
+        not(PyPy) => Ok(unsafe { bound_ref.cast_unchecked() }),
+
+    }
+}
+
+/// The standard implementation of how PyO3 extracts a `#[pyfunction]` or `#[pymethod]` function argument.
+pub fn extract_argument<'a, 'holder, 'py, T, const IMPLEMENTS_FROMPYOBJECT: bool>(
+    obj: Borrowed<'a, 'py, PyAny>,
+    holder: &'holder mut T::Holder,
+    arg_name: &str,
+) -> PyResult<T>
+where
+    T: PyFunctionArgument<'a, 'holder, 'py, IMPLEMENTS_FROMPYOBJECT>,
+{
+    match PyFunctionArgument::extract(obj, holder) {
+        Ok(value) => Ok(value),
+        Err(e) => Err(argument_extraction_error(obj.py(), arg_name, e.into())),
     }
 }
 
 /// Alternative to [`extract_argument`] used when the argument has a default value provided by an annotation.
-#[doc(hidden)]
-pub fn extract_argument_with_default<'a, 'py, T>(
-    obj: Option<&'a Bound<'py, PyAny>>,
-    holder: &'a mut T::Holder,
+pub fn extract_argument_with_default<'a, 'holder, 'py, T, const IMPLEMENTS_FROMPYOBJECT: bool>(
+    obj: Option<Borrowed<'a, 'py, PyAny>>,
+    holder: &'holder mut T::Holder,
     arg_name: &str,
     default: fn() -> T,
 ) -> PyResult<T>
 where
-    T: PyFunctionArgument<'a, 'py>,
+    T: PyFunctionArgument<'a, 'holder, 'py, IMPLEMENTS_FROMPYOBJECT>,
 {
     match obj {
         Some(obj) => extract_argument(obj, holder, arg_name),
@@ -167,24 +323,22 @@ where
 }
 
 /// Alternative to [`extract_argument`] used when the argument has a `#[pyo3(from_py_with)]` annotation.
-#[doc(hidden)]
 pub fn from_py_with<'a, 'py, T>(
     obj: &'a Bound<'py, PyAny>,
     arg_name: &str,
-    extractor: impl Into<super::frompyobject::Extractor<'a, 'py, T>>,
+    extractor: fn(&'a Bound<'py, PyAny>) -> PyResult<T>,
 ) -> PyResult<T> {
-    match extractor.into().call(obj) {
+    match extractor(obj) {
         Ok(value) => Ok(value),
         Err(e) => Err(argument_extraction_error(obj.py(), arg_name, e)),
     }
 }
 
 /// Alternative to [`extract_argument`] used when the argument has a `#[pyo3(from_py_with)]` annotation and also a default value.
-#[doc(hidden)]
 pub fn from_py_with_with_default<'a, 'py, T>(
     obj: Option<&'a Bound<'py, PyAny>>,
     arg_name: &str,
-    extractor: impl Into<super::frompyobject::Extractor<'a, 'py, T>>,
+    extractor: fn(&'a Bound<'py, PyAny>) -> PyResult<T>,
     default: fn() -> T,
 ) -> PyResult<T> {
     match obj {
@@ -197,23 +351,14 @@ pub fn from_py_with_with_default<'a, 'py, T>(
 ///
 /// Only modifies TypeError. (Cannot guarantee all exceptions have constructors from
 /// single string.)
-#[doc(hidden)]
 #[cold]
 pub fn argument_extraction_error(py: Python<'_>, arg_name: &str, error: PyErr) -> PyErr {
-    if error
-        .get_type_bound(py)
-        .is(&py.get_type_bound::<PyTypeError>())
-    {
-        let remapped_error = PyTypeError::new_err(format!(
-            "argument '{}': {}",
-            arg_name,
-            error.value_bound(py)
-        ));
-        remapped_error.set_cause(py, error.cause(py));
-        remapped_error
-    } else {
-        error
-    }
+    if let Ok(msg) = crate::py_format!(py, "while processing '{arg_name}'") {
+        let _ = error
+            .value(py)
+            .call_method1(crate::intern!(py, "add_note"), (msg,));
+    };
+    error
 }
 
 /// Unwraps the Option<&PyAny> produced by the FunctionDescription `extract_arguments_` methods.
@@ -221,18 +366,81 @@ pub fn argument_extraction_error(py: Python<'_>, arg_name: &str, error: PyErr) -
 ///
 /// # Safety
 /// `argument` must not be `None`
-#[doc(hidden)]
 #[inline]
 pub unsafe fn unwrap_required_argument<'a, 'py>(
+    argument: Option<Borrowed<'a, 'py, PyAny>>,
+) -> Borrowed<'a, 'py, PyAny> {
+    match argument {
+        Some(value) => value,
+        #[cfg(debug_assertions)]
+        None => unreachable!("required method argument was not extracted"),
+        // SAFETY: invariant of calling this function. Enforced by the macros.
+        #[cfg(not(debug_assertions))]
+        None => unsafe { core::hint::unreachable_unchecked() },
+    }
+}
+
+/// Variant of above used with `from_py_with` extractors on required arguments.
+#[inline]
+pub unsafe fn unwrap_required_argument_bound<'a, 'py>(
     argument: Option<&'a Bound<'py, PyAny>>,
 ) -> &'a Bound<'py, PyAny> {
     match argument {
         Some(value) => value,
         #[cfg(debug_assertions)]
         None => unreachable!("required method argument was not extracted"),
+        // SAFETY: invariant of calling this function. Enforced by the macros.
         #[cfg(not(debug_assertions))]
-        None => std::hint::unreachable_unchecked(),
+        None => unsafe { core::hint::unreachable_unchecked() },
     }
+}
+
+/// Cast a raw `*mut ffi::PyObject` to a `PyArg`. This is used to access safer PyO3
+/// APIs with the assumption that the borrowed argument is valid for the lifetime `'py`.
+///
+/// This has the effect of limiting the lifetime of function arguments to `'py`, i.e.
+/// avoiding accidentally creating `'static` lifetimes from raw pointers.
+///
+/// # Safety
+/// - `raw_arg` must be a valid `*mut ffi::PyObject` for the lifetime `'py`.
+/// - `raw_arg` must not be NULL.
+#[inline]
+pub unsafe fn cast_function_argument<'py>(
+    py: Python<'py>,
+    raw_arg: *mut ffi::PyObject,
+) -> PyArg<'py> {
+    // Safety: caller upholds the invariants
+    unsafe { Borrowed::from_ptr_unchecked(py, raw_arg) }
+}
+
+/// Cast a `NonNull<ffi::PyObject>` to a `PyArg`. This is used to access safer PyO3
+/// APIs with the assumption that the borrowed argument is valid for the lifetime `'py`.
+///
+/// This has the effect of limiting the lifetime of function arguments to `'py`, i.e.
+/// avoiding accidentally creating `'static` lifetimes from raw pointers.
+///
+/// # Safety
+/// - `raw_arg` must be a valid `NonNull<ffi::PyObject>` for the lifetime `'py`.
+#[inline]
+pub unsafe fn cast_non_null_function_argument<'py>(
+    py: Python<'py>,
+    raw_arg: NonNull<ffi::PyObject>,
+) -> PyArg<'py> {
+    // Safety: caller upholds the invariants
+    unsafe { Borrowed::from_non_null(py, raw_arg) }
+}
+
+/// As above, but for optional arguments which may be NULL.
+///
+/// # Safety
+/// - `raw_arg` must be a valid `*mut ffi::PyObject` for the lifetime `'py`, or NULL.
+#[inline]
+pub unsafe fn cast_optional_function_argument<'py>(
+    py: Python<'py>,
+    raw_arg: *mut ffi::PyObject,
+) -> Option<PyArg<'py>> {
+    // Safety: caller upholds the invariants
+    unsafe { Borrowed::from_ptr_or_opt(py, raw_arg) }
 }
 
 pub struct KeywordOnlyParameterDescription {
@@ -265,7 +473,7 @@ impl FunctionDescription {
     /// - `args` must be a pointer to a C-style array of valid `ffi::PyObject` pointers, or NULL.
     /// - `kwnames` must be a pointer to a PyTuple, or NULL.
     /// - `nargs + kwnames.len()` is the total length of the `args` array.
-    #[cfg(not(Py_LIMITED_API))]
+    #[cfg(any(Py_3_10, not(Py_LIMITED_API)))]
     pub unsafe fn extract_arguments_fastcall<'py, V, K>(
         &self,
         py: Python<'py>,
@@ -302,9 +510,10 @@ impl FunctionDescription {
             // the rest are varargs.
             let positional_args_to_consume =
                 num_positional_parameters.min(positional_args_provided);
-            let (positional_parameters, remaining) =
-                std::slice::from_raw_parts(args, positional_args_provided)
-                    .split_at(positional_args_to_consume);
+            let (positional_parameters, remaining) = unsafe {
+                core::slice::from_raw_parts(args, positional_args_provided)
+                    .split_at(positional_args_to_consume)
+            };
             output[..positional_args_to_consume].copy_from_slice(positional_parameters);
             remaining
         };
@@ -315,14 +524,17 @@ impl FunctionDescription {
 
         // Safety: kwnames is known to be a pointer to a tuple, or null
         //  - we both have the GIL and can borrow this input reference for the `'py` lifetime.
-        let kwnames: Option<Borrowed<'_, '_, PyTuple>> =
-            Borrowed::from_ptr_or_opt(py, kwnames).map(|kwnames| kwnames.downcast_unchecked());
+        let kwnames: Option<Borrowed<'_, '_, PyTuple>> = unsafe {
+            Borrowed::from_ptr_or_opt(py, kwnames).map(|kwnames| kwnames.cast_unchecked())
+        };
         if let Some(kwnames) = kwnames {
-            // Safety: PyArg has the same memory layout as `*mut ffi::PyObject`
-            let kwargs = ::std::slice::from_raw_parts(
-                (args as *const PyArg<'py>).offset(nargs),
-                kwnames.len(),
-            );
+            let kwargs = unsafe {
+                ::core::slice::from_raw_parts(
+                    // Safety: PyArg has the same memory layout as `*mut ffi::PyObject`
+                    args.offset(nargs).cast::<PyArg<'py>>(),
+                    kwnames.len(),
+                )
+            };
 
             self.handle_kwargs::<K, _>(
                 kwnames.iter_borrowed().zip(kwargs.iter().copied()),
@@ -368,9 +580,9 @@ impl FunctionDescription {
         //  - `kwargs` is known to be a dict or null
         //  - we both have the GIL and can borrow these input references for the `'py` lifetime.
         let args: Borrowed<'py, 'py, PyTuple> =
-            Borrowed::from_ptr(py, args).downcast_unchecked::<PyTuple>();
+            unsafe { Borrowed::from_ptr(py, args).cast_unchecked::<PyTuple>() };
         let kwargs: Option<Borrowed<'py, 'py, PyDict>> =
-            Borrowed::from_ptr_or_opt(py, kwargs).map(|kwargs| kwargs.downcast_unchecked());
+            unsafe { Borrowed::from_ptr_or_opt(py, kwargs).map(|kwargs| kwargs.cast_unchecked()) };
 
         let num_positional_parameters = self.positional_parameter_names.len();
 
@@ -397,7 +609,7 @@ impl FunctionDescription {
         let mut varkeywords = K::Varkeywords::default();
         if let Some(kwargs) = kwargs {
             self.handle_kwargs::<K, _>(
-                kwargs.iter_borrowed(),
+                unsafe { kwargs.iter_borrowed() },
                 &mut varkeywords,
                 num_positional_parameters,
                 output,
@@ -437,8 +649,7 @@ impl FunctionDescription {
             // Safety: All keyword arguments should be UTF-8 strings, but if it's not, `.to_str()`
             // will return an error anyway.
             #[cfg(any(Py_3_10, not(Py_LIMITED_API)))]
-            let kwarg_name =
-                unsafe { kwarg_name_py.downcast_unchecked::<crate::types::PyString>() }.to_str();
+            let kwarg_name = unsafe { kwarg_name_py.cast_unchecked::<PyString>() }.to_str();
 
             #[cfg(all(not(Py_3_10), Py_LIMITED_API))]
             let kwarg_name = kwarg_name_py.extract::<crate::pybacked::PyBackedStr>();
@@ -464,7 +675,7 @@ impl FunctionDescription {
                 if let Some(i) = self.find_keyword_parameter_in_positional(kwarg_name) {
                     if i < self.positional_only_parameters {
                         // If accepting **kwargs, then it's allowed for the name of the
-                        // kwarg to conflict with a postional-only argument - the value
+                        // kwarg to conflict with a positional-only argument - the value
                         // will go into **kwargs anyway.
                         if K::handle_varkeyword(varkeywords, kwarg_name_py, value, self).is_err() {
                             positional_only_keyword_arguments.push(kwarg_name_owned);
@@ -483,7 +694,7 @@ impl FunctionDescription {
             #[cfg(all(not(Py_3_10), Py_LIMITED_API))]
             let positional_only_keyword_arguments: Vec<_> = positional_only_keyword_arguments
                 .iter()
-                .map(std::ops::Deref::deref)
+                .map(core::ops::Deref::deref)
                 .collect();
             return Err(self.positional_only_keyword_arguments(&positional_only_keyword_arguments));
         }
@@ -644,8 +855,18 @@ impl FunctionDescription {
     }
 }
 
+/// Seals `VarargsHandler` so that types outside PyO3 cannot implement it.
+mod varargs_handler {
+    use crate::impl_::extract_argument::{NoVarargs, TupleVarargs};
+
+    pub trait Sealed {}
+
+    impl Sealed for NoVarargs {}
+    impl Sealed for TupleVarargs {}
+}
+
 /// A trait used to control whether to accept varargs in FunctionDescription::extract_argument_(method) functions.
-pub trait VarargsHandler<'py> {
+pub trait VarargsHandler<'py>: varargs_handler::Sealed {
     type Varargs;
     /// Called by `FunctionDescription::extract_arguments_fastcall` with any additional arguments.
     fn handle_varargs_fastcall(
@@ -709,7 +930,7 @@ impl<'py> VarargsHandler<'py> for TupleVarargs {
         varargs: &[Option<PyArg<'py>>],
         _function_description: &FunctionDescription,
     ) -> PyResult<Self::Varargs> {
-        Ok(PyTuple::new_bound(py, varargs))
+        PyTuple::new(py, varargs)
     }
 
     #[inline]
@@ -722,8 +943,18 @@ impl<'py> VarargsHandler<'py> for TupleVarargs {
     }
 }
 
+/// Seals `VarkeywordsHandler` so that types outside PyO3 cannot implement it.
+mod varkeywords_halder {
+    use crate::impl_::extract_argument::{DictVarkeywords, NoVarkeywords};
+
+    pub trait Sealed {}
+
+    impl Sealed for DictVarkeywords {}
+    impl Sealed for NoVarkeywords {}
+}
+
 /// A trait used to control whether to accept varkeywords in FunctionDescription::extract_argument_(method) functions.
-pub trait VarkeywordsHandler<'py> {
+pub trait VarkeywordsHandler<'py>: varkeywords_halder::Sealed {
     type Varkeywords: Default;
     fn handle_varkeyword(
         varkeywords: &mut Self::Varkeywords,
@@ -762,7 +993,7 @@ impl<'py> VarkeywordsHandler<'py> for DictVarkeywords {
         _function_description: &FunctionDescription,
     ) -> PyResult<()> {
         varkeywords
-            .get_or_insert_with(|| PyDict::new_bound(name.py()))
+            .get_or_insert_with(|| PyDict::new(name.py()))
             .set_item(name, value)
     }
 }
@@ -790,10 +1021,8 @@ fn push_parameter_list(msg: &mut String, parameter_names: &[&str]) {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        types::{IntoPyDict, PyTuple},
-        PyAny, Python,
-    };
+    use crate::types::{IntoPyDict, PyTuple};
+    use crate::Python;
 
     use super::{push_parameter_list, FunctionDescription, NoVarargs, NoVarkeywords};
 
@@ -808,9 +1037,9 @@ mod tests {
             keyword_only_parameters: &[],
         };
 
-        Python::with_gil(|py| {
-            let args = PyTuple::new_bound(py, Vec::<&PyAny>::new());
-            let kwargs = [("foo", 0u8)].into_py_dict_bound(py);
+        Python::attach(|py| {
+            let args = PyTuple::empty(py);
+            let kwargs = [("foo", 0u8)].into_py_dict(py).unwrap();
             let err = unsafe {
                 function_description
                     .extract_arguments_tuple_dict::<NoVarargs, NoVarkeywords>(
@@ -839,9 +1068,9 @@ mod tests {
             keyword_only_parameters: &[],
         };
 
-        Python::with_gil(|py| {
-            let args = PyTuple::new_bound(py, Vec::<&PyAny>::new());
-            let kwargs = [(1u8, 1u8)].into_py_dict_bound(py);
+        Python::attach(|py| {
+            let args = PyTuple::empty(py);
+            let kwargs = [(1u8, 1u8)].into_py_dict(py).unwrap();
             let err = unsafe {
                 function_description
                     .extract_arguments_tuple_dict::<NoVarargs, NoVarkeywords>(
@@ -870,14 +1099,14 @@ mod tests {
             keyword_only_parameters: &[],
         };
 
-        Python::with_gil(|py| {
-            let args = PyTuple::new_bound(py, Vec::<&PyAny>::new());
+        Python::attach(|py| {
+            let args = PyTuple::empty(py);
             let mut output = [None, None];
             let err = unsafe {
                 function_description.extract_arguments_tuple_dict::<NoVarargs, NoVarkeywords>(
                     py,
                     args.as_ptr(),
-                    std::ptr::null_mut(),
+                    core::ptr::null_mut(),
                     &mut output,
                 )
             }

@@ -1,48 +1,64 @@
-use std::os::raw::{c_int, c_void};
+// TODO https://github.com/PyO3/pyo3/issues/5487
+#![allow(clippy::undocumented_unsafe_blocks)]
 
-use crate::{ffi, AsPyPointer, Python};
+use core::{
+    ffi::{c_int, c_void},
+    marker::PhantomData,
+    num::NonZero,
+};
+
+use crate::{ffi, Py};
 
 /// Error returned by a `__traverse__` visitor implementation.
 #[repr(transparent)]
-pub struct PyTraverseError(pub(crate) c_int);
+pub struct PyTraverseError(NonZero<c_int>);
+
+impl PyTraverseError {
+    /// Returns the error code.
+    pub(crate) fn into_inner(self) -> c_int {
+        self.0.into()
+    }
+}
 
 /// Object visitor for GC.
 #[derive(Clone)]
-pub struct PyVisit<'p> {
+pub struct PyVisit<'a> {
     pub(crate) visit: ffi::visitproc,
     pub(crate) arg: *mut c_void,
-    /// VisitProc contains a Python instance to ensure that
-    /// 1) it is cannot be moved out of the traverse() call
-    /// 2) it cannot be sent to other threads
-    pub(crate) _py: Python<'p>,
+    /// Prevents the `PyVisit` from outliving the `__traverse__` call.
+    pub(crate) _guard: PhantomData<&'a ()>,
 }
 
-impl<'p> PyVisit<'p> {
+impl PyVisit<'_> {
     /// Visit `obj`.
-    pub fn call<T>(&self, obj: &T) -> Result<(), PyTraverseError>
+    ///
+    /// Note: `obj` accepts a variety of types, including
+    /// - `&Py<T>`
+    /// - `&Option<Py<T>>`
+    /// - `Option<&Py<T>>`
+    pub fn call<'a, T, U: 'a>(&self, obj: T) -> Result<(), PyTraverseError>
     where
-        T: AsPyPointer,
+        T: Into<Option<&'a Py<U>>>,
     {
-        let ptr = obj.as_ptr();
+        let ptr = obj.into().map_or_else(core::ptr::null_mut, Py::as_ptr);
         if !ptr.is_null() {
-            let r = unsafe { (self.visit)(ptr, self.arg) };
-            if r == 0 {
-                Ok(())
-            } else {
-                Err(PyTraverseError(r))
+            match NonZero::new(unsafe { (self.visit)(ptr, self.arg) }) {
+                None => Ok(()),
+                Some(r) => Err(PyTraverseError(r)),
             }
         } else {
             Ok(())
         }
     }
+}
 
-    /// Creates the PyVisit from the arguments to tp_traverse
-    #[doc(hidden)]
-    pub unsafe fn from_raw(visit: ffi::visitproc, arg: *mut c_void, py: Python<'p>) -> Self {
-        Self {
-            visit,
-            arg,
-            _py: py,
-        }
+#[cfg(test)]
+mod tests {
+    use super::PyVisit;
+    use static_assertions::assert_not_impl_any;
+
+    #[test]
+    fn py_visit_not_send_sync() {
+        assert_not_impl_any!(PyVisit<'_>: Send, Sync);
     }
 }

@@ -1,24 +1,22 @@
 use crate::utils::Ctx;
 use crate::{
-    method::{FnArg, FnSpec},
+    attributes::FromPyWithAttribute,
+    method::{FnArg, FnSpec, RegularArg},
     pyfunction::FunctionSignature,
     quotes::some_wrap,
 };
 use proc_macro2::{Span, TokenStream};
-use quote::{quote, quote_spanned};
+use quote::{format_ident, quote, quote_spanned};
 use syn::spanned::Spanned;
-use syn::Result;
 
 pub struct Holders {
     holders: Vec<syn::Ident>,
-    gil_refs_checkers: Vec<syn::Ident>,
 }
 
 impl Holders {
     pub fn new() -> Self {
         Holders {
             holders: Vec::new(),
-            gil_refs_checkers: Vec::new(),
         }
     }
 
@@ -28,31 +26,13 @@ impl Holders {
         holder
     }
 
-    pub fn push_gil_refs_checker(&mut self, span: Span) -> syn::Ident {
-        let gil_refs_checker = syn::Ident::new(
-            &format!("gil_refs_checker_{}", self.gil_refs_checkers.len()),
-            span,
-        );
-        self.gil_refs_checkers.push(gil_refs_checker.clone());
-        gil_refs_checker
-    }
-
     pub fn init_holders(&self, ctx: &Ctx) -> TokenStream {
-        let Ctx { pyo3_path } = ctx;
+        let Ctx { pyo3_path, .. } = ctx;
         let holders = &self.holders;
-        let gil_refs_checkers = &self.gil_refs_checkers;
         quote! {
-            #[allow(clippy::let_unit_value)]
+            #[allow(clippy::let_unit_value, reason = "many holders are just `()`")]
             #(let mut #holders = #pyo3_path::impl_::extract_argument::FunctionArgumentHolder::INIT;)*
-            #(let #gil_refs_checkers = #pyo3_path::impl_::deprecations::GilRefs::new();)*
         }
-    }
-
-    pub fn check_gil_refs(&self) -> TokenStream {
-        self.gil_refs_checkers
-            .iter()
-            .map(|e| quote_spanned! { e.span() => #e.function_arg(); })
-            .collect()
     }
 }
 
@@ -60,28 +40,8 @@ impl Holders {
 pub fn is_forwarded_args(signature: &FunctionSignature<'_>) -> bool {
     matches!(
         signature.arguments.as_slice(),
-        [
-            FnArg {
-                is_varargs: true,
-                ..
-            },
-            FnArg {
-                is_kwargs: true,
-                ..
-            },
-        ]
+        [FnArg::VarArgs(..), FnArg::KwArgs(..),]
     )
-}
-
-pub(crate) fn check_arg_for_gil_refs(
-    tokens: TokenStream,
-    gil_refs_checker: syn::Ident,
-    ctx: &Ctx,
-) -> TokenStream {
-    let Ctx { pyo3_path } = ctx;
-    quote! {
-        #pyo3_path::impl_::deprecations::inspect_type(#tokens, &#gil_refs_checker)
-    }
 }
 
 pub fn impl_arg_params(
@@ -90,9 +50,9 @@ pub fn impl_arg_params(
     fastcall: bool,
     holders: &mut Holders,
     ctx: &Ctx,
-) -> Result<(TokenStream, Vec<TokenStream>)> {
+) -> (TokenStream, Vec<TokenStream>) {
     let args_array = syn::Ident::new("output", Span::call_site());
-    let Ctx { pyo3_path } = ctx;
+    let Ctx { pyo3_path, .. } = ctx;
 
     let from_py_with = spec
         .signature
@@ -100,13 +60,10 @@ pub fn impl_arg_params(
         .iter()
         .enumerate()
         .filter_map(|(i, arg)| {
-            let from_py_with = &arg.attrs.from_py_with.as_ref()?.value;
-            let from_py_with_holder =
-                syn::Ident::new(&format!("from_py_with_{}", i), Span::call_site());
+            let from_py_with = &arg.from_py_with()?.value;
+            let from_py_with_holder = format_ident!("from_py_with_{}", i);
             Some(quote_spanned! { from_py_with.span() =>
-                let e = #pyo3_path::impl_::deprecations::GilRefs::new();
-                let #from_py_with_holder = #pyo3_path::impl_::deprecations::inspect_fn(#from_py_with, &e);
-                e.from_py_with_arg();
+                let #from_py_with_holder = #from_py_with;
             })
         })
         .collect::<TokenStream>();
@@ -119,42 +76,31 @@ pub fn impl_arg_params(
             .arguments
             .iter()
             .enumerate()
-            .map(|(i, arg)| {
-                let from_py_with =
-                    syn::Ident::new(&format!("from_py_with_{}", i), Span::call_site());
-                let arg_value = quote!(#args_array[0].as_deref());
-
-                impl_arg_param(arg, from_py_with, arg_value, holders, ctx).map(|tokens| {
-                    check_arg_for_gil_refs(
-                        tokens,
-                        holders.push_gil_refs_checker(arg.ty.span()),
-                        ctx,
-                    )
-                })
-            })
-            .collect::<Result<_>>()?;
-        return Ok((
+            .map(|(i, arg)| impl_arg_param(arg, i, &mut 0, holders, ctx))
+            .collect();
+        return (
             quote! {
-                let _args = #pyo3_path::impl_::pymethods::BoundRef::ref_from_ptr(py, &_args);
-                let _kwargs = #pyo3_path::impl_::pymethods::BoundRef::ref_from_ptr_or_opt(py, &_kwargs);
+                let _args = unsafe { #pyo3_path::impl_::extract_argument::cast_function_argument(py, _args) };
+                let _kwargs = unsafe { #pyo3_path::impl_::extract_argument::cast_optional_function_argument(py, _kwargs) };
                 #from_py_with
             },
             arg_convert,
-        ));
+        );
     };
 
     let positional_parameter_names = &spec.signature.python_signature.positional_parameters;
     let positional_only_parameters = &spec.signature.python_signature.positional_only_parameters;
-    let required_positional_parameters = &spec
+    let required_positional_parameters = spec
         .signature
         .python_signature
-        .required_positional_parameters;
+        .required_positional_parameters();
     let keyword_only_parameters = spec
         .signature
         .python_signature
         .keyword_only_parameters
         .iter()
-        .map(|(name, required)| {
+        .map(|(name, default_value)| {
+            let required = default_value.is_none();
             quote! {
                 #pyo3_path::impl_::extract_argument::KeywordOnlyParameterDescription {
                     name: #name,
@@ -171,18 +117,8 @@ pub fn impl_arg_params(
         .arguments
         .iter()
         .enumerate()
-        .map(|(i, arg)| {
-            let from_py_with = syn::Ident::new(&format!("from_py_with_{}", i), Span::call_site());
-            let arg_value = quote!(#args_array[#option_pos].as_deref());
-            if arg.is_regular() {
-                option_pos += 1;
-            }
-
-            impl_arg_param(arg, from_py_with, arg_value, holders, ctx).map(|tokens| {
-                check_arg_for_gil_refs(tokens, holders.push_gil_refs_checker(arg.ty.span()), ctx)
-            })
-        })
-        .collect::<Result<_>>()?;
+        .map(|(i, arg)| impl_arg_param(arg, i, &mut option_pos, holders, ctx))
+        .collect();
 
     let args_handler = if spec.signature.python_signature.varargs.is_some() {
         quote! { #pyo3_path::impl_::extract_argument::TupleVarargs }
@@ -196,7 +132,7 @@ pub fn impl_arg_params(
     };
 
     let cls_name = if let Some(cls) = self_ {
-        quote! { ::std::option::Option::Some(<#cls as #pyo3_path::type_object::PyTypeInfo>::NAME) }
+        quote! { ::std::option::Option::Some(<#cls as #pyo3_path::PyClass>::NAME) }
     } else {
         quote! { ::std::option::Option::None }
     };
@@ -204,12 +140,15 @@ pub fn impl_arg_params(
 
     let extract_expression = if fastcall {
         quote! {
-            DESCRIPTION.extract_arguments_fastcall::<#args_handler, #kwargs_handler>(
+            #pyo3_path::impl_::pymethods::maybe_extract_arguments_fastcall!(
+                DESCRIPTION,
                 py,
                 _args,
                 _nargs,
-                _kwnames,
-                &mut #args_array
+                _kwargs,
+                #args_array,
+                #args_handler,
+                #kwargs_handler
             )?
         }
     } else {
@@ -224,7 +163,7 @@ pub fn impl_arg_params(
     };
 
     // create array of arguments, and then parse
-    Ok((
+    (
         quote! {
                 const DESCRIPTION: #pyo3_path::impl_::extract_argument::FunctionDescription = #pyo3_path::impl_::extract_argument::FunctionDescription {
                     cls_name: #cls_name,
@@ -239,142 +178,141 @@ pub fn impl_arg_params(
                 #from_py_with
         },
         param_conversion,
-    ))
+    )
+}
+
+fn impl_arg_param(
+    arg: &FnArg<'_>,
+    pos: usize,
+    option_pos: &mut usize,
+    holders: &mut Holders,
+    ctx: &Ctx,
+) -> TokenStream {
+    let Ctx { pyo3_path, .. } = ctx;
+    let args_array = syn::Ident::new("output", Span::call_site());
+
+    match arg {
+        FnArg::Regular(arg) => {
+            let from_py_with = format_ident!("from_py_with_{}", pos);
+            let arg_value = quote!(#args_array[#option_pos]);
+            *option_pos += 1;
+            impl_regular_arg_param(arg, from_py_with, arg_value, holders, ctx)
+        }
+        FnArg::VarArgs(arg) => {
+            let span = Span::call_site().located_at(arg.ty.span());
+            let holder = holders.push_holder(span);
+            let name_str = arg.name.to_string();
+            quote_spanned! { span =>
+                #pyo3_path::impl_::extract_argument::extract_argument(
+                    _args.as_any().as_borrowed(),
+                    &mut #holder,
+                    #name_str
+                )?
+            }
+        }
+        FnArg::KwArgs(arg) => {
+            let span = Span::call_site().located_at(arg.ty.span());
+            let holder = holders.push_holder(span);
+            let name_str = arg.name.to_string();
+            quote_spanned! { span =>
+                #pyo3_path::impl_::extract_argument::extract_argument_with_default(
+                    _kwargs.as_ref().map(|d| d.as_any().as_borrowed()),
+                    &mut #holder,
+                    #name_str,
+                    || ::std::option::Option::None
+                )?
+            }
+        }
+        FnArg::Py(arg) => {
+            let span = Span::call_site().located_at(arg.ty.span());
+            quote_spanned! { span => py }
+        }
+        FnArg::CancelHandle(arg) => {
+            let span = Span::call_site().located_at(arg.ty.span());
+            quote_spanned! { span => __cancel_handle }
+        }
+    }
 }
 
 /// Re option_pos: The option slice doesn't contain the py: Python argument, so the argument
 /// index and the index in option diverge when using py: Python
-pub(crate) fn impl_arg_param(
-    arg: &FnArg<'_>,
+pub(crate) fn impl_regular_arg_param(
+    arg: &RegularArg<'_>,
     from_py_with: syn::Ident,
     arg_value: TokenStream, // expected type: Option<&'a Bound<'py, PyAny>>
     holders: &mut Holders,
     ctx: &Ctx,
-) -> Result<TokenStream> {
-    let Ctx { pyo3_path } = ctx;
+) -> TokenStream {
+    let Ctx { pyo3_path, .. } = ctx;
     let pyo3_path = pyo3_path.to_tokens_spanned(arg.ty.span());
 
     // Use this macro inside this function, to ensure that all code generated here is associated
     // with the function argument
+    let use_probe = quote! {
+        #[allow(unused_imports, reason = "`Probe` trait used on negative case only")]
+        use #pyo3_path::impl_::pyclass::Probe as _;
+    };
     macro_rules! quote_arg_span {
-        ($($tokens:tt)*) => { quote_spanned!(arg.ty.span() => $($tokens)*) }
+        ($($tokens:tt)*) => { quote_spanned!(arg.ty.span() => { #use_probe $($tokens)* }) }
     }
 
-    if arg.py {
-        return Ok(quote! { py });
-    }
-
-    if arg.is_cancel_handle {
-        return Ok(quote! { __cancel_handle });
-    }
-
-    let name = arg.name;
-    let name_str = name.to_string();
-
-    if arg.is_varargs {
-        ensure_spanned!(
-            arg.optional.is_none(),
-            arg.name.span() => "args cannot be optional"
-        );
-        let holder = holders.push_holder(arg.ty.span());
-        return Ok(quote_arg_span! {
-            #pyo3_path::impl_::extract_argument::extract_argument(
-                &_args,
-                &mut #holder,
-                #name_str
-            )?
-        });
-    } else if arg.is_kwargs {
-        ensure_spanned!(
-            arg.optional.is_some(),
-            arg.name.span() => "kwargs must be Option<_>"
-        );
-        let holder = holders.push_holder(arg.name.span());
-        return Ok(quote_arg_span! {
-            #pyo3_path::impl_::extract_argument::extract_optional_argument(
-                _kwargs.as_deref(),
-                &mut #holder,
-                #name_str,
-                || ::std::option::Option::None
-            )?
-        });
-    }
-
-    let mut default = arg.default.as_ref().map(|expr| quote!(#expr));
+    let name_str = arg.name.to_string();
+    let mut default = arg.default_value.as_ref().map(|expr| quote!(#expr));
 
     // Option<T> arguments have special treatment: the default should be specified _without_ the
     // Some() wrapper. Maybe this should be changed in future?!
-    if arg.optional.is_some() {
-        default = Some(default.map_or_else(
-            || quote!(::std::option::Option::None),
-            |tokens| some_wrap(tokens, ctx),
-        ));
+    if arg.option_wrapped_type.is_some() {
+        default = default.map(|tokens| some_wrap(tokens, ctx));
     }
 
-    let tokens = if arg
-        .attrs
-        .from_py_with
-        .as_ref()
-        .map(|attr| &attr.value)
-        .is_some()
-    {
+    if let Some(FromPyWithAttribute { kw, .. }) = &arg.from_py_with.as_deref() {
+        let extractor = quote_spanned! { kw.span =>
+            { let from_py_with: fn(_) -> _ = #from_py_with; from_py_with }
+        };
         if let Some(default) = default {
             quote_arg_span! {
                 #pyo3_path::impl_::extract_argument::from_py_with_with_default(
-                    #arg_value,
+                    #arg_value.as_deref(),
                     #name_str,
-                    #from_py_with as fn(_) -> _,
-                    #[allow(clippy::redundant_closure)]
+                    #extractor,
+                    #[allow(clippy::redundant_closure, reason = "wrapping user-provided default expression")]
                     {
                         || #default
                     }
                 )?
             }
         } else {
+            let unwrap = quote! {unsafe { #pyo3_path::impl_::extract_argument::unwrap_required_argument_bound(#arg_value.as_deref()) }};
             quote_arg_span! {
                 #pyo3_path::impl_::extract_argument::from_py_with(
-                    #pyo3_path::impl_::extract_argument::unwrap_required_argument(#arg_value),
+                    #unwrap,
                     #name_str,
-                    #from_py_with as fn(_) -> _,
+                    #extractor,
                 )?
             }
         }
-    } else if arg.optional.is_some() {
-        let holder = holders.push_holder(arg.name.span());
-        quote_arg_span! {
-            #pyo3_path::impl_::extract_argument::extract_optional_argument(
-                #arg_value,
-                &mut #holder,
-                #name_str,
-                #[allow(clippy::redundant_closure)]
-                {
-                    || #default
-                }
-            )?
-        }
     } else if let Some(default) = default {
-        let holder = holders.push_holder(arg.name.span());
+        let holder = holders.push_holder(arg.ty.span());
         quote_arg_span! {
             #pyo3_path::impl_::extract_argument::extract_argument_with_default(
                 #arg_value,
                 &mut #holder,
                 #name_str,
-                #[allow(clippy::redundant_closure)]
+                #[allow(clippy::redundant_closure, reason = "wrapping user-provided default expression")]
                 {
                     || #default
                 }
             )?
         }
     } else {
-        let holder = holders.push_holder(arg.name.span());
+        let holder = holders.push_holder(arg.ty.span());
+        let unwrap = quote! { unsafe { #pyo3_path::impl_::extract_argument::unwrap_required_argument(#arg_value) } };
         quote_arg_span! {
             #pyo3_path::impl_::extract_argument::extract_argument(
-                #pyo3_path::impl_::extract_argument::unwrap_required_argument(#arg_value),
+                #unwrap,
                 &mut #holder,
                 #name_str
             )?
         }
-    };
-
-    Ok(tokens)
+    }
 }

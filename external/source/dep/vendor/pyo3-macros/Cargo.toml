@@ -11,11 +11,19 @@
 
 [package]
 edition = "2021"
+rust-version = "1.83"
 name = "pyo3-macros"
-version = "0.21.2"
+version = "0.29.0"
 authors = ["PyO3 Project and Contributors <https://github.com/PyO3>"]
+build = false
+autolib = false
+autobins = false
+autoexamples = false
+autotests = false
+autobenches = false
 description = "Proc macros for PyO3 package"
 homepage = "https://github.com/pyo3/pyo3"
+readme = false
 keywords = [
     "pyo3",
     "python",
@@ -29,15 +37,22 @@ categories = [
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/pyo3/pyo3"
 
+[features]
+experimental-async = ["pyo3-macros-backend/experimental-async"]
+experimental-inspect = ["pyo3-macros-backend/experimental-inspect"]
+multiple-pymethods = []
+
 [lib]
+name = "pyo3_macros"
+path = "src/lib.rs"
 proc-macro = true
 
 [dependencies.proc-macro2]
-version = "1"
+version = "1.0.60"
 default-features = false
 
 [dependencies.pyo3-macros-backend]
-version = "=0.21.2"
+version = "=0.29.0"
 
 [dependencies.quote]
 version = "1"
@@ -48,11 +63,6 @@ features = [
     "full",
     "extra-traits",
 ]
-
-[features]
-experimental-async = ["pyo3-macros-backend/experimental-async"]
-experimental-declarative-modules = []
-multiple-pymethods = []
 
 [lints.clippy]
 checked_conversions = "warn"
@@ -65,6 +75,7 @@ let_unit_value = "warn"
 manual_assert = "warn"
 manual_ok_or = "warn"
 todo = "warn"
+undocumented_unsafe_blocks = "warn"
 unnecessary_wraps = "warn"
 used_underscore_binding = "warn"
 useless_transmute = "warn"
@@ -72,9 +83,21 @@ useless_transmute = "warn"
 [lints.rust]
 elided_lifetimes_in_paths = "warn"
 invalid_doc_attributes = "warn"
-rust_2018_idioms = "warn"
 rust_2021_prelude_collisions = "warn"
+unsafe_op_in_unsafe_fn = "warn"
 unused_lifetimes = "warn"
+
+[lints.rust.rust_2018_idioms]
+level = "warn"
+priority = -1
+
+[lints.rust.unexpected_cfgs]
+level = "warn"
+priority = 0
+check-cfg = [
+    "cfg(pyo3_disable_reference_pool)",
+    "cfg(pyo3_leak_on_drop_without_reference_pool)",
+]
 
 [lints.rustdoc]
 bare_urls = "warn"

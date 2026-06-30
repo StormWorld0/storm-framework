@@ -1,19 +1,23 @@
-#![cfg(feature = "experimental-declarative-modules")]
+#![cfg(feature = "macros")]
+
+use std::sync::OnceLock;
 
 use pyo3::create_exception;
 use pyo3::exceptions::PyException;
 use pyo3::prelude::*;
-#[cfg(not(Py_LIMITED_API))]
-use pyo3::types::PyBool;
+use pyo3::sync::OnceLockExt;
 
-#[path = "../src/tests/common.rs"]
-mod common;
+mod test_utils;
 
 mod some_module {
+    use pyo3::create_exception;
+    use pyo3::exceptions::PyException;
     use pyo3::prelude::*;
 
     #[pyclass]
     pub struct SomePyClass;
+
+    create_exception!(some_module, SomeException, PyException);
 }
 
 #[pyclass]
@@ -30,7 +34,7 @@ impl ValueClass {
 }
 
 #[pyclass(module = "module")]
-struct LocatedClass {}
+pub struct LocatedClass {}
 
 #[pyfunction]
 fn double(x: usize) -> usize {
@@ -43,6 +47,9 @@ create_exception!(
     PyException,
     "Some description."
 );
+
+#[pymodule(submodule)]
+mod external_submodule {}
 
 /// A module written using declarative syntax.
 #[pymodule]
@@ -61,6 +68,27 @@ mod declarative_module {
     #[pymodule_export]
     use super::some_module::SomePyClass;
 
+    // test for #4036
+    #[pymodule_export]
+    use super::some_module::SomeException;
+
+    #[pymodule_export]
+    use super::external_submodule;
+
+    #[pymodule_export]
+    const FOO: u32 = 42;
+
+    #[pymodule_export]
+    #[cfg(Py_LIMITED_API)]
+    const BAR: &str = "BAR";
+
+    #[pymodule_export]
+    #[expect(non_upper_case_globals)]
+    const r#type: char = '!';
+
+    #[expect(unused)]
+    const NOT_EXPORTED: &str = "not exported";
+
     #[pymodule]
     mod inner {
         use super::*;
@@ -70,7 +98,7 @@ mod declarative_module {
             x * 3
         }
 
-        #[pyclass]
+        #[pyclass(name = "Struct")]
         struct Struct;
 
         #[pymethods]
@@ -81,12 +109,35 @@ mod declarative_module {
             }
         }
 
-        #[pyclass]
+        #[pyclass(module = "foo")]
+        struct StructInCustomModule;
+
+        #[pyclass(eq, eq_int, name = "Enum")]
+        #[derive(PartialEq)]
         enum Enum {
             A,
             B,
         }
+
+        #[pyclass(eq, eq_int, module = "foo")]
+        #[derive(PartialEq)]
+        enum EnumInCustomModule {
+            A,
+            B,
+        }
     }
+
+    #[pymodule]
+    #[pyo3(module = "custom_root")]
+    mod inner_custom_root {
+        use super::*;
+
+        #[pyclass]
+        struct Struct;
+    }
+
+    #[pyo3::prelude::pymodule]
+    mod full_path_inner {}
 
     #[pymodule_init]
     fn init(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -99,23 +150,30 @@ fn double_value(v: &ValueClass) -> usize {
     v.value * 2
 }
 
-#[pymodule]
+#[pymodule(module = "declarative_module")]
 mod declarative_submodule {
     #[pymodule_export]
     use super::{double, double_value};
 }
 
-#[pymodule]
-#[pyo3(name = "declarative_module_renamed")]
+#[pymodule(name = "declarative_module_renamed")]
 mod declarative_module2 {
     #[pymodule_export]
     use super::double;
 }
 
+fn declarative_module(py: Python<'_>) -> &Bound<'_, PyModule> {
+    static MODULE: OnceLock<Py<PyModule>> = OnceLock::new();
+
+    MODULE
+        .get_or_init_py_attached(py, || pyo3::wrap_pymodule!(declarative_module)(py))
+        .bind(py)
+}
+
 #[test]
 fn test_declarative_module() {
-    Python::with_gil(|py| {
-        let m = pyo3::wrap_pymodule!(declarative_module)(py).into_bound(py);
+    Python::attach(|py| {
+        let m = declarative_module(py);
         py_assert!(
             py,
             m,
@@ -138,30 +196,32 @@ fn test_declarative_module() {
         py_assert!(py, m, "hasattr(m, 'LocatedClass')");
         py_assert!(py, m, "isinstance(m.inner.Struct(), m.inner.Struct)");
         py_assert!(py, m, "isinstance(m.inner.Enum.A, m.inner.Enum)");
-    })
-}
+        py_assert!(py, m, "hasattr(m, 'external_submodule')");
+        py_assert!(py, m, "m.FOO == 42");
+        #[cfg(Py_LIMITED_API)]
+        py_assert!(py, m, "m.BAR == 'BAR'");
+        #[cfg(not(Py_LIMITED_API))]
+        py_assert!(py, m, "not hasattr(m, 'BAR')");
+        py_assert!(py, m, "m.type == '!'");
+        py_assert!(py, m, "not hasattr(m, 'NOT_EXPORTED')");
 
-#[cfg(not(Py_LIMITED_API))]
-#[pyclass(extends = PyBool)]
-struct ExtendsBool;
+        // submodule dunder name and attribute name
+        // declarative_module.inner is declared inside
+        py_assert!(py, m, "m.inner.__name__ == 'declarative_module.inner'");
+        py_assert!(py, m, "'inner' in m.__dict__");
+        py_assert!(py, m, "'declarative_module.inner' not in m.__dict__");
 
-#[cfg(not(Py_LIMITED_API))]
-#[pymodule]
-mod class_initialization_module {
-    #[pymodule_export]
-    use super::ExtendsBool;
-}
-
-#[test]
-#[cfg(not(Py_LIMITED_API))]
-fn test_class_initialization_fails() {
-    Python::with_gil(|py| {
-        let err = class_initialization_module::_PYO3_DEF
-            .make_module(py)
-            .unwrap_err();
-        assert_eq!(
-            err.to_string(),
-            "RuntimeError: An error occurred while initializing class ExtendsBool"
+        // since declarative_submodule is declared outside, but the parent module name is passed
+        py_assert!(
+            py,
+            m,
+            "m.declarative_submodule.__name__ == 'declarative_module.declarative_submodule'"
+        );
+        py_assert!(py, m, "'declarative_submodule' in m.__dict__");
+        py_assert!(
+            py,
+            m,
+            "'declarative_module.declarative_submodule' not in m.__dict__"
         );
     })
 }
@@ -174,8 +234,40 @@ mod r#type {
 
 #[test]
 fn test_raw_ident_module() {
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         let m = pyo3::wrap_pymodule!(r#type)(py).into_bound(py);
         py_assert!(py, m, "m.double(2) == 4");
+    })
+}
+
+#[test]
+fn test_module_names() {
+    Python::attach(|py| {
+        let m = declarative_module(py);
+        py_assert!(
+            py,
+            m,
+            "m.inner.Struct.__module__ == 'declarative_module.inner'"
+        );
+        py_assert!(py, m, "m.inner.StructInCustomModule.__module__ == 'foo'");
+        py_assert!(
+            py,
+            m,
+            "m.inner.Enum.__module__ == 'declarative_module.inner'"
+        );
+        py_assert!(py, m, "m.inner.EnumInCustomModule.__module__ == 'foo'");
+        py_assert!(
+            py,
+            m,
+            "m.inner_custom_root.Struct.__module__ == 'custom_root.inner_custom_root'"
+        );
+    })
+}
+
+#[test]
+fn test_inner_module_full_path() {
+    Python::attach(|py| {
+        let m = declarative_module(py);
+        py_assert!(py, m, "m.full_path_inner");
     })
 }

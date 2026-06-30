@@ -6,20 +6,25 @@
 //! APIs may may change at any time without documentation in the CHANGELOG and without
 //! breaking semver guarantees.
 
+pub mod callback;
+pub mod concat;
 #[cfg(feature = "experimental-async")]
 pub mod coroutine;
-pub mod deprecations;
+pub mod deprecated;
 pub mod exceptions;
 pub mod extract_argument;
 pub mod freelist;
 pub mod frompyobject;
-pub(crate) mod not_send;
+#[cfg(feature = "experimental-inspect")]
+pub mod introspection;
 pub mod panic;
 pub mod pycell;
 pub mod pyclass;
+pub mod pyclass_init;
 pub mod pyfunction;
 pub mod pymethods;
 pub mod pymodule;
 #[doc(hidden)]
 pub mod trampoline;
+pub mod unindent;
 pub mod wrap;

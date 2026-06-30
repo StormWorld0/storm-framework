@@ -11,10 +11,13 @@
 /// ```
 /// use pyo3::{prelude::*, py_run, types::PyList};
 ///
-/// Python::with_gil(|py| {
-///     let list = PyList::new_bound(py, &[1, 2, 3]);
+/// # fn main() -> PyResult<()> {
+/// Python::attach(|py| {
+///     let list = PyList::new(py, &[1, 2, 3])?;
 ///     py_run!(py, list, "assert list == [1, 2, 3]");
-/// });
+/// # Ok(())
+/// })
+/// # }
 /// ```
 ///
 /// You can use this macro to test pyfunctions or pyclasses quickly.
@@ -44,7 +47,7 @@
 ///     }
 /// }
 ///
-/// Python::with_gil(|py| {
+/// Python::attach(|py| {
 ///     let time = Py::new(py, Time {hour: 8, minute: 43, second: 16}).unwrap();
 ///     let time_as_tuple = (8, 43, 16);
 ///     py_run!(py, time time_as_tuple, r#"
@@ -72,65 +75,100 @@
 ///     }
 /// }
 ///
-/// Python::with_gil(|py| {
-///     let locals = [("C", py.get_type_bound::<MyClass>())].into_py_dict_bound(py);
+/// # fn main() -> PyResult<()> {
+/// Python::attach(|py| {
+///     let locals = [("C", py.get_type::<MyClass>())].into_py_dict(py)?;
 ///     pyo3::py_run!(py, *locals, "c = C()");
-/// });
+/// #   Ok(())
+/// })
+/// # }
 /// ```
 #[macro_export]
 macro_rules! py_run {
+    // unindent the code at compile time
     ($py:expr, $($val:ident)+, $code:literal) => {{
-        $crate::py_run_impl!($py, $($val)+, $crate::indoc::indoc!($code))
-    }};
-    ($py:expr, $($val:ident)+, $code:expr) => {{
-        $crate::py_run_impl!($py, $($val)+, &$crate::unindent::unindent($code))
+        $crate::py_run_impl!($py, $($val)+, $crate::impl_::unindent::unindent!($code))
     }};
     ($py:expr, *$dict:expr, $code:literal) => {{
-        $crate::py_run_impl!($py, *$dict, $crate::indoc::indoc!($code))
+        $crate::py_run_impl!($py, *$dict, $crate::impl_::unindent::unindent!($code))
+    }};
+    // unindent the code at runtime
+    ($py:expr, $($val:ident)+, $code:expr) => {{
+        $crate::py_run_impl!($py, $($val)+, $crate::impl_::unindent::unindent($code))
     }};
     ($py:expr, *$dict:expr, $code:expr) => {{
-        $crate::py_run_impl!($py, *$dict, &$crate::unindent::unindent($code))
+        $crate::py_run_impl!($py, *$dict, $crate::impl_::unindent::unindent($code))
     }};
 }
 
+/// Internal implementation of the `py_run!` macro.
+///
+/// FIXME: this currently unconditionally allocates a `CString`. We should consider making this not so:
+/// - Maybe require users to pass `&CStr` / `CString`?
+/// - Maybe adjust the `unindent` code to produce `&Cstr` / `Cstring`?
 #[macro_export]
 #[doc(hidden)]
 macro_rules! py_run_impl {
     ($py:expr, $($val:ident)+, $code:expr) => {{
         use $crate::types::IntoPyDict;
-        use $crate::ToPyObject;
-        let d = [$((stringify!($val), $val.to_object($py)),)+].into_py_dict_bound($py);
+        use $crate::conversion::IntoPyObject;
+        use $crate::BoundObject;
+        let d = [$((stringify!($val), (&$val).into_pyobject($py).unwrap().into_any().into_bound()),)+].into_py_dict($py).unwrap();
         $crate::py_run_impl!($py, *d, $code)
     }};
     ($py:expr, *$dict:expr, $code:expr) => {{
-        use ::std::option::Option::*;
-        #[allow(unused_imports)]
-        use $crate::PyNativeType;
-        if let ::std::result::Result::Err(e) = $py.run_bound($code, None, Some(&$dict.as_borrowed())) {
+        use ::core::option::Option::*;
+        if let ::core::result::Result::Err(e) = $py.run(&::std::ffi::CString::new($code).unwrap(), None, Some(&$dict)) {
             e.print($py);
             // So when this c api function the last line called printed the error to stderr,
             // the output is only written into a buffer which is never flushed because we
             // panic before flushing. This is where this hack comes into place
-            $py.run_bound("import sys; sys.stderr.flush()", None, None)
+            $py.run(c"import sys; sys.stderr.flush()", None, None)
                 .unwrap();
-            ::std::panic!("{}", $code)
+            ::core::panic!("{}", $code)
         }
     }};
 }
 
 /// Wraps a Rust function annotated with [`#[pyfunction]`](macro@crate::pyfunction).
 ///
-/// This can be used with [`PyModule::add_function`](crate::types::PyModule::add_function) to add free
-/// functions to a [`PyModule`](crate::types::PyModule) - see its documentation for more
+/// This can be used with [`PyModule::add_function`](crate::types::PyModuleMethods::add_function) to
+/// add free functions to a [`PyModule`](crate::types::PyModule) - see its documentation for more
 /// information.
 ///
-/// During the migration from the GIL Ref API to the Bound API, the return type of this macro will
-/// be either the `&'py PyModule` GIL Ref or `Bound<'py, PyModule>` according to the second
-/// argument.
+/// # Examples
+/// ```
+/// use pyo3::prelude::*;
+/// #[pyfunction]
+/// fn add(x: i32, y: i32) -> i32 {
+///     x + y
+/// }
 ///
-/// For backwards compatibility, if the second argument is `Python<'py>` then the return type will
-/// be `&'py PyModule` GIL Ref. To get `Bound<'py, PyModule>`, use the [`crate::wrap_pyfunction_bound!`]
-/// macro instead.
+/// # fn main() -> PyResult<()> {
+/// Python::attach(|py| {
+///     let example = PyModule::from_code(
+///         py,
+///         c"from collections.abc import Callable
+/// def add_two_and_three(add: 'Callable[[int, int], int]') -> int:
+///     return add(2, 3)",
+///         c"example.py",
+///         c"",
+///     )?;
+///
+///     // `add_two_and_three` is a Python function defined in the code above
+///     let add_two_and_three = example.getattr("add_two_and_three")?;
+///
+///     // `add` is a Python function defined by the `#[pyfunction]` macro
+///     let add = wrap_pyfunction!(add, py)?;
+///
+///     let result = add_two_and_three.call1((add,))?.extract::<i32>()?;
+///
+///     assert_eq!(result, 5);
+///
+///     # Ok(())
+/// })
+/// # }
+/// ```
 #[macro_export]
 macro_rules! wrap_pyfunction {
     ($function:path) => {
@@ -144,36 +182,8 @@ macro_rules! wrap_pyfunction {
     };
     ($function:path, $py_or_module:expr) => {{
         use $function as wrapped_pyfunction;
-        let check_gil_refs = $crate::impl_::deprecations::GilRefs::new();
-        let py_or_module =
-            $crate::impl_::deprecations::inspect_type($py_or_module, &check_gil_refs);
-        check_gil_refs.is_python();
         $crate::impl_::pyfunction::WrapPyFunctionArg::wrap_pyfunction(
-            py_or_module,
-            &wrapped_pyfunction::_PYO3_DEF,
-        )
-    }};
-}
-
-/// Wraps a Rust function annotated with [`#[pyfunction]`](macro@crate::pyfunction).
-///
-/// This can be used with [`PyModule::add_function`](crate::types::PyModule::add_function) to add free
-/// functions to a [`PyModule`](crate::types::PyModule) - see its documentation for more information.
-#[macro_export]
-macro_rules! wrap_pyfunction_bound {
-    ($function:path) => {
-        &|py_or_module| {
-            use $function as wrapped_pyfunction;
-            $crate::impl_::pyfunction::WrapPyFunctionArg::wrap_pyfunction(
-                $crate::impl_::pyfunction::OnlyBound(py_or_module),
-                &wrapped_pyfunction::_PYO3_DEF,
-            )
-        }
-    };
-    ($function:path, $py_or_module:expr) => {{
-        use $function as wrapped_pyfunction;
-        $crate::impl_::pyfunction::WrapPyFunctionArg::wrap_pyfunction(
-            $crate::impl_::pyfunction::OnlyBound($py_or_module),
+            $py_or_module,
             &wrapped_pyfunction::_PYO3_DEF,
         )
     }};
@@ -183,7 +193,7 @@ macro_rules! wrap_pyfunction_bound {
 /// Python module.
 ///
 /// Use this together with [`#[pymodule]`](crate::pymodule) and
-/// [`PyModule::add_wrapped`](crate::types::PyModule::add_wrapped).
+/// [`PyModule::add_wrapped`](crate::types::PyModuleMethods::add_wrapped).
 #[macro_export]
 macro_rules! wrap_pymodule {
     ($module:path) => {
@@ -199,21 +209,21 @@ macro_rules! wrap_pymodule {
 /// Add the module to the initialization table in order to make embedded Python code to use it.
 /// Module name is the argument.
 ///
-/// Use it before [`prepare_freethreaded_python`](crate::prepare_freethreaded_python) and
+/// Use it before [`Python::initialize`](crate::marker::Python::initialize) and
 /// leave feature `auto-initialize` off
-#[cfg(not(any(PyPy, GraalPy)))]
+#[cfg(not(any(PyPy, GraalPy, all(Py_LIMITED_API, Py_GIL_DISABLED))))]
 #[macro_export]
 macro_rules! append_to_inittab {
     ($module:ident) => {
         unsafe {
             if $crate::ffi::Py_IsInitialized() != 0 {
-                ::std::panic!(
+                ::core::panic!(
                     "called `append_to_inittab` but a Python interpreter is already running."
                 );
             }
             $crate::ffi::PyImport_AppendInittab(
-                $module::__PYO3_NAME.as_ptr() as *const ::std::os::raw::c_char,
-                ::std::option::Option::Some($module::__pyo3_init),
+                $module::__PYO3_NAME.as_ptr(),
+                ::core::option::Option::Some($module::__pyo3_init),
             );
         }
     };

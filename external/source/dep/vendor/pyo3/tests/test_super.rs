@@ -1,4 +1,5 @@
-#![cfg(all(feature = "macros", not(PyPy)))]
+#![cfg(feature = "macros")]
+#![cfg(not(any(PyPy, GraalPy)))]
 
 use pyo3::{prelude::*, types::PySuper};
 
@@ -25,8 +26,8 @@ struct SubClass {}
 #[pymethods]
 impl SubClass {
     #[new]
-    fn new() -> (Self, BaseClass) {
-        (SubClass {}, BaseClass::new())
+    fn new() -> PyClassInitializer<Self> {
+        PyClassInitializer::from(BaseClass::new()).add_subclass(Self {})
     }
 
     fn method<'py>(self_: &Bound<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
@@ -35,16 +36,15 @@ impl SubClass {
     }
 
     fn method_super_new<'py>(self_: &Bound<'py, Self>) -> PyResult<Bound<'py, PyAny>> {
-        #[cfg_attr(not(feature = "gil-refs"), allow(deprecated))]
-        let super_ = PySuper::new_bound(&self_.get_type(), self_)?;
+        let super_ = PySuper::new(&self_.get_type(), self_)?;
         super_.call_method("method", (), None)
     }
 }
 
 #[test]
 fn test_call_super_method() {
-    Python::with_gil(|py| {
-        let cls = py.get_type_bound::<SubClass>();
+    Python::attach(|py| {
+        let cls = py.get_type::<SubClass>();
         pyo3::py_run!(
             py,
             cls,

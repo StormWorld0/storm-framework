@@ -1,8 +1,8 @@
 /* --- PyStatus ----------------------------------------------- */
 
 use crate::Py_ssize_t;
+use core::ffi::{c_char, c_int, c_ulong};
 use libc::wchar_t;
-use std::os::raw::{c_char, c_int, c_ulong};
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -21,7 +21,7 @@ pub struct PyStatus {
     pub exitcode: c_int,
 }
 
-extern "C" {
+extern_libpython! {
     pub fn PyStatus_Ok() -> PyStatus;
     pub fn PyStatus_Error(err_msg: *const c_char) -> PyStatus;
     pub fn PyStatus_NoMemory() -> PyStatus;
@@ -40,7 +40,7 @@ pub struct PyWideStringList {
     pub items: *mut *mut wchar_t,
 }
 
-extern "C" {
+extern_libpython! {
     pub fn PyWideStringList_Append(list: *mut PyWideStringList, item: *const wchar_t) -> PyStatus;
     pub fn PyWideStringList_Insert(
         list: *mut PyWideStringList,
@@ -70,7 +70,7 @@ pub struct PyPreConfig {
     pub allocator: c_int,
 }
 
-extern "C" {
+extern_libpython! {
     pub fn PyPreConfig_InitPythonConfig(config: *mut PyPreConfig);
     pub fn PyPreConfig_InitIsolatedConfig(config: *mut PyPreConfig);
 }
@@ -93,6 +93,8 @@ pub struct PyConfig {
     pub tracemalloc: c_int,
     #[cfg(Py_3_12)]
     pub perf_profiling: c_int,
+    #[cfg(Py_3_14)]
+    pub remote_debug: c_int,
     pub import_time: c_int,
     #[cfg(Py_3_11)]
     pub code_debug_ranges: c_int,
@@ -103,6 +105,8 @@ pub struct PyConfig {
     #[cfg(Py_3_11)]
     pub dump_refs_file: *mut wchar_t,
     pub malloc_stats: c_int,
+    #[cfg(Py_3_15)]
+    pub pymalloc_hugepages: c_int,
     pub filesystem_encoding: *mut wchar_t,
     pub filesystem_errors: *mut wchar_t,
     pub pycache_prefix: *mut wchar_t,
@@ -141,6 +145,20 @@ pub struct PyConfig {
     pub safe_path: c_int,
     #[cfg(Py_3_12)]
     pub int_max_str_digits: c_int,
+    #[cfg(Py_3_14)]
+    pub thread_inherit_context: c_int,
+    #[cfg(Py_3_14)]
+    pub context_aware_warnings: c_int,
+    #[cfg(all(Py_3_14, target_os = "macos"))]
+    pub use_system_logger: c_int,
+    #[cfg(Py_3_13)]
+    pub cpu_count: c_int,
+    #[cfg(Py_GIL_DISABLED)]
+    pub enable_gil: c_int,
+    #[cfg(all(Py_3_14, Py_GIL_DISABLED))]
+    pub tlbc_enabled: c_int,
+    #[cfg(Py_3_15)]
+    pub lazy_imports: c_int,
     pub pathconfig_warnings: c_int,
     #[cfg(Py_3_10)]
     pub program_name: *mut wchar_t,
@@ -165,6 +183,8 @@ pub struct PyConfig {
     pub run_command: *mut wchar_t,
     pub run_module: *mut wchar_t,
     pub run_filename: *mut wchar_t,
+    #[cfg(Py_3_13)]
+    pub sys_path_0: *mut wchar_t,
     pub _install_importlib: c_int,
     pub _init_main: c_int,
     #[cfg(all(Py_3_9, not(Py_3_12)))]
@@ -173,9 +193,11 @@ pub struct PyConfig {
     pub _is_python_build: c_int,
     #[cfg(all(Py_3_9, not(Py_3_10)))]
     pub _orig_argv: PyWideStringList,
+    #[cfg(all(Py_3_13, py_sys_config = "Py_DEBUG"))]
+    pub run_presite: *mut wchar_t,
 }
 
-extern "C" {
+extern_libpython! {
     pub fn PyConfig_InitPythonConfig(config: *mut PyConfig);
     pub fn PyConfig_InitIsolatedConfig(config: *mut PyConfig);
     pub fn PyConfig_Clear(config: *mut PyConfig);
@@ -210,6 +232,6 @@ extern "C" {
 
 /* --- Helper functions --------------------------------------- */
 
-extern "C" {
+extern_libpython! {
     pub fn Py_GetArgcArgv(argc: *mut c_int, argv: *mut *mut *mut wchar_t);
 }
