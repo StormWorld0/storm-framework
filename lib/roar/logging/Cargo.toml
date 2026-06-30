@@ -8,15 +8,13 @@ name = "smf"
 crate-type = ["cdylib"]
 
 [dependencies]
-# abi3-py37 memastikan biner kompatibel terhadap banyak versi python
-pyo3 = { version = "0.21", features = ["extension-module", "abi3-py37"] }
+# abi3-py39 ensure to match minimum Python version 3.9
+pyo3 = { version = "0.29", features = ["extension-module", "abi3-py39"] }
 rayon = "1"
 rusqlite = { version = "0.31.0", features = ["bundled"] }
 
-# crossbeam dihapus karena kita sudah pakai Rayon .collect() untuk menjaga urutan
-
 [profile.release]
-lto = true            # Link-Time Optimization (optimasi lintas file .rs)
-codegen-units = 1     # Mengurangi paralelisasi kompilasi demi optimasi maksimal
-panic = "abort"       # Mengurangi ukuran biner & mempercepat eksekusi saat crash
-strip = true          # Menghapus simbol debug agar file .so lebih ringan
+lto = true            # Link-Time Optimization (optimization across .rs files)
+codegen-units = 1     # Reduce compilation parallelization for maximum optimization
+panic = "abort"       # Reduce binary size & speed up execution on crash
+strip = true          # Remove debug symbols to make .so files lighter
