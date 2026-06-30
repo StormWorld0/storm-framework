@@ -8,7 +8,7 @@ use crate::errors::{PrintError, PrintResult};
 pub fn object_to_string(obj: &Bound<'_, PyAny>) -> PrintResult<String> {
     // 1. Jalur Cepat (Fast-path): Jika objek secara native adalah PyString.
     // downcast() pada Bound akan mengembalikan Result<&Bound<'_, PyString>, DowncastError>.
-    if let Ok(s) = obj.downcast::<PyString>() {
+    if let Ok(s) = obj.cast::<PyString>() {
         return Ok(s.to_string_lossy().into_owned());
     }
     
@@ -20,7 +20,7 @@ pub fn object_to_string(obj: &Bound<'_, PyAny>) -> PrintResult<String> {
 
     // 3. Handling Bytes (Bypass konversi encoding, inspeksi memori secara langsung)
     // as_bytes() meminjam pointer internal PyBytes langsung ke buffer C/Rust.
-    if let Ok(b) = obj.downcast::<PyBytes>() {
+    if let Ok(b) = obj.cast::<PyBytes>() {
         return Ok(format!("b'{}'", escape_bytes(b.as_bytes())));
     }
     
