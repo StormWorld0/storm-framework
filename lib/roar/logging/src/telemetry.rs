@@ -37,7 +37,7 @@ pub fn execute_telemetry(
         .as_secs_f64();
 
     // 3. FFI Traceback Caller
-    let caller_info = match py.import_bound("sys").and_then(|sys| sys.getattr("_getframe")) {
+    let caller_info = match py.import("sys").and_then(|sys| sys.getattr("_getframe")) {
         Ok(getframe) => {
             if let Ok(frame) = getframe.call1((1,)) {
                 let filename = frame.getattr("f_code").and_then(|c| c.getattr("co_filename"));
@@ -56,14 +56,12 @@ pub fn execute_telemetry(
         Err(_) => "SysModuleError".to_string(),
     };
 
-    // 4. Inisialisasi Database (Butuh GIL)
+    // 4. Inisialisasi Database
     let conn = get_db_connection(py)?;
 
-    // 5. Injeksi ke Database Terstruktur (Tanpa GIL)
-    py.allow_threads(move || {
-        // Masukkan label_str dan payload_str secara terpisah
-        let _ = insert_log(&conn, timestamp, level, &label_str, &payload_str, &caller_info);
-    });
+    // 5. Injeksi ke Database Terstruktur
+    // Masukkan label_str dan payload_str secara terpisah
+    let _ = insert_log(&conn, timestamp, level, &label_str, &payload_str, &caller_info);
 
     Ok(())
 }
