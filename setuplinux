@@ -96,7 +96,7 @@ fi
 
 # --- RUST TOOLCHAIN PREPARATION ---
 # Check cargo availability using sudo to detect root environment
-if ! sudo command -v cargo &> /dev/null || ! sudo cargo --version | grep -q "1.8"; then
+if [ ! -f /usr/local/bin/cargo ] || ! /usr/local/bin/cargo --version | grep -q "1.8"; then
     echo -e "${GREEN}[+] Installing modern Rust toolchain for ROOT environment...${NC}"
 
     # Force full installation using ROOT user
@@ -124,7 +124,7 @@ if [ -d "$INSTALL_DIR" ]; then
 fi
 
 # Compilation binary
-sudo "$PYTHON_CMD" -m scripts.cpl.compiler
+sudo PATH="/usr/local/bin:/root/.cargo/bin:$PATH" "$VENV_PYTHON" -m scripts.cpl.compiler
 cd "$INSTALL_DIR" || { echo -e "${RED}[x] ERROR: Lost track of directory!${NC}"; exit 1; }
 
 # --- Security Identity Generation (Version: The 60-Char Fix) ---
