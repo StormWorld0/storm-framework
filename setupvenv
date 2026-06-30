@@ -125,7 +125,7 @@ if [ -d "$INSTALL_DIR" ]; then
 fi
 
 # Compilation binary (executed within venv context)
-sudo PATH="/usr/local/bin:/root/.cargo/bin:$PATH" "$VENV_PYTHON" -m scripts.cpl.compiler
+sudo bash -c "export PATH='/usr/local/bin:/root/.cargo/bin:\$PATH'; \$VENV_PYTHON -m scripts.cpl.compiler"
 
 cd "$INSTALL_DIR" || { echo -e "${RED}[x] ERROR: Lost track of directory!${NC}"; exit 1; }
 
