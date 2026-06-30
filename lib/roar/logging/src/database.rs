@@ -7,7 +7,7 @@ use crate::errors::PrintResult;
 
 pub fn get_db_connection(py: Python<'_>) -> PrintResult<Connection> {
     // 1. Ekstrak Path dari Python (Butuh GIL Token)
-    let rootmap_mod = PyModule::import_bound(py, "rootmap")?;
+    let rootmap_mod = PyModule::import(py, "rootmap")?;
     let root_py = rootmap_mod.getattr("ROOT")?;
     let root_path_str: String = root_py.call_method0("__str__")?.extract()?;
     let root_path = PathBuf::from(root_path_str);
