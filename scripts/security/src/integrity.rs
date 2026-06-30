@@ -92,7 +92,7 @@ fn storm_sign(py: Python) -> PyResult<()> {
 
     // --- MODIFIKASI DIMULAI DI SINI ---
     // Kita bungkus bagian scanning agar GIL aman
-    let manifest = Python::allow_threads(|| {
+    let manifest = py.allow_threads(|| {
         
         // TAHAP 1: FILTERING (I/O Bound)
         // Kumpulkan semua file yang valid secara sekuensial.
@@ -164,7 +164,7 @@ fn storm_sign(py: Python) -> PyResult<()> {
     // Eksekusi keluar `with` -> memanggil __exit__
     let none = py.None();
     let args = PyTuple::new(py, &[&none, &none, &none]);
-    let _ = spin_instance.call_method1("__exit__", args);
+    let _ = spin_instance.call_method1("__exit__", args?);
 
     // 6. Signing Process
     // Serialisasi BTreeMap ke JSON kompak
