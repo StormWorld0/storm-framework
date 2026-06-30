@@ -41,7 +41,7 @@ fn storm_sign(py: Python) -> PyResult<()> {
     log!("[+] Get started with Storm Framework security.");
 
     // 1. Memanggil objek Python: from rootmap import ROOT
-    let rootmap_mod = PyModule::import_bound(py, "rootmap")?;
+    let rootmap_mod = PyModule::import(py, "rootmap")?;
     let root_py = rootmap_mod.getattr("ROOT")?;
     let root_path_str: String = root_py.call_method0("__str__")?.extract()?;
     let root_path = PathBuf::from(&root_path_str);
@@ -83,7 +83,7 @@ fn storm_sign(py: Python) -> PyResult<()> {
     .collect();
 
     // 4. Memanggil Context Manager Python: from apps.utility.spin import StormSpin
-    let spin_mod = PyModule::import_bound(py, "apps.utility.spin")?;
+    let spin_mod = PyModule::import(py, "apps.utility.spin")?;
     let spin_class = spin_mod.getattr("StormSpin")?;
     let spin_instance = spin_class.call0()?;
 
@@ -91,8 +91,8 @@ fn storm_sign(py: Python) -> PyResult<()> {
     spin_instance.call_method0("__enter__")?;
 
     // --- MODIFIKASI DIMULAI DI SINI ---
-    // Kita bungkus bagian scanning agar GIL dilepas
-    let manifest = py.allow_threads(|| {
+    // Kita bungkus bagian scanning agar GIL aman
+    let manifest = Python::allow_threads(|| {
         
         // TAHAP 1: FILTERING (I/O Bound)
         // Kumpulkan semua file yang valid secara sekuensial.
@@ -163,7 +163,7 @@ fn storm_sign(py: Python) -> PyResult<()> {
 
     // Eksekusi keluar `with` -> memanggil __exit__
     let none = py.None();
-    let args = PyTuple::new_bound(py, &[&none, &none, &none]);
+    let args = PyTuple::new(py, &[&none, &none, &none]);
     let _ = spin_instance.call_method1("__exit__", args);
 
     // 6. Signing Process
@@ -196,7 +196,7 @@ fn storm_sign(py: Python) -> PyResult<()> {
     // 7. Wrap Final Data
     let final_data = json!({
         "metadata": {
-            "version": "2.0",
+            "version": "3.0",
             "signature": signature_b64
         },
         "files": manifest
