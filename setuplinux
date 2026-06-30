@@ -124,8 +124,11 @@ if [ -d "$INSTALL_DIR" ]; then
 fi
 
 # Compilation binary
-sudo PATH="/usr/local/bin:/root/.cargo/bin:$PATH" "$VENV_PYTHON" -m scripts.cpl.compiler
-cd "$INSTALL_DIR" || { echo -e "${RED}[x] ERROR: Lost track of directory!${NC}"; exit 1; }
+sudo "$PYTHON_CMD" -m scripts.cpl.compiler
+
+if [ -d "$INSTALL_DIR" ]; then
+    cd "$INSTALL_DIR" || { echo -e "${RED}[x] ERROR: Cannot access $INSTALL_DIR${NC}"; }
+fi
 
 # --- Security Identity Generation (Version: The 60-Char Fix) ---
 if [ ! -f .env ]; then
@@ -200,7 +203,7 @@ fi
 cd "$INSTALL_DIR" || { echo -e "${RED}[x] ERROR: Lost track of directory!${NC}"; exit 1; }
 
 # Sign all files
-sudo python3 -m scripts.security.sign
+sudo "$PYTHON_CMD" -m scripts.security.sign
 
 # Creating a Dynamic Wrapper Script
 WRAPPER_DST="$BIN_DIR/$TOOL_NAME"
