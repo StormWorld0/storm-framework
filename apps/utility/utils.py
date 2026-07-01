@@ -1,7 +1,6 @@
 import os
 import smf
 import importlib
-import traceback
 
 from typing import List
 from rootmap import ROOT
