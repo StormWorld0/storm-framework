@@ -55,3 +55,27 @@ sudo update-ca-certificates
 ```
 
 You can also install Storm Trust Root CA to Firefox Browser and so on.
+
+---
+
+## Troubleshooting
+
+If you encounter an error message `make: cargo: No such file or directory` in the compilation process, this is usually caused by the security hardening mechanism on `sudo` which resets the variable `PATH` your system. `sudo` does not automatically recognize the **Rust** installation located on `/root/.cargo/bin`.
+
+### How to overcome it
+
+To ensure the compiler script recognizes the Rust Toolchain, you need to modify `/etc/sudoers` in `secure_path` and look for;
+
+```bash
+Defaults secure_path=
+```
+
+And change it to something like this;
+
+```bash
+Defaults secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+```
+
+After that you can call the command `sudo storm --update` to update the storm-framework and recompile anything that was not compiled during the initial installation. If it still fails I suggest running **setupdocker** which should be more stable in a bad environment like this.
+
+If you feel that everything has been done but the same error still appears during the compilation process, you can open **Issue** by explaining everything in detail, we will be happy to help😁.
