@@ -76,7 +76,6 @@ def load_module_dynamically(module_input):
         return importlib.import_module(module_dots)
     except Exception as e:
         smf.printd("ERROR DYNAMIC IMPORT", f"{module_dots} -> {repr(e)}", level="ERROR")
-        smf.printd("Error importlib.import_module", traceback.print_exc(), level="ERROR")
         return None
 
 
