@@ -1,6 +1,7 @@
 import os
 import smf
 import importlib
+import traceback
 
 from typing import List
 from rootmap import ROOT
@@ -74,7 +75,8 @@ def load_module_dynamically(module_input):
     try:
         return importlib.import_module(module_dots)
     except Exception as e:
-        smf.printd("ERROR DYNAMIC IMPORT", type(e), level="ERROR")
+        smf.printd("ERROR DYNAMIC IMPORT", f"{module_dots} -> {repr(e)}", level="ERROR")
+        smf.printd("Error importlib.import_module", traceback.print_exc(), level="ERROR")
         return None
 
 
