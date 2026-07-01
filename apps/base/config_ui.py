@@ -18,8 +18,10 @@ def show_about():
     smf.printf(
         f"{C.HEADER}=========================================================================="
     )
-    smf.printf(f"{C.INPUT}      owner                     : エルジー")
-    smf.printf(f"{C.INPUT}      Purpose                   : All-in-One Storm Framework")
+    smf.printf(f"{C.INPUT}      Tool                      : Storm Framework")
+    smf.printf(f"{C.INPUT}      Organization              : StormWorld0")
+    smf.printf(f"{C.INPUT}      Owner                     : エルジー")
+    smf.printf(f"{C.INPUT}      Purpose                   : All-In-One Pentest Tool")
     smf.printf(f"{C.INPUT}      Version                   : {VERSION}")
     smf.printf(
         f"{C.INPUT}      GitHub                    : github.com/StormWorld0/storm-framework"
@@ -44,7 +46,8 @@ def show_help():
   help                          : Displaying the manual
   export log <val>              : Export logs from internal database and save as txt
   search                        : To search for modules, you can also use
-                                  filters such as (action:...) / (defaction:...)
+                                  filters such as (act:...) / (defact:...) /
+                                  (severity:...) / (cve:...) / (author:...)
   about                         : Information Development
   info <cve_name>               : Complete CVE information
   info <module_name>            : Complete Modules information
@@ -55,8 +58,8 @@ def show_help():
   unload <plugin_name>          : Remove plugins from memory
 
   
-  use                           : To use the module, you can use
-                                  <module_name> / <path_module>
+  use                           : To use the module, you can use <module_name> 
+                                  / <path_module>
   set <key> <val>               : Filling in the parameters
   run                           : Run the selected module
 
