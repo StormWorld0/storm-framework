@@ -92,7 +92,7 @@ fn storm_sign(py: Python) -> PyResult<()> {
 
     // --- MODIFIKASI DIMULAI DI SINI ---
     // Kita bungkus bagian scanning agar GIL aman
-    let manifest = py.allow_threads(|| {
+    let manifest = py.detach(|| {
         
         // TAHAP 1: FILTERING (I/O Bound)
         // Kumpulkan semua file yang valid secara sekuensial.
