@@ -124,7 +124,7 @@ if [ -d "$INSTALL_DIR" ]; then
 fi
 
 # Compilation binary (executed within venv context)
-sudo python3 -m scripts.cpl.compiler
+sudo "$VENV_PYTHON" -m scripts.cpl.compiler
 
 cd "$INSTALL_DIR" || { echo -e "${RED}[x] ERROR: Lost track of directory!${NC}"; exit 1; }
 
@@ -201,7 +201,7 @@ fi
 cd "$INSTALL_DIR" || { echo -e "${RED}[x] ERROR: Lost track of directory!${NC}"; exit 1; }
 
 # Sign using the isolated venv python
-sudo python3 -m scripts.security.sign
+sudo "$VENV_PYTHON" -m scripts.security.sign
 
 # Creating a Dynamic Wrapper Script
 WRAPPER_DST="$BIN_DIR/$TOOL_NAME"
