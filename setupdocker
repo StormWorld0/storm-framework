@@ -17,9 +17,9 @@ write_to_file() {
     local append=$3
 
     if [ "$append" = true ]; then
-        echo "$content" | sudo tee -a "$file" > /dev/null
+        echo "$content" | tee -a "$file" > /dev/null
     else
-        echo "$content" | sudo tee "$file" > /dev/null
+        echo "$content" | tee "$file" > /dev/null
     fi
 }
 
@@ -33,8 +33,8 @@ SHEBANG_PATH="#!/usr/bin/env bash"
 PYTHON_CMD="python3"
 INSTALL_DIR="/opt/$REPO_NAME"
 
-sudo apt update
-sudo apt install -y jq python3 git openssl docker.io
+apt update
+apt install -y jq python3 git openssl docker.io
 # -----------------------------------------------------------------------------
 
 echo -e "${GREEN}[!] Start Installation: ${REPO_NAME} [!] ${NC}"
@@ -57,7 +57,7 @@ fi
 if [ -d "$INSTALL_DIR" ]; then
     echo -e "${GREEN}[-] Remove old installations.${NC}"
     cd ~
-    sudo rm -rf "$INSTALL_DIR"
+    rm -rf "$INSTALL_DIR"
 fi
 
 echo -e "${GREEN}[+] Create installation directory${NC}"
@@ -65,23 +65,23 @@ echo -e "${GREEN}[+] Create installation directory${NC}"
 # Checking if a script is running inside GitHub Actions
 if [ "$GITHUB_ACTIONS" == "true" ]; then
     echo -e "${GREEN}[*] CI Environment detected${NC}"
-    sudo cp -a . "$INSTALL_DIR"
+    cp -a . "$INSTALL_DIR"
 else
     echo -e "${GREEN}[*] Production Environment detected${NC}"
-    sudo mkdir -p "$INSTALL_DIR"
-    sudo git clone "$GITHUB_REPO" "$INSTALL_DIR"
+    mkdir -p "$INSTALL_DIR"
+    git clone "$GITHUB_REPO" "$INSTALL_DIR"
 fi
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}[x] ERROR: Failed to clone repository.${NC}"
-    sudo rm -rf "$INSTALL_DIR"
+    rm -rf "$INSTALL_DIR"
     exit 1
 fi
 
 # Validate whether the folder is successfully filled
 if [ ! -f "$INSTALL_DIR/pyproject.toml" ]; then
     echo -e "${RED}[x] ERROR: Failed to prepare repository files.${NC}"
-    sudo rm -rf "$INSTALL_DIR"
+    rm -rf "$INSTALL_DIR"
     exit 1
 fi
 
@@ -103,12 +103,12 @@ RUN pip install --no-cache-dir -r $INSTALL_DIR/requirements.txt"
 
     # Check CI/CD or Production environment
     if [ "$GITHUB_ACTIONS" == "true" ]; then
-        sudo -E docker buildx build -t "$REPO_NAME" \
+        -E docker buildx build -t "$REPO_NAME" \
             --cache-from type=gha \
             --cache-to type=gha,mode=max \
             --load "$INSTALL_DIR"
     else
-        sudo docker build -t "$REPO_NAME" "$INSTALL_DIR"
+        docker build -t "$REPO_NAME" "$INSTALL_DIR"
     fi
 
     # FAIL-FAST IMPLEMENTATION
@@ -125,7 +125,7 @@ if [ -d "$INSTALL_DIR" ]; then
 fi
 
 # Inject -e GOFLAGS="-buildvcs=false" to turn off VCS stamping
-sudo docker run --rm -e GOFLAGS="-buildvcs=false" -v "$INSTALL_DIR":"$INSTALL_DIR" -w "$INSTALL_DIR" "$REPO_NAME" "$PYTHON_CMD" -m scripts.cpl.compiler
+docker run --rm -e GOFLAGS="-buildvcs=false" -v "$INSTALL_DIR":"$INSTALL_DIR" -w "$INSTALL_DIR" "$REPO_NAME" "$PYTHON_CMD" -m scripts.cpl.compiler
 cd "$INSTALL_DIR" || { echo -e "${RED}[x] ERROR: Lost track of directory!${NC}"; exit 1; }
 
 
@@ -155,7 +155,7 @@ if [ ! -f .env ]; then
 fi
 
 # This ensures that the command always matches the environment.
-sudo chmod 600 .env
+chmod 600 .env
 
 # Go to data folder
 cd "$INSTALL_DIR/data" || { echo -e "${RED}[x] ERROR: Lost track of directory!${NC}"; exit 1; }
@@ -167,16 +167,16 @@ else
     echo "[+] Generate CA Trust Store..."
 
     # Delete CA lama
-    sudo rm -f smf_ca.key smf_ca.crt
+    rm -f smf_ca.key smf_ca.crt
 
     # Generate CA private key
-    sudo openssl genrsa -out smf_ca.key 2048
+    openssl genrsa -out smf_ca.key 2048
 
     # Allow standard owner read/write
-    sudo chmod 600 smf_ca.key
+    chmod 600 smf_ca.key
 
     # Generate self-signed CA certificate
-    sudo openssl req -x509 -new -nodes \
+    openssl req -x509 -new -nodes \
         -key smf_ca.key \
         -sha256 \
         -days 3650 \
@@ -202,7 +202,7 @@ fi
 cd "$INSTALL_DIR" || { echo -e "${RED}[x] ERROR: Lost track of directory!${NC}"; exit 1; }
 
 # Sign executed inside Docker
-sudo docker run --rm -v "$INSTALL_DIR":"$INSTALL_DIR" -w "$INSTALL_DIR" "$REPO_NAME" python3 -m scripts.security.sign
+docker run --rm -v "$INSTALL_DIR":"$INSTALL_DIR" -w "$INSTALL_DIR" "$REPO_NAME" python3 -m scripts.security.sign
 
 # Creating a Dynamic Wrapper Script
 WRAPPER_DST="$BIN_DIR/$TOOL_NAME"
@@ -221,18 +221,35 @@ else
     TTY_FLAG=""
 fi
 
-DOCKER_CMD="sudo docker run \$TTY_FLAG --rm --network host -v \$PROJECT_DIR:\$PROJECT_DIR -w \$PROJECT_DIR $REPO_NAME"
+DOCKER_CMD="docker run \$TTY_FLAG --rm --network host -v \$PROJECT_DIR:\$PROJECT_DIR -w \$PROJECT_DIR $REPO_NAME"
 
 if [ "\$1" = "--update" ] && [ \$# -eq 1 ]; then
     exec \$DOCKER_CMD ./smfupdate
+
+elif [ "\$1" = "-cp" ] && [ "\$2" = "-crt" ] && [ \$# -eq 2 ]; then
+
+    if [ ! -f "./data/smf_ca.crt" ]; then
+        echo "[*] ERROR: smf_ca.crt not found."
+        exit 1
+    fi
+
+    TARGET_HOME=\$(getent passwd "\$SUDO_USER" | cut -d: -f6)
+    : "\${TARGET_HOME:=\$HOME}"
+
+    cp ./data/smf_ca.crt "\$TARGET_HOME/smf_ca.crt" || { echo "[x] Failed to copy certificate."; exit 1; }
+
+    echo "[+] Certificate copied to: \$TARGET_HOME/smf_ca.crt"
+
 elif [ \$# -eq 0 ]; then
+
     if [ ! -f "./smfstart" ]; then
         exec \$DOCKER_CMD ./smfupdate
     else
         exec \$DOCKER_CMD ./smfstart
     fi
+
 else
-    echo "[x] Error: Command '\$@' not found."
+    echo "Invalid arguments: \$@"
     exit 1
 fi
 EOF
@@ -240,7 +257,7 @@ EOF
 
 write_to_file "$CREATE_WRAPPER" "$WRAPPER_DST" false
 
-sudo chmod +x "$WRAPPER_DST"
+chmod +x "$WRAPPER_DST"
 
 echo -e "${GREEN}####################################################${NC}"
 echo -e "${GREEN}[✓] INSTALLATION COMPLETE${NC}"
