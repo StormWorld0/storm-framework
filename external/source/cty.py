@@ -6,7 +6,7 @@ from apps.utility.colors import *
 def libcrp():
     try:
         crypto = ctypes.CDLL("libcrypto.so.3")
-        
+
         class AES_KEY(ctypes.Structure):
             _fields_ = [("rd_key", ctypes.c_uint * 60), ("rounds", ctypes.c_int)]
 
@@ -15,7 +15,11 @@ def libcrp():
             ctypes.c_int,
             ctypes.POINTER(AES_KEY),
         ]
-        crypto.AES_decrypt.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.POINTER(AES_KEY)]
+        crypto.AES_decrypt.argtypes = [
+            ctypes.c_char_p,
+            ctypes.c_char_p,
+            ctypes.POINTER(AES_KEY),
+        ]
 
         return crypto
     except OSError as e:
@@ -25,6 +29,7 @@ def libcrp():
         smf.printd("Failed to load libcrypto.so.3", e, level="INFO")
         return None
 
+
 def libc():
     try:
         return ctypes.CDLL("libc.so.6", use_errno=True)
@@ -33,6 +38,7 @@ def libc():
         smf.printd("Failed to load libc.so.6", e, level="INFO")
         return None
 
+
 def aes_decrypt_block(block):
     key = AES_KEY()
     crypto.AES_set_decrypt_key(KEY, 128, ctypes.byref(key))
@@ -40,4 +46,3 @@ def aes_decrypt_block(block):
     crypto.AES_decrypt(block, out, ctypes.byref(key))
     smf.printd(f"Output decript: {block}", out.raw[:16], level="INFO")
     return out.raw[:16]
-    
