@@ -59,6 +59,7 @@ pub fn insert_log(
     level: &str, 
     label: &str, 
     payload: &str, 
+    traceback: &str, 
     caller_info: &str
 ) -> PrintResult<()> {
     conn.execute(
