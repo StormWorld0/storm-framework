@@ -11,7 +11,7 @@ However, we still provide this option in case some users prefer installing using
 This URL will do the automatic installation and handle everything, you just have to wait until it's finished.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/StormWorld0/storm-framework/main/setuplinux | bash
+curl -fsSL https://raw.githubusercontent.com/StormWorld0/storm-framework/main/setuplinux | sudo bash
 ```
 
 ### 2. Execute Command
@@ -35,13 +35,7 @@ sudo storm --update
 This Root CA can be copied from internal to `$HOME` and is usually used when you want to run a module `https_proxy`, the command is as below:
 
 ```bash
-storm --cp --crt
-```
-
-Alternative:
-
-```bash
-sudo storm --cp --crt
+sudo storm -cp -crt
 ```
 
 After finishing copying CA to `$HOME` use the following command to insert into the trust store certificate:
