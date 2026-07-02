@@ -6,6 +6,7 @@ import smf
 from pathlib import Path
 from apps.utility.colors import *
 
+
 def extract_logs(level_target: str, output_file: str = "log.txt"):
     """
     Extract logs from internal SQLite database by level.
@@ -81,13 +82,16 @@ def extract_logs(level_target: str, output_file: str = "log.txt"):
                 if traceback_data:
                     f.write(" TRACEBACK:\n")
                     # Indent to make it look neat in text files
-                    for line in traceback.split('\n'):
+                    for line in traceback.split("\n"):
                         f.write(f"     {line}\n")
 
                 f.write("-" * 60 + "\n")
 
         smf.printd("System log extracted by user", final_output_path, level="INFO")
-        smf.printf(f"[✓]{CC.GREEN} Extraction Successful! {len(rows)} log lines =>{CC.RESET}", level_query)
+        smf.printf(
+            f"[✓]{CC.GREEN} Extraction Successful! {len(rows)} log lines =>{CC.RESET}",
+            level_query,
+        )
         smf.printf(f"[!]{CC.YELLOW} File saved to =>{CC.RESET}", final_output_path)
 
     except sqlite3.Error as e:
