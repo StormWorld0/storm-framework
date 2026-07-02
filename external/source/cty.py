@@ -6,10 +6,6 @@ from apps.utility.colors import *
 def libcrp():
     try:
         crypto = ctypes.CDLL("libcrypto.so.3")
-
-        class AES_KEY(ctypes.Structure):
-            _fields_ = [("rd_key", ctypes.c_uint * 60), ("rounds", ctypes.c_int)]
-
         crypto.AES_set_decrypt_key.argtypes = [
             ctypes.c_char_p,
             ctypes.c_int,
