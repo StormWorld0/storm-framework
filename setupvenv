@@ -17,9 +17,9 @@ write_to_file() {
     local append=$3
 
     if [ "$append" = true ]; then
-        echo "$content" | sudo tee -a "$file" > /dev/null
+        echo "$content" | tee -a "$file" > /dev/null
     else
-        echo "$content" | sudo tee "$file" > /dev/null
+        echo "$content" | tee "$file" > /dev/null
     fi
 }
 
@@ -35,7 +35,7 @@ INSTALL_DIR="/opt/$REPO_NAME"
 VENV_DIR="$INSTALL_DIR/venv"
 VENV_PYTHON="$VENV_DIR/bin/python"
 
-sudo apt install -y jq python3-full python3-venv python3-pip git golang build-essential libpcap-dev clang cmake ffmpeg openssl pkg-config libssl-dev
+apt install -y jq python3-full python3-venv python3-pip git golang build-essential libpcap-dev clang cmake ffmpeg openssl pkg-config libssl-dev
 
 # -----------------------------------------------------------------------------
 
@@ -55,7 +55,7 @@ fi
 if [ -d "$INSTALL_DIR" ]; then
     echo -e "${GREEN}[-] Remove old installations.${NC}"
     cd ~
-    sudo rm -rf "$INSTALL_DIR"
+    rm -rf "$INSTALL_DIR"
 fi
 
 echo -e "${GREEN}[+] Create installation directory${NC}"
@@ -63,23 +63,23 @@ echo -e "${GREEN}[+] Create installation directory${NC}"
 # Check CI/CD or Production environment
 if [ "$GITHUB_ACTIONS" == "true" ]; then
     echo -e "${GREEN}[*] CI Environment detected${NC}"
-    sudo cp -a . "$INSTALL_DIR"
+    cp -a . "$INSTALL_DIR"
 else
     echo -e "${GREEN}[*] Production Environment detected${NC}"
-    sudo mkdir -p "$INSTALL_DIR"
-    sudo git clone "$GITHUB_REPO" "$INSTALL_DIR"
+    mkdir -p "$INSTALL_DIR"
+    git clone "$GITHUB_REPO" "$INSTALL_DIR"
 fi
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}[x] ERROR: Failed to clone repository.${NC}"
-    sudo rm -rf "$INSTALL_DIR"
+    rm -rf "$INSTALL_DIR"
     exit 1
 fi
 
 # Validate whether the folder is successfully filled
 if [ ! -f "$INSTALL_DIR/pyproject.toml" ]; then
     echo -e "${RED}[x] ERROR: Failed to prepare repository files.${NC}"
-    sudo rm -rf "$INSTALL_DIR"
+    rm -rf "$INSTALL_DIR"
     exit 1
 fi
 
@@ -87,8 +87,8 @@ fi
 if [ -f "$INSTALL_DIR/requirements.txt" ]; then
     echo -e "${GREEN}[+] Installing Python dependencies.${NC}"
 
-    sudo "$PYTHON_CMD" -m venv "$VENV_DIR"
-    sudo "$VENV_PYTHON" -m pip install -r "$INSTALL_DIR/requirements.txt"
+    "$PYTHON_CMD" -m venv "$VENV_DIR"
+    "$VENV_PYTHON" -m pip install -r "$INSTALL_DIR/requirements.txt"
 
     if [ $? -ne 0 ]; then
         echo -e "${RED}[x] ERROR: Failed to install Python dependencies.${NC}"
@@ -101,16 +101,16 @@ if [ ! -f /usr/local/bin/cargo ] || ! /usr/local/bin/cargo --version | grep -q "
     echo -e "${GREEN}[+] Installing modern Rust toolchain for ROOT environment...${NC}"
 
     # Force full installation using ROOT user
-    sudo bash -c "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
+    bash -c "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
 
     # Create a Rust binary symlink from the root directory to the global system
-    sudo ln -sf /root/.cargo/bin/cargo /usr/local/bin/cargo
-    sudo ln -sf /root/.cargo/bin/rustc /usr/local/bin/rustc
-    sudo ln -sf /root/.cargo/bin/rustup /usr/local/bin/rustup
+    ln -sf /root/.cargo/bin/cargo /usr/local/bin/cargo
+    ln -sf /root/.cargo/bin/rustc /usr/local/bin/rustc
+    ln -sf /root/.cargo/bin/rustup /usr/local/bin/rustup
 
     # Set the default toolchain explicitly specifically for the root user
     # This grants the error request: "run 'rustup default stable'"
-    sudo /usr/local/bin/rustup default stable
+    /usr/local/bin/rustup default stable
 fi
 
 # Version validation using sudo context
@@ -124,7 +124,7 @@ if [ -d "$INSTALL_DIR" ]; then
 fi
 
 # Compilation binary (executed within venv context)
-sudo "$VENV_PYTHON" -m scripts.cpl.compiler
+"$VENV_PYTHON" -m scripts.cpl.compiler
 
 cd "$INSTALL_DIR" || { echo -e "${RED}[x] ERROR: Lost track of directory!${NC}"; exit 1; }
 
@@ -154,7 +154,7 @@ if [ ! -f .env ]; then
 fi
 
 # This ensures that the command always matches the environment.
-sudo chmod 600 .env
+chmod 600 .env
 
 # Go to data folder
 cd "$INSTALL_DIR/data" || { echo -e "${RED}[x] ERROR: Lost track of directory!${NC}"; exit 1; }
@@ -166,16 +166,16 @@ else
     echo "[+] Generate CA Trust Store..."
 
     # Delete CA lama
-    sudo rm -f smf_ca.key smf_ca.crt
+    rm -f smf_ca.key smf_ca.crt
 
     # Generate CA private key
-    sudo openssl genrsa -out smf_ca.key 2048
+    openssl genrsa -out smf_ca.key 2048
 
     # Allow standard owner read/write
-    sudo chmod 600 smf_ca.key
+    chmod 600 smf_ca.key
 
     # Generate self-signed CA certificate
-    sudo openssl req -x509 -new -nodes \
+    openssl req -x509 -new -nodes \
         -key smf_ca.key \
         -sha256 \
         -days 3650 \
@@ -201,7 +201,7 @@ fi
 cd "$INSTALL_DIR" || { echo -e "${RED}[x] ERROR: Lost track of directory!${NC}"; exit 1; }
 
 # Sign using the isolated venv python
-sudo "$VENV_PYTHON" -m scripts.security.sign
+"$VENV_PYTHON" -m scripts.security.sign
 
 # Creating a Dynamic Wrapper Script
 WRAPPER_DST="$BIN_DIR/$TOOL_NAME"
@@ -222,16 +222,19 @@ fi
 if [ "\$1" = "--update" ] && [ \$# -eq 1 ]; then
     exec ./smfupdate
 
-elif [ "\$1" = "--cp" ] && [ "\$2" = "--crt" ] && [ \$# -eq 2 ]; then
+elif [ "\$1" = "-cp" ] && [ "\$2" = "-crt" ] && [ \$# -eq 2 ]; then
 
     if [ ! -f "./data/smf_ca.crt" ]; then
         echo "[x] ERROR: smf_ca.crt not found."
         exit 1
     fi
 
-    cp ./data/smf_ca.crt "\$HOME/smf_ca.crt" || { echo "[x] Failed to copy certificate."; exit 1; }
+    TARGET_HOME=\$(getent passwd "\$SUDO_USER" | cut -d: -f6)
+    : "\${TARGET_HOME:=\$HOME}"
 
-    echo "[+] Certificate copied to \$HOME/smf_ca.crt"
+    cp ./data/smf_ca.crt "\$TARGET_HOME/smf_ca.crt" || { echo "[x] Failed to copy certificate."; exit 1; }
+
+    echo "[+] Certificate copied to: \$TARGET_HOME/smf_ca.crt"
 
 elif [ \$# -eq 0 ]; then
 
@@ -242,7 +245,7 @@ elif [ \$# -eq 0 ]; then
     fi
 
 else
-    echo "Command '\$@' not found."
+    echo "Invalid arguments: \$@"
     exit 1
 fi
 EOF
@@ -250,7 +253,7 @@ EOF
 
 write_to_file "$CREATE_WRAPPER" "$WRAPPER_DST" false
 
-sudo chmod +x "$WRAPPER_DST"
+chmod +x "$WRAPPER_DST"
 
 echo -e "${GREEN}####################################################${NC}"
 echo -e "${GREEN}[✓] INSTALLATION COMPLETE${NC}"
