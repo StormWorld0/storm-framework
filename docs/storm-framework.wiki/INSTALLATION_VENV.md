@@ -9,7 +9,7 @@ This installation follows the standard recommended by Python. Since Storm is Pyt
 This URL will run the installation automatically, including creating Venv and so on, you just have to wait for it to finish.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/StormWorld0/storm-framework/main/setupvenv | bash
+curl -fsSL https://raw.githubusercontent.com/StormWorld0/storm-framework/main/setupvenv | sudo bash
 ```
 
 ### 2. Execute Command
