@@ -5,19 +5,7 @@ from apps.utility.colors import *
 
 def libcrp():
     try:
-        crypto = ctypes.CDLL("libcrypto.so.3")
-        crypto.AES_set_decrypt_key.argtypes = [
-            ctypes.c_char_p,
-            ctypes.c_int,
-            ctypes.POINTER(AES_KEY),
-        ]
-        crypto.AES_decrypt.argtypes = [
-            ctypes.c_char_p,
-            ctypes.c_char_p,
-            ctypes.POINTER(AES_KEY),
-        ]
-
-        return crypto
+        return ctypes.CDLL("libcrypto.so.3")
     except OSError as e:
         smf.printf(
             f"[*] {CC.YELLOW}This module is not supported on this platform.{CC.RESET}"
