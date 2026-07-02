@@ -37,12 +37,3 @@ def libc():
         smf.printf(f"{CC.YELLOW}This module is not supported on this platform.{CC.RESET}")
         smf.printd("Failed to load libc.so.6", e, level="INFO")
         return None
-
-
-def aes_decrypt_block(block):
-    key = AES_KEY()
-    crypto.AES_set_decrypt_key(KEY, 128, ctypes.byref(key))
-    out = ctypes.create_string_buffer(16)
-    crypto.AES_decrypt(block, out, ctypes.byref(key))
-    smf.printd(f"Output decript: {block}", out.raw[:16], level="INFO")
-    return out.raw[:16]
