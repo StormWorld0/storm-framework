@@ -103,7 +103,7 @@ RUN pip install --no-cache-dir -r $INSTALL_DIR/requirements.txt"
 
     # Check CI/CD or Production environment
     if [ "$GITHUB_ACTIONS" == "true" ]; then
-        -E docker buildx build -t "$REPO_NAME" \
+        docker buildx build -t "$REPO_NAME" \
             --cache-from type=gha \
             --cache-to type=gha,mode=max \
             --load "$INSTALL_DIR"
