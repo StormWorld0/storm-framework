@@ -56,12 +56,30 @@ pub fn execute_telemetry(
         Err(_) => "SysModuleError".to_string(),
     };
 
+    // 2. Mengambil Traceback jika ada Exception aktif
+    let traceback_info = match py.import("traceback").and_then(|tb| tb.getattr("format_exc")) {
+        Ok(format_exc) => {
+            if let Ok(tb_obj) = format_exc.call0() {
+                let tb_str = tb_obj.extract::<String>().unwrap_or_default();
+                // format_exc() mereturn "NoneType: None" jika tidak ada error aktif
+                if !tb_str.trim().is_empty() && !tb_str.contains("NoneType: None") {
+                    tb_str.trim().to_string()
+                } else {
+                    String::new()
+                }
+            } else {
+                String::new()
+            }
+        },
+        Err(_) => String::new(),
+    };
+
     // 4. Inisialisasi Database
     let conn = get_db_connection(py)?;
 
     // 5. Injeksi ke Database Terstruktur
     // Masukkan label_str dan payload_str secara terpisah
-    let _ = insert_log(&conn, timestamp, level, &label_str, &payload_str, &caller_info);
+    let _ = insert_log(&conn, timestamp, level, &label_str, &payload_str, &traceback_info, &caller_info);
 
     Ok(())
 }
