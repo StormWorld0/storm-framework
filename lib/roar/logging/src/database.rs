@@ -43,6 +43,7 @@ pub fn get_db_connection(py: Python<'_>) -> PrintResult<Connection> {
              level TEXT,
              label TEXT,
              payload TEXT,
+             traceback TEXT,
              caller_info TEXT
          );
          DELETE FROM system_logs WHERE timestamp < (strftime('%s', 'now') - {});",
@@ -61,8 +62,8 @@ pub fn insert_log(
     caller_info: &str
 ) -> PrintResult<()> {
     conn.execute(
-        "INSERT INTO system_logs (timestamp, level, label, payload, caller_info) VALUES (?1, ?2, ?3, ?4, ?5)",
-        (timestamp, level, label, payload, caller_info),
+        "INSERT INTO system_logs (timestamp, level, label, payload, traceback, caller_info) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        (timestamp, level, label, payload, traceback, caller_info),
     )?;
     Ok(())
 }
