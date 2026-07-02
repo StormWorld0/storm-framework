@@ -80,7 +80,7 @@ def extract_logs(level_target: str, output_file: str = "log.txt"):
                     f.write(f" PAYLOAD : {payload}\n")
 
                 if traceback:
-                    f.write(" TRACEBACK:\n")
+                    f.write("\n TRACEBACK:\n")
                     # Indent to make it look neat in text files
                     for line in traceback.split("\n"):
                         f.write(f"     {line}\n")
