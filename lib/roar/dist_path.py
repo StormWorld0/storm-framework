@@ -40,7 +40,7 @@ def _get_grpc_client():
         channel = grpc.secure_channel("127.0.0.1:31337", credentials)
         return services_pb_grpc.SliverRPCStub(channel)
     except FileNotFoundError as e:
-        smf.printd("[handler] [-] Missing cryptography assets", e, level="ERROR")
+        smf.printd("[-] Missing cryptography assets", e, level="ERROR")
         return None
 
 
@@ -69,11 +69,11 @@ def process_attack_flow(module_data):
         req = services_pb.StartMTLSListenerReq(Host=lhost, Port=lport)
         rpc_client.StartMTLSListener(req)
     except grpc.RpcError as e:
-        smf.printd(f"[-] Backend listener failed: {e.details()}")
+        smf.printd(f"Backend listener failed", e.details(), level="ERROR")
         return
 
     # 3. KUNCI LOOP 1: Polling Koneksi Masuk
-    smf.printd("Listener active. Scanning connection queue (Ctrl+C to abort)...")
+    smf.printf("Listener active. Scanning connection queue (Ctrl+C to abort)...")
     empty_req = (
         common_pb2.Empty()
     )  # Sliver butuh objek 'Empty' untuk parameter fungsi tanpa input
@@ -88,13 +88,13 @@ def process_attack_flow(module_data):
                 break
             time.sleep(1)  # Delay agar tidak DDoS lokal
         except KeyboardInterrupt:
-            print("\n[handler] [-] Scan aborted by operator.")
+            smf.printf("\n[handler] [-] Scan aborted by operator.")
             _teardown_backend(rpc_client, lport)
             return
 
     # 4. KUNCI LOOP 2: REPL C2 (Terminal Hijacked)
     _IS_C2_ACTIVE = True
-    print(f"\n[handler] [+] TARGET CAUGHT! Session ID: {_SESSION_ID}")
+    smf.printf(f"\n[handler] [+] TARGET CAUGHT! Session ID: {_SESSION_ID}")
 
     while _IS_C2_ACTIVE:
         try:
@@ -102,8 +102,8 @@ def process_attack_flow(module_data):
             if not c2_input:
                 continue
             if c2_input == "exit":
-                print(
-                    "[handler] [*] Exit command received. Terminating implant connection..."
+                smf.printf(
+                    "[*] Exit command received. Terminating implant connection..."
                 )
                 _IS_C2_ACTIVE = False
                 break
