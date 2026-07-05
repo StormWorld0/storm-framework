@@ -7,7 +7,8 @@ from ..core import c2_console
 
 from internal.proto.rpc import services_pb
 from internal.proto.rpc import services_pb_grpc
-from internal.proto.common import common_pb 
+from internal.proto.common import common_pb
+
 
 # ==========================================
 # GRP/mTLS CONNECTION INITIATOR
@@ -17,13 +18,13 @@ def _get_grpc_client():
     OPERATOR_KEY = "data/smf_ca.key"
 
     try:
-        with open(STORM_CA_CERT, "rb") as f: root_ca = f.read()
-        with open(OPERATOR_KEY, "rb") as f: client_key = f.read()
+        with open(STORM_CA_CERT, "rb") as f:
+            root_ca = f.read()
+        with open(OPERATOR_KEY, "rb") as f:
+            client_key = f.read()
 
         credentials = grpc.ssl_channel_credentials(
-            root_certificates=root_ca, 
-            private_key=client_key,
-            certificate_chain=root_ca
+            root_certificates=root_ca, private_key=client_key, certificate_chain=root_ca
         )
 
         channel = grpc.secure_channel("127.0.0.1:31337", credentials)
@@ -31,6 +32,7 @@ def _get_grpc_client():
     except FileNotFoundError as e:
         smf.printd("Missing cryptography assets", e, level="ERROR")
         return None
+
 
 # ==========================================
 # CORE PIPELINE: MODULES -> HANDLER -> TARGET
@@ -64,7 +66,7 @@ def process_attack_flow(module_data):
 
     # 4. Polling Koneksi Masuk
     smf.printf("[*] Listener active. Scanning connection queue (Ctrl+C to abort)...")
-    empty_req = common_pb.Empty() 
+    empty_req = common_pb.Empty()
     session_id = None
 
     while True:
@@ -73,7 +75,7 @@ def process_attack_flow(module_data):
             if len(res.Sessions) > 0:
                 session_id = res.Sessions[-1].ID
                 break
-            time.sleep(1) 
+            time.sleep(1)
         except KeyboardInterrupt:
             smf.printf("\n[*] Scan aborted by operator.")
             _teardown_backend(rpc_client, lport, None)
@@ -87,6 +89,7 @@ def process_attack_flow(module_data):
     smf.printf(f"[*] Destroying active state for session {session_id}...")
     _teardown_backend(rpc_client, lport, session_id)
     smf.printf("[+] Handler sequence completed. Storm Core REPL unlocked.")
+
 
 # ==========================================
 # BACKEND CLEANUP
@@ -107,10 +110,8 @@ def _teardown_backend(rpc_client, lport, session_id):
         # Matikan port listener secara agresif
         req_stop = services_pb.StopListenerReq(Port=lport)
         rpc_client.StopMTLSListener(req_stop)
-        
+
     except grpc.RpcError as e:
         smf.printd("Cleanup warning: gRPC Error", e.details(), level="ERROR")
     except AttributeError as e:
         smf.printd("Protobuf attribute mismatch during teardown", e, level="ERROR")
-    
-        
