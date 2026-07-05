@@ -102,9 +102,7 @@ def process_attack_flow(module_data):
             if not c2_input:
                 continue
             if c2_input == "exit":
-                smf.printf(
-                    "[*] Exit command received. Terminating implant connection..."
-                )
+                smf.printf("[*] Exit command received. Terminating implant connection...")
                 _IS_C2_ACTIVE = False
                 break
 
