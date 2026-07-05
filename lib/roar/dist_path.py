@@ -64,16 +64,16 @@ def process_attack_flow(module_data):
 
     # 2. Nyalakan Listener di Backend gRPC
     try:
-        print(f"\n[handler] Deploying MTLS listener on backend -> {lhost}:{lport}")
+        smf.printd(f"Deploying MTLS listener on backend -> {lhost}:{lport}", level="INFO")
         # Note: Sliver biasanya menggunakan camel case untuk method RPC-nya
         req = services_pb.StartMTLSListenerReq(Host=lhost, Port=lport)
         rpc_client.StartMTLSListener(req)
     except grpc.RpcError as e:
-        smf.printd(f"[handler] [-] Backend listener failed: {e.details()}")
+        smf.printd(f"[-] Backend listener failed: {e.details()}")
         return
 
     # 3. KUNCI LOOP 1: Polling Koneksi Masuk
-    print("[handler] [*] Listener active. Scanning connection queue (Ctrl+C to abort)...")
+    smf.printd("Listener active. Scanning connection queue (Ctrl+C to abort)...")
     empty_req = (
         common_pb2.Empty()
     )  # Sliver butuh objek 'Empty' untuk parameter fungsi tanpa input
