@@ -12,8 +12,10 @@ def command(callback):
             )
             promp = f"{CC.CYAN}└─{CC.BLUE}➤ {CC.RESET}"
             user_input = input(promp).strip().split()
-        except KeyboardInterrupt: return
-        except EOFError: break
+        except KeyboardInterrupt:
+            return
+        except EOFError:
+            break
 
         # validation
         if not user_input:
