@@ -1,3 +1,9 @@
-The security folder is where the signature logic for storm security for users is located.
-security is included in the core store because without it storm will stop running
-engine storm will reject startup if signature is missing
+## Explanation
+
+The `scripts/` folder is for placing the basic logic used during the initial stages of Storm-Framework installation.
+
+### Example
+
+- `cpl/` The language compilation logic location that Storm-Framework uses.
+- `security/` Save the security code for signing.
+- ETC.
