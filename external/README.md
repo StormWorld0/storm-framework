@@ -1,5 +1,3 @@
 ### Explanation
 
-The folder named bin in the source is intentionally empty and is prepared to store the compiled binary results during the initial installation.
-
-External folders are created to store files or binaries that are not previously in the repo or files with logic for retrieval from outside.
+`external/` This folder is intended to store files that did not previously exist but are automatically filled in when the installation is complete. And also to store files from outside that are not included in the original Storm ecosystem.
