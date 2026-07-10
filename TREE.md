@@ -1,10 +1,204 @@
-# Storm Framework Structure
+# Storm Framework TREE🚀
+
+We will explain the function or use of each folder in the top directory to make it easier to understand each folder.
+
+### apps/
+
+**Objective:**  
+Grouping utilities.
+
+**Containing:**  
+- Utility Banner.
+- Utility Command.
+- Utility Base.
+- Utility Colors.
+- Utility Database.
+- Utility Spinner.
+- ETC.
+
+**Notes:**  
+- Just some logic to help.
+
+---
+
+### assets/
+
+**Objective:**  
+Saving static files.
+
+**Containing:**  
+- Image
+- Wordlist
+
+**Notes:**  
+- Safe to save new files except dynamic data.
+
+---
+
+### data/
+
+**Objective:**  
+Stores global data and global variables.
+
+**Containing:**  
+- OPTIONS variable
+- Data Storm
+
+**Notes:**  
+- Only to store data globally.
+
+---
+
+### docs/
+
+**Objective:**  
+Maintain internal documentation.
+
+**Containing:**  
+- Installation
+- Module Guide
+- ETC.
+
+---
+
+### example/
+
+**Objective:**  
+Stores various usage examples.
+
+**Containing:**  
+- Logging
+- Makefile
+- Module
+- Metadata
+- Plugin
+- ETC.
+
+---
+
+### external/
+
+**Objective:**  
+Places files outside the internal ecosystem, and is used to store compilation results.
+
+**Containing:**  
+- Vendor / Rust Dependencies
+- out / Compilation results
+- regex / Parsing
+- ETC.
+
+**Notes:**  
+Only for storing files that are outside the ecosystem or did not previously exist.
+
+---
+
+### internal/
+
+**Objective:**  
+Stores files related to the internal ecosystem.
+
+**Containing:**  
+- Modules / Binary Modules
+- ETC.
+
+**Notes:**  
+Not to store unrelated files.
+
+**Rules:**  
+- Modules: Must be written in Golang.
+- Outside of Modules `internal/source/` You can create new folders as needed.
+
+---
+
+### lib/
+
+**Objective:**  
+To store the runtime library.
+
+**Containing:**  
+- Roar / Runtime Library.
+- Command / Command REPL
+- UI
+- SQLite Database
+- API
+- Logging
+- Integrity Check
+- Cache
+- Core
+- ETC.
+
+**Notes:**  
+You may not modify anything unless it is necessary.
+
+---
+
+### modules/
+
+**Objective:**  
+Stores various types of Python modules.
+
+**Containing:**  
+- Auxiliary
+- Exploit
+- ETC.
+
+**Notes:**  
+Can include various types of modules.
+
+**Rules:**  
+- Python Only
+- Complete with metadata.
+- Adjust the Options to the module's needs.
+
+---
+
+### plugin/
+
+**Objective:**  
+Modifying runtime modules.
+
+**Notes:**  
+Free to fill with any plugin.
+
+**Rules:**
+- Must be Python
+- Must use Class as Entry.
+- Include Metadata.
+
+---
+
+### script/
+
+**Objective:**  
+To be used in the future.
+
+---
+
+### scripts/
+
+**Objective:**  
+Saves the basic logic files for the installation.
+
+**Containing:**  
+- Compiler
+- Security
+
+---
+
+### tests/
+
+**Objective:**  
+Used for testing Storm-Framework to analyze any bugs that may exist.
+
+---
+
+
+## Storm Framework Structure
 
 TREE.md is the entire structure of the Storm Framework that is `tree -d -I ".git|__pycache__"` for the deepest knowledge of folder & subfolder mapping.
 
 > [!IMPORTANT]
 > Updated regularly
-
 
 ```bash
 .
