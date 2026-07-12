@@ -91,7 +91,7 @@ func worker(jobs <-chan Job, wg *sync.WaitGroup, foundCounter *int32, processedC
 			}
 
 			if resp.StatusCode < 400 || resp.StatusCode == 403 || resp.StatusCode == 401 {
-				fmt.Printf("FOUND => %d | %-40s | %-25s | %s\n", resp.StatusCode, j.URL, server, contentType)
+				fmt.Printf("FOUND => %d | %-40s | %-10s | %s\n", resp.StatusCode, j.URL, server, contentType)
 				atomic.AddInt32(foundCounter, 1)
 			}
 		}(job)
