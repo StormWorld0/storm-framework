@@ -23,7 +23,7 @@ from lib.smfdb_helpers.log_stream import dump_log
 # Will display all logs from the database to the terminal screen.
 def execute(args, ctx):
     # Validate argument length.
-    if len(args) >= 2:
+    if len(args) >= 1:
         cmd = args[0].lower()
         val = args[1]
 
