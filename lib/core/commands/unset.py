@@ -20,23 +20,25 @@ def execute(args, ctx):
     if len(args) >= 1:
         var_name = args[0].upper()
 
+        # Remove values from all variables
+        if var_name == "ALL":
+            for key in options.keys():
+                options[key] = ""
+            smf.printf(f"[*]{CC.YELLOW} All options => unset{CC.RESET}")
+            return
+
         # Validate the existence of keys in dictionary options
         if var_name not in options:
             smf.printf(
                 f"[!]{CC.YELLOW} WARN =>{CC.RESET} {var_name} {CC.YELLOW}> is not a valid options!{CC.RESET}"
             )
             return
+            
+        # Delete value in specific variables
+        options[var_name] = ""
 
-        # Reset the variable value to an empty string
-        if var_name == "ALL":
-            # Remove values from all variables
-            for key in options.keys():
-                options[key] = ""
-            smf.printf(f"{CC.YELLOW}[*] All options have been unset.{CC.RESET}")
-        else:
-            # Delete value in specific variables
-            options[var_name] = ""
-            smf.printf(f"{CC.YELLOW}{var_name} => unset{CC.RESET}")
+        # Feedback to users
+        smf.printf(f"{CC.YELLOW}{var_name} => unset{CC.RESET}")
     else:
         # Displays command usage help if no arguments are given.
         smf.printf(f"[!]{CC.YELLOW} Use the command =>{CC.RESET} unset <VAR>")
