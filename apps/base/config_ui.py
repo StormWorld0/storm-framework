@@ -41,6 +41,7 @@ def show_help():
   show modules                  : Displaying module categories
   show <categories>             : Displays the complete contents
   show plugin                   : Displays existing plugins & plugin status
+  info <module_name>            : Complete Modules information
   search <module_name>          : To search for modules, you can also use
                                   filters such as (act:...) / (defact:...) /
                                   (severity:...) / (cve:...) / (author:...)
@@ -51,11 +52,9 @@ def show_help():
   clear                         : Clear command line
   exit                          : Exit the application
   restart                       : To restart if you experience a bug or error
+  
   log export <val>              : Export logs from internal database and save as txt
   log dump                      : Dump logs to the terminal screen
-  
-  info <cve_name>               : Complete CVE information
-  info <module_name>            : Complete Modules information
   load <plugin_name>            : Loading plugins into memory
   unload <plugin_name>          : Remove plugins from memory
   unset <var>                   : Delete value in a specific variable
