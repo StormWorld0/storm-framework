@@ -9,16 +9,16 @@ from apps.utility.restart import run_restart as restart
 
 # This command storm is used for several specific command values.
 # for example give this;
-# 1. Command => storm update > to update the Storm Framework.
-# 2. Command => storm verify > to re-verify by activating the integrity check.
-# 3. Command => storm restart > to restart storm if there are any strange bugs or errors after the update.
+#
+# Command => storm update > to update the Storm Framework.
+#
 def execute(args, ctx):
     cmd = args[0].lower() if args else ""
     options = ctx.options
 
     if not cmd:
         smf.printf(
-            f"{CC.YELLOW}[!] Incorrect input, Run (help) for complete information.{CC.RESET}"
+            f"[!]{CC.YELLOW} Incorrect input, Run (help) for complete information.{CC.RESET}"
         )
         return
 
@@ -29,15 +29,7 @@ def execute(args, ctx):
         status = update()
         if status == True:
             restart(options)
-
-    # This is to restart and save the variables that were set before restarting and then restore them.
-    # This is good if we experience a bug or error failure when we are ready to execute.
-    # by storing old variable data, it is very profitable and speeds up the time
-    elif cmd == "restart":
-        restart(options)
-
+            
     # Fallback not found
     else:
-        smf.printf(f"{CC.YELLOW}[!]{CC.RESET} {args} {CC.YELLOW}> Not found.{CC.RESET}")
-
-    return
+        smf.printf(f"[!]{CC.YELLOW} {args} => Not found.{CC.RESET}")
