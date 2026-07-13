@@ -29,7 +29,7 @@ def execute(args, ctx):
         status = update()
         if status == True:
             restart(options)
-            
+
     # Fallback not found
     else:
         smf.printf(f"[!]{CC.YELLOW} {args} => Not found.{CC.RESET}")
