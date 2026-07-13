@@ -22,6 +22,10 @@ def dump_log():
         return
 
     try:
+        time_log = datetime.datetime.now().replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        today = time_log.timestamp()
         # Use mode=ro for better stability
         uri_path = f"file:{db_path.absolute()}?mode=ro"
 
@@ -33,11 +37,13 @@ def dump_log():
             query = """
                 SELECT timestamp, level, label, payload, traceback, caller_info 
                 FROM system_logs 
+                WHERE timestamp >= ?
                 ORDER BY timestamp DESC
+                LIMIT 50;
             """
 
             # Execution and iteration on cursor
-            for row in cursor.execute(query):
+            for row in cursor.execute(query, (today,)):
                 ts, lvl, label, payload, traceback, caller = row
 
                 # Convert f64 Unix Epoch to Date Format
