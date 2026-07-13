@@ -12,6 +12,9 @@ classifiers = [
     "License :: OSI Approved :: GPL License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Golang",
+    "Programming Language :: Rust",
+    "Programming Language :: Bash"
 ]
 keywords=["storm", "python", "tool-suite", "offensive-security", "storm-framework"]
 
