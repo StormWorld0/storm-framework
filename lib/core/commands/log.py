@@ -22,6 +22,11 @@ from lib.smfdb_helpers.log_stream import dump_log
 # Command => log dump >> Dump all logs to terminal
 # Will display all logs from the database to the terminal screen.
 def execute(args, ctx):
+    # Validation of at least 1 argument
+    if not args:
+        smf.printf(f"[!] {CC.YELLOW}Argument null{CC.RESET}")
+        return
+    
     # Validate argument length.
     if len(args) <= 2:
         cmd = args[0].lower()
