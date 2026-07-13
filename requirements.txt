@@ -9,7 +9,7 @@ dnspython>=2.8.0
 paramiko>=4.0.0
 scapy>=2.7.0
 
-ipwhois>=1.3.0
+ipwhois
 ipaddress>=1.0.23
-whoisdomain>=1.20260106.1
-telnetlib3>=4.0.0
+whoisdomain
+telnetlib3
