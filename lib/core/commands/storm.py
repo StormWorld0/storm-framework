@@ -32,4 +32,4 @@ def execute(args, ctx):
 
     # Fallback not found
     else:
-        smf.printf(f"[!]{CC.YELLOW} {args} => Not found.{CC.RESET}")
+        smf.printf(f"[!]{CC.YELLOW} {cmd} => Not found.{CC.RESET}")
