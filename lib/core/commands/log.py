@@ -26,7 +26,7 @@ def execute(args, ctx):
     if not args:
         smf.printf(f"[!] {CC.YELLOW}Argument null{CC.RESET}")
         return
-    
+
     # Validate argument length.
     if len(args) <= 2:
         cmd = args[0].lower()
