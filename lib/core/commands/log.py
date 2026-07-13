@@ -6,6 +6,7 @@ from apps.utility.colors import *
 from lib.smfdb_helpers.log_utils import extract_logs
 from lib.smfdb_helpers.log_stream import dump_log
 
+
 # This command is used to retrieve specific logs that are stored.
 # in the internal log database and differentiated using several log levels
 # for example:
@@ -49,7 +50,7 @@ def execute(args, ctx):
         elif cmd == "dump":
             smf.printd("Performing a log dump", level="INFO")
             dump_log()
-            
+
         else:
             # If the user types: take backup, take system, etc.
             smf.printf(
