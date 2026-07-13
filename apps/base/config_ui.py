@@ -41,17 +41,18 @@ def show_help():
   show modules                  : Displaying module categories
   show <categories>             : Displays the complete contents
   show plugin                   : Displays existing plugins & plugin status
-
-  help                          : Displaying the manual
-  export log <val>              : Export logs from internal database and save as txt
   search <module_name>          : To search for modules, you can also use
                                   filters such as (act:...) / (defact:...) /
                                   (severity:...) / (cve:...) / (author:...)
+
+  help                          : Displaying the manual
   about                         : Information Development
   back                          : Back from current position
   clear                         : Clear command line
   exit                          : Exit the application
   restart                       : To restart if you experience a bug or error
+  log export <val>              : Export logs from internal database and save as txt
+  log dump                      : Dump logs to the terminal screen
   
   info <cve_name>               : Complete CVE information
   info <module_name>            : Complete Modules information
@@ -60,8 +61,7 @@ def show_help():
   unset <var>                   : Delete value in a specific variable
   unset all                     : Delete values in all variables
 
-  use                           : To use the module, you can use <module_name> 
-                                  or <path_module>
+  use                           : To use the module, you can use <module_name> or <path_module>
   set <var> <val>               : Filling values in variables
   run                           : Run the selected module
 
