@@ -25,11 +25,11 @@ def execute(args, ctx):
     # Validate argument length.
     if len(args) <= 2:
         cmd = args[0].lower()
-        
+
         if cmd == "export":
             val = args[1]
             valup = val.upper()
-            
+
             # Security Validation (Whitelist)
             valid_levels = {"DEBUG", "INFO", "WARN", "ERROR", "CRITICAL"}
             if valup not in valid_levels:
