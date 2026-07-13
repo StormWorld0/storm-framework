@@ -19,8 +19,8 @@ func init() {
 	customTransport := &http.Transport{
 		TLSClientConfig:     &tls.Config{InsecureSkipVerify: true},
 		DisableKeepAlives:   true,
-		MaxIdleConns:        100,
-		MaxIdleConnsPerHost: 10,
+		MaxIdleConns:        1000,
+		MaxIdleConnsPerHost: 100,
 	}
 
 	httpClient = &http.Client{
