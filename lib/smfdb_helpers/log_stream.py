@@ -39,7 +39,7 @@ def dump_log():
                 FROM system_logs 
                 WHERE timestamp >= ?
                 ORDER BY timestamp DESC
-                LIMIT 50;
+                LIMIT 100;
             """
 
             # Execution and iteration on cursor
