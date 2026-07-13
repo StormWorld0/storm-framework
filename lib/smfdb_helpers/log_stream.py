@@ -46,21 +46,21 @@ def dump_log():
                 )[:-3]
 
                 # Neat writing format
-                smf.printf("=" * 60 + "\n")
-                smf.printf(f"[{dt_str}] [{lvl}]")
-                smf.printf(f" CALLER  : {caller}")
-                smf.printf(f" LABEL   : {label}")
+                smf.printf(f"{CC.MAGENTA}-{CC.RESET}" * 60)
+                smf.printf(f"[{CC.CYAN}{dt_str}{CC.RESET}] [{lvl}]")
+                smf.printf(f"{CC.CYAN} CALLER {CC.RESET} : {CC.YELLOW}{caller}{CC.RESET}")
+                smf.printf(f"{CC.CYAN} LABEL {CC.RESET}  : {CC.YELLOW}{label}{CC.RESET}")
 
                 # Show if any
                 if payload:
-                    smf.printf(f" PAYLOAD : {payload}")
+                    smf.printf(f"{CC.CYAN} PAYLOAD {CC.RESET}: {CC.YELLOW}{payload}{CC.YELLOW}")
 
                 # Show if any
                 if traceback:
-                    smf.printf(f"\n{CC.RED} TRACEBACK:{CC.RESET}")
+                    smf.printf(f"\n{CC.CYAN} TRACEBACK:{CC.RESET}")
                     for line in traceback.split("\n"):
                         smf.printf(f"{CC.RED}     {line}{CC.RESET}")
-                smf.printf("=" * 60 + "\n")
+                smf.printf(f"{CC.MAGENTA}-{CC.RESET}" * 60 + "\n")
 
     except sqlite3.Error as e:
         smf.printf(f"[-]{CC.RED} A Database Log I/O error occurred{CC.RESET}")
