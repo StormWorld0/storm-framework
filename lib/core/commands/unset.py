@@ -33,7 +33,7 @@ def execute(args, ctx):
                 f"[!]{CC.YELLOW} WARN =>{CC.RESET} {var_name} {CC.YELLOW}> is not a valid options!{CC.RESET}"
             )
             return
-            
+
         # Delete value in specific variables
         options[var_name] = ""
 
