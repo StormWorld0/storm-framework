@@ -3,6 +3,7 @@
 import smf
 from apps.utility.colors import *
 
+
 # This command is to delete data in the specified global variable.
 # The command consists of two different mechanisms, namely;
 #
@@ -39,4 +40,3 @@ def execute(args, ctx):
     else:
         # Displays command usage help if no arguments are given.
         smf.printf(f"[!]{CC.YELLOW} Use the command =>{CC.RESET} unset <VAR>")
-      
