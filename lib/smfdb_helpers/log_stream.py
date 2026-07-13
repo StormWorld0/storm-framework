@@ -53,7 +53,9 @@ def dump_log():
 
                 # Show if any
                 if payload:
-                    smf.printf(f"{CC.CYAN} PAYLOAD {CC.RESET}: {CC.YELLOW}{payload}{CC.YELLOW}")
+                    smf.printf(
+                        f"{CC.CYAN} PAYLOAD {CC.RESET}: {CC.YELLOW}{payload}{CC.YELLOW}"
+                    )
 
                 # Show if any
                 if traceback:
