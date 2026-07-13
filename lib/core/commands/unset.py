@@ -24,13 +24,13 @@ def execute(args, ctx):
         if var_name == "ALL":
             for key in options.keys():
                 options[key] = ""
-            smf.printf(f"[*]{CC.YELLOW} All options => unset{CC.RESET}")
+            smf.printf(f"{CC.YELLOW}All options => unset{CC.RESET}")
             return
 
         # Validate the existence of keys in dictionary options
         if var_name not in options:
             smf.printf(
-                f"[!]{CC.YELLOW} WARN =>{CC.RESET} {var_name} {CC.YELLOW}> is not a valid options!{CC.RESET}"
+                f"[!]{CC.YELLOW} WARN =>{CC.RESET} {var_name} {CC.YELLOW}>> is not a valid options!{CC.RESET}"
             )
             return
 
