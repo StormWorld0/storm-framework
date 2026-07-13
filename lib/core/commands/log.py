@@ -23,12 +23,13 @@ from lib.smfdb_helpers.log_stream import dump_log
 # Will display all logs from the database to the terminal screen.
 def execute(args, ctx):
     # Validate argument length.
-    if len(args) >= 1:
+    if len(args) <= 2:
         cmd = args[0].lower()
-        val = args[1]
-
-        valup = val.upper()
+        
         if cmd == "export":
+            val = args[1]
+            valup = val.upper()
+            
             # Security Validation (Whitelist)
             valid_levels = {"DEBUG", "INFO", "WARN", "ERROR", "CRITICAL"}
             if valup not in valid_levels:
