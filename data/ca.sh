@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # Generate ROOT CA TRUST STORE
 if [ -f smf_ca.key ] && [ -f smf_ca.crt ]; then
 else
