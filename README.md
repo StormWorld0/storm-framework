@@ -27,7 +27,7 @@
 
 <p align="center">
   <a href="https://github.com/python">
-    <img src="https://img.shields.io/badge/Python-3.12.13-black">
+    <img src="https://img.shields.io/badge/Python-3.13.13-black">
   </a>
   <a href="https://github.com/golang/go">
     <img src="https://img.shields.io/badge/Golang-1.26.2-black">
@@ -64,6 +64,10 @@
 ## 🚀 INTRODUCTION
 
 **Storm-Framework** is an offensive security tool suite built for reconnaissance, vulnerability assessment, exploitation, and security research. It aims to streamline security testing workflows for cybersecurity professionals, penetration testers, and bug bounty hunters.
+
+## 📝 NOTES
+
+If you have ever used metasploit or you are a metasploit user, you will be 100% able to use Storm Framework.
 
 ## ⚙️ FLOW
 
