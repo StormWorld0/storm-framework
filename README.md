@@ -94,10 +94,16 @@ We recommend the standard installation provided:
 
 ## USING STORM
 
-To get started with Storm:
+To get started with Storm:  
+**`sudo storm`:** This is the main interface for interacting with Storm.
 
-**Start `storm`:** This is the main interface for interacting with Storm.
+Commands in Storm:  
+**`help`:** Displays help information on what commands can be used.
 
+Module initialization command:  
+**`use`:** To use the module in `modules/`.  
+**`set`:** To set the value in the variable, a module is required.  
+**`run`:** Running the module.
 
 ## COMMUNICATION & QUESTION
 
