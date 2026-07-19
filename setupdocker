@@ -1,266 +1,43 @@
 #!/usr/bin/env bash
+set -e
 
 # --- CONFIGURATION ---
 TOOL_NAME="storm"
 REPO_NAME="storm-framework"
-GITHUB_REPO="https://github.com/StormWorld0/$REPO_NAME.git"
+WRAPPER_URL="https://raw.githubusercontent.com/StormWorld0/$REPO_NAME/main/docker/bin/$TOOL_NAME"
+DOCKER_IMAGE="zxelzy/$REPO_NAME"
 
 # Color
 GREEN='\033[92m'
 RED='\033[91m'
-BLUE='\033[94m'
+YELLOW='\033[93m'
 NC='\033[0m'
 
-write_to_file() {
-    local content=$1
-    local file=$2
-    local append=$3
-
-    if [ "$append" = true ]; then
-        echo "$content" | tee -a "$file" > /dev/null
-    else
-        echo "$content" | tee "$file" > /dev/null
-    fi
-}
-
-# -----------------------------------------------------------------------------
-# --- AUTOMATIC ENVIRONMENT DETECTION & PATH CONFIGURATION ---
-# -----------------------------------------------------------------------------
-
-# Standard Linux Environment
-BIN_DIR="/usr/local/bin"
-SHEBANG_PATH="#!/usr/bin/env bash"
-PYTHON_CMD="python3"
-INSTALL_DIR="/opt/$REPO_NAME"
-
-apt update
-apt install -y jq python3 git openssl docker.io
-# -----------------------------------------------------------------------------
-
-echo -e "${GREEN}[!] Start Installation: ${REPO_NAME} [!] ${NC}"
-
-# Check Python and Git and Docker
-if ! command -v git &> /dev/null; then
-    echo -e "${RED}[x] ERROR: Git not found. Install Git first.${NC}"
-    exit 1
-fi
-if ! command -v "$PYTHON_CMD" &> /dev/null; then
-    echo -e "${RED}[x] ERROR: Python not found. Make sure $PYTHON_CMD installed.${NC}"
-    exit 1
-fi
-if ! command -v docker &> /dev/null; then
-    echo -e "${RED}[x] ERROR: Docker not found. Make sure Docker is installed and running.${NC}"
-    exit 1
-fi
-
-# Installation Directory Preparation
-if [ -d "$INSTALL_DIR" ]; then
-    echo -e "${GREEN}[-] Remove old installations.${NC}"
-    cd ~
-    rm -rf "$INSTALL_DIR"
-fi
-
-echo -e "${GREEN}[+] Create installation directory${NC}"
-
-# Checking if a script is running inside GitHub Actions
-if [ "$GITHUB_ACTIONS" == "true" ]; then
-    echo -e "${GREEN}[*] CI Environment detected${NC}"
-    cp -a . "$INSTALL_DIR"
-else
-    echo -e "${GREEN}[*] Production Environment detected${NC}"
-    mkdir -p "$INSTALL_DIR"
-    git clone "$GITHUB_REPO" "$INSTALL_DIR"
-fi
-
-if [ $? -ne 0 ]; then
-    echo -e "${RED}[x] ERROR: Failed to clone repository.${NC}"
-    rm -rf "$INSTALL_DIR"
-    exit 1
-fi
-
-# Validate whether the folder is successfully filled
-if [ ! -f "$INSTALL_DIR/pyproject.toml" ]; then
-    echo -e "${RED}[x] ERROR: Failed to prepare repository files.${NC}"
-    rm -rf "$INSTALL_DIR"
-    exit 1
-fi
-
-# Install Python Dependencies
-# Changed to Build Docker Image process
-if [ -f "$INSTALL_DIR/requirements.txt" ]; then
-    echo -e "${GREEN}[+] Installing Python dependencies and Building Image.${NC}"
-
-    CREATE_DOCKERFILE="FROM python:3.13-slim
-RUN apt-get update && apt-get install -y git golang build-essential libpcap-dev clang cmake ffmpeg openssl cargo pkg-config libssl-dev rustc python3-dev
-WORKDIR $INSTALL_DIR
-COPY . $INSTALL_DIR
-RUN pip install --upgrade pip setuptools wheel
-RUN pip install --no-cache-dir -r $INSTALL_DIR/requirements.txt"
-
-    write_to_file "$CREATE_DOCKERFILE" "$INSTALL_DIR/Dockerfile" false
-
-    echo "[+] Initiating Docker Build Process..."
-
-    # Check CI/CD or Production environment
-    if [ "$GITHUB_ACTIONS" == "true" ]; then
-        docker buildx build -t "$REPO_NAME" \
-            --cache-from type=gha \
-            --cache-to type=gha,mode=max \
-            --load "$INSTALL_DIR"
-    else
-        docker build -t "$REPO_NAME" "$INSTALL_DIR"
-    fi
-
-    # FAIL-FAST IMPLEMENTATION
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}[x] FATAL ERROR: Failed to build Docker Image and Python dependencies.${NC}"
-        echo -e "${RED}[x] Halting installation to prevent downstream failures.${NC}"
+# --- OS DETECTION ---
+OS="$(uname -s)"
+case "${OS}" in
+    Linux*|Darwin*)
+        echo -e "${GREEN}[+] OS Detected: ${OS}${NC}"
+        ;;
+    *)
+        echo -e "${RED}[*] OS not recognized: ${OS}${NC}"
         exit 1
-    fi
-fi
+        ;;
+esac
 
-# Run binary compilation
-if [ -d "$INSTALL_DIR" ]; then
-    cd "$INSTALL_DIR" || { echo -e "${RED}[x] ERROR: Cannot access $INSTALL_DIR${NC}"; }
-fi
+# --- PULL DOCKER IMAGE ---
+docker pull "$DOCKER_IMAGE"
 
-# Inject -e GOFLAGS="-buildvcs=false" to turn off VCS stamping
-docker run --rm -e GOFLAGS="-buildvcs=false" -v "$INSTALL_DIR":"$INSTALL_DIR" -w "$INSTALL_DIR" "$REPO_NAME" "$PYTHON_CMD" -m scripts.cpl.compiler
-cd "$INSTALL_DIR" || { echo -e "${RED}[x] ERROR: Lost track of directory!${NC}"; exit 1; }
+# --- DOWNLOAD & INSTALL WRAPPER ---
+TARGET_PATH="/usr/local/bin/$TOOL_NAME"
 
-
-# --- Security Identity Generation (Version: The 60-Char Fix) ---
-if [ ! -f .env ]; then
-    echo "[+] Generating unique security keys via OpenSSL..."
-
-    # Generate Private Key
-    PRIV_KEY=$(openssl genpkey -algorithm ed25519 2>/dev/null | openssl pkey -outform DER 2>/dev/null | base64 -w 0 | tr -d '[:space:]')
-
-    # Generate Public Key
-    PUB_KEY=$(echo -n "$PRIV_KEY" | base64 -d | openssl pkey -inform DER -pubout -outform DER 2>/dev/null | base64 -w 0 | tr -d '[:space:]')
-
-    # This code just adds '=' when PUBKEY is only 59 characters long
-    # Rust with its dependencies is very sensitive, it doesn't want anything odd.
-    # Storm's security logic is written in Rust, and this Key is to make it run.
-    if [ ${#PUB_KEY} -eq 59 ]; then
-        PUB_KEY="${PUB_KEY}="
-    fi
-
-    # This code will insert the key into .env
-    # This is very crucial because if there is only 1 space it will not be usable.
-    write_to_file "STORM_PRIVKEY=${PRIV_KEY}" ".env" false
-    write_to_file "STORM_PUBKEY=${PUB_KEY}" ".env" true
-
-    echo "[✓] Security identity created successfully."
-fi
-
-# This ensures that the command always matches the environment.
-chmod 600 .env
-
-# Go to data folder
-cd "$INSTALL_DIR/data" || { echo -e "${RED}[x] ERROR: Lost track of directory!${NC}"; exit 1; }
-
-# Generate ROOT CA TRUST STORE
-if [ -f smf_ca.key ] && [ -f smf_ca.crt ]; then
-    echo "[*] CA already exists"
+# Validation (sudo)
+if [ "$EUID" -ne 0 ]; then
+    sudo curl -sL "$WRAPPER_URL" -o "$TARGET_PATH"
+    sudo chmod +x "$TARGET_PATH"
 else
-    echo "[+] Generate CA Trust Store..."
-
-    # Delete CA lama
-    rm -f smf_ca.key smf_ca.crt
-
-    # Generate CA private key
-    openssl genrsa -out smf_ca.key 2048
-
-    # Allow standard owner read/write
-    chmod 600 smf_ca.key
-
-    # Generate self-signed CA certificate
-    openssl req -x509 -new -nodes \
-        -key smf_ca.key \
-        -sha256 \
-        -days 3650 \
-        -out smf_ca.crt \
-        -subj "/CN=Storm Trusted Root CA/O=StormWorld0/OU=Network-Security-Storm" \
-        -extensions v3_ca \
-        -config <(cat <<-EOF
-[req]
-distinguished_name = req_distinguished_name
-[req_distinguished_name]
-[v3_ca]
-subjectKeyIdentifier = hash
-authorityKeyIdentifier = keyid:always,issuer
-basicConstraints = critical, CA:true
-keyUsage = critical, digitalSignature, cRLSign, keyCertSign
-EOF
-        )
-
-    echo "[✓] Success generate CA Trust Store"
+    curl -sL "$WRAPPER_URL" -o "$TARGET_PATH"
+    chmod +x "$TARGET_PATH"
 fi
 
-# Go to root folder
-cd "$INSTALL_DIR" || { echo -e "${RED}[x] ERROR: Lost track of directory!${NC}"; exit 1; }
-
-# Sign executed inside Docker
-docker run --rm -v "$INSTALL_DIR":"$INSTALL_DIR" -w "$INSTALL_DIR" "$REPO_NAME" python3 -m scripts.security.sign
-
-# Creating a Dynamic Wrapper Script
-WRAPPER_DST="$BIN_DIR/$TOOL_NAME"
-
-# Create wrapper content in variables for easy management
-CREATE_WRAPPER=$(cat << EOF
-${SHEBANG_PATH}
-
-PROJECT_DIR="$INSTALL_DIR"
-cd "\$PROJECT_DIR" || { echo "[x] ERROR: Failed to access project directory."; exit 1; }
-
-# Check descriptor 1 (STDOUT) is connected to the native terminal (TTY)
-if [ -t 1 ]; then
-    TTY_FLAG="-it"
-else
-    TTY_FLAG=""
-fi
-
-DOCKER_CMD="docker run \$TTY_FLAG --rm --network host -v \$PROJECT_DIR:\$PROJECT_DIR -w \$PROJECT_DIR $REPO_NAME"
-
-if [ "\$1" = "--update" ] && [ \$# -eq 1 ]; then
-    exec \$DOCKER_CMD ./smfupdate
-
-elif [ "\$1" = "-cp" ] && [ "\$2" = "-crt" ] && [ \$# -eq 2 ]; then
-
-    if [ ! -f "./data/smf_ca.crt" ]; then
-        echo "[*] ERROR: smf_ca.crt not found."
-        exit 1
-    fi
-
-    TARGET_HOME=\$(getent passwd "\$SUDO_USER" | cut -d: -f6)
-    : "\${TARGET_HOME:=\$HOME}"
-
-    cp ./data/smf_ca.crt "\$TARGET_HOME/smf_ca.crt" || { echo "[x] Failed to copy certificate."; exit 1; }
-
-    echo "[+] Certificate copied to: \$TARGET_HOME/smf_ca.crt"
-
-elif [ \$# -eq 0 ]; then
-
-    if [ ! -f "./smfstart" ]; then
-        exec \$DOCKER_CMD ./smfupdate
-    else
-        exec \$DOCKER_CMD ./smfstart
-    fi
-
-else
-    echo "Invalid arguments: \$@"
-    exit 1
-fi
-EOF
-)
-
-write_to_file "$CREATE_WRAPPER" "$WRAPPER_DST" false
-
-chmod +x "$WRAPPER_DST"
-
-echo -e "${GREEN}####################################################${NC}"
 echo -e "${GREEN}[✓] INSTALLATION COMPLETE${NC}"
-echo -e "${GREEN}[✓] PATH STORM: ${INSTALL_DIR}${NC}"
-echo -e "${GREEN}[✓] PATH WRAPPER: ${BIN_DIR}/${TOOL_NAME}${NC}"
-echo -e "${GREEN}####################################################${NC}"
