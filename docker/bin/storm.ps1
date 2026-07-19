@@ -7,7 +7,7 @@
 #>
 
 $AppHome = "/opt/storm-framework"
-$DockerImage = "zxelzy/storm-framework:latest"
+$DockerImage = "stormworld0/storm-framework:latest"
 
 # Interception of Copy CA Certificate Command
 if ($args.Count -eq 2 -and $args[0] -eq "-cp" -and $args[1] -eq "-crt") {
