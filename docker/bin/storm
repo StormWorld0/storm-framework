@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP_HOME="/opt/storm-framework"
-DOCKER_NAME="zxelzy/storm-framework:latest"
+DOCKER_NAME="stormworld0/storm-framework:latest"
 
 # Interception of Copy CA Certificate Command
 if [ "$1" = "-cp" ] && [ "$2" = "-crt" ] && [ $# -eq 2 ]; then
