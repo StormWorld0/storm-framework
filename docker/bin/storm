@@ -46,7 +46,7 @@ else
 fi
 
 # Docker Execution (CA Persistence returned)
-exec docker run $TTY_FLAG --rm \
+exec docker run $TTY_FLAG --init --rm \
     --network host \
     $PRIV_FLAGS \
     -v storm_data:"$APP_HOME/data" \
