@@ -50,7 +50,7 @@ if ($args.Count -eq 0) {
 
 # Docker Argument Construction
 $DockerArgs = @(
-    "run", "-it", "--rm",
+    "run", "-it", "--init", "--rm",
     "--network", "host"
 )
 
