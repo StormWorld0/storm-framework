@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+APP_HOME="/opt/storm-framework"
+
+# Interception of Copy CA Certificate Command
+if [ "$1" = "-cp" ] && [ "$2" = "-crt" ] && [ $# -eq 2 ]; then
+
+    # Safe $HOME path resolution for Linux & macOS
+    if [ -n "$SUDO_USER" ]; then
+        TARGET_HOME=$(eval echo "~$SUDO_USER")
+    else
+        TARGET_HOME="$HOME"
+    fi
+
+    if docker run --rm -v storm_data:"$APP_HOME/data" storm-framework cat "$APP_HOME/data/smf_ca.crt" > "$TARGET_HOME/smf_ca.crt" 2>/dev/null; then
+        if [ -n "$SUDO_USER" ]; then
+            # Hapus argumen group, cukup gunakan user agar OS menyesuaikan (Linux: user, macOS: staff)
+            chown "$SUDO_USER" "$TARGET_HOME/smf_ca.crt"
+        fi
+        echo -e "[*] Certificate successfully copied to: $TARGET_HOME/smf_ca.crt"
+        exit 0
+    else
+        echo -e "[*] Failed to copy CA"
+        exit 1
+    fi
+fi
+
+# TTY detection for interactive stdin allocation
+if [ -t 1 ]; then
+    TTY_FLAG="-it"
+else
+    TTY_FLAG=""
+fi
+
+# Privilege escalation detection (sudo)
+PRIV_FLAGS=""
+if [ "$EUID" -eq 0 ]; then
+    PRIV_FLAGS="--cap-add=NET_ADMIN --cap-add=NET_RAW --cap-add=SYS_ADMIN"
+fi
+
+# Parsing Main Arguments
+if [ $# -eq 0 ]; then
+    CMD_ARGS="./smfstart"
+else
+    CMD_ARGS="$@"
+fi
+
+# Docker Execution (CA Persistence returned)
+exec docker run $TTY_FLAG --rm \
+    --network host \
+    $PRIV_FLAGS \
+    -v storm_data:"$APP_HOME/data" \
+    -v "$PWD:/workspace" \
+    -w /workspace \
+    storm-framework $CMD_ARGS
