@@ -20,6 +20,9 @@
   <a href="https://github.com/debian">
     <img src="https://img.shields.io/badge/Debian-supported-black?logo=debian">
   </a>
+  <a href="https://github.com/windows">
+    <img src="https://img.shields.io/badge/Windows-supported-black?logo=windows">
+  </a>
   <a href="https://github.com/StormWorld0/storm-framework/blob/main/README_ID.md">
     <img src="https://img.shields.io/badge/Language-Indonesian-red?logo=indonesia&logoColor=white">
   </a>
