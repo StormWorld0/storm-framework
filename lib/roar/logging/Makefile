@@ -12,14 +12,6 @@ ifeq ($(CACHE),)
     CACHE := target
 endif
 
-# --- HARDWARE OPTIMIZATION LAYER ---
-# Using the Compile-on-Device paradigm. 
-# Delegates 100% of microarchitectural resolution to the host LLVM backend.
-# rustc will evaluate CPUID (x86_64) or MIDR_EL1 (ARM64) dynamically 
-# to inject the most advanced vector instruction sets (AVX, SVE, NEON) 
-# supported by the user's local silicon.
-export RUSTFLAGS := -C target-cpu=native
-
 # Source code resolution for re-compile trigger
 SRC      := $(shell find src -name "*.rs" 2>/dev/null) Cargo.toml
 
