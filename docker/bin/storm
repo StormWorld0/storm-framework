@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 APP_HOME="/opt/storm-framework"
+DOCKER_NAME="zxelzy/storm-framework:latest"
 
 # Interception of Copy CA Certificate Command
 if [ "$1" = "-cp" ] && [ "$2" = "-crt" ] && [ $# -eq 2 ]; then
@@ -12,7 +13,7 @@ if [ "$1" = "-cp" ] && [ "$2" = "-crt" ] && [ $# -eq 2 ]; then
         TARGET_HOME="$HOME"
     fi
 
-    if docker run --rm -v storm_data:"$APP_HOME/data" storm-framework cat "$APP_HOME/data/smf_ca.crt" > "$TARGET_HOME/smf_ca.crt" 2>/dev/null; then
+    if docker run --rm -v storm_data:"$APP_HOME/data" "$DOCKER_NAME" cat "$APP_HOME/data/smf_ca.crt" > "$TARGET_HOME/smf_ca.crt" 2>/dev/null; then
         if [ -n "$SUDO_USER" ]; then
             # Hapus argumen group, cukup gunakan user agar OS menyesuaikan (Linux: user, macOS: staff)
             chown "$SUDO_USER" "$TARGET_HOME/smf_ca.crt"
@@ -52,4 +53,4 @@ exec docker run $TTY_FLAG --init --rm \
     -v storm_data:"$APP_HOME/data" \
     -v "$PWD:/workspace" \
     -w /workspace \
-    storm-framework $CMD_ARGS
+    "$DOCKER_NAME" $CMD_ARGS
