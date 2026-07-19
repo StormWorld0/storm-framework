@@ -1,5 +1,6 @@
 FROM python:3.13-slim
 LABEL maintainer="StormWorld0"
+LABEL description="Offensive Security"
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
