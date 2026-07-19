@@ -31,13 +31,8 @@ docker pull "$DOCKER_IMAGE"
 # --- DOWNLOAD & INSTALL WRAPPER ---
 TARGET_PATH="/usr/local/bin/$TOOL_NAME"
 
-# Validation (sudo)
-if [ "$EUID" -ne 0 ]; then
-    sudo curl -sL "$WRAPPER_URL" -o "$TARGET_PATH"
-    sudo chmod +x "$TARGET_PATH"
-else
-    curl -sL "$WRAPPER_URL" -o "$TARGET_PATH"
-    chmod +x "$TARGET_PATH"
-fi
+curl -sL "$WRAPPER_URL" -o "$TARGET_PATH"
+chmod +x "$TARGET_PATH"
 
+# Installation complete
 echo -e "${GREEN}[✓] INSTALLATION COMPLETE${NC}"
