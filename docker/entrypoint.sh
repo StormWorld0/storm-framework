@@ -27,6 +27,6 @@ EOF
         -extensions v3_ca -config openssl_v3.cnf >/dev/null 2>&1
 
     rm openssl_v3.cnf
-    cd "$APP_ROOT"                                                                      fi
+    cd "$APP_ROOT"
 fi
 exec "$@"
