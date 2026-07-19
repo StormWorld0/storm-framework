@@ -36,8 +36,8 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-              zxelzy/storm-framework:${{ github.ref_name }}
-              zxelzy/storm-framework:latest
+              stormworld0/storm-framework:${{ github.ref_name }}
+              stormworld0/storm-framework:latest
           
           cache-from: type=gha
           cache-to: type=gha,mode=max
