@@ -5,7 +5,7 @@ set -e
 TOOL_NAME="storm"
 REPO_NAME="storm-framework"
 WRAPPER_URL="https://raw.githubusercontent.com/StormWorld0/$REPO_NAME/main/docker/bin/$TOOL_NAME"
-DOCKER_IMAGE="zxelzy/$REPO_NAME"
+DOCKER_IMAGE="zxelzy/$REPO_NAME:latest"
 
 # Color
 GREEN='\033[92m'
