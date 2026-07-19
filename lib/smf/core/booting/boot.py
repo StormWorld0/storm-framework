@@ -3,6 +3,9 @@
 import smf
 import time
 import sys
+import os
+
+from rootmap import ROOT
 
 from apps.utility.verify import *
 from apps.utility.spin import SpinBoot
@@ -33,9 +36,10 @@ def boot():
             smf.printd("Binary synchronization is running", level="INFO")
             manager.sync_bin()
 
-            # Verify file integrity
-            smf.printd("Integrity verification is running", level="INFO")
-            run_verif()
+            if not os.path.exists(os.path.join(ROOT, ".docker")):
+                # Verify file integrity
+                smf.printd("Integrity verification is running", level="INFO")
+                run_verif()
 
         # Countdown to pause and start
         for i in range(5, 0, -1):
