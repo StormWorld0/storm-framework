@@ -1,7 +1,7 @@
 $ToolName = "storm.ps1"
 $RepoName = "storm-framework"
 $WrapperUrl = "https://raw.githubusercontent.com/StormWorld0/$RepoName/main/docker/bin/$ToolName"
-$DockerImage = "zxelzy/$RepoName:latest"
+$DockerImage = "stormworld0/$RepoName:latest"
 
 $IsAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 if (-not $IsAdmin) {
