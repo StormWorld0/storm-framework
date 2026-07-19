@@ -5,6 +5,3 @@
 *.h linguist-detectable=true
 *.json linguist-detectable=true
 *.sh linguist-detectable=true
-
-# Lock shell script
-*.sh text eol=lf
