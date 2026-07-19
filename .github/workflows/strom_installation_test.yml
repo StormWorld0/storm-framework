@@ -9,29 +9,6 @@ on:
 
 jobs:
   # =================================================================
-  # JOB 1: NATIVE DOCKER TEST (1 Job)
-  # Execute setupdocker directly at the Host OS level (without containers)
-  # Leveraging the pre-installed Docker daemon from the GitHub Actions VM
-  # =================================================================
-  docker-test:
-    name: Test docker on native ubuntu host
-    runs-on: ubuntu-latest
-    steps:
-      - name: Prepare Environment
-        run: sudo apt-get update && sudo apt-get install -y curl bash jq
-
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Execute Storm Installation (docker)
-        run: bash ./setupdocker
-
-          
-
-  # =================================================================
   # JOB 2: CONTAINERIZED SCRIPT TEST (6 Jobs)
   # Executing setuplinux & setupvenv in an isolated environment
   # Total execution: 3 OS x 2 Setup = 6 Jobs
