@@ -1,10 +1,12 @@
 package protocol
-// Handler adalah signature untuk semua fungsi protokol
-type Handler func(RequestPacket) ResponsePacket
+
+import (
+	h "github.com/StormWorld0/storm-framework/lib/roar/crs/src/protocol/http"
+)
 
 // Handlers Registry (Map)
 var Handlers = map[string]Handler{
-	"HTTP_SEND": HTTP,
+	"HTTP_SEND": h.HTTP,
 	// "DNS_LOOKUP": DNS,
 	// "TCP_CONNECT": TCP,
 }
