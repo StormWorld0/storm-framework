@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	regis "github.com/StormWorld0/storm-framework/lib/roar/crs/src/protocol"
+	regis "github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 )
 
 // Fungsi HTTP sesuai signature Handler
