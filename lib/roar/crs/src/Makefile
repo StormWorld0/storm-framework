@@ -12,7 +12,9 @@ TARGET     := $(OUT)/$(basename $(notdir $(MAIN_FILE)))
 
 .PHONY: all clean
 
-all:
+all: $(TARGET)
+
+$(TARGET): $(ALL_SRCS)
 	@mkdir -p "$(OUT)"
 	@go build -o "$(TARGET)" "$(MAIN_DIR)"
 
