@@ -2,9 +2,10 @@ import dns.resolver
 import dns.exception
 import socket
 
+
 class DNSTransport:
     """Core Engine untuk menangani operasional jaringan DNS."""
-    
+
     def __init__(self, nameservers=None, timeout=2.0, lifetime=3.0):
         self.resolver = dns.resolver.Resolver(configure=False)
         self.resolver.nameservers = nameservers or ["8.8.8.8", "1.1.1.1"]
@@ -34,4 +35,3 @@ class DNSTransport:
             return True
         except socket.gaierror:
             return False
-          
