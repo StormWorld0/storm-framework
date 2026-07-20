@@ -19,7 +19,7 @@ class RuntimeContext:
             "execute", payload=payload, metadata=self.metadata
         )
         current_payload = payload
-        
+
         if isinstance(results, dict):
             for plugin_name, res in results.items():
                 if isinstance(res, dict) and "mutated_payload" in res:
