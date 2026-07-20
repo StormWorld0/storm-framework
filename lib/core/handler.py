@@ -23,13 +23,13 @@ def execute(cmd: str, args: list[str], ctx: "Context") -> bool:
     if os.path.exists(cmd_path):
         try:
             # Import modules dynamically
-            module = importlib.import_module(f"lib.core.commands.{safe_cmd}")
+            cmd = importlib.import_module(f"lib.core.commands.{safe_cmd}")
 
             # [Context Mutation Execution]
             # Pass a `ctx` object into the command module.
             # The module will modify the properties of `ctx`
             # directly in memory (in-place modification).
-            module.execute(args, ctx)
+            cmd.execute(args, ctx)
 
             return True  # Routing successfully handled
         except KeyboardInterrupt:
