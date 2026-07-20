@@ -39,7 +39,7 @@ func HTTP(req regis.RequestPacket) regis.ResponsePacket {
 
 	respBody, _ := io.ReadAll(resp.Body)
 
-	return ResponsePacket{
+	return regis.ResponsePacket{
 		Status: "SUCCESS",
 		Data: map[string]interface{}{
 			"status_code": resp.StatusCode,
