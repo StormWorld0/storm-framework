@@ -8,6 +8,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+
+	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/protocol"
 )
 
 func main() {
@@ -17,23 +19,23 @@ func main() {
 	for scanner.Scan() {
 		line := scanner.Bytes()
 
-		var req RequestPacket
-		// Ubah JSON string jadi struct Golang
+		var req protocol.RequestPacket
 		if err := json.Unmarshal(line, &req); err != nil {
-			sendResponse(ResponsePacket{Status: "ERROR", Message: "Invalid JSON from Python"})
+			sendResponse(protocol.ResponsePacket{Status: "ERROR", Message: "Invalid JSON"})
 			continue
 		}
+		
+		var res protocol.ResponsePacket
 
-		var res ResponsePacket
-
-		// ROUTER: Arahkan berdasarkan nama Primitive
-		switch req.Primitive {
-		case "HTTP_SEND":
-			res = executeHTTP(req)
-    case "DNS_LOOKUP":
-      res = executeDNS(req)
-		default:
-			res = ResponsePacket{Status: "ERROR", Message: "Unknown primitive: " + req.Primitive}
+		handler, ok := protocol.Handlers[req.Primitive]
+		if !ok {
+			res = protocol.ResponsePacket{
+				Status:  "ERROR",
+				Message: "Unknown primitive: " + req.Primitive,
+			}
+		} else {
+			// Eksekusi handler yang cocok
+			res = handler(req)
 		}
 
 		// Kirim balikan ke Python
@@ -42,7 +44,7 @@ func main() {
 }
 
 // sendResponse mengubah struct jadi JSON 1 baris lalu mencetaknya ke stdout
-func sendResponse(res ResponsePacket) {
+func sendResponse(res protocol.ResponsePacket) {
 	out, err := json.Marshal(res)
 	if err != nil {
 		fmt.Println(`{"status":"ERROR","message":"Failed to marshal response"}`)
@@ -50,4 +52,3 @@ func sendResponse(res ResponsePacket) {
 	}
 	fmt.Println(string(out))
 }
-
