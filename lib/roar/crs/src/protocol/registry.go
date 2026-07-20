@@ -1,4 +1,4 @@
-package main
+package protocol
 // Handler adalah signature untuk semua fungsi protokol
 type Handler func(RequestPacket) ResponsePacket
 
