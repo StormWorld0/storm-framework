@@ -17,9 +17,22 @@ metadata = {
 SYM_INFO = "💡"
 SYM_SECURITY = "🔒"
 DNS_RECORDS = [
-    "A", "AAAA", "CNAME", "MX", "TXT", "NS", 
-    "SOA", "SRV", "NAPTR", "CAA", "TLSA", 
-    "PTR", "DNSKEY", "DS", "RRSIG", "LOC"
+    "A",
+    "AAAA",
+    "CNAME",
+    "MX",
+    "TXT",
+    "NS",
+    "SOA",
+    "SRV",
+    "NAPTR",
+    "CAA",
+    "TLSA",
+    "PTR",
+    "DNSKEY",
+    "DS",
+    "RRSIG",
+    "LOC",
 ]
 
 REQUIRED_OPTIONS = {"DOMAIN": ""}
@@ -58,7 +71,7 @@ def execute(options):
             result = transport.resolve_record(target_domain, record_type, tcp=True)
 
             status = result["status"]
-            
+
             if status == "SUCCESS":
                 smf.printf(f"{C.MENU} \n[{record_type} Records]:")
                 for item in result["data"]:
@@ -77,4 +90,3 @@ def execute(options):
         return
     except Exception as e:
         smf.printf(f"{C.ERROR}[!] Global ERROR =>", e, file=sys.stderr, flush=True)
-        
