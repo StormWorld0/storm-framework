@@ -8,8 +8,10 @@ import smf
 from ..calling import call_bin
 from apps.utility.colors import *
 
+
 class CRS:
     """IPC (Inter-Process Communication) via Subprocess."""
+
     _process = None
 
     @classmethod
@@ -17,7 +19,7 @@ class CRS:
         if cls._process is None or cls._process.poll() is not None:
             # Nanti path ini tinggal kamu arahin ke biner Go kamu
             binary_path = call_bin("crs_engine")
-            
+
             # Kalau biner belum ada, Jembatan akan langsung lapor error
             if not os.path.exists(binary_path):
                 smf.printf(f"[!]{CC.YELLOW} Binary not found =>{CC.RESET}", binary_path)
@@ -27,8 +29,8 @@ class CRS:
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True, 
-                bufsize=1
+                text=True,
+                bufsize=1,
             )
         return cls._process
 
@@ -47,7 +49,7 @@ class CRS:
 
             # 3. Baca 1 baris balasan JSON dari Stdout
             response_line = proc.stdout.readline()
-            
+
             if not response_line:
                 smf.printd("CRS Engine suddenly stopped", response_line, level="WARN")
                 return {"status": "ERROR", "message": "Engine mati mendadak"}
@@ -58,4 +60,3 @@ class CRS:
         except Exception as e:
             smf.printd("Error CRS send", e, level="ERROR")
             return {"status": "ERROR", "message": str(e)}
-            
