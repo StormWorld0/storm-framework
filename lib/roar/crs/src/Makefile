@@ -3,7 +3,7 @@ OUT := $(OUT_DIR)/core/CRS
 
 # --- Source Discovery ---
 ALL_SRCS   := $(shell find . -type f -name '*.go')
-MAIN_SRCS  := $(shell grep -lE '^[[:space:]]*func[[:space:]]+main[[:space:]]*\(' $(ALL_SRCS) 2>/dev/null)
+MAIN_SRCS := $(shell grep -l "func main()" $(ALL_SRCS) 2>/dev/null)
 
 MAIN_COUNT := $(words $(MAIN_SRCS))
 MAIN_FILE  := $(firstword $(MAIN_SRCS))
