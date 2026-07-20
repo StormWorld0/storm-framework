@@ -1,17 +1,19 @@
 // https://github.com/StormWorld0/storm-framework
 // License SMF
 // Author zxelzy
-package protocol
+package http
 
 import (
 	"bytes"
 	"io"
 	"net/http"
 	"time"
+
+	regis "github.com/StormWorld0/storm-framework/lib/roar/crs/src/protocol"
 )
 
 // Fungsi HTTP sesuai signature Handler
-func HTTP(req RequestPacket) ResponsePacket {
+func HTTP(req regis.RequestPacket) regis.ResponsePacket {
 	timeout := time.Duration(req.Timeout * float64(time.Second))
 	if timeout == 0 {
 		timeout = 5 * time.Second
@@ -26,12 +28,12 @@ func HTTP(req RequestPacket) ResponsePacket {
 
 	httpReq, err := http.NewRequest(req.Method, req.URL, bodyReader)
 	if err != nil {
-		return ResponsePacket{Status: "ERROR", Message: err.Error()}
+		return regis.ResponsePacket{Status: "ERROR", Message: err.Error()}
 	}
 
 	resp, err := client.Do(httpReq)
 	if err != nil {
-		return ResponsePacket{Status: "ERROR", Message: err.Error()}
+		return regis.ResponsePacket{Status: "ERROR", Message: err.Error()}
 	}
 	defer resp.Body.Close()
 
