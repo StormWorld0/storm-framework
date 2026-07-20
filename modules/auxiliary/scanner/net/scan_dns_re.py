@@ -54,9 +54,7 @@ def execute(options):
     except ValueError:
         pass
 
-    # Jika transport tidak di-pass dari luar, gunakan default instance (Fallback)
-    if transport is None:
-        transport = DNSTransport()
+    transport = DNSTransport()
 
     smf.printf(f"{C.HEADER} DNS ENUMERATION For {target_domain}")
 
