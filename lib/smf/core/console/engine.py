@@ -4,7 +4,7 @@ import typing
 import smf
 import data.option.session as ops
 
-from .runtime import RuntimeContext
+from .net import NetContext
 from lib.core import handler as ex
 from lib.roar.plugin_api import plugin
 from dataclasses import dataclass, field
@@ -22,10 +22,10 @@ class Context:
     options: dict = field(default_factory=ops.default_options)
     exit: bool = False
     plugin: typing.Any = plugin
-    runtime: typing.Any = RuntimeContext
+    net: NetContext = field(default_factory=NetContext)
 
     smf.printd("CONTEXT PLUGIN", plugin, level="DEBUG")
-    smf.printd("CONTEXT RUNTIME", runtime, level="DEBUG")
+    smf.printd("CONTEXT RUNTIME", net, level="DEBUG")
 
     def dispatch(self, cmd: str, args: list[str]) -> None:
         """
