@@ -1,4 +1,3 @@
-// internal/source/models.go
 package packet
 
 // RequestPacket adalah cerminan dari dictionary yang dikirim Python
@@ -11,11 +10,11 @@ type RequestPacket struct {
 	Body      string            `json:"body,omitempty"`
 	Headers   map[string]string `json:"headers,omitempty"`
 	
-	// Parameter Umum
+	// Parameter umum
 	Timeout   float64           `json:"timeout,omitempty"`
 }
 
-// ResponsePacket adalah balasan yang akan dibaca oleh Python
+// ResponsePacket
 type ResponsePacket struct {
 	Status  string      `json:"status"`
 	Message string      `json:"message,omitempty"`
@@ -23,6 +22,3 @@ type ResponsePacket struct {
 	// Data bebas (bisa map, array, string)
 	Data    interface{} `json:"data,omitempty"`
 }
-
-// Handler adalah signature untuk semua fungsi protokol
-type Handler func(RequestPacket) ResponsePacket
