@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/protocol"
 )
 
@@ -19,17 +20,17 @@ func main() {
 	for scanner.Scan() {
 		line := scanner.Bytes()
 
-		var req protocol.RequestPacket
+		var req packet.RequestPacket
 		if err := json.Unmarshal(line, &req); err != nil {
-			sendResponse(protocol.ResponsePacket{Status: "ERROR", Message: "Invalid JSON"})
+			sendResponse(packet.ResponsePacket{Status: "ERROR", Message: "Invalid JSON"})
 			continue
 		}
 		
-		var res protocol.ResponsePacket
+		var res packet.ResponsePacket
 
 		handler, ok := protocol.Handlers[req.Primitive]
 		if !ok {
-			res = protocol.ResponsePacket{
+			res = packet.ResponsePacket{
 				Status:  "ERROR",
 				Message: "Unknown primitive: " + req.Primitive,
 			}
@@ -44,7 +45,7 @@ func main() {
 }
 
 // sendResponse mengubah struct jadi JSON 1 baris lalu mencetaknya ke stdout
-func sendResponse(res protocol.ResponsePacket) {
+func sendResponse(res packet.ResponsePacket) {
 	out, err := json.Marshal(res)
 	if err != nil {
 		fmt.Println(`{"status":"ERROR","message":"Failed to marshal response"}`)
