@@ -18,7 +18,7 @@ from apps.utility.colors import *
 def execute(args, ctx):
     current_module = ctx.current_module
     options = ctx.options
-    plugin = ctx.plugin
+    manager = ctx.plugin
 
     if not current_module:
         smf.printf(f"{CC.YELLOW}[!] No modules selected. (use <module>) first.{CC.RESET}")
@@ -62,7 +62,7 @@ def execute(args, ctx):
             options["PASS"] = full_path
 
     # Runtime
-    module_runtime = ctx.runtime(metadata=metadata, plugin_manager=plugin)
+    module_runtime = ctx.runtime(metadata=metadata, manager=manager)
 
     # Execution module
     try:
