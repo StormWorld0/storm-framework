@@ -1,7 +1,7 @@
 // https://github.com/StormWorld0/storm-framework
 // License SMF
 // Author zxelzy
-package main
+package protocol
 
 import (
 	"bytes"
