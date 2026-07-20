@@ -1,5 +1,5 @@
 // internal/source/models.go
-package main
+package packet
 
 // RequestPacket adalah cerminan dari dictionary yang dikirim Python
 type RequestPacket struct {
@@ -23,3 +23,6 @@ type ResponsePacket struct {
 	// Data bebas (bisa map, array, string)
 	Data    interface{} `json:"data,omitempty"`
 }
+
+// Handler adalah signature untuk semua fungsi protokol
+type Handler func(RequestPacket) ResponsePacket
