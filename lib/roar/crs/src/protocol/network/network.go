@@ -16,7 +16,7 @@ import (
 
 // Socket mengeksekusi koneksi TCP/UDP/TLS menggunakan Global Fastdialer
 func Network(req packet.RequestPacket) packet.ResponsePacket {
-	packet.Take()
+	utils.Take()
 	
 	timeout := time.Duration(req.Timeout * float64(time.Second))
 	if timeout == 0 {
