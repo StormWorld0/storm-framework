@@ -38,7 +38,7 @@ DNS_RECORDS = [
 REQUIRED_OPTIONS = {"DOMAIN": ""}
 
 
-def execute(options):
+def execute(options, net):
     """
     Eksekusi modul. Meminta 'transport' engine dari Framework Core
     untuk melakukan inspeksi paket di jaringan.
@@ -54,25 +54,17 @@ def execute(options):
     except ValueError:
         pass
 
-    transport = DNSTransport()
-
     smf.printf(f"{C.HEADER} DNS ENUMERATION For {target_domain}")
-
-    # Validasi awal via Core Transport
-    if not transport.is_domain_resolvable(target_domain):
-        smf.printf(f"{C.ERROR}[!] ERROR: Domain not found.")
-        return
-
     try:
         for record_type in DNS_RECORDS:
             # Modul hanya memanggil instruksi 'resolve_record' ke Core
-            result = transport.resolve_record(target_domain, record_type, tcp=True)
+            result = net.dns_request(target_domain, type=record_type, protocol="tcp", timeout=2.0)
 
             status = result["status"]
 
             if status == "SUCCESS":
                 smf.printf(f"{C.MENU} \n[{record_type} Records]:")
-                for item in result["data"]:
+                for item in result["data"]["rcode_str"]:
                     if record_type == "TXT":
                         smf.printf(f"{C.SUCCESS}  {SYM_SECURITY} {item}")
                     else:
