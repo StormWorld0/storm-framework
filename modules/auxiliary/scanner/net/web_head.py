@@ -71,9 +71,9 @@ def execute(options, net):
 
         # Strict-Transport-Security (Downgrade Prevention)
         hsts = response["data"]["headers"].get("Strict-Transport-Security")
-        if "Strict-Transport-Security" not in response["data"]["headers"] and url.startswith(
-            "https://"
-        ):
+        if "Strict-Transport-Security" not in response["data"][
+            "headers"
+        ] and url.startswith("https://"):
             smf.printf(
                 f"{C.ERROR}[!] The Strict-Transport-Security header is MISSING. HTTP Downgrade Risks.{C.RESET}"
             )
