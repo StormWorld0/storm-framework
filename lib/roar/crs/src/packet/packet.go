@@ -16,9 +16,12 @@ type RequestPacket struct {
 
 // ResponsePacket
 type ResponsePacket struct {
-	Status  string      `json:"status"`
-	Message string      `json:"message,omitempty"`
+	Status     string      `json:"status"`
+	Message    string      `json:"message,omitempty"`
 	
 	// Data bebas (bisa map, array, string)
-	Data    interface{} `json:"data,omitempty"`
+	Data       interface{} `json:"data,omitempty"`
+	StatusCode int               `json:"status_code"`
+    Headers    map[string]string `json:"headers"`
+    Body       string            `json:"body"`
 }
