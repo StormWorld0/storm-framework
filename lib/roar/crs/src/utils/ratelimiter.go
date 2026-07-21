@@ -1,7 +1,7 @@
 // https://github.com/StormWorld0/storm-framework
 // License SMF
 // Author zxelzy (Core Rate Limiter Engine)
-package packet
+package utils
 
 import (
 	"context"
