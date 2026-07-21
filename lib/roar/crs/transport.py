@@ -55,6 +55,7 @@ class CRS:
                 return {"status": "ERROR", "message": "Engine mati mendadak"}
 
             # 4. Ubah balik JSON ke Dict
+            smf.printd("CRS Process Output dict format", json.loads(response_line), level="DEBUG")
             return json.loads(response_line)
 
         except Exception as e:
