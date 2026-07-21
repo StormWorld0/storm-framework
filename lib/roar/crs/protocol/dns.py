@@ -8,14 +8,19 @@ from ..transport import CRS
 
 
 def dns_request(
-    domain: str, record_type: str = "A", timeout: float = 2.0, **kwargs
+    domain: str, 
+    type: str = "A", 
+    protocol: str = "",
+    timeout: float = 2.0, 
+    **kwargs
 ) -> dict:
     """Wrapper DNS"""
 
     packet = {
         "primitive": "DNS_LOOKUP",
         "domain": domain,
-        "record_type": record_type,
+        "type": record_type,
+        "protocol": protocol,
         "timeout": timeout,
     }
 
