@@ -35,10 +35,20 @@ func HTTP(req packet.RequestPacket) packet.ResponsePacket {
 		options.Timeout = timeout
 
 		rawClient := rawhttp.NewClient(options)
+
+		parsedURL, err := url.Parse(req.URL)
+		if err != nil {
+			return packet.ResponsePacket{Status: "ERROR", Message: "Invalid URL for RawHTTP: " + err.Error()}
+		}
+
+		uriPath := parsedURL.RequestURI()
+		if uriPath == "" {
+			uriPath = "/"
+		}
 		
 		// Module bisa menyuplai FULL raw HTTP string di req.Body
 		// Contoh: "GET / HTTP/1.1\r\nHost: target\r\nX-Injected:  spasi_aneh\r\n\r\n"
-		resp, err := rawClient.DoRaw(req.Method, req.URL, map[string][]string{}, ioutil.NopCloser(strings.NewReader(req.Body)))
+		resp, err := rawClient.DoRaw(req.Method, req.URL, uriPath, map[string][]string{}, io.NopCloser(strings.NewReader(req.Body)))
 		if err != nil {
 			return packet.ResponsePacket{Status: "ERROR", Message: "RawHTTP failed: " + err.Error()}
 		}
