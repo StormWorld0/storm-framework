@@ -58,8 +58,41 @@ def format_record(record_type, item):
             f"Minimum TTL : {item['minttl']}s"
         )
 
-    return str(item)
+    if record_type == "SSHFP":
+        return (
+            f"Algorithm : {item['algorithm']}, "
+            f"Fingerprint Type : {item['fingerprint_type']}, "
+            f"Fingerprint : {item['fingerprint']}"
+        )
 
+    if record_type == "CERT":
+        return (
+            f"Type : {item['type']}, "
+            f"Key Tag : {item['key_tag']}, "
+            f"Algorithm : {item['algorithm']}"
+        )
+
+    if record_type == "URI":
+        return (
+            f"Target : {item['target']} "
+            f"(priority {item['priority']}, weight {item['weight']})"
+        )
+
+    if record_type in ("HTTPS", "SVCB"):
+        lines = [
+            f"Priority : {item['priority']}",
+            f"Target : {item['target']}",
+        ]
+
+        for param in item["value"]:
+            for key, value in param.items():
+                if isinstance(value, list):
+                    value = ", ".join(value)
+                lines.append(f"{key} : {value}")
+
+        return "\n    ".join(lines)
+
+    return str(item)
 
 REQUIRED_OPTIONS = {"DOMAIN": "", "PROTOCOL": "Default TCP"}
 
