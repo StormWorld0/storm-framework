@@ -38,14 +38,13 @@ func HTTP(req regis.RequestPacket) regis.ResponsePacket {
 	defer resp.Body.Close()
 
 	respBody, _ := io.ReadAll(resp.Body)
-	respHead, _ := resp.Header
 
 	return regis.ResponsePacket{
 		Status: "SUCCESS",
 		Data: map[string]interface{}{
 			"status_code": resp.StatusCode,
 			"body":        string(respBody),
-			"headers":     string(respHead),
+			"headers":     resp.Header,
 		},
 	}
 }
