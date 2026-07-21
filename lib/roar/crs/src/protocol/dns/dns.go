@@ -75,10 +75,7 @@ func DNS(req packet.RequestPacket) packet.ResponsePacket {
 	}
 
 	// Ekstraksi record untuk kebutuhan rule evaluation
-	answers := make([]string, 0)
-	for _, ans := range respMsg.Answer {
-		answers = append(answers, ans.String())
-	}
+	answers := ParseAnswers(respMsg.Answer)
 
 	// Return terstruktur
 	return packet.ResponsePacket{
