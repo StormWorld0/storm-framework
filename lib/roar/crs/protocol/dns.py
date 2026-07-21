@@ -13,7 +13,7 @@ def dns_request(
     """Wrapper DNS"""
 
     packet = {
-        "primitive": "DNS_LOOKUP",
+        "primitive": "DNS_SEND",
         "domain": domain,
         "type": type,
         "protocol": protocol,
