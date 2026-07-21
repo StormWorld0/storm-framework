@@ -81,9 +81,11 @@ func HTTP(req packet.RequestPacket) packet.ResponsePacket {
 		MaxIdleConnsPerHost:   10,
 	}
 
-	// Jangan auto-follow redirect
-	retryClient.HTTPClient.CheckRedirect = func(r *http.Request, via []*http.Request) error {
-		return http.ErrUseLastResponse
+	// Cek redirect bool
+	if !req.Redirect {
+        retryClient.HTTPClient.CheckRedirect = func(r *http.Request, via []*http.Request) error {
+		    return http.ErrUseLastResponse
+	    }
 	}
 
 	var bodyReader io.Reader
