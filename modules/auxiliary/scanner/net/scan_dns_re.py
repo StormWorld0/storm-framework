@@ -81,3 +81,4 @@ def execute(options, net):
         return
     except Exception as e:
         smf.printf(f"{C.ERROR}[!] Global ERROR =>", e, file=sys.stderr, flush=True)
+        smf.printd("Global error dns lookup", e, level="ERROR")
