@@ -37,7 +37,7 @@ def execute(options, net):
         }
         response = net.http_request("get", url, headers=headers, timeout=5)
         for header, value in response["data"]["headers"].items():
-            smf.printf(f"  {C.HEADER}{headers}:{C.RESET} {value}")
+            smf.printf(f"  {C.HEADER}{header}:{C.RESET} {value}")
 
         smf.printf(f"{C.HEADER} \n--- HEADER SECURITY ANALYSIS ---\n")
 
