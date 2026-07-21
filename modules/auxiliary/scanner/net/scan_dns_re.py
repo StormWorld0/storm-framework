@@ -2,7 +2,6 @@ import ipaddress
 import sys
 import smf
 from apps.utility.colors import C
-from lib.roar.crs.dns_transport import DNSTransport
 
 metadata = {
     "Name": "Scanning DNS Records",
@@ -58,7 +57,9 @@ def execute(options, net):
     try:
         for record_type in DNS_RECORDS:
             # Modul hanya memanggil instruksi 'resolve_record' ke Core
-            result = net.dns_request(target_domain, type=record_type, protocol="tcp", timeout=2.0)
+            result = net.dns_request(
+                target_domain, type=record_type, protocol="tcp", timeout=2.0
+            )
 
             status = result["status"]
 
