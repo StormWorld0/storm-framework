@@ -32,12 +32,13 @@ DNS_RECORDS = [
     "DS",
     "RRSIG",
     "LOC",
-    "SSHFP",   # Fingerprint SSH
-    "CERT",    # Certificate
-    "URI",     # URI record
-    "SVCB",    # Service Binding (modern)
-    "HTTPS",   # HTTPS Service Binding (RFC 9460)
+    "SSHFP",  # Fingerprint SSH
+    "CERT",  # Certificate
+    "URI",  # URI record
+    "SVCB",  # Service Binding (modern)
+    "HTTPS",  # HTTPS Service Binding (RFC 9460)
 ]
+
 
 def format_record(record_type, item):
     if record_type == "TXT":
@@ -59,10 +60,8 @@ def format_record(record_type, item):
 
     return str(item)
 
-REQUIRED_OPTIONS = {
-    "DOMAIN": "",
-    "PROTOCOL": "Default TCP"
-}
+
+REQUIRED_OPTIONS = {"DOMAIN": "", "PROTOCOL": "Default TCP"}
 
 
 def execute(options, net):
@@ -106,7 +105,7 @@ def execute(options, net):
                     color = C.SUCCESS if record_type == "TXT" else C.MENU
 
                     smf.printf(f"{color}  {icon} {format_record(record_type, item)}")
-                        
+
             elif status == "TIMEOUT":
                 smf.printf(f"{C.YELLOW}[!] Timeout:", record_type)
 
