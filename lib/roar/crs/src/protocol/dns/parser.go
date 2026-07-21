@@ -33,7 +33,10 @@ func ParseRR(rr dns.RR) interface{} {
 		return r.Ptr
 
 	case *dns.TXT:
-		return r.Txt
+        if len(v.Txt) == 1 {
+            return v.Txt[0]
+        }
+        return v.Txt
 
 	case *dns.MX:
 		return map[string]interface{}{
