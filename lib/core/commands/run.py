@@ -53,8 +53,6 @@ def execute(args, ctx):
         )
         return
 
-    metadata = getattr(current_module, "metadata", {})
-
     # Path Resolution for local files
     if options.get("PASS"):
         full_path = utils.resolve_path(options["PASS"])
@@ -62,14 +60,14 @@ def execute(args, ctx):
             options["PASS"] = full_path
 
     # Runtime
-    module_runtime = ctx.runtime(metadata=metadata, manager=manager)
+    mod_net = ctx.net
 
     # Execution module
     try:
-        execute_func = current_module.execute
-        sig = inspect.signature(execute_func)
+        execute = current_module.execute
+        sig = inspect.signature(execute)
 
-        # Hitung parameter yang bisa menerima argumen posisi
+        # Count parameters that can accept positional arguments
         valid_params = [
             p
             for p in sig.parameters.values()
@@ -77,9 +75,9 @@ def execute(args, ctx):
         ]
 
         if len(valid_params) >= 2:
-            execute_func(options, module_runtime)
+            execute(options, mod_net)
         else:
-            execute_func(options)
+            execute(options)
 
     except AttributeError as e:
         smf.printd("ATTRIBUTE ERROR COMMAND RUN", e, level="ERROR")
