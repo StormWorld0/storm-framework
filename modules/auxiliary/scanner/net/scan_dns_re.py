@@ -94,6 +94,7 @@ def format_record(record_type, item):
 
     return str(item)
 
+
 REQUIRED_OPTIONS = {"DOMAIN": "", "PROTOCOL": "Default TCP"}
 
 
