@@ -1,7 +1,7 @@
 // https://github.com/StormWorld0/storm-framework
 // License SMF
 // Author zxelzy (Refactored: True Nuclei Socket Module)
-package socket
+package network
 
 import (
 	"context"
