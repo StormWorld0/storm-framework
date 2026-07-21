@@ -140,7 +140,7 @@ def execute(options, net):
 
                     smf.printf(f"{color}  {icon} {format_record(record_type, item)}")
                 smf.printf()
-                
+
             elif status == "TIMEOUT":
                 smf.printf(f"{C.YELLOW}[!] Timeout:", record_type)
 
