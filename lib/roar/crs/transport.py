@@ -38,10 +38,10 @@ class CRS:
     def send(cls, data: dict) -> dict:
         try:
             proc = cls._get_process()
-            smf.printd("Process output from CRS Engine", proc, level="INFO")
 
             # 1. Ubah Dict ke JSON (1 baris)
             json_payload = json.dumps(data) + "\n"
+            smf.printd("Process output from CRS Engine", json.dumps(data), level="DEBUG")
 
             # 2. Lempar ke engine via Stdin
             proc.stdin.write(json_payload)
