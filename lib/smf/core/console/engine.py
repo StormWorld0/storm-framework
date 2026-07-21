@@ -10,6 +10,26 @@ from lib.roar.crs import net_api as api
 from dataclasses import dataclass, field
 
 
+# ----------------------
+# Network call function
+# ----------------------
+class NetContext:
+    """
+    NetContext for all Storm Framework network operations.
+    Using Singleton and Dynamic Binding patterns.
+    """
+
+    def __init__(self):
+        # Looping all function names registered in __all__ in net_api.py
+        for func_name in api.__all__:
+            # Get the function object from net_api.py
+            func_obj = getattr(api, func_name)
+
+            # Use the function that has been called
+            setattr(self, func_name, func_obj)
+
+
+
 @dataclass
 class Context:
     """
@@ -45,22 +65,3 @@ class Context:
             smf.printf(
                 f"[-] Unknown Command => {cmd} > Run the <help> command for more details."
             )
-
-
-# ----------------------
-# Network call function
-# ----------------------
-class NetContext:
-    """
-    NetContext for all Storm Framework network operations.
-    Using Singleton and Dynamic Binding patterns.
-    """
-
-    def __init__(self):
-        # Looping all function names registered in __all__ in net_api.py
-        for func_name in api.__all__:
-            # Get the function object from net_api.py
-            func_obj = getattr(api, func_name)
-
-            # Use the function that has been called
-            setattr(self, func_name, func_obj)
