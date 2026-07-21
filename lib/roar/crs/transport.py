@@ -5,7 +5,6 @@ import subprocess
 import os
 import smf
 
-from types import SimpleNamespace
 from ..calling import call_bin
 from apps.utility.colors import *
 
