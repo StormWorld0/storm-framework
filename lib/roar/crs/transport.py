@@ -41,7 +41,9 @@ class CRS:
 
             # 1. Ubah Dict ke JSON (1 baris)
             json_payload = json.dumps(data) + "\n"
-            smf.printd("Process input data from CRS Engine", json.dumps(data), level="DEBUG")
+            smf.printd(
+                "Process input data from CRS Engine", json.dumps(data), level="DEBUG"
+            )
 
             # 2. Lempar ke engine via Stdin
             proc.stdin.write(json_payload)
