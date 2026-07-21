@@ -38,14 +38,14 @@ func HTTP(req packet.RequestPacket) packet.ResponsePacket {
 		
 		// Module bisa menyuplai FULL raw HTTP string di req.Body
 		// Contoh: "GET / HTTP/1.1\r\nHost: target\r\nX-Injected:  spasi_aneh\r\n\r\n"
-		resp, err := rawClient.DoRaw(req.Method, req.URL, req.URL, map[string][]string{}, ioutil.NopCloser(strings.NewReader(req.Body)))
+		resp, err := rawClient.DoRaw(req.Method, req.URL, map[string][]string{}, ioutil.NopCloser(strings.NewReader(req.Body)))
 		if err != nil {
 			return packet.ResponsePacket{Status: "ERROR", Message: "RawHTTP failed: " + err.Error()}
 		}
 
 		// Konversi raw headers
 		headers := make(map[string]interface{})
-		for k, v := range resp.Headers {
+		for k, v := range resp.Header {
 			headers[k] = strings.Join(v, ", ") // Raw engine sering mempertahankan array string
 		}
 
