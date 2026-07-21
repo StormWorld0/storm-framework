@@ -21,6 +21,14 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		timeout = 5 * time.Second
 	}
 
+	// Ratelimit
+	netutils.Take()
+
+	addr := req.Host
+	if req.Port != "" {
+		addr = net.JoinHostPort(req.Host, req.Port)
+	}
+	
 	// Ambil Global Dialer dari lapisan Core (Zero Overhead!)
 	fd := netutils.GetDialer()
 	if fd == nil {
@@ -40,9 +48,9 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 
 	// Eksekusi koneksi (Fastdialer otomatis menggunakan DNS Cache dari memori)
 	if protocol == "tls" || protocol == "ssl" {
-		conn, err = fd.DialTLS(ctx, "tcp", req.Target)
+		conn, err = fd.DialTLS(ctx, "tcp", addr)
 	} else {
-		conn, err = fd.Dial(ctx, protocol, req.Target)
+		conn, err = fd.Dial(ctx, protocol, addr)
 	}
 
 	if err != nil {
@@ -53,16 +61,34 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	// I/O Deadlines (Sabuk pengaman anti-Tarpit)
 	conn.SetDeadline(time.Now().Add(timeout))
 
-	// Injeksi Payload
+	// Penanganan Payload (Text vs Hex Binary)
 	if req.Body != "" {
-		_, err = conn.Write([]byte(req.Body))
+		var payload []byte
+		
+		// Jika modul menandai payload sebagai Hex (misal eksploitasi buffer overflow / binary protocol)
+		if strings.ToLower(req.Encoding) == "hex" {
+			cleanHex := strings.ReplaceAll(req.Body, " ", "")
+			payload, err = hex.DecodeString(cleanHex)
+			if err != nil {
+				return regis.ResponsePacket{Status: "ERROR", Message: "Invalid HEX payload: " + err.Error()}
+			}
+		} else {
+			payload = []byte(req.Body)
+		}
+
+		_, err = conn.Write(payload)
 		if err != nil {
-			return packet.ResponsePacket{Status: "ERROR", Message: "Write failed: " + err.Error()}
+			return regis.ResponsePacket{Status: "ERROR", Message: "Write failed: " + err.Error()}
 		}
 	}
 
-	// Pembacaan Buffer (Mencegah Memory Exhaustion dari stream infinit)
-	buffer := make([]byte, 4096)
+	readSize := req.ReadSize
+	if readSize <= 0 {
+		readSize = 4096 // Default fallback
+	}
+	
+	// Pembacaan Buffer
+	buffer := make([]byte, readSize)
 	n, err := conn.Read(buffer)
 
 	// Validasi error I/O raw socket
@@ -81,8 +107,8 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	return packet.ResponsePacket{
 		Status: "SUCCESS",
 		Data: map[string]interface{}{
-			"bytes_resp":   string(buffer[:n]),
-			"bytes_int":    n,
+			"raw_bytes":    string(buffer[:n]),
+			"read_bytes":    n,
 			"protocol":     protocol,
 			"ip":           remoteIP, // IP hasil dari in-memory resolution fastdialer
 		},
