@@ -38,6 +38,7 @@ require (
 	github.com/projectdiscovery/gologger v1.1.68 // indirect
 	github.com/projectdiscovery/hmap v0.0.101 // indirect
 	github.com/projectdiscovery/networkpolicy v0.1.42 // indirect
+	github.com/projectdiscovery/ratelimit v0.0.88 // indirect
 	github.com/projectdiscovery/rawhttp v0.1.90 // indirect
 	github.com/projectdiscovery/retryabledns v1.0.115 // indirect
 	github.com/projectdiscovery/retryablehttp-go v1.3.19 // indirect
@@ -67,6 +68,7 @@ require (
 	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/sys v0.45.0 // indirect
 	golang.org/x/text v0.37.0 // indirect
+	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.44.0 // indirect
 	gopkg.in/djherbis/times.v1 v1.3.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
