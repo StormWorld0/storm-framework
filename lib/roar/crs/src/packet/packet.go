@@ -21,7 +21,4 @@ type ResponsePacket struct {
 	
 	// Data bebas (bisa map, array, string)
 	Data       interface{} `json:"data,omitempty"`
-	StatusCode int               `json:"status_code"`
-    Headers    map[string]string `json:"headers"`
-    Body       string            `json:"body"`
 }
