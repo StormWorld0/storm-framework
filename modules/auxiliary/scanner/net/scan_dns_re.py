@@ -62,10 +62,15 @@ def execute(options, net):
             )
 
             status = result["status"]
+            answers = result["data"]["answers"]
 
             if status == "SUCCESS":
+                if not answers:
+                    continue
+                    
                 smf.printf(f"{C.MENU} \n[{record_type} Records]:")
-                for item in result["data"]["rcode_str"]:
+                
+                for item in answers:
                     if record_type == "TXT":
                         smf.printf(f"{C.SUCCESS}  {SYM_SECURITY} {item}")
                     else:
