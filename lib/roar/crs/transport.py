@@ -5,6 +5,7 @@ import subprocess
 import os
 import smf
 
+from types import SimpleNamespace
 from ..calling import call_bin
 from apps.utility.colors import *
 
@@ -55,7 +56,7 @@ class CRS:
                 return {"status": "ERROR", "message": "Engine mati mendadak"}
 
             # 4. Ubah balik JSON ke Dict
-            return json.loads(response_line)
+            return json.loads(response_line, object_hook=lambda d: SimpleNamespace(**d))
 
         except Exception as e:
             smf.printd("Error CRS send", e, level="ERROR")
