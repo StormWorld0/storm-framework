@@ -9,6 +9,7 @@ import (
 	"net"
 	"strings"
 	"time"
+	"strconv"
 	"encoding/hex"
 	"crypto/tls"
 
@@ -60,8 +61,8 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	defer conn.Close()
 
 	// I/O Deadlines (Sabuk pengaman anti-Tarpit)
-	startTime := conn.SetDeadline(time.Now().Add(timeout))
-	rtt := time.Since(startTime).Milliseconds()
+	startTime := time.Now()
+	conn.SetDeadline(time.Now().Add(timeout))
 
 	// Penanganan Payload (Text vs Hex Binary)
 	if req.Body != "" {
@@ -128,7 +129,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
     if lAddr := conn.LocalAddr(); lAddr != nil {
 	    localAddr = lAddr.String()
     }
-	
+	rtt := time.Since(startTime).Milliseconds()
 
 	return packet.ResponsePacket{
 		Status: "SUCCESS",
