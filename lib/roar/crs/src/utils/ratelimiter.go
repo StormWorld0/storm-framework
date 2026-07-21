@@ -30,7 +30,7 @@ func InitGlobalRateLimiter(req packet.RequestPacket, duration time.Duration) {
 		}
 
 		// Menggunakan MultiRateLimiter/Limiter bawaan ProjectDiscovery
-		globalLimiter = ratelimit.NewWithBurst(context.Background(), uint(maxUnits), duration, uint(maxUnits))
+		globalLimiter = ratelimit.New(context.Background(), uint(maxUnits), duration, uint(maxUnits))
 	})
 }
 
