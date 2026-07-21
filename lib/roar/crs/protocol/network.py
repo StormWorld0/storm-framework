@@ -8,12 +8,13 @@ from ..transport import CRS
 
 
 def socket(
-    host: dict = None,
+    host: str = "",
     port: int = None,
-    headers: dict = None,
     body: str = "",
     protocol: str = "tcp",
     timeout: float = 5.0,
+    encoding: str = "",
+    readsize: int = None,
     **kwargs,
 ) -> dict:
     """Wrapper to send Socket to CRS Engine"""
@@ -22,10 +23,11 @@ def socket(
         "primitive": "NETWORK_SEND",
         "host": host,
         "port": port,
-        "headers": headers or {},
         "body": body,
         "protocol": protocol,
         "timeout": timeout,
+        "encoding": encoding,
+        "readsize": readsize,
     }
 
     if kwargs:
