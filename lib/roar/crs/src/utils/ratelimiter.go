@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/projectdiscovery/ratelimit"
+	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 )
 
 var (
@@ -19,7 +20,7 @@ var (
 // InitGlobalRateLimiter menginisialisasi Rate Limiter global.
 // maxUnits: Jumlah maksimal request (misal: 150)
 // duration: Window waktu (misal: 1 * time.Second) -> Artinya max 150 RPS
-func InitGlobalRateLimiter(req RequestPacket, duration time.Duration) {
+func InitGlobalRateLimiter(req packet.RequestPacket, duration time.Duration) {
 	limiterOnce.Do(func() {
 		// ratelimit.NewUnlimited() digunakan jika user men-set rate limit = 0
     maxUnits := req.RateLimit
