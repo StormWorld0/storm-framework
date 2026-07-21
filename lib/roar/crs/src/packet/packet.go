@@ -1,6 +1,6 @@
 package packet
 
-// RequestPacket adalah cerminan dari dictionary yang dikirim Python
+// RequestPacket is a mirror of the dictionary that Python sends
 type RequestPacket struct {
 	Primitive string            `json:"primitive"`
 	
@@ -15,8 +15,9 @@ type RequestPacket struct {
     Type     string             `json:"type,omitempty"`      // A, AAAA, MX, TXT, ...
     Protocol string             `json:"protocol,omitempty"`  // udp, tcp
 	
-	// Parameter umum
+	// General parameters
 	Timeout   float64           `json:"timeout,omitempty"`
+	RawMode   bool              `json:"rawmode,omitempty"`
 }
 
 // ResponsePacket
@@ -24,6 +25,6 @@ type ResponsePacket struct {
 	Status     string      `json:"status"`
 	Message    string      `json:"message,omitempty"`
 	
-	// Data bebas (bisa map, array, string)
+	// Free data (can be map, array, string)
 	Data       interface{} `json:"data,omitempty"`
 }
