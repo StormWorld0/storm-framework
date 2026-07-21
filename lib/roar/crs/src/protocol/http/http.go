@@ -14,11 +14,14 @@ import (
 	"github.com/projectdiscovery/rawhttp"
 	"github.com/projectdiscovery/retryablehttp-go"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
+	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/utils"
 )
 
 // HTTP mengeksekusi request. Secara dinamis beralih antara Standard Engine dan Raw Engine
 // tergantung pada flag req.RawMode yang ditentukan oleh module.
 func HTTP(req packet.RequestPacket) packet.ResponsePacket {
+	utils.Take()
+	
 	timeout := time.Duration(req.Timeout * float64(time.Second))
 	if timeout == 0 {
 		timeout = 10 * time.Second
