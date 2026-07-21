@@ -22,12 +22,12 @@ public or look for other loopholes to exploit weaknesses.
 REQUIRED_OPTIONS = {"URL": ""}
 
 
-def execute(options):
+def execute(options, net):
     """Checking the security header of a URL."""
-    target_url = options.get("URL")
+    url = options.get("URL")
 
-    if not target_url.startswith(("https://", "http://")):
-        target_url = "https://" + target_url
+    if not url.startswith(("https://", "http://")):
+        url = "https://" + url
 
     print()
     smf.printf(f"{C.HEADER} CHECKING THE HEADER: {target_url}")
@@ -35,7 +35,7 @@ def execute(options):
         headers = {
             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
         }
-        response = requests.get(target_url, headers=headers, timeout=5)
+        response = net.http_request(url, headers=headers, timeout=5, method=get)
         for header, value in response.headers.items():
             smf.printf(f"  {C.HEADER}{header}:{C.RESET} {value}")
 
@@ -123,7 +123,7 @@ def execute(options):
         return
     except requests.exceptions.RequestException as e:
         smf.printf(
-            f"{C.ERROR}[x] ERROR WHILE CONNECTING TO {target_url} =>",
+            f"{C.ERROR}[x] ERROR WHILE CONNECTING TO {url} =>",
             e,
             file=sys.stderr,
             flush=True,
