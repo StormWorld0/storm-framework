@@ -1,4 +1,3 @@
-import socket
 import smf
 import sys
 from apps.utility.colors import C
@@ -31,7 +30,9 @@ def get_service_banner(target_ip, port, net):
         # agar network.go di Go yang mengirimkannya dalam 1x koneksi socket!
         payload_body = ""
         if port in [80, 443, 8080]:
-            payload_body = f"HEAD / HTTP/1.1\r\nHost: {target_ip}\r\nConnection: close\r\n\r\n"
+            payload_body = (
+                f"HEAD / HTTP/1.1\r\nHost: {target_ip}\r\nConnection: close\r\n\r\n"
+            )
 
         # Tentukan protokol transport
         protocol = "tls" if port == 443 else "tcp"
@@ -44,7 +45,7 @@ def get_service_banner(target_ip, port, net):
             protocol=protocol,
             body=payload_body,
             read_size=1024,
-            timeout=1.0
+            timeout=1.0,
         )
 
         # 3. PARSING RESPONSE DICTIONARY DARI GO
@@ -60,7 +61,7 @@ def get_service_banner(target_ip, port, net):
             # Jika ada byte balasan/banner dari target
             if raw_bytes:
                 clean_banner = raw_bytes.strip()
-                
+
                 # Handling khusus Banner SSH (Port 22)
                 if port == 22:
                     banner_info = clean_banner.split("\n")[0]
@@ -73,7 +74,7 @@ def get_service_banner(target_ip, port, net):
                             for line in clean_banner.split("\r\n")
                             if line.lower().startswith("server:")
                         ),
-                        None
+                        None,
                     )
                     if server_header:
                         # Ambil nilai misal "Server: nginx/1.18.0" -> "Server: nginx/1.18.0"
@@ -95,7 +96,6 @@ def get_service_banner(target_ip, port, net):
     except Exception as e:
         smf.printd("Global error service", e, level="ERROR")
         return f"{C.ERROR} ERROR ", None
-
 
 
 REQUIRED_OPTIONS = {"IP": ""}
