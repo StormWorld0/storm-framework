@@ -29,7 +29,6 @@ class NetContext:
             setattr(self, func_name, func_obj)
 
 
-
 @dataclass
 class Context:
     """
