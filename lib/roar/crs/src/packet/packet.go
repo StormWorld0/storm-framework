@@ -5,7 +5,7 @@ type RequestPacket struct {
 	Primitive string            `json:"primitive"`
 	
 	// HTTP
-	Method    string            `json:"method,omitempty"`
+	Method    string            `json:"method,omitempty"`    // GET, POST, PUT, DELETE, ...
 	URL       string            `json:"url,omitempty"`
 	Body      string            `json:"body,omitempty"`
 	Headers   map[string]string `json:"headers,omitempty"`
@@ -13,13 +13,15 @@ type RequestPacket struct {
 	// DNS
     Domain   string             `json:"domain,omitempty"`
     Type     string             `json:"type,omitempty"`      // A, AAAA, MX, TXT, ...
-    Protocol string             `json:"protocol,omitempty"`  // udp, tcp
+    Protocol string             `json:"protocol,omitempty"`  // udp, tcp, tls, ssl
 	
 	// General parameters
 	Timeout   float64           `json:"timeout,omitempty"`
-	RawMode   bool              `json:"rawmode"`
-	Redirect  bool              `json:"redirect"`
-	RateLimit int               `json:"ratelimit"`
+	RawMode   bool              `json:"rawmode"`             // True / False
+	Redirect  bool              `json:"redirect"`            // True / False
+	RateLimit int               `json:"ratelimit"`           // 0 = Unlimited
+	Encoding  string            `json:"encoding,omitempty"`  // Hex / Text
+	ReadSize  int               `json:"readsize"`            // Limit Read Buffer
 }
 
 // ResponsePacket
