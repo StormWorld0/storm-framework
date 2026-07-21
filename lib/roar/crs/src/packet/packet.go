@@ -18,6 +18,7 @@ type RequestPacket struct {
 	// General parameters
 	Timeout   float64           `json:"timeout,omitempty"`
 	RawMode   bool              `json:"rawmode,omitempty"`
+	Redirect  bool              `json:"redirect,omitempty"`
 }
 
 // ResponsePacket
