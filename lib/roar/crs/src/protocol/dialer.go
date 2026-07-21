@@ -1,7 +1,7 @@
 // https://github.com/StormWorld0/storm-framework
 // License SMF
 // Author zxelzy
-package network
+package protocol
 
 import (
 	"sync"
