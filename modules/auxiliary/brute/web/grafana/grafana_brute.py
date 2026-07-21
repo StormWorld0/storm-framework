@@ -1,4 +1,3 @@
-import requests
 import os
 import smf
 from assets.wordlist.userpass import DEFAULT_CREDS, COMMON_USERS
@@ -28,7 +27,9 @@ def test_grafana(target_ip, port, username, password, net):
     payload = {"user": username, "password": password}
     headers = {"Content-Type": "application/json"}
     try:
-        response = net.http_request("post", login_url, json=payload, headers=headers, timeout=3, redirect=False)
+        response = net.http_request(
+            "post", login_url, json=payload, headers=headers, timeout=3, redirect=False
+        )
 
         if response.status_code == 302 and "location" in response.headers:
             return True
