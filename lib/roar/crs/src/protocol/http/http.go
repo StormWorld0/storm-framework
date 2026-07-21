@@ -38,7 +38,7 @@ func HTTP(req regis.RequestPacket) regis.ResponsePacket {
 	defer resp.Body.Close()
 
 	respBody, _ := io.ReadAll(resp.Body)
-	respHead, _ := io.ReadAll(resp.Headers)
+	respHead, _ := io.ReadAll(resp.Header)
 
 	return regis.ResponsePacket{
 		Status: "SUCCESS",
