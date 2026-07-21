@@ -69,7 +69,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			cleanHex := strings.ReplaceAll(req.Body, " ", "")
 			payload, err = hex.DecodeString(cleanHex)
 			if err != nil {
-				return regis.ResponsePacket{Status: "ERROR", Message: "Invalid HEX payload: " + err.Error()}
+				return packet.ResponsePacket{Status: "ERROR", Message: "Invalid HEX payload: " + err.Error()}
 			}
 		} else {
 			payload = []byte(req.Body)
@@ -77,7 +77,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 
 		_, err = conn.Write(payload)
 		if err != nil {
-			return regis.ResponsePacket{Status: "ERROR", Message: "Write failed: " + err.Error()}
+			return packet.ResponsePacket{Status: "ERROR", Message: "Write failed: " + err.Error()}
 		}
 	}
 
