@@ -2,7 +2,7 @@ package protocol
 
 import (
 	h "github.com/StormWorld0/storm-framework/lib/roar/crs/src/protocol/http"
-	d "github.com/StormWorld0/storm-framework/lib/roar/crs/src/protocol/http"
+	d "github.com/StormWorld0/storm-framework/lib/roar/crs/src/protocol/dns"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 )
 
