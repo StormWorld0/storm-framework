@@ -67,9 +67,9 @@ def execute(options, net):
             if status == "SUCCESS":
                 if not answers:
                     continue
-                    
+
                 smf.printf(f"{C.MENU} \n[{record_type} Records]:")
-                
+
                 for item in answers:
                     if record_type == "TXT":
                         smf.printf(f"{C.SUCCESS}  {SYM_SECURITY} {item}")
