@@ -22,7 +22,7 @@ func main() {
 
 		var req packet.RequestPacket
 		if err := json.Unmarshal(line, &req); err != nil {
-			sendResponse(packet.ResponsePacket{Status: "ERROR", Message: "Invalid JSON"})
+			sendResponse(packet.ResponsePacket{Status: "ERROR", Message: "Invalid JSON" + err.Error()})
 			continue
 		}
 		
