@@ -14,6 +14,11 @@ type RequestPacket struct {
     Domain   string             `json:"domain,omitempty"`
     Type     string             `json:"type,omitempty"`      // A, AAAA, MX, TXT, ...
     Protocol string             `json:"protocol,omitempty"`  // udp, tcp, tls, ssl
+
+	// Standard parameters
+	Host      string            `json:"host,omitempty"`      // URL / IP / DOMAIN
+	Ip        int               `json:"ip,omitempty"`
+	Port      int               `json:"port,omitempty"`      // PORT 1 - 65535
 	
 	// General parameters
 	Timeout   float64           `json:"timeout,omitempty"`
