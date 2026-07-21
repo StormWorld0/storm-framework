@@ -90,7 +90,7 @@ def format_record(record_type, item):
                     value = ", ".join(value)
                 lines.append(f"{key} : {value}")
 
-        return "\n    ".join(lines)
+        return "\n     ".join(lines)
 
     return str(item)
 
