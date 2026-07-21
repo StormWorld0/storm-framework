@@ -35,7 +35,7 @@ def execute(options, net):
         headers = {
             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
         }
-        response = net.http_request(url, headers=headers, timeout=5, method=get)
+        response = net.http_request("get", url, headers=headers, timeout=5)
         for header, value in response.headers.items():
             smf.printf(f"  {C.HEADER}{header}:{C.RESET} {value}")
 
@@ -113,7 +113,7 @@ def execute(options, net):
             if "httponly" not in cookie_lower:
                 smf.printf(f"{C.ERROR}[!] Cookie missing 'HttpOnly' flag.{C.RESET}")
 
-            if target_url.startswith("https://") and "secure" not in cookie_lower:
+            if url.startswith("https://") and "secure" not in cookie_lower:
                 smf.printf(f"{C.ERROR}[!] Cookie missing 'Secure' flag.{C.RESET}")
 
             if "samesite" not in cookie_lower:
