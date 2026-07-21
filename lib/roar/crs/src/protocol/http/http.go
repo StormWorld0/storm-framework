@@ -1,58 +1,89 @@
 // https://github.com/StormWorld0/storm-framework
 // License SMF
-// Author zxelzy (Refactored to Industry Security Standard)
+// Author zxelzy (Refactored: Dual-Engine Nuclei Standard)
 package http
 
 import (
 	"bytes"
 	"crypto/tls"
 	"io"
-	"net"
 	"net/http"
 	"strings"
 	"time"
 
-	regis "github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
+	"github.com/projectdiscovery/rawhttp"
+	"github.com/projectdiscovery/retryablehttp-go"
+	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 )
 
-// HTTP mengeksekusi request dengan custom transport yang di-tuning untuk security scanning
-func HTTP(req regis.RequestPacket) regis.ResponsePacket {
+// HTTP mengeksekusi request. Secara dinamis beralih antara Standard Engine dan Raw Engine
+// tergantung pada flag req.RawMode yang ditentukan oleh module.
+func HTTP(req packet.RequestPacket) packet.ResponsePacket {
 	timeout := time.Duration(req.Timeout * float64(time.Second))
 	if timeout == 0 {
 		timeout = 10 * time.Second
 	}
 
-	// 1. Tuning Transport Layer (Krusial untuk koneksi masif & target kotor)
-	transport := &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		DialContext: (&net.Dialer{
-			Timeout:   timeout,
-			KeepAlive: 30 * time.Second,
-		}).DialContext,
-		MaxIdleConns:          100,              // Connection pooling
-		MaxIdleConnsPerHost:   10,               // Mencegah bottleneck pada 1 host
-		IdleConnTimeout:       90 * time.Second,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-	    DisableKeepAlives:     true, // Menghindari statefull WAF Bloking
+	// ---------------------------------------------------------
+	// ENGINE 1: RAW HTTP (Mode Tidak Waras / Malformed / Bypass)
+	// ---------------------------------------------------------
+	if req.RawMode { // Asumsi Anda menambahkan field 'RawMode bool' di struct regis.RequestPacket
+		options := rawhttp.DefaultOptions
+		options.Timeout = timeout
+
+		rawClient := rawhttp.NewClient(options)
 		
-		// TLS Bypass: Wajib untuk scanner (mengabaikan self-signed, expired cert, atau IP targeting)
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-			MinVersion:         tls.VersionTLS10, // Downgrade support untuk target legacy
-		},
+		// Module bisa menyuplai FULL raw HTTP string di req.Body
+		// Contoh: "GET / HTTP/1.1\r\nHost: target\r\nX-Injected:  spasi_aneh\r\n\r\n"
+		resp, err := rawClient.DoRaw(req.Method, req.URL, req.URL, map[string][]string{}, ioutil.NopCloser(strings.NewReader(req.Body)))
+		if err != nil {
+			return packet.ResponsePacket{Status: "ERROR", Message: "RawHTTP failed: " + err.Error()}
+		}
+
+		// Konversi raw headers
+		headers := make(map[string]interface{})
+		for k, v := range resp.Headers {
+			headers[k] = strings.Join(v, ", ") // Raw engine sering mempertahankan array string
+		}
+
+		bodyBytes, _ := io.ReadAll(resp.Body)
+
+		return packet.ResponsePacket{
+			Status: "SUCCESS",
+			Data: map[string]interface{}{
+				"status_code": resp.StatusCode,
+				"body":        string(bodyBytes),
+				"headers":     headers,
+				"engine":      "rawhttp", // Penanda untuk module debugging
+			},
+		}
 	}
 
-	// Modifikasi Client Behavior
-	client := &http.Client{
-		Transport: transport,
-		Timeout:   timeout,
-		// Redirect Control: Jangan ikuti redirect secara membabi buta.
-		// Security module seringkali perlu membaca isi dari respons 301/302.
-		CheckRedirect: func(r *http.Request, via []*http.Request) error {
-			// Menghentikan client dari auto-follow
-			return http.ErrUseLastResponse 
+	// ---------------------------------------------------------
+	// ENGINE 2: RETRYABLE HTTP (Mode Waras / Standard Scanning)
+	// ---------------------------------------------------------
+	
+	// Menggunakan retryablehttp milik ProjectDiscovery (Lebih stabil dari http.Client bawaan)
+	retryOptions := retryablehttp.DefaultOptionsSingle
+	retryOptions.Timeout = timeout
+	retryOptions.RetryMax = 2 // Otomatis retry jika koneksi terputus di tengah jalan
+
+	retryClient := retryablehttp.NewClient(retryOptions)
+	
+	// Konfigurasi Transport untuk TLS Bypass
+	retryClient.HTTPClient.Transport = &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+			MinVersion:         tls.VersionTLS10,
 		},
+		MaxIdleConns:          100,
+		MaxIdleConnsPerHost:   10,
+	}
+
+	// Jangan auto-follow redirect
+	retryClient.HTTPClient.CheckRedirect = func(r *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
 	}
 
 	var bodyReader io.Reader
@@ -60,50 +91,39 @@ func HTTP(req regis.RequestPacket) regis.ResponsePacket {
 		bodyReader = bytes.NewBufferString(req.Body)
 	}
 
-	httpReq, err := http.NewRequest(req.Method, req.URL, bodyReader)
+	httpReq, err := retryablehttp.NewRequest(req.Method, req.URL, bodyReader)
 	if err != nil {
-		return regis.ResponsePacket{Status: "ERROR", Message: "Request creation failed: " + err.Error()}
+		return packet.ResponsePacket{Status: "ERROR", Message: "Request creation failed: " + err.Error()}
 	}
 
-	// Injeksi Header Kustom (Opsional tapi wajib ada jalurnya)
-	// Jika req.Headers tersedia di struct packet, mapping di sini:
-	// for k, v := range req.Headers { httpReq.Header.Set(k, v) }
-	
-	// Pastikan User-Agent diset jika tidak ada, default Go sering diblokir WAF
-	if httpReq.Header.Get("User-Agent") == "" {
-		httpReq.Header.Set("User-Agent", "StormWorld/storm-framework 3.0 (Security Framework)")
-	}
+	// Set User-Agent Default
+	httpReq.Header.Set("User-Agent", "StormWorld/storm-framework 3.0 (Security Framework)")
 
-	// Eksekusi
-	resp, err := client.Do(httpReq)
+	resp, err := retryClient.Do(httpReq)
 	if err != nil {
-		return regis.ResponsePacket{Status: "ERROR", Message: "Execution failed: " + err.Error()}
+		return packet.ResponsePacket{Status: "ERROR", Message: "Execution failed: " + err.Error()}
 	}
 	defer resp.Body.Close()
 
-	// Limitasi pembacaan Body (Proteksi dari serangan Tarpit/Infinite Stream)
-	// Membatasi pembacaan maksimal ke 2MB untuk mencegah memory exhaustion
-	limitedReader := io.LimitReader(resp.Body, 2*1024*1024)
-	respBody, _ := io.ReadAll(limitedReader)
-
-	// Header Fidelity: Jangan ratakan header menjadi v[0]
-	// Banyak kerentanan (seperti HTTP Response Splitting) atau proteksi memunculkan header ganda (misal: Set-Cookie)
 	headers := make(map[string]interface{})
 	for k, v := range resp.Header {
 		if len(v) == 1 {
 			headers[k] = v[0]
 		} else {
-			headers[k] = v // Simpan sebagai array/slice string
+			headers[k] = v 
 		}
 	}
 
-	return regis.ResponsePacket{
+	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 2*1024*1024))
+
+	return packet.ResponsePacket{
 		Status: "SUCCESS",
 		Data: map[string]interface{}{
 			"status_code": resp.StatusCode,
 			"body":        string(respBody),
 			"headers":     headers,
-			"protocol":    resp.Proto, // Berguna untuk deteksi HTTP/1.1 vs HTTP/2
+			"protocol":    resp.Proto,
+			"engine":      "retryablehttp",
 		},
 	}
 }
