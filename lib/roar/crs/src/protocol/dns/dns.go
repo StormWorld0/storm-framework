@@ -10,10 +10,13 @@ import (
 
 	"github.com/miekg/dns"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
+	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/utils"
 )
 
 // DNS menangani request DNS terstandarisasi berbasis miekg/dns
 func DNS(req packet.RequestPacket) packet.ResponsePacket {
+	utils.Take()
+	
 	target := req.Domain
     if target == "" {
         return packet.ResponsePacket{Status: "ERROR", Message: "Domain not found"}
