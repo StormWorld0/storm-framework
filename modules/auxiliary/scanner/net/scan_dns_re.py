@@ -95,7 +95,7 @@ def format_record(record_type, item):
     return str(item)
 
 
-REQUIRED_OPTIONS = {"DOMAIN": "", "PROTOCOL": "Default TCP"}
+REQUIRED_OPTIONS = {"DOMAIN": "", "PROTOCOL": "Set to TCP or UDP"}
 
 
 def execute(options, net):
@@ -139,7 +139,8 @@ def execute(options, net):
                     color = C.SUCCESS if record_type == "TXT" else C.MENU
 
                     smf.printf(f"{color}  {icon} {format_record(record_type, item)}")
-
+                smf.printf()
+                
             elif status == "TIMEOUT":
                 smf.printf(f"{C.YELLOW}[!] Timeout:", record_type)
 
