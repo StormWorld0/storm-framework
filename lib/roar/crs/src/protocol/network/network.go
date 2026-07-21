@@ -9,6 +9,7 @@ import (
 	"net"
 	"strings"
 	"time"
+	"encoding/hex"
 
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/utils"
@@ -91,7 +92,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	n, err := conn.Read(buffer)
 
 	// Validasi error I/O raw socket
-	if err != nil && err != io.EOF && !strings.Contains(err.Error(), "timeout") {
+	if err != nil && err != io.EOF {
 		if n == 0 {
 			return packet.ResponsePacket{Status: "ERROR", Message: "Read failed: " + err.Error()}
 		}
