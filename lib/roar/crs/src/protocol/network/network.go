@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 	"encoding/hex"
+	"crypto/tls"
 
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/utils"
@@ -25,9 +26,9 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	}
 
 	addr := req.Host
-	if req.Port != "" {
-		addr = net.JoinHostPort(req.Host, req.Port)
-	}
+	if req.Port != 0 {
+        addr = net.JoinHostPort(req.Host, strconv.Itoa(req.Port))
+    }
 	
 	// Ambil Global Dialer dari lapisan Core (Zero Overhead!)
 	fd := utils.GetDialer()
@@ -138,7 +139,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			"protocol":     protocol,
 			"ip":           remoteIP,
 			"local_ip":     localAddr,
-			"rtt_ms":       latencyMs,
+			"rtt_ms":       rtt,
 			"tls_info":     tlsData,
 		},
 	}
