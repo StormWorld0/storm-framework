@@ -30,7 +30,7 @@ def execute(options, net):
         url = "https://" + url
 
     print()
-    smf.printf(f"{C.HEADER} CHECKING THE HEADER: {target_url}")
+    smf.printf(f"{C.HEADER} CHECKING THE HEADER: {url}")
     try:
         headers = {
             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
