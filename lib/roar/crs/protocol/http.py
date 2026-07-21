@@ -12,6 +12,8 @@ def http_request(
     url: str,
     headers: dict = None,
     body: str = "",
+    redirect: bool = True,
+    rawmode: bool = False,
     timeout: float = 5.0,
     **kwargs,
 ) -> dict:
@@ -23,6 +25,8 @@ def http_request(
         "url": url,
         "headers": headers or {},
         "body": body,
+        "redirect": redirect,
+        "rawmode": rawmode,
         "timeout": timeout,
     }
 
