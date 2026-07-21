@@ -114,6 +114,42 @@ func ParseRR(rr dns.RR) interface{} {
 			"altitude":  r.Altitude,
 		}
 
+	case *dns.SSHFP:
+        return map[string]interface{}{
+            "algorithm":         r.Algorithm,
+            "fingerprint_type":  r.Type,
+            "fingerprint":       r.FingerPrint,
+        }
+
+    case *dns.CERT:
+        return map[string]interface{}{
+            "type":       r.Type,
+            "key_tag":    r.KeyTag,
+            "algorithm":  r.Algorithm,
+            "certificate": r.Certificate,
+        }
+
+    case *dns.URI:
+        return map[string]interface{}{
+            "priority": r.Priority,
+            "weight":   r.Weight,
+            "target":   r.Target,
+        }
+
+    case *dns.SVCB:
+        return map[string]interface{}{
+            "priority": r.Priority,
+            "target":   r.Target,
+            "value":    r.Value,
+        }
+
+    case *dns.HTTPS:
+        return map[string]interface{}{
+            "priority": r.Priority,
+            "target":   r.Target,
+            "value":    r.Value,
+        }
+
 	default:
 		return rr.String()
 	}
