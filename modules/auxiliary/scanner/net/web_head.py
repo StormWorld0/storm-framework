@@ -71,7 +71,7 @@ def execute(options, net):
 
         # Strict-Transport-Security (Downgrade Prevention)
         hsts = response.headers.get("Strict-Transport-Security")
-        if "Strict-Transport-Security" not in response.headers and target_url.startswith(
+        if "Strict-Transport-Security" not in response.headers and url.startswith(
             "https://"
         ):
             smf.printf(
