@@ -21,62 +21,87 @@ to find vulnerabilities, do a quick scan of.
 }
 
 
-def get_service_banner(target_ip, port, timeout=1.0):
+def get_service_banner(target_ip, port, net):
     """
-    Checking port status and trying to get banner/version information.
+    Checking port status and parsing banner/version information via Go CRS Engine.
     """
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.settimeout(timeout)
     try:
-        result = s.connect_ex((target_ip, port))
-        if result == 0:
+        # 1. SIAPKAN PAYLOAD UNTUK GO
+        # Jika port HTTP, kita langsung titip payload 'HEAD /' di field Body
+        # agar network.go di Go yang mengirimkannya dalam 1x koneksi socket!
+        payload_body = ""
+        if port in [80, 443, 8080]:
+            payload_body = f"HEAD / HTTP/1.1\r\nHost: {target_ip}\r\nConnection: close\r\n\r\n"
+
+        # Tentukan protokol transport
+        protocol = "tls" if port == 443 else "tcp"
+
+        # 2. EKSEKUSI VIA GO CRS ENGINE
+        # Kirim argument sebagai dict/kwargs sesuai spec wrapper Python Anda
+        result = net.socket(
+            host=target_ip,
+            port=str(port),
+            protocol=protocol,
+            body=payload_body,
+            read_size=1024,
+            timeout=1.0
+        )
+
+        # 3. PARSING RESPONSE DICTIONARY DARI GO
+        status = result.get("Status")
+        data = result.get("Data", {}) or {}
+        raw_bytes = data.get("raw_bytes", "")
+
+        # Jika Go berhasil melakukan Dial (Socket Terbuka)
+        if status == "SUCCESS":
             status_color = f"{C.SUCCESS} OPEN " + STATUS_OPEN
             banner_info = "No version information."
-            try:
-                if port in [80, 443, 8080]:
-                    request = f"HEAD / HTTP/1.1\r\nHost: {target_ip}\r\n\r\n"
-                    s.sendall(request.encode())
 
-                banner = s.recv(1024)
-                if banner:
-                    banner_info = banner.decode(errors="ignore").strip()
-                    if port == 22:
-                        banner_info = banner_info.split("\n")[0]
+            # Jika ada byte balasan/banner dari target
+            if raw_bytes:
+                clean_banner = raw_bytes.strip()
+                
+                # Handling khusus Banner SSH (Port 22)
+                if port == 22:
+                    banner_info = clean_banner.split("\n")[0]
 
-                    elif port in [80, 443, 8080]:
-                        server_header = next(
-                            (
-                                line
-                                for line in banner_info.split("\n")
-                                if line.lower().startswith("server:")
-                            ),
-                            None,
-                        )
-                        if server_header:
-                            banner_info = server_header.strip()
-                        else:
-                            banner_info = "HTTP Response received."
-
-            except socket.timeout:
-                banner_info = "Timeout"
-            except Exception as e:
-                banner_info = f"ERROR: {e}"
+                # Handling khusus HTTP Server Header (Port 80, 443, 8080)
+                elif port in [80, 443, 8080]:
+                    server_header = next(
+                        (
+                            line
+                            for line in clean_banner.split("\r\n")
+                            if line.lower().startswith("server:")
+                        ),
+                        None
+                    )
+                    if server_header:
+                        # Ambil nilai misal "Server: nginx/1.18.0" -> "Server: nginx/1.18.0"
+                        banner_info = server_header.strip()
+                    else:
+                        banner_info = "HTTP Response received."
+                else:
+                    # Port lain (FTP, SMTP, Redis, MySQL, dll) yang langsung menyapa
+                    banner_info = clean_banner.split("\n")[0]
 
             return status_color, banner_info
+
+        # Jika Go mengembalikan Error (Port Tertutup / Timeout)
         else:
-            s.close()
             return f"{C.ERROR} CLOSED " + STATUS_CLOSED, None
 
     except KeyboardInterrupt:
         return
-    finally:
-        s.close()
+    except Exception as e:
+        smf.printd("Global error service", e, level="ERROR")
+        return f"{C.ERROR} ERROR ", None
+
 
 
 REQUIRED_OPTIONS = {"IP": ""}
 
 
-def execute(options):
+def execute(options, net):
     """The main function is to run a scan with version/banner detection.."""
 
     target_ip = options.get("IP")
@@ -156,7 +181,7 @@ def execute(options):
     MAX_TOTAL_WIDTH = 30
     try:
         for port in ports_to_check:
-            status_line, banner = get_service_banner(target_ip, port)
+            status_line, banner = get_service_banner(target_ip, port, net)
             service_name = port_names.get(port, "Unknown Service")
 
             port_info_string = f"  Port {port} ({service_name})"
