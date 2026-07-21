@@ -36,8 +36,8 @@ def execute(options, net):
             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
         }
         response = net.http_request("get", url, headers=headers, timeout=5)
-        for header, value in response.headers.items():
-            smf.printf(f"  {C.HEADER}{header}:{C.RESET} {value}")
+        for headers, value in response.headers.items():
+            smf.printf(f"  {C.HEADER}{headers}:{C.RESET} {value}")
 
         smf.printf(f"{C.HEADER} \n--- HEADER SECURITY ANALYSIS ---\n")
 
