@@ -19,6 +19,7 @@ type RequestPacket struct {
 	Timeout   float64           `json:"timeout,omitempty"`
 	RawMode   bool              `json:"rawmode"`
 	Redirect  bool              `json:"redirect"`
+	RateLimit int               `json:"ratelimit"`
 }
 
 // ResponsePacket
