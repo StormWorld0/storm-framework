@@ -9,7 +9,7 @@ from ..transport import CRS
 
 def socket(
     host: dict = None,
-    port: int,
+    port: int = None,
     headers: dict = None,
     body: str = "",
     protocol: str = "tcp",
