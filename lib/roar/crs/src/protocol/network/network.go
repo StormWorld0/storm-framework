@@ -59,7 +59,8 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	defer conn.Close()
 
 	// I/O Deadlines (Sabuk pengaman anti-Tarpit)
-	conn.SetDeadline(time.Now().Add(timeout))
+	startTime := conn.SetDeadline(time.Now().Add(timeout))
+	rtt := time.Since(startTime).Milliseconds()
 
 	// Penanganan Payload (Text vs Hex Binary)
 	if req.Body != "" {
@@ -98,19 +99,47 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		}
 	}
 
+	var tlsData map[string]interface{}
+
+    if tlsConn, ok := conn.(*tls.Conn); ok {
+	    // Dapatkan detail handshake SSL/TLS
+    	state := tlsConn.ConnectionState()
+    	if len(state.PeerCertificates) > 0 {
+		    cert := state.PeerCertificates[0] // Leaf Certificate
+		    tlsData = map[string]interface{}{
+			    "subject":          cert.Subject.CommonName,
+			    "issuer":           cert.Issuer.CommonName,
+			    "dns_names":        cert.DNSNames, // Subject Alternative Names (SANs) - Bagus buat Subdomain Enum!
+			    "expires_at":       cert.NotAfter.Format(time.RFC3339),
+			    "tls_version":      state.Version,
+			    "cipher_suite":     state.CipherSuite,
+		    }
+	    }
+    }
+	
+
 	// Ekstraksi Data Spesifik
 	remoteIP := "unknown"
 	if addr := conn.RemoteAddr(); addr != nil {
 		remoteIP = addr.String()
 	}
+	localAddr := "unknown"
+    if lAddr := conn.LocalAddr(); lAddr != nil {
+	    localAddr = lAddr.String()
+    }
+	
 
 	return packet.ResponsePacket{
 		Status: "SUCCESS",
 		Data: map[string]interface{}{
 			"raw_bytes":    string(buffer[:n]),
-			"read_bytes":    n,
+			"hex_bytes":    hex.EncodeToString(buffer[:n]),
+			"read_bytes":   n,
 			"protocol":     protocol,
-			"ip":           remoteIP, // IP hasil dari in-memory resolution fastdialer
+			"ip":           remoteIP,
+			"local_ip":     localAddr,
+			"rtt_ms":       latencyMs,
+			"tls_info":     tlsData,
 		},
 	}
 }
