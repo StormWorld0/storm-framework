@@ -8,4 +8,5 @@ from .protocol.dns import dns_request
 __all__ = [
     "http_request",
     "dns_request",
+    "socket",
 ]
