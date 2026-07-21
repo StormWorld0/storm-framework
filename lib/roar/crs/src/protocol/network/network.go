@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
-	netutils "github.com/StormWorld0/storm-framework/lib/roar/crs/src/protocol" 
 )
 
 // Socket mengeksekusi koneksi TCP/UDP/TLS menggunakan Global Fastdialer
@@ -29,7 +28,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	}
 	
 	// Ambil Global Dialer dari lapisan Core (Zero Overhead!)
-	fd := netutils.GetDialer()
+	fd := packet.GetDialer()
 	if fd == nil {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Global dialer not initialized"}
 	}
