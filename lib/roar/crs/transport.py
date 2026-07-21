@@ -56,7 +56,7 @@ class CRS:
                 return {"status": "ERROR", "message": "Engine mati mendadak"}
 
             # 4. Ubah balik JSON ke Dict
-            return json.loads(response_line, object_hook=lambda d: SimpleNamespace(**d))
+            return json.loads(response_line)
 
         except Exception as e:
             smf.printd("Error CRS send", e, level="ERROR")
