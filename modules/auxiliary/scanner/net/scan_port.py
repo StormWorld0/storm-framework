@@ -41,7 +41,7 @@ def get_service_banner(target_ip, port, net):
         # Kirim argument sebagai dict/kwargs sesuai spec wrapper Python Anda
         result = net.socket(
             host=target_ip,
-            port=str(port),
+            port=port,
             protocol=protocol,
             body=payload_body,
             read_size=1024,
