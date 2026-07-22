@@ -16,6 +16,7 @@ def http_request(
     rawhttp: bool = False,
     infotls: bool = False,
     verify: bool = True,
+    retry: int = 2,
     timeout: float = 5.0,
     **kwargs,
 ) -> dict:
@@ -31,6 +32,7 @@ def http_request(
         "rawmode": rawhttp,
         "info_tls": infotls,
         "verify": verify,
+        "retry": retry,
         "timeout": timeout,
     }
 
