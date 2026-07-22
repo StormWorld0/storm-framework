@@ -1,6 +1,6 @@
 // https://github.com/StormWorld0/storm-framework
 // License SMF
-// Author zxelzy (Refactored: Dual-Engine Nuclei Standard)
+// Author zxelzy
 package http
 
 import (
@@ -31,17 +31,16 @@ func HTTP(req packet.RequestPacket) packet.ResponsePacket {
 	// ---------------------------------------------------------
 	// ENGINE 1: RAW HTTP (Mode Tidak Waras / Malformed / Bypass)
 	// ---------------------------------------------------------
-	if req.RawMode { // Asumsi Anda menambahkan field 'RawMode bool' di struct regis.RequestPacket
+	if req.RawMode {
 		options := rawhttp.DefaultOptions
 		options.Timeout = timeout
 
 		rawClient := rawhttp.NewClient(options)
 
 		parsedURL, err := url.Parse(req.URL)
-		if err != nil {
-			return packet.ResponsePacket{Status: "ERROR", Message: "Invalid URL for RawHTTP: " + err.Error()}
-		}
-
+    	if err != nil {
+		    return packet.ResponsePacket{Status: "ERROR", Message: "Invalid URL for RawHTTP: " + err.Error()}
+	    }
 		uriPath := parsedURL.RequestURI()
 		if uriPath == "" {
 			uriPath = "/"
@@ -68,7 +67,7 @@ func HTTP(req packet.RequestPacket) packet.ResponsePacket {
 				"status_code": resp.StatusCode,
 				"body":        string(bodyBytes),
 				"headers":     headers,
-				"engine":      "rawhttp", // Penanda untuk module debugging
+				"engine":      "rawhttp",
 			},
 		}
 	}
@@ -76,11 +75,16 @@ func HTTP(req packet.RequestPacket) packet.ResponsePacket {
 	// ---------------------------------------------------------
 	// ENGINE 2: RETRYABLE HTTP (Mode Waras / Standard Scanning)
 	// ---------------------------------------------------------
+
+	skipVerify := false
+	if req.Verify {
+		skipVerify = true
+	}
 	
-	// Menggunakan retryablehttp milik ProjectDiscovery (Lebih stabil dari http.Client bawaan)
+	// Menggunakan retryablehttp milik ProjectDiscovery
 	retryOptions := retryablehttp.DefaultOptionsSingle
 	retryOptions.Timeout = timeout
-	retryOptions.RetryMax = 2 // Otomatis retry jika koneksi terputus di tengah jalan
+	retryOptions.RetryMax = 2 // Otomatis retry koneksi
 
 	retryClient := retryablehttp.NewClient(retryOptions)
 	
@@ -88,8 +92,8 @@ func HTTP(req packet.RequestPacket) packet.ResponsePacket {
 	retryClient.HTTPClient.Transport = &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-			MinVersion:         tls.VersionTLS10,
+			InsecureSkipVerify: skipVerify,
+			MinVersion:         tls.VersionTLS12,
 		},
 		MaxIdleConns:          100,
 		MaxIdleConnsPerHost:   10,
