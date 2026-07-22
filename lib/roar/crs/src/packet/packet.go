@@ -24,6 +24,7 @@ type RequestPacket struct {
 	Timeout   float64           `json:"timeout,omitempty"`
 	RawMode   bool              `json:"rawmode"`             // True / False
 	Redirect  bool              `json:"redirect"`            // True / False
+	Verify    bool              `json:"verify"`              // True / False
 	RateLimit int               `json:"ratelimit"`           // 0 = Unlimited
 	Encoding  string            `json:"encoding,omitempty"`  // Hex / Text
 	ReadSize  int               `json:"readsize"`            // Limit Read Buffer
