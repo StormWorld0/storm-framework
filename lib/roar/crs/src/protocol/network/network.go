@@ -17,6 +17,21 @@ import (
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/utils"
 )
 
+func tlsVersionString(v uint16) string {
+    switch v {
+	    case tls.VersionTLS10:
+		    return "TLS 1.0"
+	    case tls.VersionTLS11:
+		    return "TLS 1.1"
+	    case tls.VersionTLS12:
+		    return "TLS 1.2"
+	    case tls.VersionTLS13:
+		    return "TLS 1.3"
+	    default:
+		    return v
+	}
+}
+
 // Socket mengeksekusi koneksi TCP/UDP/TLS menggunakan Global Fastdialer
 func Network(req packet.RequestPacket) packet.ResponsePacket {
 	utils.Take()
@@ -113,13 +128,17 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			    "issuer":           cert.Issuer.CommonName,
 			    "dns_names":        cert.DNSNames, // Subject Alternative Names (SANs) - Bagus buat Subdomain Enum!
 			    "expires_at":       cert.NotAfter.Format(time.RFC3339),
-			    "tls_version":      state.Version,
-			    "cipher_suite":     state.CipherSuite,
+			    "tls_version":      tlsVersionString(state.Version),
+			    "cipher_suite":     tls.CipherSuiteName(state.CipherSuite),
+				"protocol":         state.NegotiatedProtocol,
+				"hostname":         state.ServerName,
+				"handshake":        state.HandshakeComplete,
+				"session_resume":   state.DidResume,
+				"cert_chain":       state.VerifiedChains,
 		    }
 	    }
     }
 	
-
 	// Ekstraksi Data Spesifik
 	remoteIP := "unknown"
 	if addr := conn.RemoteAddr(); addr != nil {
