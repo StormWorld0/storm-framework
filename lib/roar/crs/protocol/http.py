@@ -8,17 +8,18 @@ from ..transport import CRS
 
 
 def http_request(
-    method: str,
+    method: str,             # Method: GET, PUT, POST, ...
     url: str,
     headers: dict = None,
     body: str = "",
-    redirect: bool = True,
-    rawhttp: bool = False,
-    infotls: bool = False,
+    redirect: bool = True,   # Default True will do a redirect
+    rawhttp: bool = False,   # Using rawhttp request
+    infotls: bool = False,   # To display TLS response information: Default False
     verify: bool = True,
-    retry: int = 2,
+    retry: int = 2,          # Retry connection
+    ratelimit: int = 0       # Default 0 = unlimited
     timeout: float = 5.0,
-    **kwargs,
+    **kwargs,                # Excessive parameter drop
 ) -> dict:
     """Wrapper to send HTTP Request to CRS Engine"""
 
@@ -33,6 +34,7 @@ def http_request(
         "info_tls": infotls,
         "verify": verify,
         "retry": retry,
+        "ratelimit": ratelimit,
         "timeout": timeout,
     }
 
