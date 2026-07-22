@@ -18,6 +18,21 @@ import (
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/utils"
 )
 
+func tlsVersionString(v uint16) string {
+    switch v {
+	    case tls.VersionTLS10:
+		    return "TLS 1.0"
+	    case tls.VersionTLS11:
+		    return "TLS 1.1"
+	    case tls.VersionTLS12:
+		    return "TLS 1.2"
+	    case tls.VersionTLS13:
+		    return "TLS 1.3"
+	    default:
+		    return strconv.Itoa(int(v))
+	}
+}
+
 // HTTP mengeksekusi request. Secara dinamis beralih antara Standard Engine dan Raw Engine
 // tergantung pada flag req.RawMode yang ditentukan oleh module.
 func HTTP(req packet.RequestPacket) packet.ResponsePacket {
@@ -61,12 +76,35 @@ func HTTP(req packet.RequestPacket) packet.ResponsePacket {
 
 		bodyBytes, _ := io.ReadAll(resp.Body)
 
+		var tlsData map[string]interface{}
+
+        if req.InfoTLS && resp.TLS != nil {
+	        // Dapatkan detail handshake SSL/TLS
+    	    state := resp.TLS
+    	    if len(state.PeerCertificates) > 0 {
+		        cert := state.PeerCertificates[0] // Leaf Certificate
+		        tlsData = map[string]interface{}{
+			        "subject":          cert.Subject.CommonName,
+			        "issuer":           cert.Issuer.CommonName,
+			        "dns_names":        cert.DNSNames,
+			        "expires_at":       cert.NotAfter.Format(time.RFC3339),
+			        "tls_version":      tlsVersionString(state.Version),
+			        "cipher_suite":     tls.CipherSuiteName(state.CipherSuite),
+			    	"protocol":         state.NegotiatedProtocol,
+			    	"hostname":         state.ServerName,
+				    "handshake":        state.HandshakeComplete,
+			    	"session_resume":   state.DidResume,
+				    "cert_chain":       state.VerifiedChains,
+		    	}
+	        }
+        }
 		return packet.ResponsePacket{
 			Status: "SUCCESS",
 			Data: map[string]interface{}{
 				"status_code": resp.StatusCode,
 				"body":        string(bodyBytes),
 				"headers":     headers,
+				"info_tls":    tlsData,
 				"engine":      "rawhttp",
 			},
 		}
@@ -135,6 +173,29 @@ func HTTP(req packet.RequestPacket) packet.ResponsePacket {
 	}
 
 	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 2*1024*1024))
+	
+	var tlsData map[string]interface{}
+
+    if req.InfoTLS && resp.TLS != nil {
+	    // Dapatkan detail handshake SSL/TLS
+    	state := resp.TLS
+    	if len(state.PeerCertificates) > 0 {
+		    cert := state.PeerCertificates[0] // Leaf Certificate
+		    tlsData = map[string]interface{}{
+			    "subject":          cert.Subject.CommonName,
+			    "issuer":           cert.Issuer.CommonName,
+			    "dns_names":        cert.DNSNames,
+			    "expires_at":       cert.NotAfter.Format(time.RFC3339),
+			    "tls_version":      tlsVersionString(state.Version),
+			    "cipher_suite":     tls.CipherSuiteName(state.CipherSuite),
+				"protocol":         state.NegotiatedProtocol,
+				"hostname":         state.ServerName,
+				"handshake":        state.HandshakeComplete,
+				"session_resume":   state.DidResume,
+				"cert_chain":       state.VerifiedChains,
+			}
+	    }
+    }
 
 	return packet.ResponsePacket{
 		Status: "SUCCESS",
@@ -143,6 +204,7 @@ func HTTP(req packet.RequestPacket) packet.ResponsePacket {
 			"body":        string(respBody),
 			"headers":     headers,
 			"protocol":    resp.Proto,
+			"info_tls":    tlsData,
 			"engine":      "retryablehttp",
 		},
 	}
