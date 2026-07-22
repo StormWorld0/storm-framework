@@ -25,6 +25,7 @@ type RequestPacket struct {
 	RawMode   bool              `json:"rawmode"`             // True / False
 	Redirect  bool              `json:"redirect"`            // True / False
 	Verify    bool              `json:"verify"`              // True / False
+	InfoTLS   bool              `json:"info_tls"`            // True / False
 	RateLimit int               `json:"ratelimit"`           // 0 = Unlimited
 	Encoding  string            `json:"encoding,omitempty"`  // Hex / Text
 	ReadSize  int               `json:"readsize"`            // Limit Read Buffer
