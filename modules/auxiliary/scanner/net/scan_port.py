@@ -44,7 +44,7 @@ def get_service_banner(target_ip, port, net):
             port=port,
             protocol=protocol,
             body=payload_body,
-            read_size=1024,
+            readsize=1024,
             timeout=1.0,
         )
 
