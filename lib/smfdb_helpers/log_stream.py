@@ -64,7 +64,7 @@ def dump_log():
                 )
 
             if traceback:
-                smf.printf(f"\n{CC.CYAN} TRACEBACK:{CC.RESET}")
+                smf.printf(f"\n{CC.CYAN} TRACEBACK{CC.RESET}:")
                 for line in traceback.split("\n"):
                     smf.printf(f"{CC.RED}     {line}{CC.RESET}")
 
