@@ -15,7 +15,7 @@ def http_request(
     redirect: bool = True,  # Default True will do a redirect
     rawhttp: bool = False,  # Using rawhttp request
     infotls: bool = False,  # To display TLS response information: Default False
-    verify: bool = True,    # Skip verify default performs verification
+    verify: bool = True,  # Skip verify default performs verification
     retry: int = 2,  # Retry connection
     ratelimit: int = 0,  # Default 0 = unlimited
     timeout: float = 5.0,
