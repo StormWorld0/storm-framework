@@ -8,14 +8,15 @@ from ..transport import CRS
 
 
 def socket(
-    host: str = "",
+    host: str = "",          # Host: IP / URL
     port: int = None,
     body: str = "",
-    protocol: str = "tcp",
+    protocol: str = "tcp",   # TCP / TLS / SSL
     timeout: float = 5.0,
-    encoding: str = "",
-    readsize: int = None,
-    **kwargs,
+    encoding: str = "",      # Encoding: hex
+    readsize: int = None,    # Read buffer
+    ratelimit: int = 0,      # Default 0 = Unlimited
+    **kwargs,                # Drop excess parameters
 ) -> dict:
     """Wrapper to send Socket to CRS Engine"""
 
@@ -28,6 +29,7 @@ def socket(
         "timeout": timeout,
         "encoding": encoding,
         "readsize": readsize,
+        "ratelimit": ratelimit,
     }
 
     if kwargs:
