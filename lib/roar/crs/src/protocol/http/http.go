@@ -122,7 +122,7 @@ func HTTP(req packet.RequestPacket) packet.ResponsePacket {
 	// Menggunakan retryablehttp milik ProjectDiscovery
 	retryOptions := retryablehttp.DefaultOptionsSingle
 	retryOptions.Timeout = timeout
-	retryOptions.RetryMax = 2 // Otomatis retry koneksi
+	retryOptions.RetryMax = req.Retry // Otomatis retry koneksi
 
 	retryClient := retryablehttp.NewClient(retryOptions)
 	
