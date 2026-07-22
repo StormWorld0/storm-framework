@@ -17,7 +17,7 @@ def http_request(
     infotls: bool = False,   # To display TLS response information: Default False
     verify: bool = True,
     retry: int = 2,          # Retry connection
-    ratelimit: int = 0       # Default 0 = unlimited
+    ratelimit: int = 0,       # Default 0 = unlimited
     timeout: float = 5.0,
     **kwargs,                # Excessive parameter drop
 ) -> dict:
