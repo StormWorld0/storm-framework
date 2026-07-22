@@ -7,6 +7,7 @@ from pathlib import Path
 from rootmap import ROOT
 from apps.utility.colors import *
 
+
 def dump_log():
     """
     Dump logs from internal SQLite database.
@@ -23,7 +24,7 @@ def dump_log():
         today_start = datetime.datetime.combine(
             datetime.date.today(), datetime.time.min
         ).timestamp()
-        
+
         uri_path = f"file:{db_path.absolute()}?mode=ro"
 
         # 1. Gunakan contextlib.closing untuk menjamin koneksi SQLite benar-benar ditutup (conn.close())
@@ -48,9 +49,9 @@ def dump_log():
         for row in rows:
             ts, lvl, label, payload, traceback, caller = row
 
-            dt_str = datetime.datetime.fromtimestamp(ts).strftime(
-                "%Y-%m-%d %H:%M:%S.%f"
-            )[:-3]
+            dt_str = datetime.datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S.%f")[
+                :-3
+            ]
 
             smf.printf(f"{CC.MAGENTA}-{CC.RESET}" * 60)
             smf.printf(f"[{CC.CYAN}{dt_str}{CC.RESET}] [{lvl}]")
@@ -58,13 +59,15 @@ def dump_log():
             smf.printf(f"{CC.CYAN} LABEL {CC.RESET}  : {CC.YELLOW}{label}{CC.RESET}")
 
             if payload:
-                smf.printf(f"{CC.CYAN} PAYLOAD {CC.RESET}: {CC.YELLOW}{payload}{CC.YELLOW}")
+                smf.printf(
+                    f"{CC.CYAN} PAYLOAD {CC.RESET}: {CC.YELLOW}{payload}{CC.YELLOW}"
+                )
 
             if traceback:
                 smf.printf(f"\n{CC.CYAN} TRACEBACK:{CC.RESET}")
                 for line in traceback.split("\n"):
                     smf.printf(f"{CC.RED}     {line}{CC.RESET}")
-                    
+
             smf.printf(f"{CC.MAGENTA}-{CC.RESET}" * 60 + "\n")
 
     except sqlite3.Error as e:
