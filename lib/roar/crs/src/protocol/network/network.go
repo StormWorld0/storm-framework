@@ -1,6 +1,6 @@
 // https://github.com/StormWorld0/storm-framework
 // License SMF
-// Author zxelzy (Refactored: True Nuclei Socket Module)
+// Author zxelzy
 package network
 
 import (
@@ -126,7 +126,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		    tlsData = map[string]interface{}{
 			    "subject":          cert.Subject.CommonName,
 			    "issuer":           cert.Issuer.CommonName,
-			    "dns_names":        cert.DNSNames, // Subject Alternative Names (SANs) - Bagus buat Subdomain Enum!
+			    "dns_names":        cert.DNSNames,
 			    "expires_at":       cert.NotAfter.Format(time.RFC3339),
 			    "tls_version":      tlsVersionString(state.Version),
 			    "cipher_suite":     tls.CipherSuiteName(state.CipherSuite),
