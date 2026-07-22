@@ -49,8 +49,8 @@ def get_service_banner(target_ip, port, net):
         )
 
         # 3. PARSING RESPONSE DICTIONARY DARI GO
-        status = result.get("Status")
-        data = result.get("Data", {}) or {}
+        status = result.get("status")
+        data = result.get("data", {}) or {}
         raw_bytes = data.get("raw_bytes", "")
 
         # Jika Go berhasil melakukan Dial (Socket Terbuka)
