@@ -16,7 +16,7 @@ type RequestPacket struct {
     Protocol string             `json:"protocol,omitempty"`  // udp, tcp, tls, ssl
 
 	// Standard parameters
-	Host      string            `json:"host,omitempty"`      // URL / IP / DOMAIN
+	Host      string            `json:"host,omitempty"`      // URL / IP
 	Ip        int               `json:"ip,omitempty"`
 	Port      int               `json:"port,omitempty"`      // PORT 1 - 65535
 	
@@ -27,6 +27,7 @@ type RequestPacket struct {
 	Verify    bool              `json:"verify"`              // True / False
 	InfoTLS   bool              `json:"info_tls"`            // True / False
 	RateLimit int               `json:"ratelimit"`           // 0 = Unlimited
+	Retry     int               `json:"retry"`               // Retry connection
 	Encoding  string            `json:"encoding,omitempty"`  // Hex / Text
 	ReadSize  int               `json:"readsize"`            // Limit Read Buffer
 }
