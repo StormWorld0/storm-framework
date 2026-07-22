@@ -77,7 +77,7 @@ func HTTP(req packet.RequestPacket) packet.ResponsePacket {
 	// ---------------------------------------------------------
 
 	skipVerify := false
-	if req.Verify {
+	if !req.Verify {
 		skipVerify = true
 	}
 	
