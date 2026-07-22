@@ -160,7 +160,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			"ip":           remoteIP,
 			"local_ip":     localAddr,
 			"rtt_ms":       rtt,
-			"tls_info":     tlsData,
+			"info_tls":     tlsData,
 		},
 	}
 }
