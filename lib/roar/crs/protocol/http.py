@@ -15,7 +15,7 @@ def http_request(
     redirect: bool = True,
     rawmode: bool = False,
     timeout: float = 5.0,
-    verify: bool = False,
+    verify: bool = True,
     **kwargs,
 ) -> dict:
     """Wrapper to send HTTP Request to CRS Engine"""
