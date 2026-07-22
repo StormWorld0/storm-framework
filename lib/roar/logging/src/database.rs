@@ -29,12 +29,9 @@ pub fn get_db_connection(py: Python<'_>) -> PrintResult<Connection> {
     // 5. Buka Koneksi SQLite (Otomatis membuat file log.db jika belum ada)
     // ? operator di sini akan dilempar sebagai SqliteError ke PrintResult
     let conn = Connection::open(file_path)?;
-
-    // Hapus otomatis database dalam rentang waktu 7 hari
-    let retention_period_seconds = 7 * 24 * 60 * 60;
     
     // 6. Konfigurasi Mesin Database High-Performance
-    conn.execute_batch(&format!(
+    conn.execute_batch(
         "PRAGMA journal_mode = WAL;
          PRAGMA synchronous = NORMAL;
          CREATE TABLE IF NOT EXISTS system_logs (
@@ -45,10 +42,8 @@ pub fn get_db_connection(py: Python<'_>) -> PrintResult<Connection> {
              payload TEXT,
              traceback TEXT,
              caller_info TEXT
-         );
-         DELETE FROM system_logs WHERE timestamp < (strftime('%s', 'now') - {});",
-         retention_period_seconds
-    ))?;
+         );",
+    )?;
     
     Ok(conn)
 }
@@ -65,6 +60,30 @@ pub fn insert_log(
     conn.execute(
         "INSERT INTO system_logs (timestamp, level, label, payload, traceback, caller_info) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
         (timestamp, level, label, payload, traceback, caller_info),
+    )?;
+
+    let retention_period = 7 * 24 * 60 * 60;
+    conn.execute(
+        "DELETE FROM system_logs
+         WHERE timestamp < (strftime('%s','now') - ?1)",
+        [retention_period],
+    )?;
+
+    // Maksimal 3000 log
+    conn.execute(
+        "
+        DELETE FROM system_logs
+        WHERE id IN (
+            SELECT id
+            FROM system_logs
+            ORDER BY id ASC
+            LIMIT (
+                SELECT MAX(COUNT(*) - 5000, 0)
+                FROM system_logs
+            )
+        )
+        ",
+        [],
     )?;
     Ok(())
 }
