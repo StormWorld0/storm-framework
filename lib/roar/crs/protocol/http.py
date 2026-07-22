@@ -13,7 +13,7 @@ def http_request(
     headers: dict = None,
     body: str = "",
     redirect: bool = True,
-    rawmode: bool = False,
+    rawhttp: bool = False,
     timeout: float = 5.0,
     verify: bool = True,
     **kwargs,
@@ -27,7 +27,7 @@ def http_request(
         "headers": headers or {},
         "body": body,
         "redirect": redirect,
-        "rawmode": rawmode,
+        "rawmode": rawhttp,
         "timeout": timeout,
         "verify": verify,
     }
