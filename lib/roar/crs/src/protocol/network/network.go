@@ -28,7 +28,7 @@ func tlsVersionString(v uint16) string {
 	    case tls.VersionTLS13:
 		    return "TLS 1.3"
 	    default:
-		    return v
+		    return strconv.Itoa(int(v))
 	}
 }
 
