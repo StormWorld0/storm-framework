@@ -22,7 +22,7 @@ import (
 var bufferPool = sync.Pool{
 	New: func() interface{} {
 		// Default allocation size
-		b := make([]byte, 0)
+		b := make([]byte, 4096)
 		return &b
 	},
 }
@@ -93,6 +93,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		conn net.Conn
 		err error
 		isReused bool
+		timeout time.Duration
 	) 
 	
 	if req.Timeout <= 0 {
@@ -115,9 +116,14 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
         }
     }
 
+	mode := strings.ToLower(req.Mode)
+	if mode == "" {
+		mode = "duplex" // Default mode Normal
+	}
+
 	protocol := strings.ToLower(req.Protocol)
     if protocol == "" {
-        protocol = "tcp"
+        protocol = "tcp" // Default TCP
     }
 
 	if conn == nil {
@@ -159,44 +165,45 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 
 	// I/O Deadlines (Sabuk pengaman anti-Tarpit)
 	startTime := time.Now()
-	conn.SetDeadline(time.Now().Add(timeout))
 
 	// Penanganan Payload (Text vs Hex Binary)
-	if req.Body != "" {
-		var payload []byte
+	if mode == "duplex" || mode == "send_only" {
+	    if req.Body != "" {
+		    var payload []byte
 		
-		// Jika modul menandai payload sebagai Hex (misal eksploitasi buffer overflow / binary protocol)
-		if strings.ToLower(req.Encoding) == "hex" {
-			cleanHex := strings.ReplaceAll(req.Body, " ", "")
-			payload, err = hex.DecodeString(cleanHex)
-			if err != nil {
-				return packet.ResponsePacket{Status: "ERROR", Message: "Invalid HEX payload: " + err.Error()}
-			}
-		} else {
-			payload = []byte(req.Body)
-		}
+		    // Jika modul menandai payload sebagai Hex (misal eksploitasi buffer overflow / binary protocol)
+		    if strings.ToLower(req.Encoding) == "hex" {
+			    cleanHex := strings.ReplaceAll(req.Body, " ", "")
+		    	payload, err = hex.DecodeString(cleanHex)
+		    	if err != nil {
+		    		return packet.ResponsePacket{Status: "ERROR", Message: "Invalid HEX payload: " + err.Error()}
+		    	}
+	    	} else {
+		    	payload = []byte(req.Body)
+	    	}
 
-		_, err = conn.Write(payload)
-		if err != nil {
-			// Jika koneksi re-used ternyata sudah stale/broken di server side, hapus session
-            if req.SessionID != "" {
-                utils.ActiveSessions.Delete(req.SessionID)
-                conn.Close()
-            }
-			return packet.ResponsePacket{Status: "ERROR", Message: "Write failed: " + err.Error()}
-		}
+	    	_, err = conn.Write(payload)
+	    	if err != nil {
+		    	// Jika koneksi re-used ternyata sudah stale/broken di server side, hapus session
+                if req.SessionID != "" {
+                    utils.ActiveSessions.Delete(req.SessionID)
+                    conn.Close()
+                }
+		    	return packet.ResponsePacket{Status: "ERROR", Message: "Write failed: " + err.Error()}
+		    }
+	    }
 	}
 
 	readSize := req.ReadSize
 	if readSize <= 0 {
-		readSize = 0 // Default fallback
+		readSize = 4096 // Default fallback
 	}
 
 	// Mengambil buffer dari Pool jika ukuran standar, atau buat baru jika custom
 	var bufPtr *[]byte
 	var buffer []byte
 
-	if readSize == 0 {
+	if readSize == 4096 {
 		bufPtr = bufferPool.Get().(*[]byte)
 		buffer = *bufPtr
 		defer bufferPool.Put(bufPtr) // Kembalikan ke pool saat selesai
@@ -204,13 +211,15 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		buffer = make([]byte, readSize)
 	}
 	
+	conn.SetDeadline(time.Now().Add(timeout))
+	
 	// Pembacaan Buffer
 	// Membaca stream sampai EOF atau buffer penuh agar tidak ada data tertinggal
 	n, err := conn.Read(buffer)
 	if err != nil && err != io.EOF {
         // Jika koneksi error/stale, PASTI hapus session & close socket!
         if req.SessionID != "" {
-            ActiveSessions.Delete(req.SessionID)
+            utils.ActiveSessions.Delete(req.SessionID)
         }
         conn.Close()
         return packet.ResponsePacket{Status: "ERROR", Message: "Read failed: " + err.Error()}
@@ -219,13 +228,25 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	// Jika sampai tahap ini sukses & KeepAlive diaktifkan, simpan koneksi
 	if req.SessionID != "" {
         if req.KeepAlive {
-            ActiveSessions.Store(req.SessionID, conn)
+            utils.ActiveSessions.Store(req.SessionID, conn)
             keepSession = true
         } else {
-            ActiveSessions.Delete(req.SessionID)
+            utils.ActiveSessions.Delete(req.SessionID)
             keepSession = false // Biarkan defer me-close socket
         }
     }
+	// Jika mode cuma "send_only", keluar tanpa read buffer
+	if mode == "send_only" {
+		rtt := time.Since(startTime).Milliseconds()
+		return packet.ResponsePacket{
+			Status: "SUCCESS",
+			Data: map[string]interface{}{
+				"is_reused": isReused,
+				"rtt_ms":    rtt,
+				"mode":      mode,
+			},
+		}
+	}
 	
 	var tlsData map[string]interface{}
     if tlsConn, ok := conn.(*tls.Conn); ok {
