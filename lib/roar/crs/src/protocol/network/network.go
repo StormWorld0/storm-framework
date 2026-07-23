@@ -13,10 +13,19 @@ import (
 	"strconv"
 	"encoding/hex"
 	"crypto/tls"
+	"sync"
 
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/utils"
 )
+
+var bufferPool = sync.Pool{
+	New: func() interface{} {
+		// Default allocation size
+		b := make([]byte, 4096)
+		return &b
+	},
+}
 
 func tlsVersionString(v uint16) string {
     switch v {
@@ -134,18 +143,19 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
             return packet.ResponsePacket{Status: "ERROR", Message: "Connection failed: " + err.Error()}
         }
     }
+	
+	shouldKeepAlive := req.KeepAlive && req.SessionID != ""
+	keepSession := false
 
-	// MANAGEMENT LIFECYCLE KONEKSI (HYBRID LOGIC)
-	// Jika KeepAlive = true & punya SessionID, SIMPAN socket (Jangan Close).
-	// Jika tidak, TUTUP socket saat fungsi selesai.
-	if req.KeepAlive && req.SessionID != "" {
-        ActiveSessions.Store(req.SessionID, conn)
-    } else {
-        if req.SessionID != "" {
-            ActiveSessions.Delete(req.SessionID)
-        }
-        defer conn.Close()
-    }
+	defer func() {
+		// Tutup koneksi HANYA jika TIDAK disimpan ke session aktif
+		if !keepSession {
+			if req.SessionID != "" {
+				ActiveSessions.Delete(req.SessionID)
+			}
+			conn.Close()
+		}
+	}()
 
 	// I/O Deadlines (Sabuk pengaman anti-Tarpit)
 	startTime := time.Now()
@@ -181,22 +191,32 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	if readSize <= 0 {
 		readSize = 4096 // Default fallback
 	}
+
+	// Mengambil buffer dari Pool jika ukuran standar, atau buat baru jika custom
+	var bufPtr *[]byte
+	var buffer []byte
+
+	if readSize == 4096 {
+		bufPtr = bufferPool.Get().(*[]byte)
+		buffer = *bufPtr
+		defer bufferPool.Put(bufPtr) // Kembalikan ke pool saat selesai
+	} else {
+		buffer = make([]byte, readSize)
+	}
 	
 	// Pembacaan Buffer
-	buffer := make([]byte, readSize)
-	n, err := conn.Read(buffer)
-
-	// Validasi error I/O raw socket
-	if err != nil && err != io.EOF {
-		if n == 0 {
-			if req.SessionID != "" {
-                ActiveSessions.Delete(req.SessionID)
-                conn.Close()
-            }
-			return packet.ResponsePacket{Status: "ERROR", Message: "Read failed: " + err.Error()}
-		}
+	// Membaca stream sampai EOF atau buffer penuh agar tidak ada data tertinggal
+	n, err := io.ReadFull(conn, buffer)
+	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
+		return packet.ResponsePacket{Status: "ERROR", Message: "Read failed: " + err.Error()}
 	}
 
+	// Jika sampai tahap ini sukses & KeepAlive diaktifkan, simpan koneksi
+	if shouldKeepAlive {
+		ActiveSessions.Store(req.SessionID, conn)
+		keepSession = true // Toggle flag agar defer tidak me-close socket
+	}
+	
 	var tlsData map[string]interface{}
     if tlsConn, ok := conn.(*tls.Conn); ok {
 	    // Dapatkan detail handshake SSL/TLS
