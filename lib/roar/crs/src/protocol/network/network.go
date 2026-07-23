@@ -85,7 +85,7 @@ func BuildTarget(req packet.RequestPacket) (string, error) {
 	return net.JoinHostPort(hostOnly, strconv.Itoa(finalPort)), nil
 }
 
-// Socket mengeksekusi koneksi TCP/UDP/SSL/TLS
+// Socket mengeksekusi koneksi TCP/SSL/TLS
 func Network(req packet.RequestPacket) packet.ResponsePacket {
 	utils.Take()
 
