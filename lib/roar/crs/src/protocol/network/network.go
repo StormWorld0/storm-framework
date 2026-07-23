@@ -42,7 +42,6 @@ func BuildTarget(req packet.RequestPacket) (string, error) {
 	// 1. Handling Scheme (http/https)
 	if strings.Contains(rawHost, "://") {
 		parts := strings.SplitN(rawHost, "://", 2)
-		scheme = strings.ToLower(parts[0])
 		rawHost = parts[1] // Ambil string setelah "://"
 	}
 
