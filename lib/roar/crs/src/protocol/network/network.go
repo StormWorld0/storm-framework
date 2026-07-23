@@ -80,6 +80,11 @@ func BuildTarget(req packet.RequestPacket) (string, error) {
 // Socket mengeksekusi koneksi TCP/UDP/SSL/TLS
 func Network(req packet.RequestPacket) packet.ResponsePacket {
 	utils.Take()
+
+	var (
+		conn net.Conn
+		err error
+	) 
 	
 	timeout := time.Duration(req.Timeout * float64(time.Second))
 	if timeout == 0 {
@@ -104,9 +109,6 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-
-	var conn net.Conn
-	var err error
 
 	// Eksekusi koneksi (Fastdialer otomatis menggunakan DNS Cache dari memori)
 	if protocol == "tls" || protocol == "ssl" {
