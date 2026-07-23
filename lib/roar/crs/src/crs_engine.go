@@ -16,6 +16,10 @@ import (
 func main() {
 	// Membaca input baris per baris dari Python (Subprocess stdin)
 	scanner := bufio.NewScanner(os.Stdin)
+	
+	const maxCapacity = 10 * 1024 * 1024 // Max 10MB per JSON line
+	buf := make([]byte, 64*1024)
+	scanner.Buffer(buf, maxCapacity)
 
 	for scanner.Scan() {
 		line := scanner.Bytes()
@@ -42,14 +46,20 @@ func main() {
 		// Kirim balikan ke Python
 		sendResponse(res)
 	}
+	if err := scanner.Err(); err != nil {
+		fmt.Fprintf(os.Stderr, "CRS Engine Stdin Error: %v\n", err)
+	}
 }
 
 // sendResponse mengubah struct jadi JSON 1 baris lalu mencetaknya ke stdout
 func sendResponse(res packet.ResponsePacket) {
 	out, err := json.Marshal(res)
 	if err != nil {
-		fmt.Println(`{"status":"ERROR","message":"Failed to marshal response"}`)
+		os.Stdout.WhiteString(`{"status":"ERROR","message":"Failed to marshal response"}` + "\n")
+		os.Stdout.Sync()
 		return
 	}
-	fmt.Println(string(out))
+	os.Stdout.Write(out)
+	os.Stdout.WriteString("\n")
+	os.Stdout.Sync()
 }
