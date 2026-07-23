@@ -8,7 +8,12 @@ from ..transport import CRS
 
 
 def dns_request(
-    domain: str, type: str = "A", protocol: str = "", timeout: float = 2.0, **kwargs
+    domain: str, 
+    type: str = "A", # Type: A, AAAA, TXT, ...
+    protocol: str = "tcp", # UDP / TCP
+    timeout: float = 2.0, 
+    ratelimit: int = 0, # Default 0 = Unlimited
+    **kwargs # Drop excess parameters
 ) -> dict:
     """Wrapper DNS"""
 
@@ -18,6 +23,7 @@ def dns_request(
         "type": type,
         "protocol": protocol,
         "timeout": timeout,
+        "ratelimit": ratelimit,
     }
 
     if kwargs:
