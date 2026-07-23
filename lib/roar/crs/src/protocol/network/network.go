@@ -95,9 +95,10 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		isReused bool
 	) 
 	
-	timeout := time.Duration(req.Timeout * float64(time.Second))
-	if timeout == 0 {
+	if req.Timeout <= 0 {
 		timeout = 5 * time.Second
+	} else {
+		timeout = time.Duration(req.Timeout * float64(time.Second))
 	}
 
 	if req.SessionID != "" && req.CloseSess {
@@ -144,7 +145,6 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
         }
     }
 	
-	shouldKeepAlive := req.KeepAlive && req.SessionID != ""
 	keepSession := false
 
 	defer func() {
@@ -206,16 +206,26 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	
 	// Pembacaan Buffer
 	// Membaca stream sampai EOF atau buffer penuh agar tidak ada data tertinggal
-	n, err := io.ReadFull(conn, buffer)
-	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
-		return packet.ResponsePacket{Status: "ERROR", Message: "Read failed: " + err.Error()}
-	}
+	n, err := conn.Read(buffer)
+	if err != nil && err != io.EOF {
+        // Jika koneksi error/stale, PASTI hapus session & close socket!
+        if req.SessionID != "" {
+            ActiveSessions.Delete(req.SessionID)
+        }
+        conn.Close()
+        return packet.ResponsePacket{Status: "ERROR", Message: "Read failed: " + err.Error()}
+    }
 
 	// Jika sampai tahap ini sukses & KeepAlive diaktifkan, simpan koneksi
-	if shouldKeepAlive {
-		utils.ActiveSessions.Store(req.SessionID, conn)
-		keepSession = true // Toggle flag agar defer tidak me-close socket
-	}
+	if req.SessionID != "" {
+        if req.KeepAlive {
+            ActiveSessions.Store(req.SessionID, conn)
+            keepSession = true
+        } else {
+            ActiveSessions.Delete(req.SessionID)
+            keepSession = false // Biarkan defer me-close socket
+        }
+    }
 	
 	var tlsData map[string]interface{}
     if tlsConn, ok := conn.(*tls.Conn); ok {
