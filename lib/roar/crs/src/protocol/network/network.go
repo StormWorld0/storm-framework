@@ -83,6 +83,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	var (
 		conn net.Conn
 		err error
+		isReused bool
 	) 
 	
 	timeout := time.Duration(req.Timeout * float64(time.Second))
@@ -90,36 +91,61 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		timeout = 5 * time.Second
 	}
 
-	addr, err := BuildTarget(req)
-	if err != nil {
-        return packet.ResponsePacket{Status: "ERROR", Message: "Build target: " + err.Error()}
+	if req.SessionID != "" && req.CloseSess {
+        if val, ok := ActiveSessions.LoadAndDelete(req.SessionID); ok {
+            val.(net.Conn).Close()
+            return packet.ResponsePacket{Status: "SUCCESS", Message: "Session closed"}
+        }
     }
-	
-	// Ambil Global Dialer dari lapisan Core (Zero Overhead!)
-	fd := utils.GetDialer()
-	if fd == nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: "Global dialer not initialized"}
-	}
 
-	protocol := strings.ToLower(req.Protocol)
-	if protocol == "" {
-		protocol = "tcp"
-	}
+	if req.SessionID != "" {
+        if val, ok := ActiveSessions.Load(req.SessionID); ok {
+            conn = val.(net.Conn)
+            isReused = true
+        }
+    }
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+	if conn == nil {
+        addr, err := BuildTarget(req)
+        if err != nil {
+            return packet.ResponsePacket{Status: "ERROR", Message: "Build target: " + err.Error()}
+        }
 
-	// Eksekusi koneksi (Fastdialer otomatis menggunakan DNS Cache dari memori)
-	if protocol == "tls" || protocol == "ssl" {
-		conn, err = fd.DialTLS(ctx, "tcp", addr)
-	} else {
-		conn, err = fd.Dial(ctx, "tcp", addr)
-	}
+        fd := utils.GetDialer()
+        if fd == nil {
+            return packet.ResponsePacket{Status: "ERROR", Message: "Global dialer not initialized"}
+        }
 
-	if err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: "Connection failed: " + err.Error()}
-	}
-	defer conn.Close()
+        protocol := strings.ToLower(req.Protocol)
+        if protocol == "" {
+            protocol = "tcp"
+        }
+
+        ctx, cancel := context.WithTimeout(context.Background(), timeout)
+        defer cancel()
+
+        if protocol == "tls" || protocol == "ssl" {
+            conn, err = fd.DialTLS(ctx, "tcp", addr)
+        } else {
+            conn, err = fd.Dial(ctx, "tcp", addr)
+        }
+
+        if err != nil {
+            return packet.ResponsePacket{Status: "ERROR", Message: "Connection failed: " + err.Error()}
+        }
+    }
+
+	// MANAGEMENT LIFECYCLE KONEKSI (HYBRID LOGIC)
+	// Jika KeepAlive = true & punya SessionID, SIMPAN socket (Jangan Close).
+	// Jika tidak, TUTUP socket saat fungsi selesai.
+	if req.KeepAlive && req.SessionID != "" {
+        ActiveSessions.Store(req.SessionID, conn)
+    } else {
+        if req.SessionID != "" {
+            ActiveSessions.Delete(req.SessionID)
+        }
+        defer conn.Close()
+    }
 
 	// I/O Deadlines (Sabuk pengaman anti-Tarpit)
 	startTime := time.Now()
@@ -142,6 +168,11 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 
 		_, err = conn.Write(payload)
 		if err != nil {
+			// Jika koneksi re-used ternyata sudah stale/broken di server side, hapus session
+            if req.SessionID != "" {
+                ActiveSessions.Delete(req.SessionID)
+                conn.Close()
+            }
 			return packet.ResponsePacket{Status: "ERROR", Message: "Write failed: " + err.Error()}
 		}
 	}
@@ -158,12 +189,15 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	// Validasi error I/O raw socket
 	if err != nil && err != io.EOF {
 		if n == 0 {
+			if req.SessionID != "" {
+                ActiveSessions.Delete(req.SessionID)
+                conn.Close()
+            }
 			return packet.ResponsePacket{Status: "ERROR", Message: "Read failed: " + err.Error()}
 		}
 	}
 
 	var tlsData map[string]interface{}
-
     if tlsConn, ok := conn.(*tls.Conn); ok {
 	    // Dapatkan detail handshake SSL/TLS
     	state := tlsConn.ConnectionState()
@@ -205,6 +239,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			"protocol":     protocol,
 			"ip":           remoteIP,
 			"local_ip":     localAddr,
+			"is_reused":    isReused, // Flag indikator arsitektur hybrid
 			"rtt_ms":       rtt,
 			"info_tls":     tlsData,
 		},
