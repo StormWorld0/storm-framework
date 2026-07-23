@@ -33,14 +33,13 @@ func tlsVersionString(v uint16) string {
 	}
 }
 
-func BuildTarget(req Request) (string, error) {
+func BuildTarget(req) (string, error) {
 	rawHost := strings.TrimSpace(req.Host)
 	if rawHost == "" {
 		return "", fmt.Errorf("Invalid empty host")
 	}
 
 	// 1. Handling Scheme (http/https)
-	scheme := "http"
 	if strings.Contains(rawHost, "://") {
 		parts := strings.SplitN(rawHost, "://", 2)
 		scheme = strings.ToLower(parts[0])
