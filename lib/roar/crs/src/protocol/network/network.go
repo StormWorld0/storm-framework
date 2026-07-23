@@ -113,7 +113,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	if protocol == "tls" || protocol == "ssl" {
 		conn, err = fd.DialTLS(ctx, "tcp", addr)
 	} else {
-		conn, err = fd.Dial(ctx, protocol, addr)
+		conn, err = fd.Dial(ctx, "tcp", addr)
 	}
 
 	if err != nil {
