@@ -213,7 +213,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 
 	// Jika sampai tahap ini sukses & KeepAlive diaktifkan, simpan koneksi
 	if shouldKeepAlive {
-		ActiveSessions.Store(req.SessionID, conn)
+		utils.ActiveSessions.Store(req.SessionID, conn)
 		keepSession = true // Toggle flag agar defer tidak me-close socket
 	}
 	
