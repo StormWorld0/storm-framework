@@ -22,7 +22,7 @@ func InitGlobalDialer() error {
 	once.Do(func() {
 		options := fastdialer.DefaultOptions
 		options.DialerTimeout = 5 * time.Second
-		options.DialerKeepAlive = 5 * time.Second
+		options.DialerKeepAlive = 10 * time.Second
 		options.WithDialerHistory = true      // Melacak history IP untuk debugging
 		options.EnableFallback = true         // DNS fallback otomatis
 		
