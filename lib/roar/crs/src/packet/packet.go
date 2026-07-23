@@ -41,6 +41,3 @@ type ResponsePacket struct {
 	Message   string            `json:"message,omitempty"`   // Error message or success message
 	Data      interface{}       `json:"data,omitempty"`      // Free data (can be map, array, string)
 }
-
-// SessionManager thread-safe
-var ActiveSessions = sync.Map{} // map[string]net.Conn
