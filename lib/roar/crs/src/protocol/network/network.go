@@ -7,6 +7,7 @@ import (
 	"context"
 	"io"
 	"net"
+	"fmt"
 	"strings"
 	"time"
 	"strconv"
@@ -32,7 +33,52 @@ func tlsVersionString(v uint16) string {
 	}
 }
 
-// Socket mengeksekusi koneksi TCP/UDP/TLS menggunakan Global Fastdialer
+func BuildTarget(req Request) (string, error) {
+	rawHost := strings.TrimSpace(req.Host)
+	if rawHost == "" {
+		return "", fmt.Errorf("Invalid empty host")
+	}
+
+	// 1. Handling Scheme (http/https)
+	scheme := "http"
+	if strings.Contains(rawHost, "://") {
+		parts := strings.SplitN(rawHost, "://", 2)
+		scheme = strings.ToLower(parts[0])
+		rawHost = parts[1] // Ambil string setelah "://"
+	}
+
+	// 2. Separate Host dan Port dari string
+	hostOnly, portStr, err := net.SplitHostPort(rawHost)
+	if err != nil {
+		// Jika tidak ada port di string rawHost
+		hostOnly = rawHost
+		portStr = ""
+	}
+
+	// 3. Potong Trailing Path (misal: "domain.com/v1/api" -> "domain.com")
+	if idx := strings.Index(hostOnly, "/"); idx != -1 {
+		hostOnly = hostOnly[:idx]
+	}
+
+	// 4. Penentuan Final Port
+	finalPort := 0
+	if req.Port != 0 {
+		// Prioritas 1: Port dari struct req.Port
+		finalPort = req.Port
+	} else if portStr != "" {
+		// Prioritas 2: Port dari string "host:port"
+		if p, parseErr := strconv.Atoi(portStr); parseErr == nil && p > 0 {
+			finalPort = p
+		}
+	}
+	if finalPort == 0 {
+		return "", fmt.Errorf("Empty port error")
+	}
+	// 5. Return dengan format "host:port" yang valid
+	return net.JoinHostPort(hostOnly, strconv.Itoa(finalPort)), nil
+}
+
+// Socket mengeksekusi koneksi TCP/UDP/SSL/TLS
 func Network(req packet.RequestPacket) packet.ResponsePacket {
 	utils.Take()
 	
@@ -41,9 +87,9 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		timeout = 5 * time.Second
 	}
 
-	addr := req.Host
-	if req.Port != 0 {
-        addr = net.JoinHostPort(req.Host, strconv.Itoa(req.Port))
+	addr, err := BuildTarget(req)
+	if err != nil {
+        return packet.ResponsePacket{Status: "ERROR", Message: "Build target: " + err.Error()}
     }
 	
 	// Ambil Global Dialer dari lapisan Core (Zero Overhead!)
