@@ -101,7 +101,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	}
 
 	if req.SessionID != "" && req.CloseSess {
-        if val, ok := ActiveSessions.LoadAndDelete(req.SessionID); ok {
+        if val, ok := packet.ActiveSessions.LoadAndDelete(req.SessionID); ok {
             val.(net.Conn).Close()
             return packet.ResponsePacket{Status: "SUCCESS", Message: "Session closed"}
         }
