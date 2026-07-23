@@ -17,8 +17,8 @@ def socket(
     readsize: int = 4096,  # Read buffer default
     ratelimit: int = 0,  # Default 0 = Unlimited
     sessid: str = "", # Must combo with keep_alive for stream
-    keep_alive: bool = False # Default False, must be combo with sessid
-    close_session: bool = False  # Deleting active SessionsID
+    keep_alive: bool = False, # Default False, must be combo with sessid
+    close_session: bool = False,  # Deleting active SessionsID
     mode: str = "duplex", # Default duplex = Mode normal // or can send_only or recv_only
     **kwargs,  # Drop excess parameters
 ) -> dict:
