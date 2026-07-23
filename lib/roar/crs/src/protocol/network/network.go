@@ -108,10 +108,15 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
     }
 
 	if req.SessionID != "" {
-        if val, ok := ActiveSessions.Load(req.SessionID); ok {
+        if val, ok := utils.ActiveSessions.Load(req.SessionID); ok {
             conn = val.(net.Conn)
             isReused = true
         }
+    }
+
+	protocol := strings.ToLower(req.Protocol)
+    if protocol == "" {
+        protocol = "tcp"
     }
 
 	if conn == nil {
@@ -123,11 +128,6 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
         fd := utils.GetDialer()
         if fd == nil {
             return packet.ResponsePacket{Status: "ERROR", Message: "Global dialer not initialized"}
-        }
-
-        protocol := strings.ToLower(req.Protocol)
-        if protocol == "" {
-            protocol = "tcp"
         }
 
         ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -151,7 +151,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		// Tutup koneksi HANYA jika TIDAK disimpan ke session aktif
 		if !keepSession {
 			if req.SessionID != "" {
-				ActiveSessions.Delete(req.SessionID)
+				utils.ActiveSessions.Delete(req.SessionID)
 			}
 			conn.Close()
 		}
@@ -180,7 +180,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		if err != nil {
 			// Jika koneksi re-used ternyata sudah stale/broken di server side, hapus session
             if req.SessionID != "" {
-                ActiveSessions.Delete(req.SessionID)
+                utils.ActiveSessions.Delete(req.SessionID)
                 conn.Close()
             }
 			return packet.ResponsePacket{Status: "ERROR", Message: "Write failed: " + err.Error()}
