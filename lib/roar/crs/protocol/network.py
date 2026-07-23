@@ -8,7 +8,7 @@ from ..transport import CRS
 
 
 def socket(
-    host: str = "",  # Host: IP / URL
+    host: str = "",  # Host: http://IP / https://URL
     port: int = 0,  # Default 0 = Considered non-existent
     body: str = "",  # Can be hex or byte payload etc.
     protocol: str = "tcp",  # TCP / TLS / SSL
