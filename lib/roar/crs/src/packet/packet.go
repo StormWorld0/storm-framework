@@ -30,9 +30,9 @@ type RequestPacket struct {
 	Retry     int               `json:"retry"`               // Retry connection
 	Encoding  string            `json:"encoding,omitempty"`  // Hex
 	ReadSize  int               `json:"readsize"`            // Limit Read Buffer
-	SessionID string            `json:"session_id"`          // Session ID to use the same connection
+	SessionID string            `json:"session_id,omitempty"`// Session ID to use the same connection
 	KeepAlive bool              `json:"keep-alive"`          // true = do not close the socket after Read
-	CloseSess bool              `json:"close-sess"`          // true = force close the session in memory
+	CloseSess bool              `json:"close-session"`       // true = force close the session in memory
 	mode      string            `json:"mode"`                // duplex = default, send_only = send without read buffer, recv_only = read only buffer.
 }
 
