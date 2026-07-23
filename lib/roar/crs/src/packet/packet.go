@@ -30,11 +30,17 @@ type RequestPacket struct {
 	Retry     int               `json:"retry"`               // Retry connection
 	Encoding  string            `json:"encoding,omitempty"`  // Hex
 	ReadSize  int               `json:"readsize"`            // Limit Read Buffer
+	SessionID string            `json:"session_id"`          // Session ID to use the same connection
+	KeepAlive bool              `json:"keep-alive"`          // true = do not close the socket after Read
+	CloseSess bool              `json:"close-sess"`          // true = force close the session in memory
 }
 
 // ResponsePacket
 type ResponsePacket struct {
-	Status     string      `json:"status"`             // ERROR / SUCCESS / TIMEOUT / ...
-	Message    string      `json:"message,omitempty"`  // Error message or success message
-	Data       interface{} `json:"data,omitempty"`     // Free data (can be map, array, string)
+	Status    string            `json:"status"`              // ERROR / SUCCESS / TIMEOUT / ...
+	Message   string            `json:"message,omitempty"`   // Error message or success message
+	Data      interface{}       `json:"data,omitempty"`      // Free data (can be map, array, string)
 }
+
+// SessionManager thread-safe
+var ActiveSessions = sync.Map{} // map[string]net.Conn
