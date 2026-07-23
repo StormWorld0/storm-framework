@@ -33,7 +33,7 @@ func tlsVersionString(v uint16) string {
 	}
 }
 
-func BuildTarget(req) (string, error) {
+func BuildTarget(req packet.RequestPacket) (string, error) {
 	rawHost := strings.TrimSpace(req.Host)
 	if rawHost == "" {
 		return "", fmt.Errorf("Invalid empty host")
