@@ -22,7 +22,7 @@ import (
 var bufferPool = sync.Pool{
 	New: func() interface{} {
 		// Default allocation size
-		b := make([]byte, 4096)
+		b := make([]byte, 0)
 		return &b
 	},
 }
@@ -189,14 +189,14 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 
 	readSize := req.ReadSize
 	if readSize <= 0 {
-		readSize = 4096 // Default fallback
+		readSize = 0 // Default fallback
 	}
 
 	// Mengambil buffer dari Pool jika ukuran standar, atau buat baru jika custom
 	var bufPtr *[]byte
 	var buffer []byte
 
-	if readSize == 4096 {
+	if readSize == 0 {
 		bufPtr = bufferPool.Get().(*[]byte)
 		buffer = *bufPtr
 		defer bufferPool.Put(bufPtr) // Kembalikan ke pool saat selesai
