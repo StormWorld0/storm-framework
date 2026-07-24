@@ -54,7 +54,18 @@ class Socket:
             )
 
     def _build_packet(
-        self, body: str = "", mode: str = "duplex", close_session: bool = False
+        self, 
+        body: str = "", 
+        encoding: str = "", 
+        ratelimit: int = 0, 
+        mode: str = "duplex", 
+        verify: bool = True,
+        cert: str = "",
+        key: str = "",
+        ca: str = "",
+        readsize: int = 0,
+        timeout: float = 5.0,
+        close_session: bool = False,
     ) -> dict:
         """Internal Helper: Menyiapkan schema JSON/Dict untuk dikirim via IPC ke Go"""
         return {
@@ -63,50 +74,76 @@ class Socket:
             "port": self.port,
             "body": body,
             "protocol": self.protocol,
-            "timeout": self.timeout,
-            "encoding": self.encoding,
-            "readsize": self.readsize,
-            "ratelimit": self.ratelimit,
+            "timeout": timeout,
+            "encoding": encoding,
+            "readsize": readsize,
+            "ratelimit": ratelimit,
             "session_id": self.sessid,
             "keep-alive": self.keep_alive,
             "close_session": close_session,
             "mode": mode,
-            "verify": self.verify,
-            "tls-cert": self.cert,
-            "tls-key": self.key,
-            "tls-ca": self.ca,
+            "verify": verify,
+            "tls-cert": cert,
+            "tls-key": key,
+            "tls-ca": ca,
         }
 
-    def send(self, body: str, mode: str = "duplex") -> dict:
+    def send(
+        self, 
+        body: str, 
+        encoding: str, 
+        ratelimit: int = 0, 
+        mode: str = "send_only",
+        verify: bool,
+        cert: str,
+        key: str,
+        ca: str,
+        timeout: int,
+        **kwargs,
+    ) -> dict:
         """Kirim payload ke target via Go Engine"""
         if self._is_closed:
-            raise RuntimeError("Cannot send on a closed Socket session.")
+            smf.printd("Cannot send on a closed Socket session.", level="ERROR")
+            raise
 
-        packet = self._build_packet(body=body, mode=mode, close_session=False)
+        packet = self._build_packet(
+            body=body, 
+            encoding=encoding, 
+            ratelimit=ratelimit, 
+            mode=mode,
+            verify=verify,
+            cert=cert,
+            key=key,
+            ca=ca,
+            timeout=timeout,
+            close_session=False
+        )
         return CRS.send(packet)
 
     def recv(self, readsize: int = None) -> dict:
         """
         Receive/Read data dari active IPC Session.
-        Menggunakan mode 'recv_only' untuk instruksi khusus ke Go engine.
+        Menggunakan mode 'recv_only' untuk instruksi khusus ke CRS engine.
         """
         if self._is_closed:
-            raise RuntimeError("Cannot receive on a closed Socket session.")
+            smf.printd("Cannot receive on a closed Socket session", level="ERROR")
+            raise
 
         # Izinkan override readsize jika dibutuhkan per-read call
         original_readsize = self.readsize
         if readsize is not None:
             self.readsize = readsize
 
-        packet = self._build_packet(body="", mode="recv_only", close_session=False)
+        packet = self._build_packet(body="", readsize=readsize, mode="recv_only", close_session=False)
         response = CRS.send(packet)
 
         # Restore default readsize
         self.readsize = original_readsize
         return response
 
+    
     def close(self) -> dict:
-        """Mengirim signal terminasi ke Go Engine untuk menghapus Session ID"""
+        """Mengirim signal terminasi ke CRS Engine untuk menghapus Session ID"""
         if self._is_closed:
             return {"status": "already_closed", "session_id": self.sessid}
 
@@ -116,7 +153,6 @@ class Socket:
         return res
 
     # --- BONUS OOP FEATURE: Context Manager & Resource Lifecycle ---
-
     def __enter__(self):
         """Mendukung syntax 'with Socket(...) as sock:'"""
         return self
