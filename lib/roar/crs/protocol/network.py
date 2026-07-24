@@ -21,7 +21,6 @@ class Socket:
         port: int = 0,
         protocol: str = "tcp",
         timeout: float = 10.0,
-        encoding: str = "",
         readsize: int = 4096,
         ratelimit: int = 0,
         sessid: str = "",
@@ -38,7 +37,6 @@ class Socket:
         self.port = port
         self.protocol = protocol
         self.timeout = timeout
-        self.encoding = encoding
         self.readsize = readsize
         self.ratelimit = ratelimit
         self.keep_alive = keep_alive
@@ -60,7 +58,6 @@ class Socket:
     def _build_packet(
         self,
         data: str = "",
-        encoding: str = None,
         verify: bool = None,
         cert: str = None,
         key: str = None,
@@ -86,7 +83,6 @@ class Socket:
             "data": data_str,
             "protocol": self.protocol,
             "timeout": timeout if timeout is not None else self.timeout,
-            "encoding": encoding if encoding is not None else self.encoding,
             "readsize": readsize if readsize is not None else self.readsize,
             "ratelimit": ratelimit if ratelimit is not None else self.ratelimit,
             "session_id": self.sessid,
@@ -102,7 +98,6 @@ class Socket:
     def send(
         self,
         data: str,
-        encoding: str = None,
         verify: bool = None,
         cert: str = None,
         key: str = None,
@@ -119,7 +114,6 @@ class Socket:
 
         packet = self._build_packet(
             data=data,
-            encoding=encoding,
             verify=verify,
             cert=cert,
             key=key,
