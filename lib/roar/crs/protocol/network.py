@@ -57,7 +57,7 @@ class Socket:
 
     def _build_packet(
         self,
-        body: str = "",
+        data: str = "",
         encoding: str = "",
         verify: bool = True,
         cert: str = "",
@@ -70,11 +70,16 @@ class Socket:
         close_session: bool = False,
     ) -> dict:
         """Internal Helper: Menyiapkan schema JSON/Dict untuk dikirim via IPC ke Go"""
+
+        # Ubah data ke b64 & string
+        data_b64 = base64.b64encode(data)
+        data_str = data_b64.decode("utf-8")
+        
         return {
             "primitive": "NETWORK_SEND",
             "host": self.host,
             "port": self.port,
-            "body": body,
+            "data": data_str,
             "protocol": self.protocol,
             "timeout": timeout,
             "encoding": encoding,
@@ -92,7 +97,7 @@ class Socket:
 
     def send(
         self,
-        body: str,
+        data: str,
         encoding: str,
         verify: bool,
         cert: str,
@@ -109,7 +114,7 @@ class Socket:
             raise
 
         packet = self._build_packet(
-            body=body,
+            data=data,
             encoding=encoding,
             verify=verify,
             cert=cert,
@@ -137,7 +142,7 @@ class Socket:
             self.readsize = readsize
 
         packet = self._build_packet(
-            body="", readsize=readsize, mode="recv_only", close_session=False
+            data="", readsize=readsize, mode="recv_only", close_session=False
         )
         response = CRS.send(packet)
 
@@ -150,7 +155,7 @@ class Socket:
         if self._is_closed:
             return {"status": "already_closed", "session_id": self.sessid}
 
-        packet = self._build_packet(body="", mode="send_only", close_session=True)
+        packet = self._build_packet(data="", mode="send_only", close_session=True)
         res = CRS.send(packet)
         self._is_closed = True
         return res
