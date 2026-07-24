@@ -54,17 +54,17 @@ class Socket:
             )
 
     def _build_packet(
-        self, 
-        body: str = "", 
-        encoding: str = "", 
+        self,
+        body: str = "",
+        encoding: str = "",
         verify: bool = True,
         cert: str = "",
         key: str = "",
         ca: str = "",
         readsize: int = 0,
         timeout: float = 5.0,
-        ratelimit: int = 0, 
-        mode: str = "duplex", 
+        ratelimit: int = 0,
+        mode: str = "duplex",
         close_session: bool = False,
     ) -> dict:
         """Internal Helper: Menyiapkan schema JSON/Dict untuk dikirim via IPC ke Go"""
@@ -89,15 +89,15 @@ class Socket:
         }
 
     def send(
-        self, 
-        body: str, 
-        encoding: str, 
+        self,
+        body: str,
+        encoding: str,
         verify: bool,
         cert: str,
         key: str,
         ca: str,
         timeout: int,
-        ratelimit: int, 
+        ratelimit: int,
         mode: str = "send_only",
         **kwargs,
     ) -> dict:
@@ -107,16 +107,16 @@ class Socket:
             raise
 
         packet = self._build_packet(
-            body=body, 
-            encoding=encoding, 
+            body=body,
+            encoding=encoding,
             verify=verify,
             cert=cert,
             key=key,
             ca=ca,
             timeout=timeout,
-            ratelimit=ratelimit, 
+            ratelimit=ratelimit,
             mode=mode,
-            close_session=False
+            close_session=False,
         )
         return CRS.send(packet)
 
@@ -134,14 +134,15 @@ class Socket:
         if readsize is not None:
             self.readsize = readsize
 
-        packet = self._build_packet(body="", readsize=readsize, mode="recv_only", close_session=False)
+        packet = self._build_packet(
+            body="", readsize=readsize, mode="recv_only", close_session=False
+        )
         response = CRS.send(packet)
 
         # Restore default readsize
         self.readsize = original_readsize
         return response
 
-    
     def close(self) -> dict:
         """Mengirim signal terminasi ke CRS Engine untuk menghapus Session ID"""
         if self._is_closed:
