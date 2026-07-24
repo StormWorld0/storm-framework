@@ -268,7 +268,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	// I/O Deadlines (Sabuk pengaman anti-Tarpit)
 	startTime := time.Now()
 
-	// Malakukan decode ke wujud aslinya
+	// Malakukan decode
 	data_dec, err := base64.StdEncoding.DecodeString(req.Data)
 	if err != nil {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Base64 decode failed: " + err.Error()}
@@ -277,20 +277,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	// Penanganan Payload (Text vs Hex Binary)
 	if mode == "duplex" || mode == "send_only" {
 	    if req.Data != "" {
-		    var payload []byte
-		
-		    // Jika modul menandai payload sebagai Hex (misal eksploitasi buffer overflow / binary protocol)
-		    if strings.ToLower(req.Encoding) == "hex" {
-			    cleanHex := strings.ReplaceAll(data_dec, " ", "")
-		    	payload, err = hex.DecodeString(cleanHex)
-		    	if err != nil {
-		    		return packet.ResponsePacket{Status: "ERROR", Message: "Invalid HEX payload: " + err.Error()}
-		    	}
-	    	} else {
-		    	payload = []byte(data_dec)
-	    	}
-
-	    	_, err = conn.Write(payload)
+	    	_, err = conn.Write(data_dec)
 	    	if err != nil {
 		    	// Jika koneksi re-used ternyata sudah stale/broken di server side, hapus session
                 if req.SessionID != "" {
