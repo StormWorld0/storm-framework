@@ -34,6 +34,11 @@ type RequestPacket struct {
 	KeepAlive bool              `json:"keep-alive"`          // true = do not close the socket after Read
 	CloseSess bool              `json:"close-session"`       // true = force close the session in memory
 	mode      string            `json:"mode"`                // duplex = default, send_only = send without read buffer, recv_only = read only buffer.
+
+	// Custom TLS family
+	TLSKey    string            `json:"tls-key,omitempty"`   // TLSKey = Can path can raw pem
+	TLSCert   string            `json:"tls-cert,omitempty"`  // TLSCer = Can path can raw pem
+	TLSCA     string            `json:"tls-ca,omitempty"`    // TLSCA  = Can path can raw pem
 }
 
 // ResponsePacket
