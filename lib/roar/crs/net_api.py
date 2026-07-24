@@ -9,5 +9,5 @@ from .protocol.network import socket
 __all__ = [
     "http_request",
     "dns_request",
-    "socket",
+    "Socket",
 ]
