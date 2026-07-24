@@ -23,7 +23,8 @@ class Socket:
         readsize: int = 4096,
         ratelimit: int = 0,
         sessid: str = "",
-        keep_alive: bool = True,  # Default True untuk persistent socket
+        keep_alive: bool = True,
+        mode: str = "send_only",
         verify: bool = True,
         cert: str = "",
         key: str = "",
@@ -39,6 +40,7 @@ class Socket:
         self.readsize = readsize
         self.ratelimit = ratelimit
         self.keep_alive = keep_alive
+        self.mode = mode
         self.verify = verify
         self.cert = cert
         self.key = key
