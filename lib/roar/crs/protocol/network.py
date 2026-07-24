@@ -20,7 +20,7 @@ class Socket:
         host: str = "",
         port: int = 0,
         protocol: str = "tcp",
-        timeout: float = 5.0,
+        timeout: float = 10.0,
         encoding: str = "",
         readsize: int = 4096,
         ratelimit: int = 0,
@@ -60,22 +60,24 @@ class Socket:
     def _build_packet(
         self,
         data: str = "",
-        encoding: str = "",
-        verify: bool = True,
-        cert: str = "",
-        key: str = "",
-        ca: str = "",
-        readsize: int = 0,
-        timeout: float = 5.0,
-        ratelimit: int = 0,
-        mode: str = "duplex",
+        encoding: str = None,
+        verify: bool = None,
+        cert: str = None,
+        key: str = None,
+        ca: str = None,
+        readsize: int = None,
+        timeout: float = None,
+        ratelimit: int = None,
+        mode: str = None,
         close_session: bool = False,
     ) -> dict:
         """Internal Helper: Menyiapkan schema JSON/Dict untuk dikirim via IPC ke Go"""
 
         # Ubah data ke b64 & string
-        data_b64 = base64.b64encode(data)
-        data_str = data_b64.decode("utf-8")
+        data_str = ""
+        if data:
+            data_bytes = data.encode("utf-8") if isinstance(data, str) else data
+            data_str = base64.b64encode(data_bytes).decode("utf-8")
 
         return {
             "primitive": "NETWORK_SEND",
@@ -83,37 +85,37 @@ class Socket:
             "port": self.port,
             "data": data_str,
             "protocol": self.protocol,
-            "timeout": timeout,
-            "encoding": encoding,
-            "readsize": readsize,
-            "ratelimit": ratelimit,
+            "timeout": timeout if timeout is not None else self.timeout,
+            "encoding": encoding if encoding is not None else self.encoding,
+            "readsize": readsize if readsize is not None else self.readsize,
+            "ratelimit": ratelimit if ratelimit is not None else self.ratelimit,
             "session_id": self.sessid,
             "keep-alive": self.keep_alive,
             "close_session": close_session,
-            "mode": mode,
-            "verify": verify,
-            "tls-cert": cert,
-            "tls-key": key,
-            "tls-ca": ca,
+            "mode": mode if mode is not None else self.mode,
+            "verify": verify if verify is not None else self.verify,
+            "tls-cert": cert if cert is not None else self.cert,
+            "tls-key": key if key is not None else self.key,
+            "tls-ca": ca if ca is not None else self.ca,
         }
 
     def send(
         self,
         data: str,
-        encoding: str,
-        verify: bool,
-        cert: str,
-        key: str,
-        ca: str,
-        timeout: int,
-        ratelimit: int,
+        encoding: str = None,
+        verify: bool = None,
+        cert: str = None,
+        key: str = None,
+        ca: str = None,
+        timeout: float = None,
+        ratelimit: int = None,
         mode: str = "send_only",
         **kwargs,
     ) -> dict:
         """Kirim payload ke target via Go Engine"""
         if self._is_closed:
             smf.printd("Cannot send on a closed Socket session.", level="ERROR")
-            raise
+            raise RuntimeError("Cannot execute send() on a closed Socket session.")
 
         packet = self._build_packet(
             data=data,
@@ -136,24 +138,19 @@ class Socket:
         """
         if self._is_closed:
             smf.printd("Cannot receive on a closed Socket session", level="ERROR")
-            raise
-
-        # Izinkan override readsize jika dibutuhkan per-read call
-        original_readsize = self.readsize
-        if readsize is not None:
-            self.readsize = readsize
+            raise RuntimeError("Cannot execute recv() on a closed Socket session.")
 
         packet = self._build_packet(
-            data="", readsize=readsize, mode="recv_only", close_session=False
+            data="",
+            readsize=readsize,
+            mode="recv_only",
+            close_session=False,
         )
-        response = CRS.send(packet)
-
-        # Restore default readsize
-        self.readsize = original_readsize
-        return response
+        
+        return CRS.send(packet)
 
     def close(self) -> dict:
-        """Mengirim signal terminasi ke CRS Engine untuk menghapus Session ID"""
+        """Mengirim signal terminasi ke CRS Engine untuk menghapus Session ID."""
         if self._is_closed:
             return {"status": "already_closed", "session_id": self.sessid}
 
@@ -172,4 +169,4 @@ class Socket:
         self.close()
 
     def __repr__(self):
-        return f"<Socket host='{self.host}:{self.port}' proto='{self.protocol}' sessid='{self.sessid}' closed={self.is_closed}>"
+        return f"<Socket host='{self.host}:{self.port}' proto='{self.protocol}' sessid='{self.sessid}' closed={self._is_closed}>"
