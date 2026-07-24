@@ -314,7 +314,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	
 	// Pembacaan Buffer
 	// Membaca stream sampai EOF atau buffer penuh agar tidak ada data tertinggal
-	n, err := conn.Read(buffer)
+	n, err := io.ReadFull(conn, buffer)
 	if err != nil && err != io.EOF {
         // Jika koneksi error/stale, PASTI hapus session & close socket!
         if req.SessionID != "" {
