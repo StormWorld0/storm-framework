@@ -43,7 +43,7 @@ func tlsVersionString(v uint16) string {
 }
 
 func buildCustomTLSConfig(req packet.RequestPacket) (*tls.Config, error) {
-	verify = true
+	verify := true
 	if req.Verify {
 		verify = false
 	}
