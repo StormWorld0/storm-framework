@@ -1,6 +1,5 @@
 from .protocol.http import http_request
 from .protocol.dns import dns_request
-from .protocol.network import socket
 
 # from .ftp import ftp_login
 # from .smb import smb_enum
