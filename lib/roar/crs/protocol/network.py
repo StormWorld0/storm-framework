@@ -74,7 +74,7 @@ class Socket:
         # Ubah data ke b64 & string
         data_b64 = base64.b64encode(data)
         data_str = data_b64.decode("utf-8")
-        
+
         return {
             "primitive": "NETWORK_SEND",
             "host": self.host,
