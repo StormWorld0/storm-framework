@@ -43,15 +43,19 @@ class Socket:
         self.cert = cert
         self.key = key
         self.ca = ca
-        
+
         # Auto-generate Session ID jika belum ada (agar stream terisolasi di Go IPC)
         self.sessid = sessid if sessid else f"smf_sess_{uuid.uuid4().hex[:12]}"
         self._is_closed = False
 
         if kwargs:
-            smf.printf(f"[!] {CC.YELLOW}Unrecognized parameters dropped =>{CC.RESET}", kwargs)
+            smf.printf(
+                f"[!] {CC.YELLOW}Unrecognized parameters dropped =>{CC.RESET}", kwargs
+            )
 
-    def _build_packet(self, body: str = "", mode: str = "duplex", close_session: bool = False) -> dict:
+    def _build_packet(
+        self, body: str = "", mode: str = "duplex", close_session: bool = False
+    ) -> dict:
         """Internal Helper: Menyiapkan schema JSON/Dict untuk dikirim via IPC ke Go"""
         return {
             "primitive": "NETWORK_SEND",
@@ -77,7 +81,7 @@ class Socket:
         """Kirim payload ke target via Go Engine"""
         if self._is_closed:
             raise RuntimeError("Cannot send on a closed Socket session.")
-            
+
         packet = self._build_packet(body=body, mode=mode, close_session=False)
         return CRS.send(packet)
 
@@ -123,4 +127,3 @@ class Socket:
 
     def __repr__(self):
         return f"<Socket host='{self.host}:{self.port}' proto='{self.protocol}' sessid='{self.sessid}' closed={self.is_closed}>"
-    
