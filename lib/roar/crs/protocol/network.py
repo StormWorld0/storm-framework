@@ -146,7 +146,7 @@ class Socket:
             mode="recv_only",
             close_session=False,
         )
-        
+
         return CRS.send(packet)
 
     def close(self) -> dict:
