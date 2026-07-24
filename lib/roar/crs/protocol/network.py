@@ -3,6 +3,8 @@
 # -- Author zxelzy
 import uuid
 import smf
+import base64
+
 from apps.utility.colors import CC
 from ..transport import CRS
 
