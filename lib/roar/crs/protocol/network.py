@@ -20,6 +20,10 @@ def socket(
     keep_alive: bool = False,  # Default False, must be combo with sessid
     close_session: bool = False,  # Deleting active SessionsID
     mode: str = "duplex",  # Default duplex = Mode normal // or can send_only or recv_only
+    verify: bool = True, # Default True: It means default running verification
+    cert: str = "", # TLSCert: Can be used with path or raw pem
+    key: str = "", # TLSKey: Can be used with path or raw pem
+    ca: str = "", # TLSCA: Can be used with path or raw pem
     **kwargs,  # Drop excess parameters
 ) -> dict:
     """Wrapper to send Socket to CRS Engine"""
@@ -38,6 +42,10 @@ def socket(
         "keep-alive": keep_alive,
         "close_session": close_session,
         "mode": mode,
+        "verify": verify,
+        "tls-cert": cert,
+        "tls-key": key,
+        "tls-ca": ca,
     }
 
     if kwargs:
