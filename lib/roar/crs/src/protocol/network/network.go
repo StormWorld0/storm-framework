@@ -6,6 +6,7 @@ package network
 import (
 	"context"
 	"io"
+	"os"
 	"net"
 	"fmt"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"strconv"
 	"encoding/hex"
 	"crypto/tls"
+	"crypto/x509"
 	"sync"
 
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
