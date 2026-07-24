@@ -55,7 +55,7 @@ func main() {
 func sendResponse(res packet.ResponsePacket) {
 	out, err := json.Marshal(res)
 	if err != nil {
-		os.Stdout.WhiteString(`{"status":"ERROR","message":"Failed to marshal response"}` + "\n")
+		os.Stdout.WriteString(`{"status":"ERROR","message":"Failed to marshal response"}` + "\n")
 		os.Stdout.Sync()
 		return
 	}
