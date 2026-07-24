@@ -42,6 +42,69 @@ func tlsVersionString(v uint16) string {
 	}
 }
 
+func buildCustomTLSConfig(req packet.RequestPacket) (*tls.Config, error) {
+	verify = true
+	if req.Verify {
+		verify = false
+	}
+	
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: verify,
+	}
+
+	// 1. Client Certificate & Key (mTLS) jika diisi
+	if req.TLSCert != "" && req.TLSKey != "" {
+		var certBytes, keyBytes []byte
+		var err error
+
+		// Cek apakah string berupa path file atau raw PEM
+		if _, err = os.Stat(req.TLSCert); err == nil {
+			certBytes, err = os.ReadFile(req.TLSCert)
+			if err != nil {
+				return nil, fmt.Errorf("read cert file: %w", err)
+			}
+			keyBytes, err = os.ReadFile(req.TLSKey)
+			if err != nil {
+				return nil, fmt.Errorf("read key file: %w", err)
+			}
+		} else {
+			certBytes = []byte(req.TLSCert)
+			keyBytes = []byte(req.TLSKey)
+		}
+
+		cert, err := tls.X509KeyPair(certBytes, keyBytes)
+		if err != nil {
+			return nil, fmt.Errorf("load x509 key pair: %w", err)
+		}
+
+		tlsConfig.Certificates = []tls.Certificate{cert}
+	}
+
+	// 2. Custom Root CA jika diisi
+	if req.TLSCA != "" {
+		var caBytes []byte
+		var err error
+
+		if _, err = os.Stat(req.TLSCA); err == nil {
+			caBytes, err = os.ReadFile(req.TLSCA)
+			if err != nil {
+				return nil, fmt.Errorf("read CA file: %w", err)
+			}
+		} else {
+			caBytes = []byte(req.TLSCA)
+		}
+
+		caCertPool := x509.NewCertPool()
+		if !caCertPool.AppendCertsFromPEM(caBytes) {
+			return nil, fmt.Errorf("failed to parse custom CA PEM")
+		}
+		tlsConfig.RootCAs = caCertPool
+	}
+
+	return tlsConfig, nil
+}
+
+
 func BuildTarget(req packet.RequestPacket) (string, error) {
 	rawHost := strings.TrimSpace(req.Host)
 	if rawHost == "" {
@@ -139,16 +202,52 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 
         ctx, cancel := context.WithTimeout(context.Background(), timeout)
         defer cancel()
+		
+		hasCertKey := req.TLSCert != "" && req.TLSKey != ""
 
         if protocol == "tls" || protocol == "ssl" {
+			// Melakukan handshake TCP && Handshake TLS 
+			// menggunakan internal library fastdialer.
             conn, err = fd.DialTLS(ctx, "tcp", addr)
-        } else {
-            conn, err = fd.Dial(ctx, "tcp", addr)
-        }
+			if err != nil {
+				return packet.ResponsePacket{Status: "ERROR", Message: "Connection DialTLS failed: " + err.Error()}
+			}
+        } else if protocol == "tcp" && hasCertKey {
 
-        if err != nil {
-            return packet.ResponsePacket{Status: "ERROR", Message: "Connection failed: " + err.Error()}
-        }
+			// Protocol TCP = True && Cert/Key = True
+            rawConn, err := fd.Dial(ctx, "tcp", addr)
+			if err != nil {
+				return packet.ResponsePacket{Status: "ERROR", Message: "TCP Dial failed: " + err.Error()}
+			}
+
+			// Melakukan parsing custom TLS
+			tlsConfig, err := buildCustomTLSConfig(req)
+			if err != nil {
+				rawConn.Close()
+				return packet.ResponsePacket{Status: "ERROR", Message: "TLS Config Error: " + err.Error()}
+			}
+
+			// Masukkan ServerName/SNI dari target host
+			hostOnly, _, _ := net.SplitHostPort(addr)
+			if hostOnly != "" && tlsConfig.ServerName == "" {
+				tlsConfig.ServerName = hostOnly
+			}
+
+			// Melakukan handshake custom TLS
+			tlsConn := tls.Client(rawConn, tlsConfig)
+			if err := tlsConn.HandshakeContext(ctx); err != nil {
+				rawConn.Close()
+				return packet.ResponsePacket{Status: "ERROR", Message: "Custom TLS Handshake failed: " + err.Error()}
+			}
+
+			conn = tlsConn
+        } else {
+			// Melakukan handshake TCP saja
+			conn, err = fd.Dial(ctx, "tcp", addr)
+			if err != nil {
+                return packet.ResponsePacket{Status: "ERROR", Message: "Connection failed: " + err.Error()}
+            }
+		}
     }
 	
 	keepSession := false
