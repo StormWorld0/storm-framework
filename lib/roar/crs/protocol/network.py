@@ -57,14 +57,14 @@ class Socket:
         self, 
         body: str = "", 
         encoding: str = "", 
-        ratelimit: int = 0, 
-        mode: str = "duplex", 
         verify: bool = True,
         cert: str = "",
         key: str = "",
         ca: str = "",
         readsize: int = 0,
         timeout: float = 5.0,
+        ratelimit: int = 0, 
+        mode: str = "duplex", 
         close_session: bool = False,
     ) -> dict:
         """Internal Helper: Menyiapkan schema JSON/Dict untuk dikirim via IPC ke Go"""
@@ -92,13 +92,13 @@ class Socket:
         self, 
         body: str, 
         encoding: str, 
-        ratelimit: int = 0, 
-        mode: str = "send_only",
         verify: bool,
         cert: str,
         key: str,
         ca: str,
         timeout: int,
+        ratelimit: int, 
+        mode: str = "send_only",
         **kwargs,
     ) -> dict:
         """Kirim payload ke target via Go Engine"""
@@ -109,13 +109,13 @@ class Socket:
         packet = self._build_packet(
             body=body, 
             encoding=encoding, 
-            ratelimit=ratelimit, 
-            mode=mode,
             verify=verify,
             cert=cert,
             key=key,
             ca=ca,
             timeout=timeout,
+            ratelimit=ratelimit, 
+            mode=mode,
             close_session=False
         )
         return CRS.send(packet)
