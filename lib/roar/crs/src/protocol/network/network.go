@@ -13,6 +13,7 @@ import (
 	"time"
 	"strconv"
 	"encoding/hex"
+	"encoding/base64"
 	"crypto/tls"
 	"crypto/x509"
 	"sync"
@@ -267,20 +268,26 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	// I/O Deadlines (Sabuk pengaman anti-Tarpit)
 	startTime := time.Now()
 
+	// Malakukan decode ke wujud aslinya
+	data_dec, err := base64.StdEncoding.DecodeString(req.Data)
+	if err != nil {
+		return packet.ResponsePacket{Status: "ERROR", Message: "Base64 decode failed: " + err.Error()}
+	}
+
 	// Penanganan Payload (Text vs Hex Binary)
 	if mode == "duplex" || mode == "send_only" {
-	    if req.Body != "" {
+	    if req.Data != "" {
 		    var payload []byte
 		
 		    // Jika modul menandai payload sebagai Hex (misal eksploitasi buffer overflow / binary protocol)
 		    if strings.ToLower(req.Encoding) == "hex" {
-			    cleanHex := strings.ReplaceAll(req.Body, " ", "")
+			    cleanHex := strings.ReplaceAll(data_dec, " ", "")
 		    	payload, err = hex.DecodeString(cleanHex)
 		    	if err != nil {
 		    		return packet.ResponsePacket{Status: "ERROR", Message: "Invalid HEX payload: " + err.Error()}
 		    	}
 	    	} else {
-		    	payload = []byte(req.Body)
+		    	payload = []byte(data_dec)
 	    	}
 
 	    	_, err = conn.Write(payload)
