@@ -179,10 +179,17 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
         }
     }
 
+	var sessionData *utils.SessionState
 	if req.SessionID != "" {
         if val, ok := utils.ActiveSessions.Load(req.SessionID); ok {
             conn = val.(net.Conn)
             isReused = true
+			if req.TLSCert == "" && sessionData.TLSCert != "" {
+				req.TLSCert = sessionData.TLSCert
+				req.TLSKey = sessionData.TLSKey
+				req.TLSCA = sessionData.TLSCA
+				req.Verify = sessionData.Verify
+			}
         }
     }
 
@@ -368,8 +375,16 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 
 	// --- Simpan session jika diminta dan tidak terjadi error ---
     if req.SessionID != "" && req.KeepAlive && err == nil {
-        utils.ActiveSessions.Store(req.SessionID, conn)
-        keepSession = true
+		utils.ActiveSessions.Store(req.SessionID, &utils.SessionState{
+			Conn:    conn,
+			TLSCert: req.TLSCert,
+			TLSKey:  req.TLSKey,
+			TLSCA:   req.TLSCA,
+			Verify:  req.Verify,
+			IsTLS:   shouldUseTLS,
+			Host:    req.Host,
+		})
+		keepSession = true
     } else {
         if req.SessionID != "" {
             utils.ActiveSessions.Delete(req.SessionID)
