@@ -45,6 +45,11 @@ func tlsVersionString(v uint16) string {
 	}
 }
 
+// Interface untuk mengekstrak TLS State dari koneksi apapun (Standard tls.Conn maupun Fastdialer wrapper)
+type tlsConnStateGetter interface {
+	ConnectionState() tls.ConnectionState
+}
+
 func buildCustomTLSConfig(req packet.RequestPacket) (*tls.Config, error) {
 	verify := true
 	if req.Verify {
@@ -387,9 +392,8 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
     }
 	
 	var tlsData map[string]interface{}
-    if tlsConn, ok := conn.(*tls.Conn); ok {
-	    // Dapatkan detail handshake SSL/TLS
-    	state := tlsConn.ConnectionState()
+    if stateGetter, ok := conn.(tlsConnStateGetter); ok {
+		state := stateGetter.ConnectionState()
 		tlsData = map[string]interface{}{
             "tls_version":    tlsVersionString(state.Version),
             "cipher_suite":   tls.CipherSuiteName(state.CipherSuite),
