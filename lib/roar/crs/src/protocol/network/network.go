@@ -163,9 +163,9 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			stackTrace := string(debug.Stack())
 			fmt.Printf("\n[FATAL CRASH DETECTED]\nPanic: %v\nStack Trace:\n%s\n", r, stackTrace)
 			
-			packet.ResponsePacket{
+			return packet.ResponsePacket{
 				Status:  "ERROR",
-				Message: fmt.Sprintf("CRASH PANIC: %v (Check Go stdout for stack trace)", r),
+				Message: "CRASH PANIC: %v (Check Go stdout for stack trace", r),
 			}
 		}
 	}()
