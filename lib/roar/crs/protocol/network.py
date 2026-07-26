@@ -67,7 +67,7 @@ class Socket:
         timeout: float = None,
         ratelimit: int = None,
         mode: str = None,
-        protocol: str = "tcp"
+        protocol: str = "tcp",
         close_session: bool = False,
     ) -> dict:
         """Internal Helper: Menyiapkan schema JSON/Dict untuk dikirim via IPC ke Go"""
