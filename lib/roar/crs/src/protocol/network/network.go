@@ -160,15 +160,10 @@ func BuildTarget(req packet.RequestPacket) (string, error) {
 func Network(req packet.RequestPacket) packet.ResponsePacket {
 	defer func() {
 		if r := recover(); r != nil {
-			stackTrace := string(debug.Stack())
-			fmt.Printf("\n[FATAL CRASH DETECTED]\nPanic: %v\nStack Trace:\n%s\n", r, stackTrace)
-			
-			return packet.ResponsePacket{
-				Status:  "ERROR",
-				Message: "CRASH PANIC: %v (Check Go stdout for stack trace", r),
-			}
+			fmt.Printf("\n[FATAL CRASH DETECTED]\nPanic: %v\nStack Trace:\n%s\n", r, debug.Stack())
 		}
 	}()
+
 	
 	utils.Take()
 
