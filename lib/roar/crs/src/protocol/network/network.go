@@ -215,42 +215,33 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			if err != nil {
 				return packet.ResponsePacket{Status: "ERROR", Message: "Connection DialTLS failed: " + err.Error()}
 			}
-        } else if protocol == "tcp" && hasCertKey {
+        } else if protocol == "tcp" {
 
-			// Protocol TCP = True && Cert/Key = True
+			// Protocol TCP = True
             rawConn, err := fd.Dial(ctx, "tcp", addr)
 			if err != nil {
 				return packet.ResponsePacket{Status: "ERROR", Message: "TCP Dial failed: " + err.Error()}
 			}
 
-			// Melakukan parsing custom TLS
-			tlsConfig, err := buildCustomTLSConfig(req)
-			if err != nil {
-				rawConn.Close()
-				return packet.ResponsePacket{Status: "ERROR", Message: "TLS Config Error: " + err.Error()}
-			}
+			// Cert/Key = True
+			if hasCertKey {
 
-			// Masukkan ServerName/SNI dari target host
-			hostOnly, _, _ := net.SplitHostPort(addr)
-			if hostOnly != "" && tlsConfig.ServerName == "" {
-				tlsConfig.ServerName = hostOnly
+			    // Melakukan parsing custom TLS
+			    tlsConfig, err := buildCustomTLSConfig(req)
+			    if err != nil {
+				    rawConn.Close()
+				    return packet.ResponsePacket{Status: "ERROR", Message: "TLS Config Error: " + err.Error()}
+			    }
+				
+		    	// Melakukan handshake custom TLS
+		    	tlsConn := tls.Client(rawConn, tlsConfig)
+		    	if err := tlsConn.HandshakeContext(ctx); err != nil {
+			    	rawConn.Close()
+			    	return packet.ResponsePacket{Status: "ERROR", Message: "Custom TLS Handshake failed: " + err.Error()}
+		    	}
 			}
-
-			// Melakukan handshake custom TLS
-			tlsConn := tls.Client(rawConn, tlsConfig)
-			if err := tlsConn.HandshakeContext(ctx); err != nil {
-				rawConn.Close()
-				return packet.ResponsePacket{Status: "ERROR", Message: "Custom TLS Handshake failed: " + err.Error()}
-			}
-
 			conn = tlsConn
-        } else {
-			// Melakukan handshake TCP saja
-			conn, err = fd.Dial(ctx, "tcp", addr)
-			if err != nil {
-                return packet.ResponsePacket{Status: "ERROR", Message: "Connection failed: " + err.Error()}
-            }
-		}
+        } 
     }
 	
 	keepSession := false
