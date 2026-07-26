@@ -345,19 +345,51 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	// Pembacaan Buffer
 	// Membaca stream sampai EOF atau buffer penuh agar tidak ada data tertinggal
 	n, err := conn.Read(buffer)
-	if err != nil && err != io.EOF {
-        // Jika koneksi error/stale, PASTI hapus session & close socket!
-        if req.SessionID != "" && (err == io.EOF || !req.KeepAlive) {
+	// --- Penanganan hasil baca ---
+    if err != nil && err != io.EOF {
+        // Error selain EOF -> hapus session, defer akan tutup
+        if req.SessionID != "" {
             utils.ActiveSessions.Delete(req.SessionID)
-            conn.Close()
         }
-        // Jika tidak ada data yang terbaca sama sekali
         if n == 0 {
             return packet.ResponsePacket{
                 Status:  "ERROR",
                 Message: "Read failed: " + err.Error(),
             }
         }
+        // Jika n>0, kita tetap lanjutkan untuk mengembalikan data yang terbaca
+    } else if err == io.EOF {
+        // EOF: tidak ada data tersisa, hapus session dan tutup
+        if req.SessionID != "" {
+            utils.ActiveSessions.Delete(req.SessionID)
+            // keepSession tetap false, defer akan tutup
+        }
+        // Jika tidak ada data terbaca, return respons kosong
+        if n == 0 {
+            return packet.ResponsePacket{
+                Status:  "SUCCESS",
+                Message: "EOF - no more data",
+                Data: map[string]interface{}{
+                    "read_bytes": 0,
+                    "is_reused":  isReused,
+                    "rtt_ms":     time.Since(startTime).Milliseconds(),
+                },
+            }
+        }
+        // Jika ada data meskipun EOF, proses di bawah (tetapi setelah return, defer tutup)
+    }
+
+	// --- Simpan session jika diminta dan tidak terjadi error ---
+    if req.SessionID != "" && req.KeepAlive && err == nil {
+        // Hanya simpan jika tidak ada error sama sekali (termasuk EOF)
+        utils.ActiveSessions.Store(req.SessionID, conn)
+        keepSession = true
+    } else {
+        // Jika ada error (termasuk EOF) atau KeepAlive=false, hapus session
+        if req.SessionID != "" {
+            utils.ActiveSessions.Delete(req.SessionID)
+        }
+        // keepSession tetap false
     }
 	
 	var tlsData map[string]interface{}
