@@ -4,6 +4,7 @@ import json
 import subprocess
 import os
 import smf
+import base64
 
 from ..calling import call_bin
 from apps.utility.colors import *
