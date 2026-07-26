@@ -21,7 +21,7 @@ class Socket:
         port: int = 0,
         protocol: str = "tcp",
         timeout: float = 10.0,
-        readsize: int = 4096,
+        readsize: int = 0,
         ratelimit: int = 0,
         sessid: str = "",
         keep_alive: bool = True,
