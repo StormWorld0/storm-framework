@@ -26,7 +26,7 @@ class Socket:
         sessid: str = "",
         keep_alive: bool = True,
         mode: str = "send_only",
-        verify: bool = True,
+        verify: bool = False,
         cert: str = "",
         key: str = "",
         ca: str = "",
