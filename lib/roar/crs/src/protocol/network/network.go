@@ -264,19 +264,22 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			conn.Close()
 		}
 	}()
+	
 
 	// I/O Deadlines (Sabuk pengaman anti-Tarpit)
 	startTime := time.Now()
 
-	// Malakukan decode
-	data_dec, err := base64.StdEncoding.DecodeString(req.Data)
-	if err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: "Base64 decode failed: " + err.Error()}
-	}
-
+	
 	// Penanganan Payload (Text vs Hex Binary)
 	if mode == "duplex" || mode == "send_only" {
 	    if req.Data != "" {
+			// Malakukan decode
+	        data_dec, err := base64.StdEncoding.DecodeString(req.Data)
+	        if err != nil {
+		        return packet.ResponsePacket{Status: "ERROR", Message: "Base64 decode failed: " + err.Error()}
+	        }
+
+			// Lakukan 
 	    	_, err = conn.Write(data_dec)
 	    	if err != nil {
 		    	// Jika koneksi re-used ternyata sudah stale/broken di server side, hapus session
@@ -287,8 +290,38 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		    	return packet.ResponsePacket{Status: "ERROR", Message: "Write failed: " + err.Error()}
 		    }
 	    }
+		if mode == "send_only" {
+            // Pastikan state KeepAlive / SessionID tersimpan atau ditutup dengan benar
+            // sebelum kabur dari fungsi.
+            if req.SessionID != "" {
+                if req.KeepAlive {
+                    utils.ActiveSessions.Store(req.SessionID, conn)
+                    keepSession = true
+                } else {
+                    utils.ActiveSessions.Delete(req.SessionID)
+                    // keepSession tetap false, defer akan close conn
+                }
+            }
+            
+            rtt := time.Since(startTime).Milliseconds()
+            return packet.ResponsePacket{
+                Status: "SUCCESS",
+                Data: map[string]interface{}{
+                    "is_reused": isReused,
+                    "rtt_ms":    rtt,
+                    "mode":      mode,
+                },
+            }
+        }
 	}
 
+	// ==========================================
+	// FASE READ (recv_only dan duplex masuk ke sini)
+	// Mode recv_only akan langsung melompat ke baris ini 
+	// tanpa menyentuh komputasi base64 dan Write.
+	// ==========================================
+
+	// Readsize di gunakan untuk read byte
 	readSize := req.ReadSize
 	if readSize <= 0 {
 		readSize = 0 // Default fallback
@@ -326,29 +359,6 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
             }
         }
     }
-
-	// Jika sampai tahap ini sukses & KeepAlive diaktifkan, simpan koneksi
-	if req.SessionID != "" {
-        if req.KeepAlive {
-            utils.ActiveSessions.Store(req.SessionID, conn)
-            keepSession = true
-        } else {
-            utils.ActiveSessions.Delete(req.SessionID)
-            keepSession = false // Biarkan defer me-close socket
-        }
-    }
-	// Jika mode cuma "send_only", keluar tanpa read buffer
-	if mode == "send_only" {
-		rtt := time.Since(startTime).Milliseconds()
-		return packet.ResponsePacket{
-			Status: "SUCCESS",
-			Data: map[string]interface{}{
-				"is_reused": isReused,
-				"rtt_ms":    rtt,
-				"mode":      mode,
-			},
-		}
-	}
 	
 	var tlsData map[string]interface{}
     if tlsConn, ok := conn.(*tls.Conn); ok {
@@ -392,7 +402,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			"protocol":     protocol,
 			"ip":           remoteIP,
 			"local_ip":     localAddr,
-			"is_reused":    isReused, // Flag indikator arsitektur hybrid
+			"is_reused":    isReused,
 			"rtt_ms":       rtt,
 			"info_tls":     tlsData,
 		},
