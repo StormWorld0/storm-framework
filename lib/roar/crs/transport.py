@@ -70,9 +70,7 @@ class CRS:
                         res_dict["data"]["raw_bytes"] = b""
                         smf.printd("Base64 decode failed", str(b64_err), level="ERROR")
 
-            smf.printd(
-                "CRS Process Output dict format", res_dict, level="DEBUG"
-            )
+            smf.printd("CRS Process Output dict format", res_dict, level="DEBUG")
             return res_dict
         except Exception as e:
             smf.printd("Error CRS send", e, level="ERROR")
