@@ -160,6 +160,7 @@ class Socket:
             ca=ca,
             verify=verify,
             mode="duplex",
+            protocol="tls"
             close_session=False,
         )
 
