@@ -291,7 +291,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 
 	readSize := req.ReadSize
 	if readSize <= 0 {
-		readSize = 4096 // Default fallback
+		readSize = 0 // Default fallback
 	}
 
 	// Mengambil buffer dari Pool jika ukuran standar, atau buat baru jika custom
