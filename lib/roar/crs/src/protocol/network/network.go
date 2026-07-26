@@ -222,7 +222,8 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			if err != nil {
 				return packet.ResponsePacket{Status: "ERROR", Message: "TCP Dial failed: " + err.Error()}
 			}
-
+			conn = rawConn
+			
 			// Cert/Key = True
 			if hasCertKey {
 
@@ -239,8 +240,8 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			    	rawConn.Close()
 			    	return packet.ResponsePacket{Status: "ERROR", Message: "Custom TLS Handshake failed: " + err.Error()}
 		    	}
+				conn = tlsConn
 			}
-			conn = tlsConn
         } 
     }
 	
