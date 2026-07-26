@@ -144,15 +144,8 @@ class Socket:
 
         return CRS.send(packet)
 
-
     # Upgrade koneksi ke TLS
-    def uptls(
-        self, 
-        cert: str, 
-        key: str, 
-        ca: str = None, 
-        verify: bool = None
-    ) -> dict:
+    def uptls(self, cert: str, key: str, ca: str = None, verify: bool = None) -> dict:
         """
         Mengirim instruksi TLS UPGRADE ke CRS Engine (Go Backend)
         untuk membungkus TCP connection yang sedang aktif menjadi TLS.
@@ -167,22 +160,20 @@ class Socket:
             ca=ca,
             verify=verify,
             mode="duplex",
-            close_session=False
+            close_session=False,
         )
-        
+
         # Kirim command upgrade ke Go Engine via IPC
         response = CRS.send(packet)
-        
+
         if response.get("status") == "SUCCESS":
             self.is_tls = True
-            return response.get("data", {}) # Kembalikan info TLS (version, cipher, dll)
+            return response.get("data", {})  # Kembalikan info TLS (version, cipher, dll)
         else:
             raise Exception(f"TLS Upgrade Failed: {response.get('message')}")
-        
+
         return response
 
-
-    
     # Close season aktif dan lepas koneksi
     def close(self) -> dict:
         """Mengirim signal terminasi ke CRS Engine untuk menghapus Session ID."""
