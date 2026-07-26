@@ -67,7 +67,6 @@ class Socket:
         timeout: float = None,
         ratelimit: int = None,
         mode: str = None,
-        protocol: str = "tcp",
         close_session: bool = False,
     ) -> dict:
         """Internal Helper: Menyiapkan schema JSON/Dict untuk dikirim via IPC ke Go"""
@@ -83,7 +82,7 @@ class Socket:
             "host": self.host,
             "port": self.port,
             "data": data_str,
-            "protocol": protocol if protocol is not None else self.protocol,
+            "protocol": "tls" if self.is_tls else "tcp",
             "timeout": timeout if timeout is not None else self.timeout,
             "readsize": readsize if readsize is not None else self.readsize,
             "ratelimit": ratelimit if ratelimit is not None else self.ratelimit,
