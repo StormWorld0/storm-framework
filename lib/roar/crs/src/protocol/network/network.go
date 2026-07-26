@@ -240,6 +240,8 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			    	rawConn.Close()
 			    	return packet.ResponsePacket{Status: "ERROR", Message: "Custom TLS Handshake failed: " + err.Error()}
 		    	}
+				// Update session dengan koneksi TLS yang baru
+                utils.ActiveSessions.Set(req.SessionID, tlsConn)
 				conn = tlsConn
 			}
         } 
