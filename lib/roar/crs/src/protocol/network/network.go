@@ -390,22 +390,24 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
     if tlsConn, ok := conn.(*tls.Conn); ok {
 	    // Dapatkan detail handshake SSL/TLS
     	state := tlsConn.ConnectionState()
+		tlsData = map[string]interface{}{
+            "tls_version":    tlsVersionString(state.Version),
+            "cipher_suite":   tls.CipherSuiteName(state.CipherSuite),
+            "protocol":       state.NegotiatedProtocol,
+            "hostname":       state.ServerName,
+            "handshake":      state.HandshakeComplete,
+            "session_resume": state.DidResume,
+        }
     	if len(state.PeerCertificates) > 0 {
 		    cert := state.PeerCertificates[0] // Leaf Certificate
-		    tlsData = map[string]interface{}{
-			    "subject":          cert.Subject.CommonName,
-			    "issuer":           cert.Issuer.CommonName,
-			    "dns_names":        cert.DNSNames,
-			    "expires_at":       cert.NotAfter.Format(time.RFC3339),
-			    "tls_version":      tlsVersionString(state.Version),
-			    "cipher_suite":     tls.CipherSuiteName(state.CipherSuite),
-				"protocol":         state.NegotiatedProtocol,
-				"hostname":         state.ServerName,
-				"handshake":        state.HandshakeComplete,
-				"session_resume":   state.DidResume,
-				"cert_chain":       state.VerifiedChains,
-		    }
+		    tlsData["subject"] = cert.Subject.CommonName
+            tlsData["issuer"] = cert.Issuer.CommonName
+            tlsData["dns_names"] = cert.DNSNames
+            tlsData["expires_at"] = cert.NotAfter.Format(time.RFC3339)
 	    }
+		if len(state.VerifiedChains) > 0 {
+            tlsData["cert_chain_count"] = len(state.VerifiedChains)
+        }
     }
 	
 	// Ekstraksi Data Spesifik
