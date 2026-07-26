@@ -152,7 +152,7 @@ class Socket:
         """
         if self.is_tls:
             smf.printd("The connection is already using TLS", level="WARN")
-            return {status: "WARN", message: "Already TLS"}
+            return {"status": "WARN", "message": "Already TLS"}
         packet = self._build_packet(
             data="",
             cert=cert,
