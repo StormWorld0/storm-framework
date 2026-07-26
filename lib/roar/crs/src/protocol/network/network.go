@@ -5,18 +5,18 @@ package network
 
 import (
 	"context"
-	"io"
-	"os"
-	"net"
-	"fmt"
-	"strings"
-	"time"
-	"strconv"
-	"encoding/hex"
-	"encoding/base64"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
+	"encoding/hex"
+	"fmt"
+	"io"
+	"net"
+	"os"
+	"strconv"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/utils"
@@ -60,12 +60,11 @@ func buildCustomTLSConfig(req packet.RequestPacket) (*tls.Config, error) {
 		InsecureSkipVerify: verify,
 	}
 
-	// 1. Client Certificate & Key (mTLS) jika diisi
+	// Client Certificate & Key (mTLS) jika diisi
 	if req.TLSCert != "" && req.TLSKey != "" {
 		var certBytes, keyBytes []byte
 		var err error
 
-		// Cek apakah string berupa path file atau raw PEM
 		if _, err = os.Stat(req.TLSCert); err == nil {
 			certBytes, err = os.ReadFile(req.TLSCert)
 			if err != nil {
@@ -88,7 +87,7 @@ func buildCustomTLSConfig(req packet.RequestPacket) (*tls.Config, error) {
 		tlsConfig.Certificates = []tls.Certificate{cert}
 	}
 
-	// 2. Custom Root CA jika diisi
+	// Custom Root CA jika diisi
 	if req.TLSCA != "" {
 		var caBytes []byte
 		var err error
@@ -119,13 +118,13 @@ func BuildTarget(req packet.RequestPacket) (string, error) {
 		return "", fmt.Errorf("Invalid empty host")
 	}
 
-	// 1. Handling Scheme (http/https)
+	// Handling Scheme (http/https)
 	if strings.Contains(rawHost, "://") {
 		parts := strings.SplitN(rawHost, "://", 2)
 		rawHost = parts[1] // Ambil string setelah "://"
 	}
 
-	// 2. Separate Host dan Port dari string
+	// Separate Host dan Port dari string
 	hostOnly, portStr, err := net.SplitHostPort(rawHost)
 	if err != nil {
 		// Jika tidak ada port di string rawHost
@@ -133,12 +132,12 @@ func BuildTarget(req packet.RequestPacket) (string, error) {
 		portStr = ""
 	}
 
-	// 3. Potong Trailing Path (misal: "domain.com/v1/api" -> "domain.com")
+	// Potong Trailing Path (misal: "domain.com/v1/api" -> "domain.com")
 	if idx := strings.Index(hostOnly, "/"); idx != -1 {
 		hostOnly = hostOnly[:idx]
 	}
 
-	// 4. Penentuan Final Port
+	// Penentuan Final Port
 	finalPort := 0
 	if req.Port != 0 {
 		// Prioritas 1: Port dari struct req.Port
@@ -152,7 +151,7 @@ func BuildTarget(req packet.RequestPacket) (string, error) {
 	if finalPort == 0 {
 		return "", fmt.Errorf("Empty port error")
 	}
-	// 5. Return dengan format "host:port" yang valid
+	// Return dengan format "host:port" yang valid
 	return net.JoinHostPort(hostOnly, strconv.Itoa(finalPort)), nil
 }
 
@@ -194,68 +193,71 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 
 	protocol := strings.ToLower(req.Protocol)
     if protocol == "" {
-        protocol = "tcp" // Default TCP
+        protocol = "tcp"
     }
 
 	if conn == nil {
-        addr, err := BuildTarget(req)
-        if err != nil {
-            return packet.ResponsePacket{Status: "ERROR", Message: "Build target: " + err.Error()}
-        }
+		addr, err := BuildTarget(req)
+		if err != nil {
+			return packet.ResponsePacket{Status: "ERROR", Message: "Build target: " + err.Error()}
+		}
 
-        fd := utils.GetDialer()
-        if fd == nil {
-            return packet.ResponsePacket{Status: "ERROR", Message: "Global dialer not initialized"}
-        }
+		fd := utils.GetDialer()
+		if fd == nil {
+			return packet.ResponsePacket{Status: "ERROR", Message: "Global dialer not initialized"}
+		}
 
-        ctx, cancel := context.WithTimeout(context.Background(), timeout)
-        defer cancel()
-		
-		hasCertKey := req.TLSCert != "" && req.TLSKey != ""
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
 
-        if protocol == "tls" || protocol == "ssl" {
-			// Melakukan handshake TCP && Handshake TLS 
-			// menggunakan internal library fastdialer.
-            conn, err = fd.DialTLS(ctx, "tcp", addr)
-			if err != nil {
-				return packet.ResponsePacket{Status: "ERROR", Message: "Connection DialTLS failed: " + err.Error()}
+		rawConn, err := fd.Dial(ctx, "tcp", addr)
+		if err != nil {
+			return packet.ResponsePacket{Status: "ERROR", Message: "TCP Dial failed: " + err.Error()}
+		}
+		conn = rawConn
+	}
+
+	hasCertKey := req.TLSCert != "" && req.TLSKey != ""
+	shouldUseTLS := protocol == "tls" || protocol == "ssl" || hasCertKey
+	_, isAlreadyTLS := conn.(tlsConnStateGetter)
+
+	if shouldUseTLS && !isAlreadyTLS {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+
+		tlsConfig, err := buildCustomTLSConfig(req)
+		if err != nil {
+			if !isReused {
+				conn.Close()
 			}
-        } else if protocol == "tcp" {
+			return packet.ResponsePacket{Status: "ERROR", Message: "TLS Config Error: " + err.Error()}
+		}
 
-			// Protocol TCP = True
-            rawConn, err := fd.Dial(ctx, "tcp", addr)
-			if err != nil {
-				return packet.ResponsePacket{Status: "ERROR", Message: "TCP Dial failed: " + err.Error()}
-			}
-			conn = rawConn
-			
-			// Cert/Key = True
-			if hasCertKey {
+		if tlsConfig.ServerName == "" {
+			hostOnly, _, _ := net.SplitHostPort(req.Host)
+			tlsConfig.ServerName = hostOnly
+		}
 
-			    // Melakukan parsing custom TLS
-			    tlsConfig, err := buildCustomTLSConfig(req)
-			    if err != nil {
-				    rawConn.Close()
-				    return packet.ResponsePacket{Status: "ERROR", Message: "TLS Config Error: " + err.Error()}
-			    }
-				
-		    	// Melakukan handshake custom TLS
-		    	tlsConn := tls.Client(rawConn, tlsConfig)
-		    	if err := tlsConn.HandshakeContext(ctx); err != nil {
-			    	rawConn.Close()
-			    	return packet.ResponsePacket{Status: "ERROR", Message: "Custom TLS Handshake failed: " + err.Error()}
-		    	}
-				// Update session dengan koneksi TLS yang baru
-                utils.ActiveSessions.Store(req.SessionID, tlsConn)
-				conn = tlsConn
+		// Upgrade Socket ke TLS Client
+		tlsConn := tls.Client(conn, tlsConfig)
+		if err := tlsConn.HandshakeContext(ctx); err != nil {
+			if !isReused {
+				conn.Close()
 			}
-        } 
-    }
+			return packet.ResponsePacket{Status: "ERROR", Message: "TLS Handshake failed: " + err.Error()}
+		}
+
+		conn = tlsConn
+
+		// Update ActiveSessions dengan instance TLS yang baru
+		if req.SessionID != "" {
+			utils.ActiveSessions.Store(req.SessionID, conn)
+		}
+	}
 	
 	keepSession := false
 
 	defer func() {
-		// Tutup koneksi HANYA jika TIDAK disimpan ke session aktif
 		if !keepSession {
 			if req.SessionID != "" {
 				utils.ActiveSessions.Delete(req.SessionID)
@@ -265,23 +267,19 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	}()
 	
 
-	// I/O Deadlines (Sabuk pengaman anti-Tarpit)
+	// I/O Deadlines
 	startTime := time.Now()
 
 	
 	// Penanganan Payload (Text vs Hex Binary)
 	if mode == "duplex" || mode == "send_only" {
 	    if req.Data != "" {
-			// Malakukan decode
 	        data_dec, err := base64.StdEncoding.DecodeString(req.Data)
 	        if err != nil {
 		        return packet.ResponsePacket{Status: "ERROR", Message: "Base64 decode failed: " + err.Error()}
 	        }
-
-			// Lakukan 
 	    	_, err = conn.Write(data_dec)
 	    	if err != nil {
-		    	// Jika koneksi re-used ternyata sudah stale/broken di server side, hapus session
                 if req.SessionID != "" {
                     utils.ActiveSessions.Delete(req.SessionID)
                     conn.Close()
@@ -290,15 +288,12 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		    }
 	    }
 		if mode == "send_only" {
-            // Pastikan state KeepAlive / SessionID tersimpan atau ditutup dengan benar
-            // sebelum kabur dari fungsi.
             if req.SessionID != "" {
                 if req.KeepAlive {
                     utils.ActiveSessions.Store(req.SessionID, conn)
                     keepSession = true
                 } else {
                     utils.ActiveSessions.Delete(req.SessionID)
-                    // keepSession tetap false, defer akan close conn
                 }
             }
             
@@ -323,17 +318,16 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	// Readsize di gunakan untuk read byte
 	readSize := req.ReadSize
 	if readSize <= 0 {
-		readSize = 0 // Default fallback
+		readSize = 0
 	}
 
-	// Mengambil buffer dari Pool jika ukuran standar, atau buat baru jika custom
 	var bufPtr *[]byte
 	var buffer []byte
 
 	if readSize == 4096 {
 		bufPtr = bufferPool.Get().(*[]byte)
 		buffer = *bufPtr
-		defer bufferPool.Put(bufPtr) // Kembalikan ke pool saat selesai
+		defer bufferPool.Put(bufPtr)
 	} else {
 		buffer = make([]byte, readSize)
 	}
@@ -342,11 +336,10 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	defer conn.SetDeadline(time.Time{})
 	
 	// Pembacaan Buffer
-	// Membaca stream sampai EOF atau buffer penuh agar tidak ada data tertinggal
 	n, err := conn.Read(buffer)
+	
 	// --- Penanganan hasil baca ---
     if err != nil && err != io.EOF {
-        // Error selain EOF -> hapus session, defer akan tutup
         if req.SessionID != "" {
             utils.ActiveSessions.Delete(req.SessionID)
         }
@@ -356,14 +349,10 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
                 Message: "Read failed: " + err.Error(),
             }
         }
-        // Jika n>0, kita tetap lanjutkan untuk mengembalikan data yang terbaca
     } else if err == io.EOF {
-        // EOF: tidak ada data tersisa, hapus session dan tutup
         if req.SessionID != "" {
             utils.ActiveSessions.Delete(req.SessionID)
-            // keepSession tetap false, defer akan tutup
         }
-        // Jika tidak ada data terbaca, return respons kosong
         if n == 0 {
             return packet.ResponsePacket{
                 Status:  "SUCCESS",
@@ -375,44 +364,43 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
                 },
             }
         }
-        // Jika ada data meskipun EOF, proses di bawah (tetapi setelah return, defer tutup)
     }
 
 	// --- Simpan session jika diminta dan tidak terjadi error ---
     if req.SessionID != "" && req.KeepAlive && err == nil {
-        // Hanya simpan jika tidak ada error sama sekali (termasuk EOF)
         utils.ActiveSessions.Store(req.SessionID, conn)
         keepSession = true
     } else {
-        // Jika ada error (termasuk EOF) atau KeepAlive=false, hapus session
         if req.SessionID != "" {
             utils.ActiveSessions.Delete(req.SessionID)
         }
-        // keepSession tetap false
     }
 	
 	var tlsData map[string]interface{}
-    if stateGetter, ok := conn.(tlsConnStateGetter); ok {
+	if stateGetter, ok := conn.(tlsConnStateGetter); ok {
 		state := stateGetter.ConnectionState()
-		tlsData = map[string]interface{}{
-            "tls_version":    tlsVersionString(state.Version),
-            "cipher_suite":   tls.CipherSuiteName(state.CipherSuite),
-            "protocol":       state.NegotiatedProtocol,
-            "hostname":       state.ServerName,
-            "handshake":      state.HandshakeComplete,
-            "session_resume": state.DidResume,
-        }
-    	if len(state.PeerCertificates) > 0 {
-		    cert := state.PeerCertificates[0] // Leaf Certificate
-		    tlsData["subject"] = cert.Subject.CommonName
-            tlsData["issuer"] = cert.Issuer.CommonName
-            tlsData["dns_names"] = cert.DNSNames
-            tlsData["expires_at"] = cert.NotAfter.Format(time.RFC3339)
-	    }
-		if len(state.VerifiedChains) > 0 {
-            tlsData["cert_chain_count"] = len(state.VerifiedChains)
-        }
-    }
+		if state.HandshakeComplete || state.Version != 0 {
+			tlsData = map[string]interface{}{
+				"tls_version":    tlsVersionString(state.Version),
+				"cipher_suite":   tls.CipherSuiteName(state.CipherSuite),
+				"protocol":       state.NegotiatedProtocol,
+				"hostname":       state.ServerName,
+				"handshake":      state.HandshakeComplete,
+				"session_resume": state.DidResume,
+			}
+			if len(state.PeerCertificates) > 0 {
+				cert := state.PeerCertificates[0]
+				tlsData["subject"] = cert.Subject.CommonName
+				tlsData["issuer"] = cert.Issuer.CommonName
+				tlsData["dns_names"] = cert.DNSNames
+				tlsData["expires_at"] = cert.NotAfter.Format(time.RFC3339)
+			}
+			if len(state.VerifiedChains) > 0 {
+				tlsData["cert_chain_count"] = len(state.VerifiedChains)
+			}
+		}
+	}
+
 	
 	// Ekstraksi Data Spesifik
 	remoteIP := "unknown"
