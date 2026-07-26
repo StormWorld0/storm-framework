@@ -307,17 +307,24 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	}
 	
 	conn.SetDeadline(time.Now().Add(timeout))
+	defer conn.SetDeadline(time.Time{})
 	
 	// Pembacaan Buffer
 	// Membaca stream sampai EOF atau buffer penuh agar tidak ada data tertinggal
-	n, err := io.ReadFull(conn, buffer)
+	n, err := connRead(buffer)
 	if err != nil && err != io.EOF {
         // Jika koneksi error/stale, PASTI hapus session & close socket!
-        if req.SessionID != "" {
+        if req.SessionID != "" && (err == io.EOF || !req.KeepAlive) {
             utils.ActiveSessions.Delete(req.SessionID)
+            conn.Close()
         }
-        conn.Close()
-        return packet.ResponsePacket{Status: "ERROR", Message: "Read failed: " + err.Error()}
+        // Jika tidak ada data yang terbaca sama sekali
+        if n == 0 {
+            return packet.ResponsePacket{
+                Status:  "ERROR",
+                Message: "Read failed: " + err.Error(),
+            }
+        }
     }
 
 	// Jika sampai tahap ini sukses & KeepAlive diaktifkan, simpan koneksi
