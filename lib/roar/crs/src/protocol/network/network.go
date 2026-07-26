@@ -160,9 +160,17 @@ func BuildTarget(req packet.RequestPacket) (string, error) {
 func Network(req packet.RequestPacket) packet.ResponsePacket {
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Printf("\n[FATAL CRASH DETECTED]\nPanic: %v\nStack Trace:\n%s\n", r, debug.Stack())
+			stackTrace := string(debug.Stack())
+			logMsg := fmt.Sprintf("[%s] FATAL CRASH: %v\nStack Trace:\n%s\n\n", 
+				time.Now().Format(time.RFC3339), r, stackTrace)
+
+			// Tulis langsung ke file crash.log
+			_ = os.WriteFile("storm_crash.log", []byte(logMsg), 0644)
+
+			fmt.Printf("[CRASH] Log written to storm_crash.log\n")
 		}
 	}()
+
 
 	
 	utils.Take()
