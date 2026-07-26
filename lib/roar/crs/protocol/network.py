@@ -34,11 +34,11 @@ class Socket:
     ):
         # State Initialization
         self.host = host
-        self.port = port
+        self.port = int(port)
         self.protocol = protocol
-        self.timeout = timeout
-        self.readsize = readsize
-        self.ratelimit = ratelimit
+        self.timeout = float(timeout)
+        self.readsize = int(readsize)
+        self.ratelimit = int(ratelimit)
         self.keep_alive = keep_alive
         self.mode = mode
         self.verify = verify
