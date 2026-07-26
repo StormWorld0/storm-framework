@@ -82,7 +82,7 @@ class Socket:
             "host": self.host,
             "port": self.port,
             "data": data_str,
-            "protocol": self.protocol,
+            "protocol": protocol if protocol is not None else self.protocol,
             "timeout": timeout if timeout is not None else self.timeout,
             "readsize": readsize if readsize is not None else self.readsize,
             "ratelimit": ratelimit if ratelimit is not None else self.ratelimit,
