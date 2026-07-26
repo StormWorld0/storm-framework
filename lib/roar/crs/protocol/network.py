@@ -48,6 +48,7 @@ class Socket:
 
         # Auto-generate Session ID jika belum ada (agar stream terisolasi di Go IPC)
         self.sessid = sessid if sessid else f"smf_sess_{uuid.uuid4().hex[:12]}"
+        self.is_tls = False
         self._is_closed = False
 
         if kwargs:
@@ -143,6 +144,46 @@ class Socket:
 
         return CRS.send(packet)
 
+
+    # Upgrade koneksi ke TLS
+    def uptls(
+        self, 
+        cert: str, 
+        key: str, 
+        ca: str = None, 
+        verify: bool = None
+    ) -> dict:
+        """
+        Mengirim instruksi TLS UPGRADE ke CRS Engine (Go Backend)
+        untuk membungkus TCP connection yang sedang aktif menjadi TLS.
+        """
+        if self.is_tls:
+            smf.printd("The connection is already using TLS", level="WARN")
+            return {status: "WARN", message: "Already TLS"}
+        packet = self._build_packet(
+            data="",
+            cert=cert,
+            key=key,
+            ca=ca,
+            verify=verify,
+            mode="duplex",
+            close_session=False
+        )
+        
+        # Kirim command upgrade ke Go Engine via IPC
+        response = CRS.send(packet)
+        
+        if response.get("status") == "SUCCESS":
+            self.is_tls = True
+            return response.get("data", {}) # Kembalikan info TLS (version, cipher, dll)
+        else:
+            raise Exception(f"TLS Upgrade Failed: {response.get('message')}")
+        
+        return response
+
+
+    
+    # Close season aktif dan lepas koneksi
     def close(self) -> dict:
         """Mengirim signal terminasi ke CRS Engine untuk menghapus Session ID."""
         if self._is_closed:
@@ -163,4 +204,5 @@ class Socket:
         self.close()
 
     def __repr__(self):
-        return f"<Socket host='{self.host}:{self.port}' proto='{self.protocol}' sessid='{self.sessid}' closed={self._is_closed}>"
+        tls_state = "TLS" if self.is_tls else "TCP"
+        return f"<Socket host='{self.host}:{self.port}' proto='{tls_state}' sessid='{self.sessid}' closed={self._is_closed}>"
