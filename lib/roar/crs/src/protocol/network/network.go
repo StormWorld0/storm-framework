@@ -396,7 +396,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	return packet.ResponsePacket{
 		Status: "SUCCESS",
 		Data: map[string]interface{}{
-			"raw_bytes":    string(buffer[:n]),
+			"raw_bytes":    base64.StdEncoding.EncodeToString(buffer[:n]),
 			"hex_bytes":    hex.EncodeToString(buffer[:n]),
 			"read_bytes":   n,
 			"protocol":     protocol,
