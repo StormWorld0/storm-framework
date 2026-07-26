@@ -54,7 +54,7 @@ class CRS:
 
             if not response_line:
                 smf.printd("CRS Engine suddenly stopped", response_line, level="WARN")
-                return {"status": "ERROR", "message": "Engine mati mendadak"}
+                return {"status": "ERROR", "message": "Engine suddenly dies"}
 
             # 4. Ubah balik JSON ke Dict
             smf.printd(
