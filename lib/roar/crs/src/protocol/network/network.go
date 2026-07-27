@@ -9,7 +9,6 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/hex"
-	"runtime/debug"
 	"fmt"
 	"io"
 	"net"
