@@ -174,7 +174,8 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 
 	if req.SessionID != "" && req.CloseSess {
         if val, ok := utils.ActiveSessions.LoadAndDelete(req.SessionID); ok {
-            val.(net.Conn).Close()
+            utils.SessionTLSMap.LoadAndDelete(req.SessionID)
+			val.(net.Conn).Close()
             return packet.ResponsePacket{Status: "SUCCESS", Message: "Session closed"}
         }
     }
@@ -193,6 +194,9 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			    	req.TLSCA = meta.TLSCA
 			    	req.Verify = meta.Verify
 			    }
+				if req.Protocol == "" && meta.Protocol != "" {
+					req.Protocol = meta.Protocol
+				}
 			}
         }
     }
@@ -272,6 +276,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		if !keepSession {
 			if req.SessionID != "" {
 				utils.ActiveSessions.Delete(req.SessionID)
+				utils.SessionTLSMap.Delete(req.SessionID)
 			}
 			conn.Close()
 		}
@@ -293,6 +298,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	    	if err != nil {
                 if req.SessionID != "" {
                     utils.ActiveSessions.Delete(req.SessionID)
+					utils.SessionTLSMap.Delete(req.SessionID)
                     conn.Close()
                 }
 		    	return packet.ResponsePacket{Status: "ERROR", Message: "Write failed: " + err.Error()}
@@ -302,9 +308,20 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
             if req.SessionID != "" {
                 if req.KeepAlive {
                     utils.ActiveSessions.Store(req.SessionID, conn)
+					if shouldUseTLS {
+						utils.SessionTLSMap.Store(req.SessionID, utils.TLSMetadata{
+							TLSCert:  req.TLSCert,
+							TLSKey:   req.TLSKey,
+							TLSCA:    req.TLSCA,
+							Verify:   req.Verify,
+							Host:     req.Host,
+							Protocol: protocol,
+						})
+					}
                     keepSession = true
                 } else {
                     utils.ActiveSessions.Delete(req.SessionID)
+					utils.SessionTLSMap.Delete(req.SessionID)
                 }
             }
             
@@ -353,6 +370,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
     if err != nil && err != io.EOF {
         if req.SessionID != "" {
             utils.ActiveSessions.Delete(req.SessionID)
+			utils.SessionTLSMap.Delete(req.SessionID)
         }
         if n == 0 {
             return packet.ResponsePacket{
@@ -363,6 +381,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
     } else if err == io.EOF {
         if req.SessionID != "" {
             utils.ActiveSessions.Delete(req.SessionID)
+			utils.SessionTLSMap.Delete(req.SessionID)
         }
         if n == 0 {
             return packet.ResponsePacket{
