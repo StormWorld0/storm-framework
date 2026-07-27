@@ -200,6 +200,7 @@ class Socket:
             verify=verify,
             mode="duplex",
             protocol="tls",
+            readsize=24,
             close_session=False,
         )
 
