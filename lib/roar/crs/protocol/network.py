@@ -197,9 +197,6 @@ class Socket:
 
         packet = self._build_packet(
             data="",
-            cert=cert,
-            key=key,
-            ca=ca,
             verify=verify,
             mode="duplex",
             protocol="tls",
