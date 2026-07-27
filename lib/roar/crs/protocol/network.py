@@ -62,7 +62,7 @@ class Socket:
 
     def _resolve_cert_content(self, target: str) -> str:
         """
-        Helper: Jika target adalah path file yang valid di disk, 
+        Helper: Jika target adalah path file yang valid di disk,
         baca & kembalikan ISI FILENYA. Jika sudah berupa string PEM atau kosong,
         kembalikan apa adanya.
         """
@@ -74,7 +74,7 @@ class Socket:
                         return f.read()  # BACA ISI FILE & SIMPAN KE MEMORY PYTHON
                 except Exception as e:
                     smf.printd(f"Failed to read cert file at {target}", e, level="ERROR")
-        
+
         return target
 
     def _build_packet(
