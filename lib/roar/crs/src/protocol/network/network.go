@@ -51,32 +51,40 @@ type tlsConnStateGetter interface {
 }
 
 func buildCustomTLSConfig(req packet.RequestPacket) (*tls.Config, error) {
-	verify := true
-	if req.Verify {
-		verify = false
-	}
-	
 	tlsConfig := &tls.Config{
-		InsecureSkipVerify: verify,
+		InsecureSkipVerify: !req.Verify,
+	}
+
+	getPEMBytes := func(input string) ([]byte, error) {
+		if input == "" {
+			return nil, nil
+		}
+		// 1. Jika string diawali/mengandung header PEM, langsung pakai sebagai Raw Bytes
+		if strings.Contains(input, "-----BEGIN") {
+			return []byte(input), nil
+		}
+		// 2. Jika bukan PEM string, coba baca sebagai File Path
+		if _, err := os.Stat(input); err == nil {
+			bytes, err := os.ReadFile(input)
+			if err != nil {
+				return nil, fmt.Errorf("read file %s failed: %w", input, err)
+			}
+			return bytes, nil
+		}
+		// 3. Fallback jika bukan path yang valid & bukan PEM yang valid
+		return []byte(input), nil
 	}
 
 	// Client Certificate & Key (mTLS) jika diisi
 	if req.TLSCert != "" && req.TLSKey != "" {
-		var certBytes, keyBytes []byte
-		var err error
+		certBytes, err := getPEMBytes(req.TLSCert)
+		if err != nil {
+			return nil, fmt.Errorf("process tls-cert failed: %w", err)
+		}
 
-		if _, err = os.Stat(req.TLSCert); err == nil {
-			certBytes, err = os.ReadFile(req.TLSCert)
-			if err != nil {
-				return nil, fmt.Errorf("read cert file: %w", err)
-			}
-			keyBytes, err = os.ReadFile(req.TLSKey)
-			if err != nil {
-				return nil, fmt.Errorf("read key file: %w", err)
-			}
-		} else {
-			certBytes = []byte(req.TLSCert)
-			keyBytes = []byte(req.TLSKey)
+		keyBytes, err := getPEMBytes(req.TLSKey)
+		if err != nil {
+			return nil, fmt.Errorf("process tls-key failed: %w", err)
 		}
 
 		cert, err := tls.X509KeyPair(certBytes, keyBytes)
@@ -89,16 +97,9 @@ func buildCustomTLSConfig(req packet.RequestPacket) (*tls.Config, error) {
 
 	// Custom Root CA jika diisi
 	if req.TLSCA != "" {
-		var caBytes []byte
-		var err error
-
-		if _, err = os.Stat(req.TLSCA); err == nil {
-			caBytes, err = os.ReadFile(req.TLSCA)
-			if err != nil {
-				return nil, fmt.Errorf("read CA file: %w", err)
-			}
-		} else {
-			caBytes = []byte(req.TLSCA)
+		caBytes, err := getPEMBytes(req.TLSCA)
+		if err != nil {
+			return nil, fmt.Errorf("process tls-ca failed: %w", err)
 		}
 
 		caCertPool := x509.NewCertPool()
