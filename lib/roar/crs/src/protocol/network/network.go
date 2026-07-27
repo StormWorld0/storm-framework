@@ -342,7 +342,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
         if n == 0 {
             return packet.ResponsePacket{
                 Status:  "ERROR",
-                Message: "Read failed: " + err.Error(),
+                Message: "Read failed: %s", n + err.Error(),
             }
         }
     } else if err == io.EOF {
