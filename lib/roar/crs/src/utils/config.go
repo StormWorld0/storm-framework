@@ -16,6 +16,5 @@ type TLSMetadata struct {
 	TLSKey     string
 	TLSCA      string
 	Verify     bool
-	IsTLS      bool
 	Host       string
 }
