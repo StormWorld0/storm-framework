@@ -234,11 +234,6 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			return packet.ResponsePacket{Status: "ERROR", Message: "TLS Config Error: " + err.Error()}
 		}
 
-		if tlsConfig.ServerName == "" {
-			hostOnly, _, _ := net.SplitHostPort(req.Host)
-			tlsConfig.ServerName = hostOnly
-		}
-
 		// Upgrade Socket ke TLS Client
 		tlsConn := tls.Client(conn, tlsConfig)
 		if err := tlsConn.HandshakeContext(ctx); err != nil {
