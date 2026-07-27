@@ -179,16 +179,20 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
         }
     }
 
-	var sessionData *utils.SessionState
 	if req.SessionID != "" {
         if val, ok := utils.ActiveSessions.Load(req.SessionID); ok {
             conn = val.(net.Conn)
             isReused = true
-			if req.TLSCert == "" && sessionData.TLSCert != "" {
-				req.TLSCert = sessionData.TLSCert
-				req.TLSKey = sessionData.TLSKey
-				req.TLSCA = sessionData.TLSCA
-				req.Verify = sessionData.Verify
+
+			// Restore cert/key dari SessionTLSMap
+			if metaVal, ok := utils.SessionTLSMap.Load(req.SessionID); ok {
+			    meta := metaVal.(utils.TLSMetadata)
+			    if req.TLSCert == "" && sessionData.TLSCert != "" {
+			    	req.TLSCert = sessionData.TLSCert
+			    	req.TLSKey = sessionData.TLSKey
+			    	req.TLSCA = sessionData.TLSCA
+			    	req.Verify = sessionData.Verify
+			    }
 			}
         }
     }
@@ -375,19 +379,21 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 
 	// --- Simpan session jika diminta dan tidak terjadi error ---
     if req.SessionID != "" && req.KeepAlive && err == nil {
-		utils.ActiveSessions.Store(req.SessionID, &utils.SessionState{
-			Conn:    conn,
-			TLSCert: req.TLSCert,
-			TLSKey:  req.TLSKey,
-			TLSCA:   req.TLSCA,
-			Verify:  req.Verify,
-			IsTLS:   shouldUseTLS,
-			Host:    req.Host,
-		})
+		utils.ActiveSessions.Store(req.SessionID, conn)
+		if shouldUseTLS {
+			utils.SessionTLSMap.Store(req.SessionID, utils.TLSMetadata{
+				TLSCert: req.TLSCert,
+				TLSKey:  req.TLSKey,
+				TLSCA:   req.TLSCA,
+				Verify:  req.Verify,
+				Host:    req.Host,
+			})
+		}
 		keepSession = true
     } else {
         if req.SessionID != "" {
             utils.ActiveSessions.Delete(req.SessionID)
+			utils.SessionTLSMap.Delete(req.SessionID)
         }
     }
 	
@@ -407,8 +413,8 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 				cert := state.PeerCertificates[0]
 				tlsData["subject"] = cert.Subject.CommonName
 				tlsData["issuer"] = cert.Issuer.CommonName
-				tlsData["dns_names"] = cert.DNSNames
-				tlsData["expires_at"] = cert.NotAfter.Format(time.RFC3339)
+				tlsData["dns_name"] = cert.DNSNames
+				tlsData["expires"] = cert.NotAfter.Format(time.RFC3339)
 			}
 			if len(state.VerifiedChains) > 0 {
 				tlsData["cert_chain_count"] = len(state.VerifiedChains)
