@@ -187,7 +187,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			// Restore cert/key dari SessionTLSMap
 			if metaVal, ok := utils.SessionTLSMap.Load(req.SessionID); ok {
 			    meta := metaVal.(utils.TLSMetadata)
-			    if req.TLSCert == "" && sessionData.TLSCert != "" {
+			    if req.TLSCert == "" && meta.TLSCert != "" {
 			    	req.TLSCert = meta.TLSCert
 			    	req.TLSKey = meta.TLSKey
 			    	req.TLSCA = meta.TLSCA
