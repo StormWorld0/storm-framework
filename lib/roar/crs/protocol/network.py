@@ -83,12 +83,6 @@ class Socket:
             self.ca = ca
         if verify is not None:
             self.verify = verify
-        if timeout is not None:
-            self.timeout = float(timeout)
-        if readsize is not None:
-            self.readsize = int(readsize)
-        if ratelimit is not None:
-            self.ratelimit = int(ratelimit)
 
         if protocol is not None:
             if protocol.lower() in ["tls", "ssl"]:
