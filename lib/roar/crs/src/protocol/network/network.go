@@ -53,6 +53,7 @@ type tlsConnStateGetter interface {
 func buildCustomTLSConfig(req packet.RequestPacket) (*tls.Config, error) {
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: !req.Verify,
+		MinVersion:         tls.VersionTLS12,
 	}
 
 	getPEMBytes := func(input string) ([]byte, error) {
@@ -234,6 +235,11 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			return packet.ResponsePacket{Status: "ERROR", Message: "TLS Config Error: " + err.Error()}
 		}
 
+		if tlsConfig.ServerName == "" {
+			hostOnly, _, _ := net.SplitHostPort(req.Host)
+			tlsConfig.ServerName = hostOnly
+		}
+
 		// Upgrade Socket ke TLS Client
 		tlsConn := tls.Client(conn, tlsConfig)
 		if err := tlsConn.HandshakeContext(ctx); err != nil {
@@ -242,13 +248,13 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			}
 			return packet.ResponsePacket{Status: "ERROR", Message: "TLS Handshake failed: " + err.Error()}
 		}
-
-		conn = tlsConn
-
+		
 		// Update ActiveSessions dengan instance TLS yang baru
 		if req.SessionID != "" {
 			utils.ActiveSessions.Store(req.SessionID, conn)
 		}
+		
+		conn = tlsConn
 	}
 	
 	keepSession := false
