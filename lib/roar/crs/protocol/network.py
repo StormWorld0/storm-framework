@@ -26,7 +26,7 @@ class Socket:
         sessid: str = "",
         keep_alive: bool = True,
         mode: str = "send_only",
-        verify: bool = False,
+        verify: bool = True,
         cert: str = "",
         key: str = "",
         ca: str = "",
@@ -41,15 +41,18 @@ class Socket:
         self.ratelimit = int(ratelimit)
         self.keep_alive = keep_alive
         self.mode = mode
-        self.verify = verify
-        self.cert = cert
-        self.key = key
-        self.ca = ca
 
         # Auto-generate Session ID jika belum ada (agar stream terisolasi di Go IPC)
         self.sessid = sessid if sessid else f"smf_sess_{uuid.uuid4().hex[:12]}"
         self.is_tls = False
         self._is_closed = False
+        
+        # Menyimpan state TLS
+        self.verify = verify
+        self.cert = cert
+        self.key = key
+        self.ca = ca
+        self.tls_info = {}
 
         if kwargs:
             smf.printf(
@@ -154,6 +157,12 @@ class Socket:
         if self.is_tls:
             smf.printd("The connection is already using TLS", level="WARN")
             return {"status": "WARN", "message": "Already TLS"}
+
+        if cert is not None: self.cert = cert
+        if key is not None: self.key = key
+        if ca is not None: self.ca = ca
+        if verify is not None: self.verify = verify
+            
         packet = self._build_packet(
             data="",
             cert=cert,
@@ -170,11 +179,15 @@ class Socket:
 
         if response.get("status") == "SUCCESS":
             self.is_tls = True
-            return response.get("data", {})  # Kembalikan info TLS (version, cipher, dll)
-        else:
-            raise Exception(f"TLS Upgrade Failed: {response.get('message')}")
 
-        return response
+            data = response.get("data") or {}
+            self.tls_info = data.get("info_tls") or {}
+            return self.tls_info
+        else:
+            err_msg = response.get("message") if response else "Unknown Error"
+            smf.printd(f"TLS Upgrade Failed", err_msg, level="WARN")
+            return {}
+
 
     # Close season aktif dan lepas koneksi
     def close(self) -> dict:
