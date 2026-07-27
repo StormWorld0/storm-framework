@@ -46,7 +46,7 @@ class Socket:
         self.sessid = sessid if sessid else f"smf_sess_{uuid.uuid4().hex[:12]}"
         self.is_tls = False
         self._is_closed = False
-        
+
         # Menyimpan state TLS
         self.verify = verify
         self.cert = cert
@@ -158,11 +158,15 @@ class Socket:
             smf.printd("The connection is already using TLS", level="WARN")
             return {"status": "WARN", "message": "Already TLS"}
 
-        if cert is not None: self.cert = cert
-        if key is not None: self.key = key
-        if ca is not None: self.ca = ca
-        if verify is not None: self.verify = verify
-            
+        if cert is not None:
+            self.cert = cert
+        if key is not None:
+            self.key = key
+        if ca is not None:
+            self.ca = ca
+        if verify is not None:
+            self.verify = verify
+
         packet = self._build_packet(
             data="",
             cert=cert,
@@ -187,7 +191,6 @@ class Socket:
             err_msg = response.get("message") if response else "Unknown Error"
             smf.printd(f"TLS Upgrade Failed", err_msg, level="WARN")
             return {}
-
 
     # Close season aktif dan lepas koneksi
     def close(self) -> dict:
