@@ -96,7 +96,7 @@ class Socket:
                 self.protocol = "tls"
 
         current_proto = "tls" if self.is_tls else self.protocol
-        
+
         # Ubah data ke b64 & string
         data_str = ""
         if data:
