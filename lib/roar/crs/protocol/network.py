@@ -75,6 +75,28 @@ class Socket:
     ) -> dict:
         """Internal Helper: Menyiapkan schema JSON/Dict untuk dikirim via IPC ke Go"""
 
+        if cert is not None:
+            self.cert = cert
+        if key is not None:
+            self.key = key
+        if ca is not None:
+            self.ca = ca
+        if verify is not None:
+            self.verify = verify
+        if timeout is not None:
+            self.timeout = float(timeout)
+        if readsize is not None:
+            self.readsize = int(readsize)
+        if ratelimit is not None:
+            self.ratelimit = int(ratelimit)
+
+        if protocol is not None:
+            if protocol.lower() in ["tls", "ssl"]:
+                self.is_tls = True
+                self.protocol = "tls"
+
+        current_proto = "tls" if self.is_tls else self.protocol
+        
         # Ubah data ke b64 & string
         data_str = ""
         if data:
@@ -86,27 +108,24 @@ class Socket:
             "host": self.host,
             "port": self.port,
             "data": data_str,
-            "protocol": "tls" if self.is_tls else "tcp",
-            "timeout": timeout if timeout is not None else self.timeout,
-            "readsize": readsize if readsize is not None else self.readsize,
-            "ratelimit": ratelimit if ratelimit is not None else self.ratelimit,
+            "protocol": current_proto,
+            "timeout": self.timeout,
+            "readsize": self.readsize,
+            "ratelimit": self.ratelimit,
             "session_id": self.sessid,
             "keep-alive": self.keep_alive,
             "close_session": close_session,
             "mode": mode if mode is not None else self.mode,
-            "verify": verify if verify is not None else self.verify,
-            "tls-cert": cert if cert is not None else self.cert,
-            "tls-key": key if key is not None else self.key,
-            "tls-ca": ca if ca is not None else self.ca,
+            "verify": self.verify,
+            "tls-cert": self.cert,
+            "tls-key": self.key,
+            "tls-ca": self.ca,
         }
 
     def send(
         self,
         data: str,
         verify: bool = None,
-        cert: str = None,
-        key: str = None,
-        ca: str = None,
         timeout: float = None,
         ratelimit: int = None,
         mode: str = "send_only",
@@ -120,9 +139,6 @@ class Socket:
         packet = self._build_packet(
             data=data,
             verify=verify,
-            cert=cert,
-            key=key,
-            ca=ca,
             timeout=timeout,
             ratelimit=ratelimit,
             mode=mode,
