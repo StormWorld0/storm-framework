@@ -58,6 +58,7 @@ class CRS:
                 return {"status": "ERROR", "message": "Engine suddenly dies"}
 
             # 4. Ubah balik JSON ke Dict
+            smf.printd("Output CRS before json.loads", response_line, level="DEBUG")
             res_dict = json.loads(response_line)
 
             if isinstance(res_dict, dict) and isinstance(res_dict.get("data"), dict):
