@@ -94,11 +94,11 @@ class Socket:
         """Internal Helper: Menyiapkan schema JSON/Dict untuk dikirim via IPC ke Go"""
 
         if cert is not None:
-            self.cert = self._resolve_cert_content(cert)
+            self.cert = cert
         if key is not None:
-            self.key = self._resolve_cert_content(key)
+            self.key = key
         if ca is not None:
-            self.ca = self._resolve_cert_content(ca)
+            self.ca = ca
         if verify is not None:
             self.verify = verify
 
@@ -187,11 +187,11 @@ class Socket:
             return {"status": "WARN", "message": "Already TLS"}
 
         if cert is not None:
-            self.cert = cert
+            self.cert = self._resolve_cert_content(cert)
         if key is not None:
-            self.key = key
+            self.key = self._resolve_cert_content(key)
         if ca is not None:
-            self.ca = ca
+            self.ca = self._resolve_cert_content(ca)
         if verify is not None:
             self.verify = verify
 
