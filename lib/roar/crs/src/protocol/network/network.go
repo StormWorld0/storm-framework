@@ -251,7 +251,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		
 		// Update ActiveSessions dengan instance TLS yang baru
 		if req.SessionID != "" {
-			utils.ActiveSessions.Store(req.SessionID, conn)
+			utils.ActiveSessions.Store(req.SessionID, tlsConn)
 		}
 		
 		conn = tlsConn
