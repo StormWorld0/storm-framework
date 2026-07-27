@@ -16,4 +16,5 @@ type TLSMetadata struct {
 	TLSCA      string
 	Verify     bool
 	Host       string
+	Protocol   string
 }
