@@ -188,10 +188,10 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			if metaVal, ok := utils.SessionTLSMap.Load(req.SessionID); ok {
 			    meta := metaVal.(utils.TLSMetadata)
 			    if req.TLSCert == "" && sessionData.TLSCert != "" {
-			    	req.TLSCert = sessionData.TLSCert
-			    	req.TLSKey = sessionData.TLSKey
-			    	req.TLSCA = sessionData.TLSCA
-			    	req.Verify = sessionData.Verify
+			    	req.TLSCert = meta.TLSCert
+			    	req.TLSKey = meta.TLSKey
+			    	req.TLSCA = meta.TLSCA
+			    	req.Verify = meta.Verify
 			    }
 			}
         }
