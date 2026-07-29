@@ -40,7 +40,7 @@ class DNSResult:
     rcode_str: str
     truncated: bool
     authoritative: bool
-    answers: List[DNSRecord]
+    records: List[DNSRecord]
     raw: Dict[str, Any] = field(default_factory=dict, repr=False)
 
     @classmethod
@@ -53,7 +53,7 @@ class DNSResult:
                 rcode_str="INVALID_RESPONSE",
                 truncated=False,
                 authoritative=False,
-                answers=[],
+                records=[],
                 raw={},
             )
 
@@ -85,7 +85,7 @@ class DNSResult:
     @property
     def first_answer(self) -> Optional[DNSRecord]:
         """Quick access to the first record without having to check len(res.answers)"""
-        return self.answers[0] if self.answers else None
+        return self.records[0] if self.records else None
 
 
 # ----------------------------------------
