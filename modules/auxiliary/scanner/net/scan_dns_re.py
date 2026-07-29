@@ -95,23 +95,14 @@ def format_record(record_type, item):
     return str(item)
 
 
-REQUIRED_OPTIONS = {"DOMAIN": "", "PROTOCOL": "Set to TCP or UDP"}
+REQUIRED_OPTIONS = {"DOMAIN": "example.com"}
 
 
 def execute(options, net):
-    """
-    Eksekusi modul. Meminta 'transport' engine dari Framework Core
-    untuk melakukan inspeksi paket di jaringan.
-    """
     target_domain = options.get("DOMAIN")
-    protocol = options.get("PROTOCOL")
     if not target_domain:
         return
 
-    if not protocol:
-        protocol = "tcp"
-
-    # Validasi input (bukan IP)
     try:
         ipaddress.ip_address(target_domain)
         return
@@ -121,12 +112,12 @@ def execute(options, net):
     smf.printf(f"{C.HEADER} DNS ENUMERATION For {target_domain}")
     try:
         for record_type in DNS_RECORDS:
-            result = net.dns_request(
-                target_domain, type=record_type, protocol=protocol, timeout=2.0
+            resp = net.dns_request(
+                target_domain, type=record_type, timeout=2.0
             )
 
-            status = result["status"]
-            answers = result["data"]["answers"]
+            status = resp.status
+            answers = resp.records
 
             if status == "SUCCESS":
                 if not answers:
