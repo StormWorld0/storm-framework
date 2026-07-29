@@ -6,6 +6,7 @@ import smf
 from apps.utility.colors import *
 from ..transport import CRS
 
+
 # ----------------------------------------
 # Functions to send DNS Records to domains
 # ----------------------------------------
