@@ -73,7 +73,7 @@ class DNSResult:
             rcode_str=data.get("rcode_str", "UNKNOWN"),
             truncated=data.get("truncated", False),
             authoritative=data.get("authoritative", False),
-            message=resp.get("message", "UNKNOWN MSG")
+            message=resp.get("message", "UNKNOWN MSG"),
             records=parsed_answers,
             raw=resp,
         )
