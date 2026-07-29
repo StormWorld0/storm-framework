@@ -40,6 +40,7 @@ class DNSResult:
     rcode_str: str
     truncated: bool
     authoritative: bool
+    message: str
     records: List[DNSRecord]
     raw: Dict[str, Any] = field(default_factory=dict, repr=False)
 
@@ -72,6 +73,7 @@ class DNSResult:
             rcode_str=data.get("rcode_str", "UNKNOWN"),
             truncated=data.get("truncated", False),
             authoritative=data.get("authoritative", False),
+            message=resp.get("message", "UNKNOWN MSG")
             records=parsed_answers,
             raw=resp,
         )
