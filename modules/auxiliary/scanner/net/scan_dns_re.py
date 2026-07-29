@@ -134,7 +134,7 @@ def execute(options, net):
                 smf.printf(f"{C.YELLOW}[!] Timeout:", record_type)
 
             elif status == "ERROR":
-                smf.printf(f"{C.ERROR}[!] ERROR {record_type} => {result.get('message')}")
+                smf.printf(f"{C.ERROR}[!] ERROR {record_type} => {resp.get('message')}")
 
     except KeyboardInterrupt:
         return
