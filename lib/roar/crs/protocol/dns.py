@@ -8,9 +8,11 @@ from ..transport import CRS
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
 
+
 @dataclass(frozen=True)
 class DNSRecord:
     """Model untuk individual DNS answer record."""
+
     name: str
     record_type: str
     value: str
@@ -25,12 +27,14 @@ class DNSRecord:
             record_type=data.get("type", data.get("Header", {}).get("Rrtype", "")),
             value=data.get("data", data.get("value", data.get("txt", ""))),
             ttl=data.get("ttl", data.get("Header", {}).get("Ttl", 0)),
-            raw=data
+            raw=data,
         )
+
 
 @dataclass
 class DNSResult:
     """The main DTO model for wrapping ResponsePacket"""
+
     status: str
     rcode: int
     rcode_str: str
@@ -50,7 +54,7 @@ class DNSResult:
                 truncated=False,
                 authoritative=False,
                 answers=[],
-                raw={}
+                raw={},
             )
 
         # Ambil inner dictionary "data" dari ResponsePacket
@@ -58,7 +62,7 @@ class DNSResult:
         raw_answers = data.get("answers", []) or []
 
         parsed_answers = [
-            DNSRecord.from_dict(item) if isinstance(item, dict) else item 
+            DNSRecord.from_dict(item) if isinstance(item, dict) else item
             for item in raw_answers
         ]
 
@@ -69,7 +73,7 @@ class DNSResult:
             truncated=data.get("truncated", False),
             authoritative=data.get("authoritative", False),
             records=parsed_answers,
-            raw=resp
+            raw=resp,
         )
 
     # --- Helper Properties (Bonus DX) ---
@@ -82,6 +86,7 @@ class DNSResult:
     def first_answer(self) -> Optional[DNSRecord]:
         """Quick access to the first record without having to check len(res.answers)"""
         return self.answers[0] if self.answers else None
+
 
 # ----------------------------------------
 # Functions to send DNS Records to domains
@@ -109,5 +114,5 @@ def dns_request(
         smf.printf(f"[!] {CC.YELLOW}Data is not recognized =>{CC.RESET}", kwargs)
 
     resp = CRS.send(packet)
-    
+
     return DNSResult.parse(resp)
