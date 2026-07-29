@@ -41,57 +41,61 @@ DNS_RECORDS = [
 
 
 def format_record(record_type, item):
+    val = getattr(item, "value", item)
+    
     if record_type == "TXT":
         return item
 
-    if record_type == "MX":
-        return f"{item.host} (priority {item.preference})"
+    if isinstance(val, dict):
+        if record_type == "MX":
+            return f"{val.get('host', '')} (priority {val.get('preference', 0)})"
 
-    if record_type == "SOA":
-        return (
-            f"Primary NS : {item.ns}, "
-            f"Admin Mail : {item.mbox}, "
-            f"Serial : {item.serial}, "
-            f"Refresh : {item.refresh}s, "
-            f"Retry : {item.retry}s, "
-            f"Expire : {item.expire}s, "
-            f"Minimum TTL : {item.minttl}s"
-        )
+        if record_type == "SOA":
+            return (
+                f"Primary NS : {val.get('ns', '')}, "
+                f"Admin Mail : {val.get('mbox', '')}, "
+                f"Serial : {val.get('serial', 0)}, "
+                f"Refresh : {val.get('refresh', 0)}s, "
+                f"Retry : {val.get('retry', 0)}s, "
+                f"Expire : {val.get('expire', 0)}s, "
+                f"Minimum TTL : {val.get('minttl', 0)}s"
+            )
+            
+        if record_type == "SSHFP":
+            return (
+                f"Algorithm : {val.get('algorithm')}, "
+                f"Fingerprint Type : {val.get('fingerprint_type')}, "
+                f"Fingerprint : {val.get('fingerprint')}"
+            )
 
-    if record_type == "SSHFP":
-        return (
-            f"Algorithm : {item.algorithm}, "
-            f"Fingerprint Type : {item.fingerprint_type}, "
-            f"Fingerprint : {item.fingerprint}"
-        )
+        if record_type == "CERT":
+            return (
+                f"Type : {val.get('type')}, "
+                f"Key Tag : {val.get('key_tag')}, "
+                f"Algorithm : {val.get('algorithm')}"
+            )
 
-    if record_type == "CERT":
-        return (
-            f"Type : {item.type}, "
-            f"Key Tag : {item.key_tag}, "
-            f"Algorithm : {item.algorithm}"
-        )
+        if record_type == "URI":
+            return (
+                f"Target : {val.get('target')} "
+                f"(priority {val.get('priority')}, weight {val.get('weight')})"
+            )
 
-    if record_type == "URI":
-        return (
-            f"Target : {item.target} " f"(priority {item.priority}, weight {item.weight})"
-        )
+        if record_type in ("HTTPS", "SVCB"):
+            lines = [
+                f"Priority : {val.get('priority', 0)}",
+                f"Target : {val.get('target', '')}",
+            ]
+            params = val.get("value", [])
+            if isinstance(params, list):
+                for param in params:
+                    if isinstance(param, dict):
+                        for k, v in param.items():
+                            v_str = ", ".join(v) if isinstance(v, list) else str(v)
+                            lines.append(f"{k} : {v_str}")
+            return "\n     ".join(lines)
 
-    if record_type in ("HTTPS", "SVCB"):
-        lines = [
-            f"Priority : {item.priority}",
-            f"Target : {item.target}",
-        ]
-
-        for param in item.value:
-            for key, value in param.items():
-                if isinstance(value, list):
-                    value = ", ".join(value)
-                lines.append(f"{key} : {value}")
-
-        return "\n     ".join(lines)
-
-    return str(item)
+    return str(val)
 
 
 REQUIRED_OPTIONS = {"DOMAIN": "example.com"}
