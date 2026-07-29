@@ -42,7 +42,7 @@ DNS_RECORDS = [
 
 def format_record(record_type, item):
     val = getattr(item, "value", item)
-    
+
     if record_type == "TXT":
         return item
 
@@ -60,7 +60,7 @@ def format_record(record_type, item):
                 f"Expire : {val.get('expire', 0)}s, "
                 f"Minimum TTL : {val.get('minttl', 0)}s"
             )
-            
+
         if record_type == "SSHFP":
             return (
                 f"Algorithm : {val.get('algorithm')}, "
