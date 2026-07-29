@@ -74,8 +74,7 @@ def format_record(record_type, item):
 
     if record_type == "URI":
         return (
-            f"Target : {item.target} "
-            f"(priority {item.priority}, weight {item.weight})"
+            f"Target : {item.target} " f"(priority {item.priority}, weight {item.weight})"
         )
 
     if record_type in ("HTTPS", "SVCB"):
