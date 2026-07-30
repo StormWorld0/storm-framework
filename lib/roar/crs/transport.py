@@ -18,9 +18,9 @@ class CRS:
     @classmethod
     def _get_process(cls):
         if cls._process is None or cls._process.poll() is not None:
-            
+
             binary_path = call_bin("crs_engine")
-            
+
             if not os.path.exists(binary_path):
                 smf.printf(f"[!]{CC.YELLOW} Binary not found =>{CC.RESET}", binary_path)
 
