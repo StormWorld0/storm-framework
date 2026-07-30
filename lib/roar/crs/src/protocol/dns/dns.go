@@ -86,7 +86,7 @@ func DNS(req packet.RequestPacket) packet.ResponsePacket {
 		Data: map[string]interface{}{
 			"rcode":     respMsg.Rcode,
 			"rcode_str": dns.RcodeToString[respMsg.Rcode],
-			"answers":   answers,
+			"records":   answers,
 			"truncated": respMsg.Truncated,
 			"authoritative": respMsg.Authoritative,
 		},
