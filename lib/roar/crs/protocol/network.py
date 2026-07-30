@@ -28,6 +28,7 @@ class Socket:
         keep_alive: bool = True,
         mode: str = "send_only",
         verify: bool = True,
+        infotls: bool = False,
         cert: str = "",
         key: str = "",
         ca: str = "",
@@ -42,6 +43,7 @@ class Socket:
         self.ratelimit = int(ratelimit)
         self.keep_alive = keep_alive
         self.mode = mode
+        self.infotls = infotls
 
         # Auto-generate Session ID jika belum ada (agar stream terisolasi di Go IPC)
         self.sessid = sessid if sessid else f"smf_sess_{uuid.uuid4().hex[:12]}"
@@ -80,6 +82,7 @@ class Socket:
     def _build_packet(
         self,
         data: str = "",
+        infotls: bool = None,
         verify: bool = None,
         cert: str = None,
         key: str = None,
@@ -129,6 +132,7 @@ class Socket:
             "close_session": close_session,
             "mode": mode if mode is not None else self.mode,
             "verify": self.verify,
+            "info_tls": infotls if infotls is not None else self.mode,
             "tls-cert": self.cert,
             "tls-key": self.key,
             "tls-ca": self.ca,
@@ -154,6 +158,7 @@ class Socket:
             timeout=timeout,
             ratelimit=ratelimit,
             mode=mode,
+            infotls=False,
             close_session=False,
         )
         return CRS.send(packet)
@@ -170,6 +175,7 @@ class Socket:
         packet = self._build_packet(
             data="",
             readsize=readsize,
+            infotls=False,
             mode="recv_only",
             close_session=False,
         )
@@ -201,6 +207,7 @@ class Socket:
             mode="duplex",
             protocol="tls",
             readsize=16384,
+            infotls=True,
             close_session=False,
         )
 
