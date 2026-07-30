@@ -18,10 +18,9 @@ class CRS:
     @classmethod
     def _get_process(cls):
         if cls._process is None or cls._process.poll() is not None:
-            # Nanti path ini tinggal kamu arahin ke biner Go kamu
+            
             binary_path = call_bin("crs_engine")
-
-            # Kalau biner belum ada, Jembatan akan langsung lapor error
+            
             if not os.path.exists(binary_path):
                 smf.printf(f"[!]{CC.YELLOW} Binary not found =>{CC.RESET}", binary_path)
 
@@ -40,24 +39,24 @@ class CRS:
         try:
             proc = cls._get_process()
 
-            # 1. Ubah Dict ke JSON (1 baris)
+            # Convert Dict to JSON (1 line)
             json_payload = json.dumps(data) + "\n"
             smf.printd(
                 "Process input data from CRS Engine", json.dumps(data), level="DEBUG"
             )
 
-            # 2. Lempar ke engine via Stdin
+            # Throw to binary via Stdin
             proc.stdin.write(json_payload)
             proc.stdin.flush()
 
-            # 3. Baca 1 baris balasan JSON dari Stdout
+            # Read 1 line of JSON response from Stdout
             response_line = proc.stdout.readline()
 
             if not response_line:
                 smf.printd("CRS Engine suddenly stopped", response_line, level="WARN")
                 return {"status": "ERROR", "message": "Engine suddenly dies"}
 
-            # 4. Ubah balik JSON ke Dict
+            # Convert JSON back to Dict
             res_dict = json.loads(response_line)
 
             if isinstance(res_dict, dict) and isinstance(res_dict.get("data"), dict):
@@ -66,7 +65,7 @@ class CRS:
                     try:
                         res_dict["data"]["raw_bytes"] = base64.b64decode(raw_b64)
                     except Exception as b64_err:
-                        # Fallback jika gagal decode base64
+                        # Fallback if base64 decode fails
                         res_dict["data"]["raw_bytes"] = b""
                         smf.printd("Base64 decode failed", str(b64_err), level="ERROR")
 
