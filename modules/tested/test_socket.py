@@ -28,8 +28,9 @@ def execute(options, net):
     try:
         # 2. Test TCP Send / Plaintext First
         smf.printf("\n[1] Sending Plaintext via TCP...")
-        res_send = sock.send(data="PING_PLAINTEXT\n", mode="duplex", timeout=10)
+        sock.send(data="PING_PLAINTEXT\n", timeout=10)
 
+        res_send = sock.recv(24)
         rep = res_send.get("status")
         if rep == "SUCCESS":
             raw_send = res_send.get("data").get("raw_bytes")
@@ -38,16 +39,17 @@ def execute(options, net):
         # 3. Test Upgrade TLS (Memanggil method uptls)
         smf.printf("\n[2] Upgrading Socket Session to TLS...")
         up = sock.uptls(cert="", key="", verify=False)
-
+        
         res = up.get("status")
         if res == "SUCCESS":
-            info = up.get("data").get("info_tls").get("tls_version")
+            info = up.get("tls_version")
             smf.printf(f"    TLS Info     : {info}")
 
         # 4. Test Send Data Terenkripsi di atas Session TLS yang Sama (Reused)
         smf.printf("\n[3] Sending Encrypted Data over Reused Session...")
-        res_tls = sock.send(data="HELLO_TLS_ENCRYPTED\n", mode="duplex", timeout=10)
+        sock.send(data="HELLO_TLS_ENCRYPTED\n", timeout=10)
 
+        res_tls = sock.recv(24)
         st = res_tls.get("status")
         if st == "SUCCESS":
             raw = res_tls.get("data").get("raw_bytes")
