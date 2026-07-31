@@ -34,7 +34,7 @@ def execute(options, net):
 
         # 3. Test Upgrade TLS (Memanggil method uptls)
         smf.printf("\n[2] Upgrading Socket Session to TLS...")
-        up = sock.uptls(cert="dummy_cert_str", key="dummy_key_str", verify=False)
+        up = sock.uptls(cert="", key="", verify=False)
         info = up.get("data").get("info_tls").get("tls_version")
         smf.printf(f"    TLS Info     : {info}")
 
