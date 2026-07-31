@@ -96,12 +96,6 @@ class Socket:
     ) -> dict:
         """Internal Helper: Menyiapkan schema JSON/Dict untuk dikirim via IPC ke Go"""
 
-        if cert is not None:
-            self.cert = cert
-        if key is not None:
-            self.key = key
-        if ca is not None:
-            self.ca = ca
         if verify is not None:
             self.verify = verify
 
@@ -133,9 +127,9 @@ class Socket:
             "mode": mode if mode is not None else self.mode,
             "verify": self.verify,
             "info_tls": infotls if infotls is not None else self.mode,
-            "tls-cert": self.cert,
-            "tls-key": self.key,
-            "tls-ca": self.ca,
+            "tls-cert": cert,
+            "tls-key": key,
+            "tls-ca": ca,
         }
 
     def send(
