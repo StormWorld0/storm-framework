@@ -39,22 +39,22 @@ def get_service_banner(target_ip, port, net):
 
         # 2. EKSEKUSI VIA GO CRS ENGINE
         # Kirim argument sebagai dict/kwargs sesuai spec wrapper Python Anda
-        result = net.socket(
+        s = net.Socket(
             host=target_ip,
             port=port,
-            protocol=protocol,
-            body=payload_body,
-            readsize=1024,
             timeout=1.0,
         )
+        s.send(data=payload_body, timeout=2.0)
+        result = s.recv(1024)
 
-        # 3. PARSING RESPONSE DICTIONARY DARI GO
+        # Cek status
         status = result.get("status")
-        data = result.get("data", {}) or {}
-        raw_bytes = data.get("raw_bytes", "")
-
+        
         # Jika Go berhasil melakukan Dial (Socket Terbuka)
         if status == "SUCCESS":
+            data = result.get("data", {}) or {}
+            raw_bytes = data.get("raw_bytes", "")
+        
             status_color = f"{C.SUCCESS} OPEN " + STATUS_OPEN
             banner_info = "No version information."
 
@@ -96,6 +96,8 @@ def get_service_banner(target_ip, port, net):
     except Exception as e:
         smf.printd("Global error service", e, level="ERROR")
         return f"{C.ERROR} ERROR ", None
+    finally:
+        s.close()
 
 
 REQUIRED_OPTIONS = {"IP": ""}
@@ -207,3 +209,4 @@ def execute(options, net):
         return
     except Exception as e:
         smf.printf(f"{C.ERROR}[!] ERROR =>", e, file=sys.stderr, flush=True)
+        smf.printd("Global Exception", e, level="ERROR")
