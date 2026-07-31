@@ -201,12 +201,18 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	if conn == nil {
 		addr, err := BuildTarget(req)
 		if err != nil {
-			return packet.ResponsePacket{Status: "ERROR", Message: "Build target: " + err.Error()}
+			return packet.ResponsePacket{
+				Status: "ERROR", 
+				Message: "Build target: " + err.Error(),
+			}
 		}
 
 		fd := utils.GetDialer()
 		if fd == nil {
-			return packet.ResponsePacket{Status: "ERROR", Message: "Global dialer not initialized"}
+			return packet.ResponsePacket{
+				Status: "ERROR", 
+				Message: "Global dialer not initialized"
+			}
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -214,7 +220,10 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 
 		rawConn, err := fd.Dial(ctx, "tcp", addr)
 		if err != nil {
-			return packet.ResponsePacket{Status: "ERROR", Message: "TCP Dial failed: " + err.Error()}
+			return packet.ResponsePacket{
+				Status: "ERROR", 
+				Message: "TCP Dial failed: " + err.Error(),
+			}
 		}
 		conn = rawConn
 	}
@@ -232,11 +241,20 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			if !isReused {
 				conn.Close()
 			}
-			return packet.ResponsePacket{Status: "ERROR", Message: "TLS Config Error: " + err.Error()}
+			return packet.ResponsePacket{
+				Status: "ERROR", 
+				Message: "TLS Config Error: " + err.Error(),
+			}
 		}
 
 		if tlsConfig.ServerName == "" {
-			hostOnly, _, _ := net.SplitHostPort(req.Host)
+			hostOnly, _, err := net.SplitHostPort(addr)
+			if err != nil {
+				return packet.ResponsePacket{
+					Status: "ERROR",
+					Message: "Invalid host for TLS ServerName: " + err.Error(),
+				}
+			}
 			tlsConfig.ServerName = hostOnly
 		}
 
@@ -246,7 +264,10 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			if !isReused {
 				conn.Close()
 			}
-			return packet.ResponsePacket{Status: "ERROR", Message: "TLS Handshake failed: " + err.Error()}
+			return packet.ResponsePacket{
+				Status: "ERROR", 
+				Message: "TLS Handshake failed: " + err.Error(),
+			}
 		}
 		
 		// Update ActiveSessions dengan instance TLS yang baru
