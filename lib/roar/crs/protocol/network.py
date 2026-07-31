@@ -186,12 +186,6 @@ class Socket:
             smf.printd("The connection is already using TLS", level="WARN")
             return {"status": "WARN", "message": "Already TLS"}
 
-        if cert is not None:
-            self.cert = self._resolve_cert_content(cert)
-        if key is not None:
-            self.key = self._resolve_cert_content(key)
-        if ca is not None:
-            self.ca = self._resolve_cert_content(ca)
         if verify is not None:
             self.verify = verify
 
@@ -200,6 +194,9 @@ class Socket:
             verify=verify,
             mode="upgrade_tls",
             protocol="tls",
+            cert=cert,
+            key=key,
+            ca=ca,
             infotls=True,
             close_session=False,
         )
