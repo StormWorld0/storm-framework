@@ -15,6 +15,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"reflect"
 	"sync"
 	"time"
 
@@ -329,6 +330,8 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
                     "is_reused": isReused,
                     "rtt_ms":    rtt,
                     "mode":      mode,
+					"Cheked":    reflect.TypeOf(conn).String(),
+                    "isAlreadyTLS": strconv.FormatBool(isAlreadyTLS),
                 },
             }
         }
@@ -459,6 +462,8 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			"is_reused":    isReused,
 			"rtt_ms":       rtt,
 			"info_tls":     tlsData,
+			"Cheked":       reflect.TypeOf(conn).String(),
+            "isAlreadyTLS": strconv.FormatBool(isAlreadyTLS),
 		},
 	}
 }
