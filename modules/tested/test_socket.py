@@ -1,5 +1,20 @@
 import smf
 
+metadata = {
+    # Unique Identification & Attribution Module
+    "Name": "Testing Socket",
+    "Description": """
+To perform Engine socket testing in CRS
+    """,
+    "Author": ["zxelzy"],
+    "License": "SMF LICENSE",
+    "Date": "2026-07-31",
+    "Action": [
+        ["action name", {"Description": "brief explanation"}],
+        ["action name", {"Description": "brief explanation"}],
+    ],
+    "DefaultAction": "Testing",
+}
 
 def execute(options, net):
     ip = "127.0.0.1"
