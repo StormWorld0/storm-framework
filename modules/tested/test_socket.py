@@ -23,7 +23,7 @@ def execute(options, net):
 
     smf.printf(f"[+] Initializing IPC Session to {ip}:{port}...")
 
-    sock = net.Socket(host=ip, port=port, mode="duplex")
+    sock = net.Socket(host=ip, port=port, timeout=10)
 
     try:
         # 2. Test TCP Send / Plaintext First
