@@ -253,7 +253,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			if err != nil {
 				return packet.ResponsePacket{
 					Status: "ERROR",
-					Message: "Invalid host for TLS ServerName: " + err.Error(),
+					Message: "Invalid host for TLS ServerName: " + err.Error() + "addr: " + addr + "host: " + req.Host,
 				}
 			}
 			tlsConfig.ServerName = hostOnly
