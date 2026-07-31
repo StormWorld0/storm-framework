@@ -47,7 +47,7 @@ def execute(options, net):
         # 4. Test Send Data Terenkripsi di atas Session TLS yang Sama (Reused)
         smf.printf("\n[3] Sending Encrypted Data over Reused Session...")
         res_tls = sock.send(data="HELLO_TLS_ENCRYPTED\n", mode="duplex", timeout=10)
-        
+
         st = res_tls.get("status")
         if st == "SUCCESS":
             raw = res_tls.get("data").get("raw_bytes")
