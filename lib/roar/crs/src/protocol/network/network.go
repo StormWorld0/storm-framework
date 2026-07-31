@@ -163,7 +163,6 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 
 	var (
 		conn net.Conn
-		addr string
 		err error
 		isReused bool
 		timeout time.Duration
@@ -199,15 +198,15 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
         protocol = "tcp"
     }
 
-	if conn == nil {
-		addr, err = BuildTarget(req)
-		if err != nil {
-			return packet.ResponsePacket{
-				Status: "ERROR", 
-				Message: "Build target: " + err.Error(),
-			}
+	addr, err := BuildTarget(req)
+	if err != nil {
+		return packet.ResponsePacket{
+			Status: "ERROR", 
+			Message: "Build target: " + err.Error(),
 		}
-
+	}
+	
+	if conn == nil {
 		fd := utils.GetDialer()
 		if fd == nil {
 			return packet.ResponsePacket{
@@ -253,7 +252,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			if err != nil {
 				return packet.ResponsePacket{
 					Status: "ERROR",
-					Message: "Invalid host for TLS ServerName: " + err.Error() + "addr: " + addr + "host: " + req.Host,
+					Message: "Invalid host for TLS ServerName: " + err.Error(),
 				}
 			}
 			tlsConfig.ServerName = hostOnly
