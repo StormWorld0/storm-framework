@@ -136,6 +136,7 @@ class StormSmartCache:
                                 meta = self._extract_metadata(full_path)
 
                                 if not meta:
+                                    smf.printd(f"Missing or invalid static 'metadata' dictionary", full_path, level="WARN")
                                     continue
 
                                 raw_desc = meta.get("Description", "")
