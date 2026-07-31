@@ -211,7 +211,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		if fd == nil {
 			return packet.ResponsePacket{
 				Status: "ERROR", 
-				Message: "Global dialer not initialized"
+				Message: "Global dialer not initialized",
 			}
 		}
 
