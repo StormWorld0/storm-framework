@@ -232,6 +232,11 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	shouldUseTLS := protocol == "tls" || protocol == "ssl" || hasCertKey
 	_, isAlreadyTLS := conn.(tlsConnStateGetter)
 
+	return packet.ResponsePacket{
+        Status: "INFO",
+        Message: reflect.TypeOf(conn).String(),
+    }
+
 	if shouldUseTLS && !isAlreadyTLS {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
