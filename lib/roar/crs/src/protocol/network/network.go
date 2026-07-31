@@ -163,6 +163,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 
 	var (
 		conn net.Conn
+		addr string
 		err error
 		isReused bool
 		timeout time.Duration
@@ -199,7 +200,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
     }
 
 	if conn == nil {
-		addr, err := BuildTarget(req)
+		addr, err = BuildTarget(req)
 		if err != nil {
 			return packet.ResponsePacket{
 				Status: "ERROR", 
@@ -337,6 +338,11 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	// Mode recv_only akan langsung melompat ke baris ini 
 	// tanpa menyentuh komputasi base64 dan Write.
 	// ==========================================
+	var (
+        buffer []byte
+		bufPtr *[]byte
+        n int
+    )
 
 	if req.Mode == "recv_only" || req.Mode == "duplex" {
 	    // Readsize di gunakan untuk read byte
@@ -344,9 +350,6 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
     	if readSize <= 0 {
     		readSize = 0
 	    }
- 
-    	var bufPtr *[]byte
-     	var buffer []byte
 
     	if readSize == 4096 {
 		    bufPtr = bufferPool.Get().(*[]byte)
@@ -360,7 +363,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	    defer conn.SetDeadline(time.Time{})
 	
     	// Pembacaan Buffer
-	    n, err := conn.Read(buffer)
+	    n, err = conn.Read(buffer)
 	  
     	// --- Penanganan hasil baca ---
         if err != nil && err != io.EOF {
