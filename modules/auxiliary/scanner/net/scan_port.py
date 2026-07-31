@@ -64,14 +64,14 @@ def get_service_banner(target_ip, port, net):
 
                 # Handling khusus Banner SSH (Port 22)
                 if port == 22:
-                    banner_info = clean_banner.split("\n")[0]
+                    banner_info = clean_banner.split(b"\n")[0]
 
                 # Handling khusus HTTP Server Header (Port 80, 443, 8080)
                 elif port in [80, 443, 8080]:
                     server_header = next(
                         (
                             line
-                            for line in clean_banner.split("\r\n")
+                            for line in clean_banner.split(b"\r\n")
                             if line.lower().startswith("server:")
                         ),
                         None,
@@ -83,7 +83,7 @@ def get_service_banner(target_ip, port, net):
                         banner_info = "HTTP Response received."
                 else:
                     # Port lain (FTP, SMTP, Redis, MySQL, dll) yang langsung menyapa
-                    banner_info = clean_banner.split("\n")[0]
+                    banner_info = clean_banner.split(b"\n")[0]
 
             return status_color, banner_info
 
