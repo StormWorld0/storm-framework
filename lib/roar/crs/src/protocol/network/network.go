@@ -380,16 +380,14 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	    n, err = conn.Read(buffer)
 	  
     	// --- Penanganan hasil baca ---
-        if err != nil {
-            if req.SessionID != "" {
-                utils.ActiveSessions.Delete(req.SessionID)
-            }
+        if err != nil && err != io.EOF {
             if n == 0 {
                 return packet.ResponsePacket{
                     Status:  "ERROR",
                     Message: "Read failed: " + err.Error(),
 			    	Data: map[string]interface{}{
 			    		"buffer":       n,
+						"is_reused":    isReused,
 						"Cheked":       reflect.TypeOf(conn).String(),
                         "isAlreadyTLS": strconv.FormatBool(isTLSConn(conn)),
 			    	},
