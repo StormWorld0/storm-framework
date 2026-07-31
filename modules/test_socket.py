@@ -1,67 +1,44 @@
-import socket
-import ssl
-import time
+import smf
 
+def execute(options, net):
+    ip = "127.0.0.1"
+    port = 8443
 
-def create_tcp_socket(host: str, port: int, timeout: float = 5.0) -> socket.socket:
-    """Membuka raw TCP socket biasa"""
-    sock = socket.create_connection((host, port), timeout=timeout)
-    return sock
-
-
-def upgrade_socket_to_tls(
-    sock: socket.socket, hostname: str = "127.0.0.1"
-) -> ssl.SSLSocket:
-    """Meng-upgrade socket TCP yang sedang terbuka menjadi TLS socket (Handshake)"""
-    ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
-
-    tls_sock = ctx.wrap_socket(sock, server_hostname=hostname)
-    return tls_sock
-
-
-def send_and_receive(
-    sock: socket.socket, data: bytes, read_size: int = 4096
-) -> tuple[int, bytes]:
-    """Mengirim byte data dan membaca respon balik dari socket"""
-    start = time.time()
-
-    # Write
-    sock.sendall(data)
-
-    # Read
-    try:
-        response_data = sock.recv(read_size)
-    except socket.timeout:
-        response_data = b""
-
-    rtt_ms = int((time.time() - start) * 1000)
-    return rtt_ms, response_data
-
-
-# =========================================================
-# CARA PAKAI MODUL DI ATAS (Untuk Pengujian Ke Lab Server)
-# =========================================================
-if __name__ == "__main__":
-    HOST = "127.0.0.1"
-    PORT = 8443  # Port OpenSSL / Socat Test Server
+    smf.printf(f"[+] Initializing IPC Session to {ip}:{port}...")
+    
+    sock = net.Socket(
+        host=ip,
+        port=port,
+        mode="duplex",
+        infotls=True
+    )
 
     try:
-        print("[1] Membuka Socket Raw TCP...")
-        s = create_tcp_socket(HOST, PORT)
-        print(f"    Type: {type(s).__name__}")  # socket.socket
+        # 2. Test TCP Send / Plaintext First
+        smf.printf("\n[1] Sending Plaintext via TCP...")
+        res_send = sock.send(data="PING_PLAINTEXT\n", mode="duplex")
+        raw_send = res_tls.get("data").get("raw_bytes")
+        smf.printf(f"    Raw Response: {raw_send}")
 
-        print("\n[2] Meng-upgrade Socket ke TLS...")
-        s = upgrade_socket_to_tls(s, hostname=HOST)
-        print(f"    Type: {type(s).__name__}")  # SSLSocket
+        # 3. Test Upgrade TLS (Memanggil method uptls)
+        smf.printf("\n[2] Upgrading Socket Session to TLS...")
+        up = sock.uptls(
+            cert="dummy_cert_str",
+            key="dummy_key_str",
+            verify=False
+        )
+        info = up.get("data").get("info_tls").get("tls_version")
+        smf.printf(f"    TLS Info     : {info}")
 
-        print("\n[3] Kirim Data via TLS Socket...")
-        rtt, response = send_and_receive(s, b"PING TLS\n")
-        print(f"    RTT: {rtt}ms | Response: {response}")
-
-        s.close()
-        print("\n[+] Test Selesai. Socket tertutup.")
+        # 4. Test Send Data Terenkripsi di atas Session TLS yang Sama (Reused)
+        smf.printf("\n[3] Sending Encrypted Data over Reused Session...")
+        res_tls = sock.send(data="HELLO_TLS_ENCRYPTED\n", mode="duplex")
+        raw = res_tls.get("data").get("raw_bytes")
+        smf.printf(f"    Raw Response: {raw}")
 
     except Exception as e:
-        print(f"\n[-] Error saat pengujian: {e}")
+        smf.printf(f"\n[-] Error saat execution: {e}")
+    finally:
+        # 5. Cleanup Session di Engine Go
+        smf.printf("\n[4] Closing Session...")
+        sock.close()
