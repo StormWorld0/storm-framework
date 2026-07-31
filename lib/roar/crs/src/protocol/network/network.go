@@ -408,7 +408,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
         }
 
 	    // --- Simpan session jika diminta dan tidak terjadi error ---
-        if req.SessionID != "" && req.KeepAlive != "" {
+        if req.SessionID != "" && req.KeepAlive {
 	    	utils.ActiveSessions.Store(req.SessionID, conn)
 	    	keepSession = true
         } else {
