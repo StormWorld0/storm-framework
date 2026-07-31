@@ -204,9 +204,8 @@ class Socket:
         packet = self._build_packet(
             data="",
             verify=verify,
-            mode="duplex",
+            mode="upgrade_tls",
             protocol="tls",
-            readsize=16384,
             infotls=True,
             close_session=False,
         )
