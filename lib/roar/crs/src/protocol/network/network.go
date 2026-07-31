@@ -406,17 +406,17 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
                 }
             }
         }
-
-	    // --- Simpan session jika diminta dan tidak terjadi error ---
-        if req.SessionID != "" && req.KeepAlive {
-	    	utils.ActiveSessions.Store(req.SessionID, conn)
-	    	keepSession = true
-        } else {
-            if req.SessionID != "" {
-                utils.ActiveSessions.Delete(req.SessionID)
-            }
-        }
 	}
+
+	// --- Simpan session jika diminta dan tidak terjadi error ---
+    if req.SessionID != "" && req.KeepAlive {
+	    utils.ActiveSessions.Store(req.SessionID, conn)
+	    keepSession = true
+    } else {
+        if req.SessionID != "" {
+            utils.ActiveSessions.Delete(req.SessionID)
+        }
+    }
 	
 	var tlsData map[string]interface{}
 	if req.InfoTLS {
@@ -444,7 +444,6 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	    	}
 	    }
 	}
-
 	
 	// Ekstraksi Data Spesifik
 	remoteIP := "unknown"
