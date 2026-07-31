@@ -62,23 +62,6 @@ class Socket:
                 f"[!] {CC.YELLOW}Unrecognized parameters dropped =>{CC.RESET}", kwargs
             )
 
-    def _resolve_cert_content(self, target: str) -> str:
-        """
-        Helper: Jika target adalah path file yang valid di disk,
-        baca & kembalikan ISI FILENYA. Jika sudah berupa string PEM atau kosong,
-        kembalikan apa adanya.
-        """
-        if target and isinstance(target, str):
-            # Cek apakah string ini adalah path file yang wujud di disk
-            if os.path.isfile(target):
-                try:
-                    with open(target, "r", encoding="utf-8") as f:
-                        return f.read()  # BACA ISI FILE & SIMPAN KE MEMORY PYTHON
-                except Exception as e:
-                    smf.printd(f"Failed to read cert file at {target}", e, level="ERROR")
-
-        return target
-
     def _build_packet(
         self,
         data: str = "",
