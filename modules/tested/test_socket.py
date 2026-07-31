@@ -28,7 +28,7 @@ def execute(options, net):
     try:
         # 2. Test TCP Send / Plaintext First
         smf.printf("\n[1] Sending Plaintext via TCP...")
-        sock.send(data="PING_PLAINTEXT\n", timeout=10)
+        sock.send(data=b"PING_PLAINTEXT\n", timeout=10)
 
         res_send = sock.recv(24)
         rep = res_send.get("status")
@@ -47,7 +47,7 @@ def execute(options, net):
 
         # 4. Test Send Data Terenkripsi di atas Session TLS yang Sama (Reused)
         smf.printf("\n[3] Sending Encrypted Data over Reused Session...")
-        sock.send(data="HELLO_TLS_ENCRYPTED\n", timeout=10)
+        sock.send(data=b"HELLO_TLS_ENCRYPTED\n", timeout=10)
 
         res_tls = sock.recv(24)
         st = res_tls.get("status")
