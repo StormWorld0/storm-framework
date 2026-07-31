@@ -317,69 +317,71 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	// tanpa menyentuh komputasi base64 dan Write.
 	// ==========================================
 
-	// Readsize di gunakan untuk read byte
-	readSize := req.ReadSize
-	if readSize <= 0 {
-		readSize = 0
-	}
+	if req.Mode == "recv_only" || req.Mode == "duplex" {
+	    // Readsize di gunakan untuk read byte
+    	readSize := req.ReadSize
+    	if readSize <= 0 {
+    		readSize = 0
+	    }
+ 
+    	var bufPtr *[]byte
+     	var buffer []byte
 
-	var bufPtr *[]byte
-	var buffer []byte
-
-	if readSize == 4096 {
-		bufPtr = bufferPool.Get().(*[]byte)
-		buffer = *bufPtr
-		defer bufferPool.Put(bufPtr)
-	} else {
-		buffer = make([]byte, readSize)
-	}
+    	if readSize == 4096 {
+		    bufPtr = bufferPool.Get().(*[]byte)
+		    buffer = *bufPtr
+		    defer bufferPool.Put(bufPtr)
+	    } else {
+		    buffer = make([]byte, readSize)
+	    }
 	
-	conn.SetDeadline(time.Now().Add(timeout))
-	defer conn.SetDeadline(time.Time{})
+	    conn.SetDeadline(time.Now().Add(timeout))
+	    defer conn.SetDeadline(time.Time{})
 	
-	// Pembacaan Buffer
-	n, err := conn.Read(buffer)
-	
-	// --- Penanganan hasil baca ---
-    if err != nil && err != io.EOF {
-        if req.SessionID != "" {
-            utils.ActiveSessions.Delete(req.SessionID)
-        }
-        if n == 0 {
-            return packet.ResponsePacket{
-                Status:  "ERROR",
-                Message: "Read failed: " + err.Error(),
-				Data: map[string]interface{}{
-					"buffer": n,
-				},
+    	// Pembacaan Buffer
+	    n, err := conn.Read(buffer)
+	  
+    	// --- Penanganan hasil baca ---
+        if err != nil && err != io.EOF {
+            if req.SessionID != "" {
+                utils.ActiveSessions.Delete(req.SessionID)
+            }
+            if n == 0 {
+                return packet.ResponsePacket{
+                    Status:  "ERROR",
+                    Message: "Read failed: " + err.Error(),
+			    	Data: map[string]interface{}{
+			    		"buffer": n,
+			    	},
+                }
+            }
+        } else if err == io.EOF {
+            if req.SessionID != "" {
+                utils.ActiveSessions.Delete(req.SessionID)
+            }
+            if n == 0 {
+                return packet.ResponsePacket{
+                    Status:  "SUCCESS",
+                    Message: "EOF - no more data",
+                    Data: map[string]interface{}{
+                        "read_bytes": 0,
+                        "is_reused":  isReused,
+                        "rtt_ms":     time.Since(startTime).Milliseconds(),
+                    },
+                }
             }
         }
-    } else if err == io.EOF {
-        if req.SessionID != "" {
-            utils.ActiveSessions.Delete(req.SessionID)
-        }
-        if n == 0 {
-            return packet.ResponsePacket{
-                Status:  "SUCCESS",
-                Message: "EOF - no more data",
-                Data: map[string]interface{}{
-                    "read_bytes": 0,
-                    "is_reused":  isReused,
-                    "rtt_ms":     time.Since(startTime).Milliseconds(),
-                },
+
+	    // --- Simpan session jika diminta dan tidak terjadi error ---
+        if req.SessionID != "" && req.KeepAlive && err == nil {
+	    	utils.ActiveSessions.Store(req.SessionID, conn)
+	    	keepSession = true
+        } else {
+            if req.SessionID != "" {
+                utils.ActiveSessions.Delete(req.SessionID)
             }
         }
-    }
-
-	// --- Simpan session jika diminta dan tidak terjadi error ---
-    if req.SessionID != "" && req.KeepAlive && err == nil {
-		utils.ActiveSessions.Store(req.SessionID, conn)
-		keepSession = true
-    } else {
-        if req.SessionID != "" {
-            utils.ActiveSessions.Delete(req.SessionID)
-        }
-    }
+	}
 	
 	var tlsData map[string]interface{}
 	if req.InfoTLS {
