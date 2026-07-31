@@ -13,7 +13,7 @@ def execute(options, net):
         # 2. Test TCP Send / Plaintext First
         smf.printf("\n[1] Sending Plaintext via TCP...")
         res_send = sock.send(data="PING_PLAINTEXT\n", mode="duplex")
-        raw_send = res_tls.get("data").get("raw_bytes")
+        raw_send = res_send.get("data").get("raw_bytes")
         smf.printf(f"    Raw Response: {raw_send}")
 
         # 3. Test Upgrade TLS (Memanggil method uptls)
