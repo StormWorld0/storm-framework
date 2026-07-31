@@ -380,7 +380,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	    n, err = conn.Read(buffer)
 	  
     	// --- Penanganan hasil baca ---
-        if err != nil && err != io.EOF {
+        if err != nil {
             if req.SessionID != "" {
                 utils.ActiveSessions.Delete(req.SessionID)
             }
@@ -396,9 +396,6 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
                 }
             }
         } else if err == io.EOF {
-            if req.SessionID != "" {
-                utils.ActiveSessions.Delete(req.SessionID)
-            }
             if n == 0 {
                 return packet.ResponsePacket{
                     Status:  "SUCCESS",
