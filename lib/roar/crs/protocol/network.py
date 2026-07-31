@@ -4,7 +4,6 @@
 import uuid
 import smf
 import base64
-import os
 
 from apps.utility.colors import CC
 from ..transport import CRS
