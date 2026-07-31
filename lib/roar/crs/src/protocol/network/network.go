@@ -51,10 +51,20 @@ type tlsConnStateGetter interface {
 	ConnectionState() tls.ConnectionState
 }
 
+// Helper function untuk cek apakah socket saat ini bertipe TLS
+func isTLSConn(c net.Conn) bool {
+    if c == nil {
+        return false
+    }
+    _, ok := c.(tlsConnStateGetter)
+    return ok
+}
+
+
 func buildCustomTLSConfig(req packet.RequestPacket) (*tls.Config, error) {
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: !req.Verify,
-		MinVersion:         tls.VersionTLS12,
+		MinVersion:         tls.VersionTLS10,
 	}
 
 	getPEMBytes := func(input string) ([]byte, error) {
@@ -226,14 +236,14 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 				Message: "TCP Dial failed: " + err.Error(),
 			}
 		}
+		
 		conn = rawConn
 	}
 
 	hasCertKey := req.TLSCert != "" && req.TLSKey != ""
 	shouldUseTLS := protocol == "tls" || protocol == "ssl" || hasCertKey
-	_, isAlreadyTLS := conn.(tlsConnStateGetter)
 
-	if req.Mode == "upgrade_tls" && shouldUseTLS && !isAlreadyTLS {
+	if req.Mode == "upgrade_tls" && shouldUseTLS && !isTLSConn(conn) {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
 
@@ -327,11 +337,11 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
             return packet.ResponsePacket{
                 Status: "SUCCESS",
                 Data: map[string]interface{}{
-                    "is_reused": isReused,
-                    "rtt_ms":    rtt,
-                    "mode":      mode,
-					"Cheked":    reflect.TypeOf(conn).String(),
-                    "isAlreadyTLS": strconv.FormatBool(isAlreadyTLS),
+                    "is_reused":     isReused,
+                    "rtt_ms":        rtt,
+                    "mode":          mode,
+					"Cheked":        reflect.TypeOf(conn).String(),
+                    "isAlreadyTLS":  strconv.FormatBool(isTLSConn(conn)),
                 },
             }
         }
@@ -379,7 +389,9 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
                     Status:  "ERROR",
                     Message: "Read failed: " + err.Error(),
 			    	Data: map[string]interface{}{
-			    		"buffer": n,
+			    		"buffer":       n,
+						"Cheked":       reflect.TypeOf(conn).String(),
+                        "isAlreadyTLS": strconv.FormatBool(isTLSConn(conn)),
 			    	},
                 }
             }
@@ -463,7 +475,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			"rtt_ms":       rtt,
 			"info_tls":     tlsData,
 			"Cheked":       reflect.TypeOf(conn).String(),
-            "isAlreadyTLS": strconv.FormatBool(isAlreadyTLS),
+            "isAlreadyTLS": strconv.FormatBool(isTLSConn(conn)),
 		},
 	}
 }
