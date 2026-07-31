@@ -126,7 +126,7 @@ class Socket:
             "close_session": close_session,
             "mode": mode if mode is not None else self.mode,
             "verify": self.verify,
-            "info_tls": infotls if infotls is not None else self.mode,
+            "info_tls": infotls if infotls is not None else self.infotls,
             "tls-cert": cert,
             "tls-key": key,
             "tls-ca": ca,
