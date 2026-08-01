@@ -7,15 +7,17 @@ from typing import Dict, Any, List
 from apps.utility.colors import CC
 from ..transport import CRS
 
+
 class DNSResponse:
     """
     Data Transfer Object (DTO) untuk membungkus raw dictionary dari respons DNS Go.
     Menyediakan Type-Safety dan kemudahan akses atribut (dot notation).
     """
+
     def __init__(self, raw_response: Dict[str, Any]):
         self.raw_response = raw_response
         self._status: str = raw_response.get("status", "UNKNOWN")
-        
+
         # Ekstraksi payload "Data" dari Go IPC
         self._data: Dict[str, Any] = raw_response.get("data", {})
 
@@ -67,10 +69,10 @@ class DNSResponse:
 
 class DNSResolver:
     """
-    Namespace OOP untuk operasi DNS. 
+    Namespace OOP untuk operasi DNS.
     Menggunakan @staticmethod karena request bersifat stateless (tidak perlu menyimpan state internal).
     """
-    
+
     @staticmethod
     def query(
         domain: str,
@@ -94,11 +96,14 @@ class DNSResolver:
         }
 
         if kwargs:
-            smf.printf(f"[!] {CC.YELLOW}Unrecognized parameters dropped =>{CC.RESET}", kwargs)
+            smf.printf(
+                f"[!] {CC.YELLOW}Unrecognized parameters dropped =>{CC.RESET}", kwargs
+            )
 
         # Kirim via IPC dan langsung bungkus hasilnya
         raw_res = CRS.send(packet)
         return DNSResponse(raw_res)
+
 
 # Alias untuk entry point
 requests = DNSResolver.query
