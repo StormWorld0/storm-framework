@@ -32,9 +32,7 @@ def execute(options, net):
     print()
     smf.printf(f"{C.HEADER} CHECKING THE HEADER: {url}")
     try:
-        headers = {
-            "User-Agent": "Storm-Framework/3.11 (X11; Linux x86_64)"
-        }
+        headers = {"User-Agent": "Storm-Framework/3.11 (X11; Linux x86_64)"}
         r = net.http_requests(
             "get", url, header=headers, timeout=5, verify=False, redirect=False
         )
