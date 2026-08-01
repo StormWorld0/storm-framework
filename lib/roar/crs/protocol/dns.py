@@ -86,6 +86,7 @@ class DNSResolver:
         protocol: str = "tcp",
         timeout: float = 2.0,
         ratelimit: int = 0,
+        concurency: int = 0,
         **kwargs,
     ) -> DNSResponse:
         """
@@ -94,6 +95,7 @@ class DNSResolver:
         """
         packet = {
             "primitive": "DNS_SEND",
+            "goroutine": concurency,
             "domain": domain,
             "type": type,
             "protocol": protocol,
