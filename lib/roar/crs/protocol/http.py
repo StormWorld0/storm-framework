@@ -78,7 +78,7 @@ class HTTPResponse:
         return self.text.encode("utf-8")
 
     @property
-    def headers(self) -> Dict[str, str]:
+    def header(self) -> Dict[str, str]:
         """Dictionary header asli dari respons."""
         return self._headers
 
