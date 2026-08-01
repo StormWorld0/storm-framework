@@ -236,7 +236,6 @@ class SocketResponse:
 
     def __repr__(self):
         return f"<SocketResponse Status={self.status} Read={self.read_bytes}b RTT={self.rtt_ms}ms>"
-        
 
 
 class Socket(SocketState):
@@ -333,5 +332,3 @@ class Socket(SocketState):
     def __repr__(self):
         tls_state = "TLS" if self.is_tls else "TCP"
         return f"<Socket host='{self.host}:{self.port}' proto='{tls_state}' sessid='{self.sessid}' closed={self._is_closed}>"
-
-
