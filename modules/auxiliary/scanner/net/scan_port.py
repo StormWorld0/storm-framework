@@ -88,7 +88,7 @@ def get_service_banner(target_ip, port, net):
         smf.printd("Global error service", e, level="ERROR")
         return f"{C.ERROR} ERROR ", None
     finally:
-        res.close()
+        s.close()
 
 
 REQUIRED_OPTIONS = {"IP": ""}
