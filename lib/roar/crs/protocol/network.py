@@ -33,6 +33,7 @@ class SocketState:
         cert: str = "",
         key: str = "",
         ca: str = "",
+        con: int = 0,
         **kwargs,
     ):
         self.host = host
@@ -55,6 +56,9 @@ class SocketState:
         self.cert = cert
         self.key = key
         self.ca = ca
+
+        # Goroutine not support
+        self.con = con
 
         if kwargs:
             smf.printf(
@@ -111,6 +115,7 @@ class IPCPayloadBuilder:
 
         return {
             "primitive": "NETWORK_SEND",
+            "goroutine": state.con,
             "host": state.host,
             "port": state.port,
             "data": data_str,
