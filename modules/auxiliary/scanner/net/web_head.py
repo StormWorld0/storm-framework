@@ -39,11 +39,10 @@ def execute(options, net):
         for header, value in r.header.items():
             smf.printf(f"  {CC.YELLOW}{header}:{C.RESET} {value}")
 
-        
         # Cek status
         if r.ok:
             smf.printf(f"{C.HEADER} \n--- HEADER SECURITY ANALYSIS ---\n")
-            
+
             # Cek server
             server = r.get_header("Server")
             if server:
@@ -51,7 +50,8 @@ def execute(options, net):
                     smf.printf(f"[!]{C.ERROR} Server Version Exposed:{C.RESET}", server)
                 else:
                     smf.printf(
-                        f"[✓]{C.SUCCESS} Server identified without version disclosure:{C.RESET}", server
+                        f"[✓]{C.SUCCESS} Server identified without version disclosure:{C.RESET}",
+                        server,
                     )
             else:
                 smf.printf(f"[✓]{C.SUCCESS} Server header not found or hidden.{C.RESET}")
@@ -123,7 +123,7 @@ def execute(options, net):
             smf.printf(f"[!] {CC.YELLOW}Error Response =>{CC.RESET}", r.status_code)
             smf.printf(f"[!] {CC.RED}{r.status} =>{CC.RESET}{CC.YELLOW}", r.message)
             smf.printf()
-            
+
     except KeyboardInterrupt:
         return
     except requests.exceptions.RequestException as e:
