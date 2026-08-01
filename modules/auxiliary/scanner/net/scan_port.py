@@ -32,18 +32,16 @@ def get_service_banner(target_ip, port, net):
                 f"HEAD / HTTP/1.1\r\nHost: {target_ip}\r\nConnection: close\r\n\r\n"
             )
 
-        # Tentukan protokol transport
-        protocol = "tls" if port == 443 else "tcp"
-
         # Kirim argument sebagai dict/kwargs sesuai spec wrapper Python Anda
-        s = net.Socket(
+        res = net.Socket(
             host=target_ip,
             port=port,
+            data=payload_body,
+            readsize=1024,
             timeout=2.0,
-            con=50,
+            con=100,
+            mode="duplex",
         )
-        s.send(data=payload_body, timeout=2.0, con=50)
-        res = s.recv(1024)
 
         # Jika Go berhasil melakukan Dial (Socket Terbuka)
         if res.status == "SUCCESS":
