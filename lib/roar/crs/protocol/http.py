@@ -141,7 +141,7 @@ class HTTPClient:
     def send(
         method: str,
         url: str,
-        headers: dict = None,
+        header: dict = None,
         body: str = "",
         redirect: bool = True,
         rawhttp: bool = False,
@@ -161,7 +161,7 @@ class HTTPClient:
             "goroutine": con,
             "method": method.upper(),
             "url": url,
-            "headers": headers or {},
+            "headers": header or {},
             "body": body,
             "redirect": redirect,
             "rawmode": rawhttp,
