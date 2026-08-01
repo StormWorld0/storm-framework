@@ -57,7 +57,7 @@ class SocketState:
         self.key = key
         self.ca = ca
 
-        # Goroutine not support
+        # Goroutine
         self.con = con
 
         if kwargs:
@@ -94,6 +94,7 @@ class IPCPayloadBuilder:
         ratelimit: int = None,
         mode: str = None,
         protocol: str = None,
+        con: int = None,
         close_session: bool = False,
     ) -> dict:
         # Mutasi state keamanan secara dinamis dari operasi spesifik
@@ -115,7 +116,7 @@ class IPCPayloadBuilder:
 
         return {
             "primitive": "NETWORK_SEND",
-            "goroutine": state.con,
+            "goroutine": con if con is not None else state.con,
             "host": state.host,
             "port": state.port,
             "data": data_str,
@@ -168,7 +169,8 @@ class SocketResponse:
     def __init__(self, raw_response: Dict[str, Any]):
         self.raw_response = raw_response
         self._status: str = raw_response.get("status", "UNKNOWN")
-
+        self._message: str = raw_response.get("message", "UNKNOWN")
+        
         # Ambil payload "Data" dari respons
         self._data: Dict[str, Any] = raw_response.get("data", {})
 
@@ -176,6 +178,11 @@ class SocketResponse:
     def status(self) -> bool:
         """Mempermudah pengecekan status respons."""
         return self._status
+
+    @property
+    def message(self) -> str:
+        """Mengembalikan pesan ERROR/SUCCESS/TIMEOUT."""
+        return self._message
 
     @property
     def raw_bytes(self) -> bytes:
@@ -256,6 +263,7 @@ class Socket(SocketState):
         verify: bool = None,
         timeout: float = None,
         ratelimit: int = None,
+        con: int = 0,
         mode: str = "send_only",
         **kwargs,
     ) -> dict:
@@ -267,6 +275,7 @@ class Socket(SocketState):
             timeout=timeout,
             ratelimit=ratelimit,
             mode=mode,
+            con=con,
             infotls=False,
             close_session=False,
         )
