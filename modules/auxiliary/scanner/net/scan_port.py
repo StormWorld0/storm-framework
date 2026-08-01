@@ -41,7 +41,7 @@ def get_service_banner(target_ip, port, net):
         )
         s.send(data=payload_body, timeout=1.0, con=100)
         res = s.recv(1024)
-        
+
         # Jika Go berhasil melakukan Dial (Socket Terbuka)
         if res.status == "SUCCESS":
             status_color = f"{C.SUCCESS} OPEN " + STATUS_OPEN
