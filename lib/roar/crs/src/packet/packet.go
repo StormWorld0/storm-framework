@@ -2,7 +2,8 @@ package packet
 
 // RequestPacket is a mirror of the dictionary that Python sends
 type RequestPacket struct {
-	Primitive string            `json:"primitive"`
+	Primitive string            `json:"primitive"`           // Special flag to mark the protocol used
+	Go        int               `json:"goroutine"`           // Allocate the number of Goroutines
 	
 	// HTTP
 	Method    string            `json:"method,omitempty"`    // GET, POST, PUT, DELETE, ...
