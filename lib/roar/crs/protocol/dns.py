@@ -17,6 +17,7 @@ class DNSResponse:
     def __init__(self, raw_response: Dict[str, Any]):
         self.raw_response = raw_response
         self._status: str = raw_response.get("status", "UNKNOWN")
+        self._message: str = raw_response.get("message", "UNKNOWN")
 
         # Ekstraksi payload "Data" dari Go IPC
         self._data: Dict[str, Any] = raw_response.get("data", {})
@@ -25,6 +26,11 @@ class DNSResponse:
     def status(self) -> bool:
         """Pengecekan level IPC (Apakah request berhasil dikirim & diproses)."""
         return self._status
+
+    @property
+    def message(self) -> str:
+        """Mengecek pesan response untuk mengetahui (ERROR/SUCCESS/TIMEOUT)"""
+        return self._message
 
     @property
     def rcode(self) -> int:
