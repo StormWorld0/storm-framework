@@ -119,6 +119,7 @@ def execute(options, net):
 
                 if "samesite" not in cookie_lower:
                     smf.printf(f"[!]{C.ERROR} Cookie missing 'SameSite' flag.{C.RESET}")
+            smf.printf()
         else:
             smf.printf(f"[!] {CC.YELLOW}Error Response =>{CC.RESET}", r.status_code)
             smf.printf(f"[!] {CC.RED}{r.status} =>{CC.RESET}{CC.YELLOW}", r.message)
