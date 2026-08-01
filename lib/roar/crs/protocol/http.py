@@ -19,12 +19,14 @@ def http_request(
     retry: int = 2,  # Retry connection
     ratelimit: int = 0,  # Default 0 = unlimited
     timeout: float = 5.0,
+    con: int = 0,
     **kwargs,  # Excessive parameter drop
 ) -> dict:
     """Wrapper to send HTTP Request to CRS Engine"""
 
     packet = {
         "primitive": "HTTP_SEND",
+        "goroutine": con,
         "method": method.upper(),
         "url": url,
         "headers": headers or {},
