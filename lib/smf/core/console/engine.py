@@ -61,8 +61,14 @@ class Context:
         try:
             subprocess.run([path, *args], check=True)
             return True
+        except KeyboardInterrupt:
+            return True
         except (subprocess.SubprocessError, OSError) as e:
             smf.printd(f"Execution failed for {cmd}", e, level="ERROR")
+            smf.printd(f"Command '{cmd}' exited with code {e.returncode}", level="WARN")
+            return True
+        except Exception as e:
+            smf.printd(f"Execution failed for {cmd}: {e}", level="ERROR")
             return False
 
     def dispatch(self, cmd: str, args: list[str]) -> None:
