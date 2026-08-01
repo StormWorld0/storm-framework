@@ -16,6 +16,7 @@ class SocketState:
     Domain 1: Manajemen Konfigurasi & State Sesi.
     Menyimpan properti koneksi dan memvalidasi siklus hidup soket.
     """
+
     def __init__(
         self,
         host: str = "",
@@ -56,13 +57,17 @@ class SocketState:
         self.ca = ca
 
         if kwargs:
-            smf.printf(f"[!] {CC.YELLOW}Unrecognized parameters dropped =>{CC.RESET}", kwargs)
+            smf.printf(
+                f"[!] {CC.YELLOW}Unrecognized parameters dropped =>{CC.RESET}", kwargs
+            )
 
     def _ensure_open(self, operation: str):
         """Validasi internal untuk mencegah eksekusi operasi pada sesi yang tertutup."""
         if self._is_closed:
             smf.printd(f"Cannot {operation} on a closed Socket session.", level="ERROR")
-            raise RuntimeError(f"Cannot execute {operation}() on a closed Socket session.")
+            raise RuntimeError(
+                f"Cannot execute {operation}() on a closed Socket session."
+            )
 
 
 class IPCPayloadBuilder:
@@ -70,6 +75,7 @@ class IPCPayloadBuilder:
     Domain 2: Data Marshalling & Payload Transformation.
     Terisolasi untuk menangani translasi state dan parameter operasional menjadi skema JSON/Dict.
     """
+
     @staticmethod
     def build(
         state: SocketState,
@@ -130,7 +136,16 @@ class Socket(SocketState):
     Mewarisi SocketState untuk mempertahankan kompatibilitas atribut (Backward Compatibility).
     Hanya berfokus pada eksekusi instruksi jaringan ke Engine Go.
     """
-    def send(self, data: str, verify: bool = None, timeout: float = None, ratelimit: int = None, mode: str = "send_only", **kwargs) -> dict:
+
+    def send(
+        self,
+        data: str,
+        verify: bool = None,
+        timeout: float = None,
+        ratelimit: int = None,
+        mode: str = "send_only",
+        **kwargs,
+    ) -> dict:
         self._ensure_open("send")
         packet = IPCPayloadBuilder.build(
             state=self,
@@ -144,7 +159,7 @@ class Socket(SocketState):
         )
 
         resp = CRS.send(packet)
-        
+
         return SocketResponse(resp)
 
     def recv(self, readsize: int = None) -> dict:
@@ -159,7 +174,7 @@ class Socket(SocketState):
         )
 
         resp = CRS.send(packet)
-        
+
         return SocketResponse(resp)
 
     def uptls(self, cert: str, key: str, ca: str = None, verify: bool = True) -> dict:
@@ -184,7 +199,7 @@ class Socket(SocketState):
 
         if resp.get("status") == "SUCCESS":
             self.is_tls = True
-            
+
         return SocketResponse(resp)
 
     def close(self) -> dict:
@@ -192,15 +207,12 @@ class Socket(SocketState):
             return {"status": "already_closed", "session_id": self.sessid}
 
         packet = IPCPayloadBuilder.build(
-            state=self,
-            data="",
-            mode="send_only",
-            close_session=True
+            state=self, data="", mode="send_only", close_session=True
         )
-        
+
         resp = CRS.send(packet)
         self._is_closed = True
-        
+
         return SocketResponse(resp)
 
     def __enter__(self):
@@ -218,6 +230,7 @@ class TLSMetadata:
     """
     Data Transfer Object (DTO) untuk metadata TLS dari Go Engine.
     """
+
     def __init__(self, data: Dict[str, Any]):
         self.version: str = data.get("tls_version", "Unknown")
         self.cipher_suite: str = data.get("cipher_suite", "Unknown")
@@ -225,7 +238,7 @@ class TLSMetadata:
         self.hostname: str = data.get("hostname", "")
         self.handshake: bool = data.get("handshake", False)
         self.session_resume: bool = data.get("session_resume", False)
-        
+
         # Sertifikat Data (Bisa None jika tidak ada)
         self.subject: Optional[str] = data.get("subject")
         self.issuer: Optional[str] = data.get("issuer")
@@ -242,10 +255,11 @@ class SocketResponse:
     Wrapper untuk mengelola respons dinamis dari CRS (Go IPC).
     Menyediakan Type-Safety, Property Access, dan Lazy Decoding.
     """
+
     def __init__(self, raw_response: Dict[str, Any]):
         self.raw_response = raw_response
         self.status: str = raw_response.get("Status", "UNKNOWN")
-        
+
         # Ambil payload "Data" dari respons Go
         self._data: Dict[str, Any] = raw_response.get("Data", {})
 
@@ -318,4 +332,3 @@ class SocketResponse:
 
     def __repr__(self):
         return f"<SocketResponse Status={self.status} Read={self.read_bytes}b RTT={self.rtt_ms}ms>"
-
