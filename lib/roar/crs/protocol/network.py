@@ -170,7 +170,7 @@ class SocketResponse:
         self.raw_response = raw_response
         self._status: str = raw_response.get("status", "UNKNOWN")
         self._message: str = raw_response.get("message", "UNKNOWN")
-        
+
         # Ambil payload "Data" dari respons
         self._data: Dict[str, Any] = raw_response.get("data", {})
 
