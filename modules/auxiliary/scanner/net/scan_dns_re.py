@@ -44,7 +44,7 @@ def format_record(record_type, item):
     val = getattr(item, "value", item)
 
     if record_type == "TXT":
-        return item
+        return str(val)
 
     if isinstance(val, dict):
         if record_type == "MX":
@@ -115,12 +115,12 @@ def execute(options, net):
     smf.printf(f"{C.HEADER} DNS ENUMERATION For {target_domain}")
     try:
         for record_type in DNS_RECORDS:
-            resp = net.dns_request(target_domain, type=record_type, timeout=2.0)
+            resp = net.requests(target_domain, type=record_type, timeout=2.0)
 
             status = resp.status
             answers = resp.records
 
-            if status == "SUCCESS":
+            if status.upper() == "SUCCESS":
                 if not answers:
                     continue
 
@@ -133,11 +133,11 @@ def execute(options, net):
                     smf.printf(f"{color}  {icon} {format_record(record_type, item)}")
                 smf.printf()
 
-            elif status == "TIMEOUT":
-                smf.printf(f"{C.YELLOW}[!] Timeout:", record_type)
+            elif status.upper() == "TIMEOUT":
+                smf.printf(f"{C.YELLOW}[!] Timeout: {record_type} => {resp.message}")
 
-            elif status == "ERROR":
-                smf.printf(f"{C.ERROR}[!] ERROR {record_type} => {resp.message}")
+            elif status.upper() == "ERROR":
+                smf.printf(f"{C.ERROR}[!] ERROR: {record_type} => {resp.message}")
 
     except KeyboardInterrupt:
         return
