@@ -21,6 +21,7 @@ class NetContext:
     NetContext for all Storm Framework network operations.
     Using Singleton and Dynamic Binding patterns.
     """
+
     def __init__(self):
         # Looping all function names registered in __all__ in net_api.py
         for func_name in api.__all__:
@@ -63,7 +64,7 @@ class Context:
         except (subprocess.SubprocessError, OSError) as e:
             smf.printd(f"Execution failed for {cmd}", e, level="ERROR")
             return False
-        
+
     def dispatch(self, cmd: str, args: list[str]) -> None:
         """
         This method is the gateway to the handler.
