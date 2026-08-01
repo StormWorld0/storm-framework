@@ -339,7 +339,6 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
                 Data: map[string]interface{}{
                     "is_reused":     isReused,
                     "rtt_ms":        rtt,
-                    "mode":          mode,
 					"Cheked":        reflect.TypeOf(conn).String(),
                     "isAlreadyTLS":  strconv.FormatBool(isTLSConn(conn)),
                 },
