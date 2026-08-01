@@ -58,6 +58,7 @@ class Context:
             smf.printd("Command execution external Not found", path, level="INFO")
             return False
 
+        smf.printf()
         try:
             subprocess.run([path, *args], check=True)
             return True
@@ -70,6 +71,8 @@ class Context:
         except Exception as e:
             smf.printd(f"Execution failed for {cmd}: {e}", level="ERROR")
             return False
+        finally:
+            smf.printf()
 
     def dispatch(self, cmd: str, args: list[str]) -> None:
         """
