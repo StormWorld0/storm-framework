@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	crs := bufio.NewCRS(os.Stdin)
+	crs := bufio.NewScanner(os.Stdin)
 	const maxCapacity = 10 * 1024 * 1024 // Max 10MB per JSON line
 	buf := make([]byte, 64*1024)
 	crs.Buffer(buf, maxCapacity)
