@@ -50,7 +50,7 @@ def format_record(record_type, item):
         if record_type == "MX":
             return f"{val.get('host', '')} (priority {val.get('preference', 0)})"
 
-        if record_type == "SOA":
+        elif record_type == "SOA":
             return (
                 f"Primary NS : {val.get('ns', '')}, "
                 f"Admin Mail : {val.get('mbox', '')}, "
@@ -61,34 +61,34 @@ def format_record(record_type, item):
                 f"Minimum TTL : {val.get('minttl', 0)}s"
             )
 
-        if record_type == "SSHFP":
+        elif record_type == "SSHFP":
             return (
                 f"Algorithm : {val.get('algorithm')}, "
                 f"Fingerprint Type : {val.get('fingerprint_type')}, "
                 f"Fingerprint : {val.get('fingerprint')}"
             )
 
-        if record_type == "CERT":
+        elif record_type == "CERT":
             return (
                 f"Type : {val.get('type')}, "
                 f"Key Tag : {val.get('key_tag')}, "
                 f"Algorithm : {val.get('algorithm')}"
             )
 
-        if record_type == "URI":
+        elif record_type == "URI":
             return (
                 f"Target : {val.get('target')} "
                 f"(priority {val.get('priority')}, weight {val.get('weight')})"
             )
 
-        if record_type == "CAA":
+        elif record_type == "CAA":
             return (
                 f"Flag : {val.get('flag', 0)}, "
                 f"Tag : {val.get('tag', '')}, "
                 f"Value : {val.get('value', '')}"
             )
 
-        if record_type == "DNSKEY":
+        elif record_type == "DNSKEY":
             return (
                 f"Flags : {val.get('flags')}, "
                 f"Protocol : {val.get('protocol')}, "
@@ -96,7 +96,7 @@ def format_record(record_type, item):
                 f"Public Key : {val.get('publicKey')}"
             )
 
-        if record_type == "DS":
+        elif record_type == "DS":
             return (
                 f"Key Tag : {val.get('keyTag')}, "
                 f"Algorithm : {val.get('algorithm')}, "
@@ -104,7 +104,7 @@ def format_record(record_type, item):
                 f"Digest : {val.get('digest')}"
             )
 
-        if record_type in ("HTTPS", "SVCB"):
+        elif record_type in ("HTTPS", "SVCB"):
             lines = [
                 f"Priority : {val.get('priority', 0)}",
                 f"Target : {val.get('target', '')}",
@@ -117,8 +117,11 @@ def format_record(record_type, item):
                             v_str = ", ".join(v) if isinstance(v, list) else str(v)
                             lines.append(f"{k} : {v_str}")
             return "\n     ".join(lines)
-
-    return "\n".join(f"{k} : {v}" for k, v in val.items())
+        
+        else:
+            return "\n".join(f"{k} : {v}" for k, v in val.items())
+    
+    return str(val)
 
 
 REQUIRED_OPTIONS = {"DOMAIN": "example.com"}
