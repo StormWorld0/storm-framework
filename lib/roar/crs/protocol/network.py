@@ -258,15 +258,15 @@ class SocketResponse:
 
     def __init__(self, raw_response: Dict[str, Any]):
         self.raw_response = raw_response
-        self.status: str = raw_response.get("Status", "UNKNOWN")
+        self._status: str = raw_response.get("status", "UNKNOWN")
 
         # Ambil payload "Data" dari respons Go
-        self._data: Dict[str, Any] = raw_response.get("Data", {})
+        self._data: Dict[str, Any] = raw_response.get("data", {})
 
     @property
-    def issuccess(self) -> bool:
+    def status(self) -> bool:
         """Mempermudah pengecekan status respons."""
-        return self.status.upper() == "SUCCESS"
+        return self._status.upper() == "SUCCESS"
 
     @property
     def raw_bytes(self) -> bytes:
@@ -276,7 +276,7 @@ class SocketResponse:
     @property
     def str_bytes(self) -> str:
         """Mengembalikan raw bytes sebagai UTF-8."""
-        return self.raw_bytes.decode("utf-8", errors="replace")
+        return self.raw_bytes.decode("utf-8", errors="ignore")
 
     @property
     def hex_bytes(self) -> str:
@@ -313,7 +313,7 @@ class SocketResponse:
         return self._data.get("Cheked", "")
 
     @property
-    def info_tls(self) -> bool:
+    def status_tls(self) -> bool:
         """Menerjemahkan string boolean dari Go (strconv.FormatBool) ke native Python bool."""
         val = self._data.get("isAlreadyTLS", "false")
         return val.lower() == "true"
@@ -328,7 +328,7 @@ class SocketResponse:
 
     def __bool__(self):
         """Memungkinkan sintaks: if response: ..."""
-        return self.is_success
+        return self.status
 
     def __repr__(self):
         return f"<SocketResponse Status={self.status} Read={self.read_bytes}b RTT={self.rtt_ms}ms>"
