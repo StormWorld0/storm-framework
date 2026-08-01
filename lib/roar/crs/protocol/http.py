@@ -13,13 +13,14 @@ class HTTPTLSMetadata:
     """
     Data Transfer Object (DTO) untuk metadata TLS dari HTTP Response Go Engine.
     """
+
     def __init__(self, data: Dict[str, Any]):
         self.subject: Optional[str] = data.get("subject")
         self.issuer: Optional[str] = data.get("issuer")
         # Menangani variasi penamaan key antar primitive IPC (dns_names / dns_name)
         self.dns_name: list = data.get("dns_names") or data.get("dns_name", [])
         self.expires: Optional[str] = data.get("expires_at") or data.get("expires")
-        
+
         self.tls_version: str = data.get("tls_version", "Unknown")
         self.cipher: str = data.get("cipher_suite", "Unknown")
         self.protocol: str = data.get("protocol", "")
@@ -37,6 +38,7 @@ class HTTPResponse:
     Wrapper DTO untuk mengelola respons HTTP dari Go Engine.
     Menyediakan Type-Safety, Case-Insensitive Headers, dan JSON Parser.
     """
+
     def __init__(self, raw_response: Dict[str, Any]):
         self.raw_response = raw_response
         self._status: str = raw_response.get("status", "UNKNOWN")
@@ -134,6 +136,7 @@ class HTTPClient:
     """
     Namespace Stateless untuk mengeksekusi HTTP Request via CRS Engine.
     """
+
     @staticmethod
     def send(
         method: str,
@@ -170,13 +173,14 @@ class HTTPClient:
         }
 
         if kwargs:
-            smf.printf(f"[!] {CC.YELLOW}Unrecognized parameters dropped =>{CC.RESET}", kwargs)
+            smf.printf(
+                f"[!] {CC.YELLOW}Unrecognized parameters dropped =>{CC.RESET}", kwargs
+            )
 
         raw_res = CRS.send(packet)
-        
+
         return HTTPResponse(raw_res)
 
 
 # Alias untuk Backward Compatibility
 http_requests = HTTPClient.send
-        
