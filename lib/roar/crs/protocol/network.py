@@ -44,7 +44,7 @@ class SocketState:
         self.timeout = float(timeout)
         self.readsize = int(readsize)
         self.ratelimit = int(ratelimit)
-        self.keep_alive = keep_alive
+        self.keepalive = keepalive
         self.mode = mode
         self.infotls = infotls
 
@@ -121,7 +121,7 @@ class IPCPayloadBuilder:
             "goroutine": con if con is not None else state.con,
             "host": state.host,
             "port": state.port,
-            "data": data_str if data_str is not "" else state.data,
+            "data": data_str if data_str else state.data,
             "protocol": current_proto,
             "timeout": timeout if timeout is not None else state.timeout,
             "readsize": readsize if readsize is not None else state.readsize,
