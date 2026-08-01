@@ -41,7 +41,7 @@ def execute(options, net):
 
         # Cek status
         if r.ok:
-            smf.printf(f"{C.HEADER} \n--- HEADER SECURITY ANALYSIS ---\n")
+            smf.printf(f"{CC.CYAN} \n--- HEADER SECURITY ANALYSIS ---{CC.RESET}\n")
 
             # Cek server
             server = r.get_header("Server")
