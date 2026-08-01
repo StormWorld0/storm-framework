@@ -120,7 +120,7 @@ def execute(options, net):
                     smf.printf(f"{C.ERROR}[!] Cookie missing 'SameSite' flag.{C.RESET}")
         else:
             smf.printf(f"[!] {CC.YELLOW}Error Response =>{CC.RESET}", r.status_code)
-    
+
     except KeyboardInterrupt:
         return
     except requests.exceptions.RequestException as e:
