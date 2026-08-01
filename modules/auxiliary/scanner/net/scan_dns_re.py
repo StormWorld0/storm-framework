@@ -81,6 +81,29 @@ def format_record(record_type, item):
                 f"(priority {val.get('priority')}, weight {val.get('weight')})"
             )
 
+        if record_type == "CAA":
+            return (
+                f"Flag : {val.get('flag', 0)}, "
+                f"Tag : {val.get('tag', '')}, "
+                f"Value : {val.get('value', '')}"
+            )
+
+        if record_type == "DNSKEY":
+            return (
+                f"Flags : {val.get('flags')}, "
+                f"Protocol : {val.get('protocol')}, "
+                f"Algorithm : {val.get('algorithm')}, "
+                f"Public Key : {val.get('publicKey')}"
+            )
+
+        if record_type == "DS":
+            return (
+                f"Key Tag : {val.get('keyTag')}, "
+                f"Algorithm : {val.get('algorithm')}, "
+                f"Digest Type : {val.get('digestType')}, "
+                f"Digest : {val.get('digest')}"
+            )
+
         if record_type in ("HTTPS", "SVCB"):
             lines = [
                 f"Priority : {val.get('priority', 0)}",
@@ -95,7 +118,10 @@ def format_record(record_type, item):
                             lines.append(f"{k} : {v_str}")
             return "\n     ".join(lines)
 
-    return str(val)
+    return "\n".join(
+        f"{k} : {v}"
+        for k, v in val.items()
+    )
 
 
 REQUIRED_OPTIONS = {"DOMAIN": "example.com"}
