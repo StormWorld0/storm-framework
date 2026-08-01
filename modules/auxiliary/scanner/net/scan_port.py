@@ -25,9 +25,7 @@ def get_service_banner(target_ip, port, net):
     Checking port status and parsing banner/version information via Go CRS Engine.
     """
     try:
-        # 1. SIAPKAN PAYLOAD UNTUK GO
-        # Jika port HTTP, kita langsung titip payload 'HEAD /' di field Body
-        # agar network.go di Go yang mengirimkannya dalam 1x koneksi socket!
+        # Jika port HTTP, kita langsung titip payload 'HEAD /' di field Bod
         payload_body = ""
         if port in [80, 443, 8080]:
             payload_body = (
@@ -37,7 +35,6 @@ def get_service_banner(target_ip, port, net):
         # Tentukan protokol transport
         protocol = "tls" if port == 443 else "tcp"
 
-        # 2. EKSEKUSI VIA GO CRS ENGINE
         # Kirim argument sebagai dict/kwargs sesuai spec wrapper Python Anda
         s = net.Socket(
             host=target_ip,
@@ -45,20 +42,15 @@ def get_service_banner(target_ip, port, net):
             timeout=1.0,
         )
         s.send(data=payload_body, timeout=2.0)
-        result = s.recv(1024)
-
-        # Cek status
-        status = result.get("status")
+        res = s.recv(1024)
 
         # Jika Go berhasil melakukan Dial (Socket Terbuka)
-        if status == "SUCCESS":
-            data = result.get("data", {}) or {}
-            raw_bytes = data.get("raw_bytes", "")
-
+        if res.issuccess:
             status_color = f"{C.SUCCESS} OPEN " + STATUS_OPEN
             banner_info = "No version information."
 
-            banner_str = raw_bytes.decode("utf-8", errors="ignore")
+            # Mengambil bytes UTF-8
+            banner_str = res.str_bytes
 
             # Jika ada byte balasan/banner dari target
             if raw_bytes:
