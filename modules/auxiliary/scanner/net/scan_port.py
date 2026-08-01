@@ -41,6 +41,7 @@ def get_service_banner(target_ip, port, net):
             timeout=2.0,
             con=100,
             mode="duplex",
+            keepalive=False,
         )
 
         # Jika Go berhasil melakukan Dial (Socket Terbuka)
@@ -89,7 +90,7 @@ def get_service_banner(target_ip, port, net):
         smf.printd("Global error service", e, level="ERROR")
         return f"{C.ERROR} ERROR ", None
     finally:
-        s.close()
+        res.close()
 
 
 REQUIRED_OPTIONS = {"IP": ""}
