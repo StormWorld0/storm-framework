@@ -118,10 +118,7 @@ def format_record(record_type, item):
                             lines.append(f"{k} : {v_str}")
             return "\n     ".join(lines)
 
-    return "\n".join(
-        f"{k} : {v}"
-        for k, v in val.items()
-    )
+    return "\n".join(f"{k} : {v}" for k, v in val.items())
 
 
 REQUIRED_OPTIONS = {"DOMAIN": "example.com"}
