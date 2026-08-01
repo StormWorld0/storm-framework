@@ -33,18 +33,18 @@ def execute(options, net):
     smf.printf(f"{C.HEADER} CHECKING THE HEADER: {url}")
     try:
         headers = {
-            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+            "User-Agent": "Storm-Framework/3.11 (X11; Linux x86_64)"
         }
-        response = net.http_request(
-            "get", url, headers=headers, timeout=5, verify=False, redirect=False
+        r = net.http_requests(
+            "get", url, header=headers, timeout=5, verify=False, redirect=False
         )
-        for header, value in response["data"]["headers"].items():
+        for header, value in r.header.items():
             smf.printf(f"  {C.HEADER}{header}:{C.RESET} {value}")
 
         smf.printf(f"{C.HEADER} \n--- HEADER SECURITY ANALYSIS ---\n")
 
         # check server
-        server = response["data"]["headers"].get("Server")
+        server = r.get_header("Server")
         if server:
             if re.search(r"\d+\.\d+", server):
                 smf.printf(f"{C.ERROR}[!] Server Version Exposed: {server}{C.RESET}")
@@ -56,15 +56,15 @@ def execute(options, net):
             smf.printf(f"{C.SUCCESS}[✓] Server header not found or hidden.{C.RESET}")
 
         # Check X-Powered-By to find out the backend server
-        xpb = response["data"]["headers"].get("X-Powered-By")
+        xpb = r.get_header("X-Powered-By")
         if xpb:
             smf.printf(f"{C.ERROR}[!] Backend Technology Exposed: {xpb}{C.RESET}")
         else:
             smf.printf(f"{C.SUCCESS}[✓] X-Powered-By header not present.{C.RESET}")
 
         # Check X-Frame-Options Security Header (Clickjacking Prevention)
-        xfo = response["data"]["headers"].get("X-Frame-Options")
-        if "X-Frame-Options" not in response["data"]["headers"]:
+        xfo = r.get_header("X-Frame-Options")
+        if "X-Frame-Options" not in r.header:
             smf.printf(
                 f"{C.ERROR}[!] X-Frame-Options header is MISSING. Potential for Clickjacking.{C.RESET}"
             )
@@ -72,10 +72,8 @@ def execute(options, net):
             smf.printf(f"{C.SUCCESS}[✓] X-Frame-Options: {xfo}.{C.RESET}")
 
         # Strict-Transport-Security (Downgrade Prevention)
-        hsts = response["data"]["headers"].get("Strict-Transport-Security")
-        if "Strict-Transport-Security" not in response["data"][
-            "headers"
-        ] and url.startswith("https://"):
+        hsts = r.get_header("Strict-Transport-Security")
+        if "Strict-Transport-Security" not in r.header and url.startswith("https://"):
             smf.printf(
                 f"{C.ERROR}[!] The Strict-Transport-Security header is MISSING. HTTP Downgrade Risks.{C.RESET}"
             )
@@ -83,8 +81,8 @@ def execute(options, net):
             smf.printf(f"{C.SUCCESS}[✓] Strict-Transport-Security: {hsts}.{C.RESET}")
 
         # 1. Check Content-Security-Policy (XSS Prevention)
-        csp = response["data"]["headers"].get("Content-Security-Policy")
-        if "Content-Security-Policy" not in response["data"]["headers"]:
+        csp = r.get_header("Content-Security-Policy")
+        if "Content-Security-Policy" not in r.header:
             smf.printf(
                 f"{C.ERROR}[!] CSP Header MISSING. Risk of Cross-Site Scripting (XSS).{C.RESET}"
             )
@@ -92,7 +90,7 @@ def execute(options, net):
             smf.printf(f"{C.SUCCESS}[✓] Content-Security-Policy: {csp}.{C.RESET}")
 
         # 2. Cek X-Content-Type-Options (Pencegahan MIME Sniffing)
-        if response["data"]["headers"].get("X-Content-Type-Options") != "nosniff":
+        if r.get_header("X-Content-Type-Options") != "nosniff":
             smf.printf(
                 f"{C.ERROR}[!] X-Content-Type-Options is MISSING or misconfigured. Risk of MIME Sniffing.{C.RESET}"
             )
@@ -100,15 +98,15 @@ def execute(options, net):
             smf.printf(f"{C.SUCCESS}[✓] X-Content-Type-Options: nosniff.{C.RESET}")
 
         # 3. Cek Referrer-Policy (Pencegahan Kebocoran Data URL)
-        rp = response["data"]["headers"].get("Referrer-Policy")
-        if "Referrer-Policy" not in response["data"]["headers"]:
+        rp = r.get_header("Referrer-Policy")
+        if "Referrer-Policy" not in r.header:
             smf.printf(
                 f"{C.ERROR}[!] Referrer-Policy header MISSING. Potential data leakage via Referrer header.{C.RESET}"
             )
         else:
             smf.printf(f"{C.SUCCESS}[✓] Referrer-Policy: {rp}.{C.RESET}")
 
-        set_cookie = response["data"]["headers"].get("Set-Cookie")
+        set_cookie = r.get_header("Set-Cookie")
         if set_cookie:
             cookie_lower = set_cookie.lower()
 
@@ -130,7 +128,7 @@ def execute(options, net):
             file=sys.stderr,
             flush=True,
         )
-        print()
+        smf.printf()
 
     smf.printf(f"{C.HEADER} ---------------------------------------")
-    print()
+    smf.printf()
