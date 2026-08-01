@@ -90,56 +90,56 @@ def execute(options):
     example = options.get("URL")
 ```
 
-## Compiled Language Module
+---
 
-If you create a module with a compiled language, you need to follow these steps, so that the module can be used.
+## Connection Runtime Service (CRS)
 
-### 1. **Rust Language:**
+Now the module is only implemented as a template, use CRS to handle connections with high stability and maximum speed. CRS will handle connections according to the required protocol, no longer depending on external libraries so that it is easier when experiencing bugs/errors with the connection being used.
 
-You need to add Rust build dependencies in vendor cargo `external/source/dep/Cargo.toml` If the required dependencies are already available from the vendor but the versions are different, you need to follow the version according to the vendor, If there isn't one, you can just add it.
+We have made documentation [CRS ENGINE](https://github.com/StormWorld0/storm-framework/blob/main/docs/storm-framework.wiki/CRS_ENGINE.md) You can read it to find out more.
 
-You are not allowed to change the dependency version or remove dependencies in the vendor because the core is afraid of using those dependencies with that version, so you need to follow existing standards.
+### Implementation
 
-### 2. **Golang & C Language:**
-
-If this language is easier, you can just write the module with Go/C/C++ and create a Python file like the top step just for the loader.
-
-### Custom Makefile
-
-Make sure to add a Makefile to each compiled language module, whether it's Rust, Go, C/C++, because the compilation is run using a Makefile.
-
-You can use the existing template in `example/Makefile/` and adjust it to your needs.
-
-### Binary path information
-
-You don't need to do a path or memorize the path where the binary is located, because we already have an automatic binary search mechanism and you just need to use it like this:
+The way to use CRS is to call the API of the required protocol and send data there. Implementation example:
 
 ```python
-# Use this import
-from lib.roar.calling import call_bin
+def execute(options, net):
+    ip = options.get("IP")
+    port = options.get("PORT")
 
-def execute(options):
-    bin = call_bin("binary_name")
+    data = b"0x01..." # Data Bytes
+    s = net.Socket(ip, port, timeout=2) # Open connection
+    s.send(data, timeout=3) # Send data
+    resp = s.recv(1024) # Read buffer
 
-    if not bin:
-        smf.printf("[] Binary not found =>", bin)
-        return
+    if resp.status == "SUCCESS":
+        smf.printf("Raw Bytes", resp.raw_bytes)
+        smf.printf("String Bytes", resp.str_bytes)
+        smf.printf("Amount Bytes", resp.read_bytes)
+    else:
+        smf.printf("Message ERROR/SUCCESS", resp.message)
 
-    cmd = [bin]
-    process = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1
-    )
+    cert = path/to/file/cert
+    key = path/to/file/key
+    ca = path/to/file/ca # Optional
 
+    try:
+        # Upgrade TLS connection
+        r = s.uptls(cert, key, ca, verify=False)
+
+        # Automatically use TLS connection after upgrade
+        s.send()
+        s.recv()
+    except Exception:
+        smf.printf(r.message)
+    finally:
+        s.close() # Stop the connection so it doesn't hang
+
+    smf.printf("Cipher Suite", r.tls.cipher)
+    smf.printf("Version TLS 1.0/1.1/1.2/1.3", r.tls.version)
 ```
 
-But before that, make sure you remember what the binary output is in the Makefile you created. If you enter the wrong binary name, it won't find the binary. And for further information regarding **call_bin** you read [Caller Binary](https://github.com/StormWorld0/storm-framework/blob/main/docs/storm-framework.wiki/CALLER_BINARY.md)
+If you want to know what data is issued by the existing protocols, you can see it at [CRS ENGINE DOCS](https://github.com/StormWorld0/storm-framework/blob/main/docs/storm-framework.wiki/CRS_ENGINE.md)
 
-### Message
 
-Make sure the binary source code is placed inside `internal/source/modules` and the binary result is directed to `external/source/out/module`.
 
-To save your python loader, place it in the modules folder because this is what will be executed first before running the binary.
-
-> [!IMPORTANT]
-> When you submit a PR for a compiled language module, make sure you submit readable language source code. Don't submit a
-> binary file because I will immediately reject it.
