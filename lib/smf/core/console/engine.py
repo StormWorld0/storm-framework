@@ -2,9 +2,12 @@
 # -- SMF License
 import typing
 import smf
+import shutil
+import subprocess
 import data.option.session as ops
 
-from lib.core import handler as ex
+from apps.utility.colors import CC
+from lib.core import handler as i
 from lib.roar.plugin_api import plugin
 from lib.roar.crs import net_api as api
 from dataclasses import dataclass, field
@@ -18,7 +21,6 @@ class NetContext:
     NetContext for all Storm Framework network operations.
     Using Singleton and Dynamic Binding patterns.
     """
-
     def __init__(self):
         # Looping all function names registered in __all__ in net_api.py
         for func_name in api.__all__:
@@ -43,9 +45,25 @@ class Context:
     plugin: typing.Any = plugin
     net: NetContext = field(default_factory=NetContext)
 
-    smf.printd("CONTEXT PLUGIN", plugin, level="DEBUG")
-    smf.printd("CONTEXT RUNTIME", net, level="DEBUG")
+    def __post_init__(self) -> None:
+        smf.printd("CONTEXT PLUGIN", self.plugin, level="DEBUG")
+        smf.printd("CONTEXT RUNTIME", self.net, level="DEBUG")
 
+    def _execute_external(self, cmd: str, args: list[str]) -> bool:
+        """Melempar perintah ke alat eksternal."""
+        path = shutil.which(cmd)
+        smf.printd("Monitoring execution external", path, level="INFO")
+        if not path:
+            smf.printd("Command execution external Not found", path, level="INFO")
+            return False
+
+        try:
+            subprocess.run([path, *args], check=True)
+            return True
+        except (subprocess.SubprocessError, OSError) as e:
+            smf.printd(f"Execution failed for {cmd}", e, level="ERROR")
+            return False
+        
     def dispatch(self, cmd: str, args: list[str]) -> None:
         """
         This method is the gateway to the handler.
@@ -53,7 +71,7 @@ class Context:
         """
         # Pass 'self' (this context object itself) to the handler.
         # ex.execute now does not need to return a new dict,
-        handled = ex.execute(cmd, args, self)
+        handled = i.execute(cmd, args, self)
 
         # Log all to internal
         smf.printd("Capture cmd dispatch", cmd, level="DEBUG")
@@ -61,6 +79,8 @@ class Context:
         smf.printd("Capturing self from context", self, level="DEBUG")
 
         if not handled:
-            smf.printf(
-                f"[-] Unknown Command => {cmd} > Run the <help> command for more details."
-            )
+            success = self._execute_external(cmd, args)
+            if not success:
+                smf.printf(
+                    f"[!]{CC.YELLOW} Unknown Command =>{CC.RESET} {cmd} {CC.YELLOW}> Run the <help> command for more details.{CC.RESET}"
+                )
