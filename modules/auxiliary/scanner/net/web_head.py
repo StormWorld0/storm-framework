@@ -2,7 +2,7 @@ import requests
 import re
 import sys
 import smf
-from apps.utility.colors import C
+from apps.utility.colors import *
 
 metadata = {
     "Name": "Searching for website header",
