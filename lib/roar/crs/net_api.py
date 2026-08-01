@@ -1,4 +1,4 @@
-from .protocol.http import http_request
+from .protocol.http import http_requests
 from .protocol.dns import requests
 from .protocol.network import Socket
 
@@ -7,7 +7,7 @@ from .protocol.network import Socket
 
 # Define wrapper protocol
 __all__ = [
-    "http_request",
+    "http_requests",
     "requests",
     "Socket",
 ]
