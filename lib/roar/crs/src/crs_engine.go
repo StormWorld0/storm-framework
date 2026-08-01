@@ -10,6 +10,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/utils"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/protocol"
 )
@@ -19,6 +20,10 @@ func main() {
 	const maxCapacity = 10 * 1024 * 1024 // Max 10MB per JSON line
 	buf := make([]byte, 64*1024)
 	crs.Buffer(buf, maxCapacity)
+
+	var req packet.RequestPacket
+	// Inisialisasi Global ratelimiter
+	utils.InitGlobalRateLimiter(req)
 
 	// Channel sebagai Fan-In untuk mengumpulkan semua response secara thread-safe.
 	// Buffer dialokasikan (misal 1000) untuk mencegah backpressure pada worker.
