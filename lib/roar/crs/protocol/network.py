@@ -21,6 +21,7 @@ class SocketState:
         self,
         host: str = "",
         port: int = 0,
+        data: str = "",
         protocol: str = "tcp",
         timeout: float = 30.0,
         readsize: int = 0,
@@ -38,6 +39,7 @@ class SocketState:
     ):
         self.host = host
         self.port = int(port)
+        self.data = data
         self.protocol = protocol
         self.timeout = float(timeout)
         self.readsize = int(readsize)
@@ -119,7 +121,7 @@ class IPCPayloadBuilder:
             "goroutine": con if con is not None else state.con,
             "host": state.host,
             "port": state.port,
-            "data": data_str,
+            "data": data_str if data_str is not "" else state.data,
             "protocol": current_proto,
             "timeout": timeout if timeout is not None else state.timeout,
             "readsize": readsize if readsize is not None else state.readsize,
