@@ -48,12 +48,11 @@ def get_service_banner(target_ip, port, net):
         if res.issuccess:
             status_color = f"{C.SUCCESS} OPEN " + STATUS_OPEN
             banner_info = "No version information."
-
-            # Mengambil bytes UTF-8
-            banner_str = res.str_bytes
-
+            
             # Jika ada byte balasan/banner dari target
-            if raw_bytes:
+            if res.str_bytes:
+                # Mengambil bytes UTF-8
+                banner_str = res.str_bytes
                 clean_banner = banner_str.strip()
 
                 # Handling khusus Banner SSH (Port 22)
