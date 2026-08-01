@@ -462,7 +462,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			"hex_bytes":    hex.EncodeToString(buffer[:n]),
 			"read_bytes":   n,
 			"protocol":     protocol,
-			"ip":           remoteIP,
+			"remote_ip":    remoteIP,
 			"local_ip":     localAddr,
 			"is_reused":    isReused,
 			"rtt_ms":       rtt,
