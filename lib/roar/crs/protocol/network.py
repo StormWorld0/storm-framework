@@ -57,7 +57,7 @@ class SocketState:
         self.key = key
         self.ca = ca
 
-        # Goroutine
+        # Goroutine not support
         self.con = con
 
         if kwargs:
@@ -94,7 +94,6 @@ class IPCPayloadBuilder:
         ratelimit: int = None,
         mode: str = None,
         protocol: str = None,
-        con: int = None,
         close_session: bool = False,
     ) -> dict:
         # Mutasi state keamanan secara dinamis dari operasi spesifik
@@ -116,7 +115,6 @@ class IPCPayloadBuilder:
 
         return {
             "primitive": "NETWORK_SEND",
-            "goroutine": con if con is not None else state.con,
             "host": state.host,
             "port": state.port,
             "data": data_str,
@@ -133,6 +131,7 @@ class IPCPayloadBuilder:
             "tls-cert": cert,
             "tls-key": key,
             "tls-ca": ca,
+            "goroutine": state.con,
         }
 
 
@@ -263,7 +262,6 @@ class Socket(SocketState):
         verify: bool = None,
         timeout: float = None,
         ratelimit: int = None,
-        con: int = 0,
         mode: str = "send_only",
         **kwargs,
     ) -> dict:
@@ -275,7 +273,6 @@ class Socket(SocketState):
             timeout=timeout,
             ratelimit=ratelimit,
             mode=mode,
-            con=con,
             infotls=False,
             close_session=False,
         )
