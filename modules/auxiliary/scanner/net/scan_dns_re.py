@@ -117,10 +117,10 @@ def format_record(record_type, item):
                             v_str = ", ".join(v) if isinstance(v, list) else str(v)
                             lines.append(f"{k} : {v_str}")
             return "\n     ".join(lines)
-        
+
         else:
             return "\n".join(f"{k} : {v}" for k, v in val.items())
-    
+
     return str(val)
 
 
