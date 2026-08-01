@@ -48,7 +48,7 @@ def get_service_banner(target_ip, port, net):
         if res.issuccess:
             status_color = f"{C.SUCCESS} OPEN " + STATUS_OPEN
             banner_info = "No version information."
-            
+
             # Jika ada byte balasan/banner dari target
             if res.str_bytes:
                 # Mengambil bytes UTF-8
