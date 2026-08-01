@@ -33,17 +33,15 @@ def get_service_banner(target_ip, port, net):
             )
 
         # Kirim argument sebagai dict/kwargs sesuai spec wrapper Python Anda
-        res = net.Socket(
+        s = net.Socket(
             host=target_ip,
             port=port,
-            data=payload_body,
-            readsize=1024,
             timeout=2.0,
             con=100,
-            mode="duplex",
-            keepalive=False,
         )
-
+        s.send(data=payload_body, timeout=1.0, con=100)
+        res = s.recv(1024)
+        
         # Jika Go berhasil melakukan Dial (Socket Terbuka)
         if res.status == "SUCCESS":
             status_color = f"{C.SUCCESS} OPEN " + STATUS_OPEN
