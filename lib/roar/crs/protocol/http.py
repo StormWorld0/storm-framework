@@ -21,7 +21,7 @@ class HTTPTLSMetadata:
         self.dns_name: list = data.get("dns_names") or data.get("dns_name", [])
         self.expires: Optional[str] = data.get("expires_at") or data.get("expires")
 
-        self.tls_version: str = data.get("tls_version", "Unknown")
+        self.version: str = data.get("tls_version", "Unknown")
         self.cipher: str = data.get("cipher_suite", "Unknown")
         self.protocol: str = data.get("protocol", "")
         self.hostname: str = data.get("hostname", "")
@@ -148,9 +148,9 @@ class HTTPClient:
         infotls: bool = False,
         verify: bool = True,
         retry: int = 2,
-        ratelimit: int = 0,
-        timeout: float = 10.0,
-        con: int = 0,
+        ratelimit: int = 150,
+        timeout: float = 5.0,
+        con: int = 50,
         **kwargs,
     ) -> HTTPResponse:
         """
