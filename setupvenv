@@ -165,7 +165,7 @@ if [ -f smf_ca.key ] && [ -f smf_ca.crt ]; then
 else
     echo "[+] Generate CA Trust Store..."
 
-    # Delete CA lama
+    # Delete CA long
     rm -f smf_ca.key smf_ca.crt
 
     # Generate CA private key
