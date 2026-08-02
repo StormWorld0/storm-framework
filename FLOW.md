@@ -54,6 +54,13 @@ Executes the currently locked module. The internal process of this command goes 
 3. **Data Injection:** Data is passed to the module, and execution control is transferred to the module runtime.
 4. **Signal Interception (`Ctrl+C`):** If the module is stuck, pressing `Ctrl+C` will send `SIGINT` to force stop the module and return direct control to the main **Storm prompt**.
 
+>[!Important]
+> Storm-Framework now has fallback prompt logic, if you enter a command that is not internal to **Storm** it will fallback to external before returning a `Warning`.
+>
+> Example: When you enter the command `ping 1.1.1.1` and since ping is not in the internal command, it will automatically search externally and if found then it will be executed.
+>
+> Why is that? Because when you want to run other tools such as `nuclei`, you don't need to open a new tab, but you can stay in the **REPL** interface of **Storm-Framework.**
+
 ---
 
 ## 🛡️ Fault Tolerance & Module Isolation
