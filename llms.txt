@@ -18,12 +18,12 @@
 
 ## Documentation ROOT
 - [Tree](TREE.md)
-- [Flow](FLOW.md)
+- [Flow & Arch](FLOW.md)
 
 ## HOME
-- [license](LICENSE)
-- [Readme](README.md)
-- [Contributing](CONTRIBUTING.md)
+- [license](LICENSE): GPL-3.0
+- [Readme](README.md): A brief explanation of the Storm Framework.
+- [Contributing](CONTRIBUTING.md): Explanation of rules and practices for contributors.
 
 ## Project Structure & Core Entry Points
 - [App Entry](smfstart): Starting, Interface, Prompt, Boot.
@@ -36,11 +36,16 @@
 - [Feature Examples](example/): Examples of feature implementation and setup.
 - [data framework](data/data.json): Metadata Storm Framework.
 
+## Related Websites & Related Repositories
+- [DockerHub](https://hub.docker.com/r/stormworld0/storm-framework)
+
 
 # Identity
 > Owner: zxelzy
 > Org: StormWorld0
-> Email: StormWorld0@proton.me
+> Email: elzyproot@protonmail.com
+> Email-Org: StormWorld0@proton.me
+> Objective: Offensive Security
 
 - [X (Twitter)](https://x.com/elzyone)
 - [Threads](https://www.threads.com/@zxelzy_)
