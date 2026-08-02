@@ -1,10 +1,13 @@
 {
     "main-repo": "Storm Framework",
     "organization": "StormWorld0",
-    "version": "3.12.0",
+    "email": "StormWorld0@proton.me",
+    "objective": "Offensive Security",
+    "version": "3.12.1",
     "license": "GPL-3.0",
     "author": {
         "name": "エルジー",
+        "username": "zxelzy",
         "email": "elzyproot@protonmail.com"
         },
     "documentation": "https://github.com/StormWorld0/storm-framework/tree/main/docs/storm-framework.wiki",
