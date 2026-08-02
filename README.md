@@ -84,6 +84,10 @@ To see **storm framework structure** clearly and completely, we made it in [TREE
 
 TREE is used to see the complete structure of the Storm Framework so that it is easier to map directly without having to do it `tree` manual in **CLI**, It's also good for knowledge from the basics to the deepest subfolders.
 
+## 📖 WIKI
+
+In the wiki where we explain various feature logic and others, you can read about it at [wiki](https://github.com/StormWorld0/storm-framework/tree/main/docs/storm-framework.wiki)
+
 ---
 
 ## RECOMMENDED INSTALLATION
@@ -116,13 +120,7 @@ For questions or suggestions, etc:
 - Send [GitHub issues](https://github.com/StormWorld0/storm-framework/issues) for bug reports and feature requests.
 - Follow [@elzyone](https://x.com/elzyone) for X or [@zxelzy](https://github.com/zxelzy) for github account.
 
-
-
-## 📖 WIKI
-
-In the wiki where we explain various feature logic and others, you can read about it at [wiki](https://github.com/StormWorld0/storm-framework/tree/main/docs/storm-framework.wiki)
-
-
+---
 
 ## 🤝 CONTRIBUTING 
 
