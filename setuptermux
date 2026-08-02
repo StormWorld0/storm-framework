@@ -128,7 +128,7 @@ else
     openssl genrsa -out smf_ca.key 2048
     chmod 600 smf_ca.key
 
-    # Menggunakan <<-EOF (Indendasi WAJIB menggunakan karakter TAB)
+    # Using <<-EOF (Indention MUST use the TAB character)
     openssl req -x509 -new -nodes \
         -key smf_ca.key \
         -sha256 \
