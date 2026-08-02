@@ -1,0 +1,47 @@
+# Storm Framework
+
+> Tool Suite for Offensive Security Framework
+
+## Framework Language
+> Python, Golang, Rust, Bash, PowerShell
+
+## Documentation & Feature
+- [Connection Runtime Service](docs/storm-framework.wiki/CRS_ENGINE.md)
+- [Build Module](docs/storm-framework.wiki/MODULE_GUIDE.md)
+- [Logger Dock](docs/storm-framework.wiki/LOGGER.md)
+
+## Installation Documentation
+- [Installation Docker](docs/storm-framework.wiki/INSTALLATION_DOCKER.md)
+- [Installation Venv](docs/storm-framework.wiki/INSTALLATION_VENV.md)
+- [Installation Linux](docs/storm-framework.wiki/INSTALLATION_LINUX.md)
+- [Installation Termux](docs/storm-framework.wiki/INSTALLATION_TERMUX.md)
+
+## Documentation ROOT
+- [Tree](TREE.md)
+- [Flow](FLOW.md)
+
+## HOME
+- [license](LICENSE)
+- [Readme](README.md)
+- [Contributing](CONTRIBUTING.md)
+
+## Project Structure & Core Entry Points
+- [App Entry](smfstart): Starting, Interface, Prompt, Boot.
+- [Update Entry](smfupdate): Update tool, Source Code, Version.
+- [Template Load](modules/): Auxiliary, Scanner, Osint, Fuzzers, Exploit, Payload.
+- [Connection Runtime Service](lib/roar/crs/): Managing Runtime connections.
+- [Logger Manager](lib/roar/logging/): Manage internal logs.
+- [Plugin Manager](lib/roar/plugin/): Manage service plugins.
+- [Gathering](docker/): Collection of Linux/Windows Docker installations.
+- [Feature Examples](example/): Examples of feature implementation and setup.
+- [data framework](data/data.json): Metadata Storm Framework.
+
+
+# Identity
+> Owner: zxelzy
+> Org: StormWorld0
+> Email: StormWorld0@proton.me
+
+- [X (Twitter)](https://x.com/elzyone)
+- [Threads](https://www.threads.com/@zxelzy_)
+- [Github](https://github.com/zxelzy)
