@@ -4,14 +4,14 @@ Connection Runtime Service (CRS) is an in-house network & transport engine based
 
 By abstracting network communications into a CRS, The system gains full control over transport behavior, memory footprint, security boundaries, and performance optimization through Go's built-in concurrency model.
 
-### Architectural Motivation
+### ⚙️ Architectural Motivation
 
 - **Dependency Decoupling & Supply Chain Security:** Reduces the risk of vulnerabilities and breaking changes from third-party libraries by isolating all I/O operations into one centralized engine.
 - **Performance & Low Latency:** Leverages Go's execution speed and I/O model to minimize overhead when handling high-density communications.
 - **Connection Stability:** Provides custom connection pooling management, retry mechanisms, and predictable timeout handling.
 - **Concurrency Management:** Leverage native Go Routines to handle concurrent I/O tasks efficiently with controlled resource consumption.
 
-### Technical Specifications
+### 📝 Technical Specifications
 
 **Tech Stack & Runtime**
 - **Language:** Go (Golang)
@@ -31,7 +31,7 @@ Currently CRS implements a subset of network protocols focused on the system's c
 
 ---
 
-## Ways of working CRS
+## 🛠️ Ways of working CRS
 
 ```mermaid
 sequenceDiagram
@@ -68,14 +68,13 @@ sequenceDiagram
 
 ---
 
-## Protocol Parameters
+## 💡 Protocol Parameters
 
 All protocols definitely have different parameters, here you can learn what parameters the current protocols have.
 
-### Socket Parameters
+### 🔌 Socket Parameters
 
 **1. Open Connection**
-
 ```python
 def execute(options, net):
     s = net.Socket(host, port, timeout)
@@ -89,7 +88,6 @@ def execute(options, net):
 Just inherit the child classes of Socket like recv, send, uptls.
 
 **2. Send data**
-
 ```python
 s.send(data, timeout)
 ```
@@ -107,7 +105,6 @@ s.send(data, timeout)
 - **status_tls:** Returns a Boolean. If True=TLS is enabled. False=TLS is disabled.
 
 **3. Viewing the buffer**
-
 ```python
 raw = s.recv(readsize)
 ```
@@ -132,7 +129,6 @@ raw = s.recv(readsize)
 
 
 **4. TLS Upgrade**
-
 ```python
 r = s.uptls(cert, key, ca, verify)
 ```
@@ -162,6 +158,7 @@ Automatically inherits TLS connections to send/recv and send/recv usage remains 
 - **status_tls:** Returns a Boolean. True=TLS is enabled. False=TLS is disabled.
 - **tls:** Responses that inherit TLS information.
 
+**TLS Information**
 - **version:** Returns TLS Version 1.0/1.1/1.2/1.3.
 - **cipher:** Returning Cipher Suite.
 - **protocol:** Returns TLS protocols like h1/h2/h3.
@@ -173,6 +170,157 @@ Automatically inherits TLS connections to send/recv and send/recv usage remains 
 - **dns_name:** Returns a list of hostnames in the Subject Alternative Name (SAN) extension.
 - **expires:** Returns the certificate Expiration Time in RFC3339 format.
 - **cert_chain_count:** Returns the number of certificate chains that were successfully verified.
+
+---
+
+### ☎️ Requests Parameter
+
+**Query DNS**
+```python
+def execute(options, net):
+    r = net.requests(domain, type, protocol, timeout, ratelimit, con)
+```
+**Description:** Requests are stateless, and you get a response immediately after each run.
+
+**Parameter**
+- **domain:** example.com | str.
+- **type:** DNS query type. Example: A, AAAA, TXT, etc. | Default A | str.
+- **protocol:** Can TCP/UDP | Default TCP.
+- **timeout:** To limit the open connection time. | Default 5s
+- **ratelimit:** Blocking requests if the token runs out. | Default 150/1s | int.
+- **con:** Number of Goroutines for Concurrency, allows to run parallel connections. | int.
+
+**Response**
+- **status:** ERROR/SUCCESS/TIMEOUT/WARNING.
+- **message:** Messages adjust to status.
+
+- **rcode:** DNS Response Code (example: 0 = NOERROR, 3 = NXDOMAIN).
+- **rcode_str:** String representation of RCODE.
+- **records:** List of resolution results / answers from DNS server.
+- **truncated:** Indicator if the UDP payload is too large and is truncated (will trigger a retry via TCP).
+- **authoritative:** Indicator whether the response comes from the Authoritative Name Server directly.
+- **valid_domain:** DNS level validation: IPC operation was successful AND RCODE is NOERROR (0).
+
+---
+
+### 🖇️ Http Requests
+
+**Implementation**
+```python
+def execute(options, net):
+    r = net.http_requests(method, url, header, body, redirect, rawhttp, infotls, verify, retry, ratelimit, timeout, con)
+```
+**Description:** HTTP Requests are stateless, they get a response immediately.
+
+**Parameter**
+- **method:** GET/POST/DELETE/PUT/dll. | Default GET.
+- **url:** https://example.com | str.
+- **header:** Example: {"User-Agent": "Storm-Framework/3.11 (X11; Linux x86_64)"} | Dict.
+- **body:** Can be empty, can also be filled. | Default empty | str.
+- **redirect:** To do a page redirect. | Default True. | Boolean.
+- **rawhttp:** Can supply FULL raw HTTP string in the (body). Example: HTTP/1.1\r\nHost: target\r\nX-Injected:  space Strange\r\n\r\n | Default False. | Boolean.
+- **infotls:** To display TLS information in the Response. | Default False | Boolean.
+- **verify:** True=Verifying client certificate. False=Skip verification. | Default True. | Boolean.
+- **retry:** Performs Retryable http / Retry connection if failed. | Default 2. | int.
+- **ratelimit:** Blocking requests if the token runs out. | Default 150/1s. | int.
+- **timeout:** To limit the open connection time. | Default 5s.
+- **con:** Number of Goroutines for Concurrency, allows to run parallel connections. | int.
+
+**Response**
+- **status:** ERROR/SUCCESS/TIMEOUT/WARNING.
+- **message:** Messages adjust to status.
+
+- **status_code:** HTTP Status Code (Example: 200, 404, 500).
+- **ok:** HTTP validation shorthand: Transport success and Status Code 2xx / 3xx.
+- **text:** Returns the response body in UTF-8 string form.
+- **content:** Returns the response body in raw bytes.
+- **header:** The original header dictionary from the response.
+- **get_header:** Case-insensitive lookup for HTTP Headers. Example: res.get_header('content-type') will find 'Content-Type'.
+- **protocol:** HTTP Protocol (Example: HTTP/1.1, HTTP/2.0).
+- **engine:** The connection provider engine from CRS (Example: retryablehttp).
+- **tls:** Responses that inherit TLS information.
+- **json:** [Lazy Evaluation] Parses the string body into a JSON dict/list. Returns None if the body is not a valid JSON format.
+
+**Informasi TLS**
+- **version:** Returns TLS Version 1.0/1.1/1.2/1.3.
+- **cipher:** Returning Cipher Suite.
+- **protocol:** Returns TLS protocols like h1/h2/h3.
+- **hostname:** Returns Host like (example.com).
+- **handshake:** Returns a Boolean. True=Handshake succeeded. False=Handshake failed.
+- **session_resume:** Returns a Boolean. True=If the TLS session was resumed. False=If the handshake was complete.
+- **subject:** Returns the (CN) of the server certificate.
+- **issuer:** Returns the (CN) of the (CA) that issued the certificate. Examples: R13, ISRG Root X1, etc.
+- **dns_name:** Returns a list of hostnames in the Subject Alternative Name (SAN) extension.
+- **expires:** Returns the certificate Expiration Time in RFC3339 format.
+- **cert_chain:** Certificate chain successfully verified against a trusted root CA.
+
+---
+
+### 📡 Use of Response & Inheritance
+
+**1. Socket**
+
+- **Status:** `Stateful`
+- **Inheritance**
+```python
+# Open legacy connection
+s = net.Socket(host, port, timeout)
+
+# Send Data
+s.send(data, timeout)
+
+# Buffer Fetching
+s.recv(readsize)
+
+# TLS Upgrade has legacy
+s.uptls(cert, key, ca, verify)
+
+# Automatically be on a TLS encrypted connection
+s.send()
+s.recv()
+```
+
+- **Response**
+```python
+# send data
+r = s.send(data, timeout)
+smf.printf(r.status, r.message)
+smf.printf(r.isreused, r.rtt_ms, etc.)
+
+# read buffer
+r = s.recv(readsize)
+smf.printf(r.status, r.message)
+smf.printf(r.raw_bytes, r.hex_bytes, etc.)
+
+# TLS Upgrade
+r = s.uptls(cert, key, ca, verify)
+smf.printf(r.status, r.message)
+smf.printf(r.tls.version, r.tls.cipher, etc.)
+```
+
+**2. Requests**
+
+- **Status:** `Stateless`
+- **Response**
+```python
+r = net.requests(...)
+smf.printf(r.status, r.message)
+smf.printf(r.rcode, r.records, etc.)
+```
+
+**3. HTTP Requests**
+
+- **Status:** `Stateless`
+- **Response**
+```python
+r = net.http_requests(...)
+smf.printf(r.status, r.message)
+smf.printf(r.status_code, r.tls.cipher, etc.)
+```
+
+
+
+
 
 
 
