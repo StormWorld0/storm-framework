@@ -28,6 +28,15 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: stormworld0/storm-framework
+          tags: |
+            type=semver,pattern={{version}}
+            type=raw,value=latest
       
       - name: Build and push multi-arch image
         uses: docker/build-push-action@v6
@@ -35,9 +44,13 @@ jobs:
           context: .
           push: true
           platforms: linux/amd64,linux/arm64
-          tags: |
-              stormworld0/storm-framework:${{ github.ref_name }}
-              stormworld0/storm-framework:latest
+          # Using tags and labels extracted from metadata-action
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          
+          # Signing the SLSA Provenance Attestation
+          provenance: true
+          sbom: true
           
           cache-from: type=gha
           cache-to: type=gha,mode=max
