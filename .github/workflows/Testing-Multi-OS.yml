@@ -55,7 +55,7 @@ jobs:
           fi
           
           if [ "${{ matrix.setup_type }}" = "docker" ]; then
-            apt-get install -y curl sudo bash jq docker.io docker-compose-v2
+            apt-get install -y curl sudo bash jq docker.io
           else
             apt-get install -y curl sudo bash jq
           fi
