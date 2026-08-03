@@ -20,7 +20,7 @@ jobs:
 
     container:
       image: ${{ matrix.os }}
-      options: --privileged
+      options: --privileged -v /var/run/docker.sock:/var/run/docker.sock
 
     steps:          
       - name: Prepare Environment
@@ -53,7 +53,12 @@ jobs:
           else
             apt-get update -y
           fi
-          apt-get install -y curl sudo bash jq
+          
+          if [ "${{ matrix.setup_type }}" = "docker" ]; then
+            apt-get install -y curl sudo bash jq docker.io docker-compose-v2
+          else
+            apt-get install -y curl sudo bash jq
+          fi
 
       - name: Checkout Code
         uses: actions/checkout@v4
