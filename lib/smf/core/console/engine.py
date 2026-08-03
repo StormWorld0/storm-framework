@@ -29,6 +29,7 @@ IGNORED_SYSTEM_COMMANDS = {
     "more",
     "head",
     "tail",
+    "cat",
     # File / Directory Operations
     "mkdir",
     "touch",
