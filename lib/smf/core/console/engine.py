@@ -130,7 +130,6 @@ class Context:
         # Log all to internal
         smf.printd("Capture cmd dispatch", cmd, level="DEBUG")
         smf.printd("Capture dispatch args", args, level="DEBUG")
-        smf.printd("Capturing self from context", self, level="DEBUG")
 
         if not handled:
             success = self._execute_external(cmd, args)
