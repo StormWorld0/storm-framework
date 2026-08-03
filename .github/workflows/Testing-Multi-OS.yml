@@ -2,17 +2,12 @@ name: Multi-OS CI Testing
 
 on:
   push:
-    branches: [ main, DevExperiment ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, DevExperiment ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  # =================================================================
-  # JOB 2: CONTAINERIZED SCRIPT TEST (6 Jobs)
-  # Executing setuplinux & setupvenv in an isolated environment
-  # Total execution: 3 OS x 2 Setup = 6 Jobs
-  # =================================================================
   script-test:
     name: Test ${{ matrix.setup_type }} on ${{ matrix.os }}
     runs-on: ubuntu-latest
@@ -21,7 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu:latest, debian:latest, kalilinux/kali-rolling:latest]
-        setup_type: [linux, venv]
+        setup_type: [linux, venv, docker]
 
     container:
       image: ${{ matrix.os }}
@@ -70,4 +65,6 @@ jobs:
             bash ./setuplinux
           elif [ "${{ matrix.setup_type }}" == "venv" ]; then
             bash ./setupvenv
+          elif [ "${{ matrix.setup_type }}" == "docker" ]; then
+            bash ./setupdocker
           fi
