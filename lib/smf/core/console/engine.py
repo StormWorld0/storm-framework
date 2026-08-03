@@ -14,16 +14,32 @@ from dataclasses import dataclass, field
 
 IGNORED_SYSTEM_COMMANDS = {
     # Shell Built-ins
-    "cd", "alias", "source", "exec",
+    "cd",
+    "alias",
+    "source",
+    "exec",
     # Text Editors & Pagers
-    "nano", "vim", "vi", "emacs", 
-    "neovim", "less", "more", "head", 
+    "nano",
+    "vim",
+    "vi",
+    "emacs",
+    "neovim",
+    "less",
+    "more",
+    "head",
     "tail",
     # File / Directory Operations
-    "mkdir", "touch", "rm", "rmdir", 
-    "cp", "mv", "chmod", "chown", 
+    "mkdir",
+    "touch",
+    "rm",
+    "rmdir",
+    "cp",
+    "mv",
+    "chmod",
+    "chown",
     "ln",
 }
+
 
 # ----------------------
 # Network call function
@@ -65,11 +81,14 @@ class Context:
     def _execute_external(self, cmd: str, args: list[str]) -> bool:
         """Melempar perintah ke alat eksternal."""
         cmd_clean = os.path.basename(cmd).strip().lower()
-        
+
         if cmd_clean in IGNORED_SYSTEM_COMMANDS:
-            smf.printd(f"Execution ignored: '{cmd_clean}' is a system utility/built-in", level="INFO")
+            smf.printd(
+                f"Execution ignored: '{cmd_clean}' is a system utility/built-in",
+                level="INFO",
+            )
             return False
-        
+
         path = shutil.which(cmd_clean)
         if not path:
             smf.printd("Command execution external Not found", path, level="INFO")
@@ -83,7 +102,10 @@ class Context:
         except KeyboardInterrupt:
             return True
         except subprocess.CalledProcessError as e:
-            smf.printd(f"Execution failed for {cmd_clean}, exit code: {e.returncode}", level="WARN")
+            smf.printd(
+                f"Execution failed for {cmd_clean}, exit code: {e.returncode}",
+                level="WARN",
+            )
             return True
         except (subprocess.SubprocessError, OSError) as e:
             smf.printd(f"Execution failed for {cmd}", e, level="ERROR")
