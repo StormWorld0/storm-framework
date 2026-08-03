@@ -81,7 +81,7 @@ class Context:
         smf.printd("CONTEXT RUNTIME", self.net, level="DEBUG")
 
     def _execute_external(self, cmd: str, args: list[str]) -> bool:
-        """Melempar perintah ke alat eksternal."""
+        """Throwing commands to external devices."""
         cmd_clean = os.path.basename(cmd).strip().lower()
 
         if cmd_clean in IGNORED_SYSTEM_COMMANDS:
