@@ -3,7 +3,7 @@ import os
 import smf
 
 import apps.utility.utils as utils
-from apps.utility.colors import C
+from apps.utility.colors import *
 from rootmap import ROOT
 
 
@@ -13,30 +13,29 @@ def show_about():
         VERSION = json.load(f)["version"]
 
     smf.printf(
-        f"\n{C.HEADER}=========================================================================="
+        f"\n{CC.MAGENTA}=========================================================================="
     )
     smf.printf(
-        f"{C.HEADER}=========================================================================="
+        f"{CC.MAGENTA}=========================================================================="
     )
-    smf.printf(f"{C.INPUT}      Tool                      : Storm Framework")
-    smf.printf(f"{C.INPUT}      Organization              : StormWorld0")
-    smf.printf(f"{C.INPUT}      Owner                     : エルジー")
-    smf.printf(f"{C.INPUT}      Purpose                   : All-In-One Pentest Tool")
-    smf.printf(f"{C.INPUT}      Version                   : {VERSION}")
+    smf.printf(f"{CC.YELLOW}      Tool                      : Storm Framework")
+    smf.printf(f"{CC.YELLOW}      Organization              : StormWorld0")
+    smf.printf(f"{CC.YELLOW}      Owner                     : エルジー")
+    smf.printf(f"{CC.YELLOW}      Purpose                   : All-In-One Pentest Tool")
+    smf.printf(f"{CC.YELLOW}      Version                   : {VERSION}")
+    smf.printf(f"{CC.YELLOW}      GitHub                    : github.com/StormWorld0/storm-framework")
+    smf.printf(f"{CC.YELLOW}      DockerHub                 : hub.docker.com/r/stormworld0/storm-framework")
     smf.printf(
-        f"{C.INPUT}      GitHub                    : github.com/StormWorld0/storm-framework"
-    )
-    smf.printf(
-        f"{C.HEADER}==========================================================================\n"
+        f"{CC.MAGENTA}==========================================================================\n"
     )
 
 
 def show_help():
     smf.printf(f"""
-{C.HEADER}==========================================================================
-{C.SUCCESS}                             COMMAND GUIDE
-{C.HEADER}==========================================================================
-{C.INPUT}
+{CC.MAGENTA}==========================================================================
+{CC.GREEN}                             COMMAND GUIDE
+{CC.MAGENTA}==========================================================================
+{CC.YELLOW}
   show options                  : View the variables that have been set
   show modules                  : Displaying module categories
   show <categories>             : Displays the complete contents
@@ -65,7 +64,14 @@ def show_help():
   run                           : Run the selected module
 
   storm update                  : Make updates if necessary
-{C.RESET}
+{CC.RESET}
+{CC.GREEN}
+COMMAND OUTSIDE
+{CC.MAGENTA}
+---------------
+{CC.CYAN}
+  Can run external tools such as: nuclei, nmap, ping, etc.
+{CC.RESET}
     """)
 
 
