@@ -71,10 +71,8 @@ def show_help():
 {CC.RESET}
 {CC.GREEN}
 COMMAND OUTSIDE
-{CC.MAGENTA}
----------------
-{CC.CYAN}
-  Can run external tools such as: nuclei, nmap, ping, etc.
+{CC.MAGENTA}---------------
+{CC.CYAN}  Can run external tools such as: nuclei, nmap, ping, etc.
 {CC.RESET}
     """)
 
