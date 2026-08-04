@@ -2,7 +2,7 @@
   <img src="https://github.com/StormWorld0/storm-framework/blob/main/assets/images/flow_storm.png">
 </p>
 
-<h1 align="center">⚡ Storm Framework FLOW</h1>
+<h1 align="center">Flow & Arch</h1>
 
 Storm is a web-based framework **Stateful REPL (Read-Eval-Print Loop)** designed with an isolated modular architecture. This framework uses SQLite as *embedded database* for state management, session tracking, and internal logging, ensuring data consistency across the execution cycle.
 
