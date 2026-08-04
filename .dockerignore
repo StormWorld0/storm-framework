@@ -15,7 +15,6 @@ env/
 venv/
 
 # Compiler Build Cache (Go, Rust, C)
-.cargo/
 target/
 .go-cache/
 
