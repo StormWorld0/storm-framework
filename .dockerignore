@@ -1,0 +1,25 @@
+# Version Control & Metadata
+.git
+.gitignore
+.github
+.dockerignore
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+.venv/
+env/
+venv/
+
+# Compiler Build Cache (Go, Rust, C)
+.cargo/
+target/
+.go-cache/
+
+# Sensitive Files
+.env
+.idea/
+.vscode/
