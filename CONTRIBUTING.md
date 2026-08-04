@@ -15,7 +15,7 @@ In order for the code merging process (*Merge*) to run smoothly, please follow t
 ### 2. Module Structure & Dependencies
 - **Modules Folder**: Save your new module in the `modules/` folder.
 - **Requirements**: If your module requires additional libraries, please note them in the `requirements.txt` file.
-- **Modules Guide**: You can read the explanation [here](https://github.com/StormWorld0/storm-framework/blob/main/docs/storm-framework.wiki/MODULE_GUIDE.md) to know how to implement modules correctly.
+- **Modules Guide**: You can read the explanation [here](https://github.com/StormWorld0/storm-framework/blob/main/docs/storm-framework.wiki/MODULE-GUIDE.md) to know how to implement modules correctly.
 
 ---
 
