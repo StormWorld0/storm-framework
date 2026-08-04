@@ -1,6 +1,9 @@
 [project]
 name = "Storm-Framework"
-version = "3.10"
+org = [
+    {name = "StormWorld0", email = "StormWorld0@proton.me"}
+]
+version = "3.12"
 authors = [
     {name = "エルジー", email = "elzyproot@protonmail.com"}
 ]
@@ -11,12 +14,33 @@ license = {text = "GPL-3.0"}
 classifiers = [
     "License :: OSI Approved :: GPL License",
     "Operating System :: OS Independent",
+    "Natural Language :: English",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: POSIX",
+    "Operating System :: POSIX :: BSD",
+    "Operating System :: POSIX :: Linux",
+    'Operating System :: Microsoft :: Windows',
+    "Programming Language :: Python",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Golang",
     "Programming Language :: Rust",
-    "Programming Language :: Bash"
+    "Programming Language :: Bash",
+    "Programming Language :: PowerShell"
 ]
-keywords=["storm", "python", "tool-suite", "offensive-security", "storm-framework"]
+keywords=["hacktoberfest", "tool-suite", "offsec", "readteam"]
+
+[project.urls]
+homepage = "https://github.com/StormWorld0/storm-framework"
+documentation = "https://github.com/StormWorld0/storm-framework/tree/main/docs/storm-framework.wiki"
+source = "https://github.com/StormWorld0/storm-framework"
+issues = "https://github.com/StormWorld0/storm-framework/issues"
+discussion = "https://github.com/orgs/StormWorld0/discussions"
 
 [tool.black]
 line-length = 90
