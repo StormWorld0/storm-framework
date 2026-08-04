@@ -74,7 +74,7 @@ If you have ever used metasploit or you are a metasploit user, you will be 100% 
 
 ## ⚙️ FLOW
 
-See the explanation about **storm framework flow** in docs or in [FLOW](https://github.com/StormWorld0/storm-framework/blob/main/FLOW.md)
+See the explanation about **storm framework flow** in docs or in [FLOW](https://github.com/StormWorld0/storm-framework/blob/main/Flow&Arch.md)
 
 We explain the essence so that it is easier to understand and not ambiguous, perhaps we do not explain some of the other logic because we are not yet sure about its maturity. But don't worry, we will continue to update it little by little in the future.
 
@@ -94,9 +94,9 @@ In the wiki where we explain various feature logic and others, you can read abou
 
 We recommend the standard installation provided: 
 
-- [Installation Venv](https://github.com/StormWorld0/storm-framework/blob/main/docs/storm-framework.wiki/INSTALLATION_VENV.md)
-- [Installation Docker](https://github.com/StormWorld0/storm-framework/blob/main/docs/storm-framework.wiki/INSTALLATION_DOCKER.md)
-- [Installation Termux](https://github.com/StormWorld0/storm-framework/blob/main/docs/storm-framework.wiki/INSTALLATION_TERMUX.md)
+- [Installation Venv](https://github.com/StormWorld0/storm-framework/blob/main/docs/storm-framework.wiki/INSTALLATION-VENV.md)
+- [Installation Docker](https://github.com/StormWorld0/storm-framework/blob/main/docs/storm-framework.wiki/INSTALLATION-DOCKER.md)
+- [Installation Termux](https://github.com/StormWorld0/storm-framework/blob/main/docs/storm-framework.wiki/INSTALLATION-TERMUX.md)
 
 
 ## USING STORM
