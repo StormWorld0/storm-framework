@@ -8,13 +8,14 @@ Hello! Thank you for your interest in enlarging **Storm-Framework**. This projec
 In order for the code merging process (*Merge*) to run smoothly, please follow these standards:
 
 ### 1. Code Quality & Standards
-- **Python 3.12.x**: Make sure your code is compatible with the latest version.
+- **Python 3.13.x - 3.14.x**: Make sure your code is compatible with the latest version.
 - **Passed GitHub Actions**: Before sending a Pull Request (PR), make sure the indicator in your repo is colored. **Green ✅**. Our system will check *Syntax Error* automatically.
 - **Clear Variables**: Don't use "ghost" variables. Define all variables. (like `VERSION`) correctly to avoid the `undefined name` error.
 
 ### 2. Module Structure & Dependencies
 - **Modules Folder**: Save your new module in the `modules/` folder.
 - **Requirements**: If your module requires additional libraries, please note them in the `requirements.txt` file.
+- **CRS Connection**: Gunakan CRS untuk menangani jaringan di module. Penjelasan [CRS](https://github.com/StormWorld0/storm-framework/blob/main/docs/storm-framework.wiki/CRS-ENGINE.md)
 - **Modules Guide**: You can read the explanation [here](https://github.com/StormWorld0/storm-framework/blob/main/docs/storm-framework.wiki/MODULE-GUIDE.md) to know how to implement modules correctly.
 
 ---
@@ -29,14 +30,15 @@ In order for the code merging process (*Merge*) to run smoothly, please follow t
 | **4. Commit** | `git commit -m "Add modules X"` |
 | **5. Push** | `git push origin your new features` |
 | **6. Test** | Please test your changes before committing to PR |
-| **7. PR** | Open **Pull Request** to our `main` branch. |
+| **7. Build Test** | Create a test script if necessary for proof |
+| **8. PR** | Open **Pull Request** to our `main` branch. |
 
 ---
 
 ## 🏆 Award
 We really appreciate your hard work. The name of each contributor whose code was successfully-*merge* will be permanently displayed at:
 
-* **File CONTRIBUTE.md** (Part Hall of Fame).
+* **File THANKS.md**
 
 ---
 
