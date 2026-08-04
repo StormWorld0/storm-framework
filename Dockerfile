@@ -79,12 +79,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libreadline8 \
     ncurses-bin \
     sqlite3 \
+    libcap2-bin \
     && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /var/lib/dpkg/status-old
     
 # To perform packet sniffing (libpcap) without full root privileges.
-RUN apt-get install -y libcap2-bin && setcap cap_net_raw,cap_net_admin=eip /usr/local/bin/python3.13
+RUN setcap cap_net_raw,cap_net_admin=eip /usr/local/bin/python3.13
+RUN setcap cap_net_raw,cap_net_bind_service=eip /usr/bin/nmap
 
 # Copy the build wheels results
 COPY --from=builder /tmp/wheels /tmp/wheels
