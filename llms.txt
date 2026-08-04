@@ -6,19 +6,19 @@
 > Python, Golang, Rust, Bash, PowerShell
 
 ## Documentation & Feature
-- [Connection Runtime Service](docs/storm-framework.wiki/CRS_ENGINE.md)
-- [Build Module](docs/storm-framework.wiki/MODULE_GUIDE.md)
-- [Logger Dock](docs/storm-framework.wiki/LOGGER.md)
+- [Connection Runtime Service](docs/storm-framework.wiki/CRS-ENGINE.md): Network engine explanation.
+- [Build Module](docs/storm-framework.wiki/MODULE-GUIDE.md): Explanation of Module creation.
+- [Logger Dock](docs/storm-framework.wiki/LOGGER.md): Fast Logger machine explanation.
 
 ## Installation Documentation
-- [Installation Docker](docs/storm-framework.wiki/INSTALLATION_DOCKER.md)
-- [Installation Venv](docs/storm-framework.wiki/INSTALLATION_VENV.md)
-- [Installation Linux](docs/storm-framework.wiki/INSTALLATION_LINUX.md)
-- [Installation Termux](docs/storm-framework.wiki/INSTALLATION_TERMUX.md)
+- [Installation Docker](docs/storm-framework.wiki/INSTALLATION-DOCKER.md): Docker installer explanation.
+- [Installation Venv](docs/storm-framework.wiki/INSTALLATION-VENV.md): Venv installer explanation.
+- [Installation Linux](docs/storm-framework.wiki/INSTALLATION-LINUX.md): Standard Linux installer explained.
+- [Installation Termux](docs/storm-framework.wiki/INSTALLATION-TERMUX.md): Termux/Android installer explanation.
 
 ## Documentation ROOT
-- [Tree](TREE.md)
-- [Flow & Arch](FLOW.md)
+- [Tree](TREE.md): Rules and Brief explanation of the directory.
+- [Flow & Arch](FLOW.md): Explanation of the basics of Storm-Framework.
 
 ## HOME
 - [license](LICENSE): GPL-3.0
@@ -32,12 +32,12 @@
 - [Connection Runtime Service](lib/roar/crs/): Managing Runtime connections.
 - [Logger Manager](lib/roar/logging/): Manage internal logs.
 - [Plugin Manager](lib/roar/plugin/): Manage service plugins.
-- [Gathering](docker/): Collection of Linux/Windows Docker installations.
+- [Gathering](docker/): Collection of Linux/Windows/MacOS Docker installations.
 - [Feature Examples](example/): Examples of feature implementation and setup.
 - [data framework](data/data.json): Metadata Storm Framework.
 
 ## Related Websites & Related Repositories
-- [DockerHub](https://hub.docker.com/r/stormworld0/storm-framework)
+- [DockerHub](https://hub.docker.com/r/stormworld0/storm-framework): DockerHub repository, docker images.
 
 
 # Identity
