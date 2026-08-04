@@ -32,10 +32,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libreadline-dev \
     && rm -rf /var/lib/apt/lists/*
 
+COPY . .
+
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip wheel --no-cache-dir --extra-index-url https://pypi.org/simple -r requirements.txt -w /tmp/wheels
-
-COPY . .
 
 RUN python3 -m scripts.cpl.compiler
 RUN chmod +x ${APP_HOME}/smfstart
