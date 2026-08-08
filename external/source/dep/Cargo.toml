@@ -8,7 +8,7 @@ name = "storm_manifest"
 path = "dummy.rs"
 
 [dependencies]
-rand = "0.8"
+rand = "0.10.2"
 regex = "1"
 toml = "0.8"
 serde_yaml = "0.9"
