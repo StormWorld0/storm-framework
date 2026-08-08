@@ -34,6 +34,8 @@ pub fn get_db_connection(py: Python<'_>) -> PrintResult<Connection> {
     conn.execute_batch(
         "PRAGMA journal_mode = WAL;
          PRAGMA synchronous = NORMAL;
+         PRAGMA temp_store = MEMORY;
+         
          CREATE TABLE IF NOT EXISTS system_logs (
              id INTEGER PRIMARY KEY AUTOINCREMENT,
              timestamp REAL,
@@ -62,28 +64,30 @@ pub fn insert_log(
         (timestamp, level, label, payload, traceback, caller_info),
     )?;
 
-    let retention_period = 7 * 24 * 60 * 60;
-    conn.execute(
-        "DELETE FROM system_logs
-         WHERE timestamp < (strftime('%s','now') - ?1)",
-        [retention_period],
-    )?;
+    let should_cleanup = rand::random::<u8>() < 3; // Probabilitas ~1% (membutuhkan crate `rand`)
+    
+    if should_cleanup {
+        let retention_period = 7 * 24 * 60 * 60; // 7 Hari
+        
+        // Hapus berdasarkan waktu
+        conn.execute(
+            "DELETE FROM system_logs
+             WHERE timestamp < (strftime('%s','now') - ?1)",
+            [retention_period],
+        )?;
 
-    // Maksimal 3000 log
-    conn.execute(
-        "
-        DELETE FROM system_logs
-        WHERE id IN (
-            SELECT id
-            FROM system_logs
-            ORDER BY id ASC
-            LIMIT (
-                SELECT MAX(COUNT(*) - 5000, 0)
-                FROM system_logs
-            )
-        )
-        ",
-        [],
-    )?;
+        // Hapus berdasarkan batas maksimal 10.000 row
+        // Menggunakan OFFSET pada Primary Key index (O(1)) jauh lebih cepat daripada menghitung COUNT(*)
+        conn.execute(
+            "DELETE FROM system_logs 
+             WHERE id <= (
+                 SELECT id FROM system_logs 
+                 ORDER BY id DESC 
+                 LIMIT 1 OFFSET 10000
+             )",
+            [],
+        )?;
+    }
+    
     Ok(())
 }
