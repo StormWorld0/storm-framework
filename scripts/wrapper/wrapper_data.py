@@ -17,3 +17,6 @@ def data():
     except Exception as e:
         smf.printf("[*] Error Exception Wrapper Data =>", e)
         sys.exit(100)
+
+if __name__ == "__main__":
+    data()
