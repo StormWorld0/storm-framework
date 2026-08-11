@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
-
 import sys
+import smf
+
 from .gen_wrapper import generate
 
 def data()
@@ -14,5 +14,5 @@ def data()
 
         generate(wrapper)
     except Exception as e:
-        print(f"Error Exception Wrapper => {e}")
+        smf.printf("[*] Error Exception Wrapper Data =>", e)
         sys.exit(100)
