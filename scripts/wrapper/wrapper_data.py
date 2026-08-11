@@ -3,7 +3,7 @@ import smf
 
 from .gen_wrapper import generate
 
-def data()
+def data():
     wrapper = None
     try:
         if "--data" in sys.argv:
