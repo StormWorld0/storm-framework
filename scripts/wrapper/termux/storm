@@ -21,7 +21,7 @@ check_deps() {
 case "${1:-}" in
     --update)
         if [ "$#" -ne 1 ]; then
-            echo "[*] Invalid usage. Use: $0 --update"
+            echo "[*] Invalid arguments: $*"
             exit 1
         fi
         exec ./smfupdate --data Termux
@@ -98,7 +98,7 @@ case "${1:-}" in
         ;;
 
     *)
-        echo "[*] Invalid arguments: $*"
+        echo "[*] Invalid arguments: $* > Use: $0 --help"
         exit 1
         ;;
 esac
