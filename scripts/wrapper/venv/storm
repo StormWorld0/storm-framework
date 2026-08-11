@@ -1,64 +1,143 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+
 PROJECT_DIR="/opt/storm-framework"
-VENV_ACTIVATE="$PROJECT_DIR/venv/bin/activate"
+VENV_PATH="$PROJECT_DIR/venv"
 
-cd "$PROJECT_DIR" || { echo "[x] ERROR: Failed to access project directory."; exit 1; }
+# Access project directory
+cd "$PROJECT_DIR" || { echo "[*] ERROR: Failed to access $PROJECT_DIR" >&2; exit 1; }
 
-if [ -f "$VENV_ACTIVATE" ]; then
-    source "$VENV_ACTIVATE"
+# Activate Virtual Environment cleanly
+if [ -d "$VENV_PATH" ]; then
+    export VIRTUAL_ENV="$VENV_PATH"
+    export PATH="$VENV_PATH/bin:$PATH"
+    unset PYTHONHOME
 fi
 
-if [ "$1" = "--update" ] && [ $# -eq 1 ]; then
-    exec ./smfupdate --data Venv
+# Helper: Check dependencies
+check_deps() {
+    for cmd in jq curl; do
+        if ! command -v "$cmd" >/dev/null 2>&1; then
+            echo "[*] ERROR: Required dependency '$cmd' is missing." >&2
+            exit 1
+        fi
+    done
+}
 
-elif [ "$1" = "-cp" ] && [ "$2" = "-crt" ] && [ $# -eq 2 ]; then
+# Helper: Resolve target user context for sudo execution
+get_target_user_context() {
+    if [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != "root" ]; then
+        TARGET_USER="$SUDO_USER"
+        TARGET_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+        TARGET_GID=$(id -g "$SUDO_USER")
+    else
+        TARGET_USER="$(id -un)"
+        TARGET_HOME="$HOME"
+        TARGET_GID="$(id -g)"
+    fi
 
-    if [ ! -f "./data/smf_ca.crt" ]; then
-        echo "[x] ERROR: smf_ca.crt not found."
+    if [ -z "$TARGET_HOME" ] || [ ! -d "$TARGET_HOME" ]; then
+        echo "[*] ERROR: Could not determine valid home directory." >&2
         exit 1
     fi
+}
 
-    TARGET_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
-    : "${TARGET_HOME:=$HOME}"
-
-    cp ./data/smf_ca.crt "$TARGET_HOME/smf_ca.crt" || { echo "[x] Failed to copy certificate."; exit 1; }
-
-    echo "[+] Certificate copied to: $TARGET_HOME/smf_ca.crt"
-
-elif [ "$1" = "-v" ] || [ "$1" = "--version" ] && [ $# -eq 1 ]; then
-
-    version=$(jq -r '.version' data/data.json)
-    echo "[*] Version: $version"
-
-elif [ "$1" = "-v" ] && [ "$2" = "-L" ] && [ $# -eq 2 ]; then
-
-    latest_version=$(curl -fsSL "https://raw.githubusercontent.com/StormWorld0/storm-framework/main/data/data.json" | jq -r '.version')
-    current_version=$(jq -r '.version' data/data.json)
-
-    if [ "$(printf '%s\n' "$current_version" "$latest_version" | sort -V | tail -n1)" != "$current_version" ]; then
-        echo "[*] Update available: $current_version -> $latest_version"
-    else
-        echo "[*] Already up to date: $current_version"
-
-elif [ "$1" = "-h" ] || [ "$1" = "--help" ] && [ $# -eq 1 ]; then
-
-    echo "Arguments:"
-    echo "    [-h][--help]     : Displays existing commands"
-    echo "    [-v][--version]  : Displays the current version"
-    echo "    [-v -L]          : Shows whether the latest update is available"
-    echo "    [-cp -crt]       : Copying CA to HOME Directory"
-    echo "    [--update]       : Update to the latest version"
-
-elif [ $# -eq 0 ]; then
-
-    if [ ! -f "./smfstart" ]; then
+# Argument Parsing
+case "${1:-}" in
+    --update)
+        if [ "$#" -ne 1 ]; then
+            echo "[*] Invalid usage. Use: $0 --update" >&2
+            exit 1
+        fi
         exec ./smfupdate --data Venv
-    else
-        exec ./smfstart
-    fi
+        ;;
 
-else
-    echo "[*] Invalid arguments: $@"
-    exit 1
-fi
+    -c)
+        if [ "${2:-}" != "--crt" ] || [ "$#" -ne 2 ]; then
+            echo "[*] Invalid arguments. Use: $0 -c --crt" >&2
+            exit 1
+        fi
+
+        SRC_CERT="./data/smf_ca.crt"
+        if [ ! -f "$SRC_CERT" ]; then
+            echo "[*] ERROR: Certificate '$SRC_CERT' not found." >&2
+            exit 1
+        fi
+
+        get_target_user_context
+        DEST_CERT="$TARGET_HOME/smf_ca.crt"
+
+        cp "$SRC_CERT" "$DEST_CERT" || { echo "[*] ERROR: Failed to copy certificate." >&2; exit 1; }
+
+        # Fix permission & ownership if run via sudo
+        if [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != "root" ]; then
+            chown "$TARGET_USER:$TARGET_GID" "$DEST_CERT" || {
+                echo "[*] WARNING: Failed to set ownership to $TARGET_USER" >&2
+                exit 1
+            }
+        fi
+
+        echo "[+] Certificate copied to: $DEST_CERT"
+        ;;
+
+    -v|--version)
+        if [ "$#" -eq 1 ]; then
+            check_deps
+            version=$(jq -r '.version // empty' data/data.json 2>/dev/null)
+            if [ -z "$version" ]; then
+                echo "[*] ERROR: Failed to read version from data/data.json" >&2
+                exit 1
+            fi
+            echo "[*] Version: $version"
+
+        elif [ "$#" -eq 2 ] && [ "${2:-}" = "-L" ]; then
+            check_deps
+            
+            current_version=$(jq -r '.version // empty' data/data.json 2>/dev/null)
+            latest_version=$(curl -fsSL "https://raw.githubusercontent.com/StormWorld0/storm-framework/main/data/data.json" | jq -r '.version // empty' 2>/dev/null)
+
+            if [ -z "$current_version" ] || [ -z "$latest_version" ]; then
+                echo "[*] ERROR: Failed to fetch version data." >&2
+                exit 1
+            fi
+
+            if [ "$(printf '%s\n%s\n' "$current_version" "$latest_version" | sort -V | tail -n1)" != "$current_version" ]; then
+                echo "[*] Update available: $current_version -> $latest_version"
+            else
+                echo "[*] Already up to date: $current_version"
+            fi
+        else
+            echo "[*] Invalid arguments: $*" >&2
+            exit 1
+        fi
+        ;;
+
+    -h|--help)
+        if [ "$#" -ne 1 ]; then
+            echo "[*] Invalid usage: $*" >&2
+            exit 1
+        fi
+        echo
+        echo "Arguments:"
+        echo "    [-h][--help]     : Displays existing commands"
+        echo "    [-v][--version]  : Displays the current version"
+        echo "    [-v -L]          : Shows whether the latest update is available"
+        echo "    [-c --crt]       : Copying CA to HOME Directory"
+        echo "    [--update]       : Update to the latest version"
+        echo
+        ;;
+
+    "")
+        if [ ! -f "./smfstart" ]; then
+            exec ./smfupdate --data Venv
+        else
+            exec ./smfstart
+        fi
+        ;;
+
+    *)
+        echo "[*] Invalid arguments: $*" >&2
+        exit 1
+        ;;
+esac
