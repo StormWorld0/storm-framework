@@ -47,7 +47,7 @@ get_target_user_context() {
 case "${1:-}" in
     --update)
         if [ "$#" -ne 1 ]; then
-            echo "[*] Invalid usage. Use: $0 --update" >&2
+            echo "[*] Invalid arguments: $*" >&2
             exit 1
         fi
         exec ./smfupdate --data Venv
@@ -55,7 +55,7 @@ case "${1:-}" in
 
     -c)
         if [ "${2:-}" != "--crt" ] || [ "$#" -ne 2 ]; then
-            echo "[*] Invalid arguments. Use: $0 -c --crt" >&2
+            echo "[*] Invalid arguments: $*"
             exit 1
         fi
 
@@ -115,7 +115,7 @@ case "${1:-}" in
 
     -h|--help)
         if [ "$#" -ne 1 ]; then
-            echo "[*] Invalid usage: $*" >&2
+            echo "[*] Invalid arguments: $*" >&2
             exit 1
         fi
         echo
@@ -137,7 +137,7 @@ case "${1:-}" in
         ;;
 
     *)
-        echo "[*] Invalid arguments: $*" >&2
+        echo "[*] Invalid arguments: $* > Use: $0 --help" >&2
         exit 1
         ;;
 esac
