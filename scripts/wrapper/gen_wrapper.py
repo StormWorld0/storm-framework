@@ -34,7 +34,7 @@ def Termux():
     except URLError as e:
         smf.printf(f"[-] Network error during download: {e.reason}")
     except PermissionError:
-        smf.printf(f"[-] Insufficient permissions to write to {target_path}")
+        smf.printf(f"[-] Insufficient permissions to write to {path}")
     except Exception as e:
         smf.printf("[-] Deployment failed =>", e)
 
@@ -63,7 +63,7 @@ def Linux():
     except URLError as e:
         smf.printf(f"[-] Network error during download: {e.reason}")
     except PermissionError:
-        smf.printf(f"[-] Insufficient permissions to write to {target_path}")
+        smf.printf(f"[-] Insufficient permissions to write to {path}")
     except Exception as e:
         smf.printf("[-] Deployment failed =>", e)
 
@@ -92,7 +92,7 @@ def Venv():
     except URLError as e:
         smf.printf(f"[-] Network error during download: {e.reason}")
     except PermissionError:
-        smf.printf(f"[-] Insufficient permissions to write to {target_path}")
+        smf.printf(f"[-] Insufficient permissions to write to {path}")
     except Exception as e:
         smf.printf("[-] Deployment failed =>", e)
 
@@ -103,9 +103,11 @@ def generate(data):
     if not data:
         sys.exit(1)
 
-    if type == "Termux":
+    if data == "Termux":
         Termux()
-    elif type == "Linux":
+    elif data == "Linux":
         Linux()
-    else:
+    elif data == "Venv":
         Venv()
+    else:
+        smf.printf("[*] Invalid data:", data)
