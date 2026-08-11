@@ -9,9 +9,7 @@ from .callbin.manager import _query_db
 
 IS_WINDOWS = sys.platform.startswith("win")
 IS_MACOS = sys.platform == "darwin"
-IS_LINUX = sys.platform.startswith("linux") or hasattr(
-    sys, "getandroidapilevel"
-)
+IS_LINUX = sys.platform.startswith("linux") or hasattr(sys, "getandroidapilevel")
 
 
 def resolve_bin_path(query_name: str) -> str:
@@ -28,8 +26,8 @@ def resolve_bin_path(query_name: str) -> str:
     candidates = []
     if IS_WINDOWS:
         candidates = [
-            f"{query_name}.pyd", 
-            f"{query_name}.dll", 
+            f"{query_name}.pyd",
+            f"{query_name}.dll",
             f"{query_name}.exe",
         ]
     elif IS_MACOS:
@@ -40,8 +38,8 @@ def resolve_bin_path(query_name: str) -> str:
         ]
     elif IS_LINUX:
         candidates = [
-            f"{query_name}.so", 
-            f"lib{query_name}.so", 
+            f"{query_name}.so",
+            f"lib{query_name}.so",
             query_name,
         ]
 
