@@ -6,7 +6,7 @@ def run_sign():
     try:
         bin = call_so("libsigned", "storm_sign")
 
-        bin.storm_sign
+        bin.storm_sign()
         return True
     except ImportError as e:
         smf.printf(
