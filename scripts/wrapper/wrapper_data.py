@@ -3,6 +3,7 @@ import smf
 
 from .gen_wrapper import generate
 
+
 def data():
     wrapper = None
     try:
