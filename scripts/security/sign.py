@@ -1,12 +1,12 @@
 import sys
 import smf
-
+from lib.roar.calling import call_bin
 
 def run_sign():
     try:
-        from external.source.out.core.integrity import libsigned
+        bin = call_bin("libsigned")
 
-        libsigned.storm_sign()
+        bin.storm_sign
         return True
     except ImportError as e:
         smf.printf(
@@ -14,7 +14,7 @@ def run_sign():
             file=sys.stderr,
             flush=True,
         )
-        smf.printd("[!] Import error libsigned binary not found", e, level="INFO")
+        smf.printd("Import error libsigned binary not found", e, level="CRITICAL")
         return False
     except Exception as e:
         smf.printd("Error exception in libsigned", e, level="CRITICAL")
