@@ -13,6 +13,7 @@ from lib.roar.plugin_api import plugin
 from lib.roar.crs import net_api as api
 from dataclasses import dataclass, field
 
+from .ignore import IGNORED_SYSTEM_COMMANDS
 
 # ----------------------
 # Network call function
