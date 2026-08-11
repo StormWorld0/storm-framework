@@ -21,7 +21,7 @@ check_deps() {
 case "${1:-}" in
     --update)
         if [ "$#" -ne 1 ]; then
-            echo "[*] Invalid arguments: $*"
+            echo "[*] Invalid arguments: $*" >&2
             exit 1
         fi
         exec ./smfupdate --data Termux
@@ -29,7 +29,7 @@ case "${1:-}" in
 
     -c)
         if [ "${2:-}" != "--crt" ] || [ "$#" -ne 2 ]; then
-            echo "[*] Invalid arguments: $*"
+            echo "[*] Invalid arguments: $*" >&2
             exit 1
         fi
 
@@ -69,14 +69,14 @@ case "${1:-}" in
                 echo "[*] Already up to date: $current_version"
             fi
         else
-            echo "[*] Invalid arguments: $*"
+            echo "[*] Invalid arguments: $*" >&2
             exit 1
         fi
         ;;
 
     -h|--help)
         if [ "$#" -ne 1 ]; then
-            echo "[*] Invalid arguments: $*"
+            echo "[*] Invalid arguments: $*" >&2
             exit 1
         fi
         echo
@@ -98,7 +98,7 @@ case "${1:-}" in
         ;;
 
     *)
-        echo "[*] Invalid arguments: $* > Use: $0 --help"
+        echo "[*] Invalid arguments: $* > Use: $0 --help" >&2
         exit 1
         ;;
 esac
