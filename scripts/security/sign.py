@@ -19,6 +19,7 @@ def run_sign():
         smf.printd("Import error libsigned binary not found", e, level="CRITICAL")
         return False
     except Exception as e:
+        smf.printf("[*] Error Exception in signed", e, flush=True)
         smf.printd("Error exception in libsigned", e, level="CRITICAL")
         return False
 
