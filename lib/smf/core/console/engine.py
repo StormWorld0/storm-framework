@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 
 from .ignore import IGNORED_SYSTEM_COMMANDS
 
+
 # ----------------------
 # Network call function
 # ----------------------
