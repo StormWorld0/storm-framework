@@ -35,7 +35,7 @@ sudo storm --update
 This Root CA can be copied from internal to `$HOME` and is usually used when you want to run a module `https_proxy`, the command is as below:
 
 ```bash
-sudo storm -cp -crt
+sudo storm --cp --crt
 ```
 
 After finishing copying CA to `$HOME` use the following command to insert into the trust store certificate:
