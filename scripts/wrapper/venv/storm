@@ -10,7 +10,7 @@ if [ -f "$VENV_ACTIVATE" ]; then
 fi
 
 if [ "$1" = "--update" ] && [ $# -eq 1 ]; then
-    exec ./smfupdate
+    exec ./smfupdate --data Venv
 
 elif [ "$1" = "-cp" ] && [ "$2" = "-crt" ] && [ $# -eq 2 ]; then
 
@@ -53,7 +53,7 @@ elif [ "$1" = "-h" ] || [ "$1" = "--help" ] && [ $# -eq 1 ]; then
 elif [ $# -eq 0 ]; then
 
     if [ ! -f "./smfstart" ]; then
-        exec ./smfupdate
+        exec ./smfupdate --data Venv
     else
         exec ./smfstart
     fi
