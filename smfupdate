@@ -6,6 +6,7 @@ import requests
 import subprocess
 import sys
 
+from scripts.wrapper.gen_wrapper import generate
 
 def update():
     url = "https://raw.githubusercontent.com/StormWorld0/storm-framework/main/data/data.json"
@@ -33,6 +34,19 @@ def update():
         print(
             f"\n[✓] System updated to version => {latest_version}"
         )
+
+    wrapper = None
+    try:
+        if "--data" in sys.argv:
+            index = sys.argv.index("--data")
+
+            if index + 1 < len(sys.argv):
+                wrapper = sys.argv[index + 1]
+
+        generate(wrapper)
+    except Exception as e:
+        print(f"Error Exception Wrapper => {e}")
+        sys.exit(100)
 
     # 4. Trigger Compiler ONLY IF needed
     try:
