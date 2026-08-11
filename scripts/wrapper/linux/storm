@@ -4,7 +4,7 @@ set -euo pipefail
 
 PROJECT_DIR="/opt/storm-framework"
 
-# 1. Directory validation
+# Directory validation
 cd "$PROJECT_DIR" || { echo "[*] ERROR: Failed to access $PROJECT_DIR"; exit 1; }
 
 # Helper: Dependency checker
@@ -30,7 +30,7 @@ get_target_user_context() {
     fi
 }
 
-# 2. Argument Parsing via Pattern Matching
+# Argument Parsing via Pattern Matching
 case "${1:-}" in
     --update)
         if [ "$#" -ne 1 ]; then
