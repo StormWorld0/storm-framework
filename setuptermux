@@ -162,7 +162,7 @@ cd "$INSTALL_DIR" || { echo -e "${RED}[x] ERROR: Lost track of directory!${NC}";
 "$PYTHON_CMD" -m scripts.security.sign
 
 # Creating a Dynamic Wrapper Script
-"#PYTHON_CMD" -m scripts.wrapper.wrapper_data --data Termux
+"$PYTHON_CMD" -m scripts.wrapper.wrapper_data --data Termux
 
 echo -e "${GREEN}####################################################${NC}"
 echo -e "${GREEN}[✓] INSTALLATION COMPLETE${NC}"
