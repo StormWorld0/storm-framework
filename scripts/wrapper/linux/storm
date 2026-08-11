@@ -34,15 +34,15 @@ get_target_user_context() {
 case "${1:-}" in
     --update)
         if [ "$#" -ne 1 ]; then
-            echo "[*] Invalid usage. Use: $0 --update" >&2
+            echo "[*] Invalid arguments: $*" >&2
             exit 1
         fi
         exec ./smfupdate --data Linux
         ;;
 
-    -cp)
-        if [ "${2:-}" != "-crt" ] || [ "$#" -ne 2 ]; then
-            echo "[*] Invalid arguments. Use: $0 -cp -crt" >&2
+    -c)
+        if [ "${2:-}" != "--crt" ] || [ "$#" -ne 2 ]; then
+            echo "[*] Invalid arguments: $*" >&2
             exit 1
         fi
 
@@ -99,15 +99,17 @@ case "${1:-}" in
 
     -h|--help)
         if [ "$#" -ne 1 ]; then
-            echo "[*] Invalid usage: $*" >&2
+            echo "[*] Invalid arguments: $*" >&2
             exit 1
         fi
+        echo
         echo "Arguments:"
         echo "    [-h][--help]     : Displays existing commands"
         echo "    [-v][--version]  : Displays the current version"
         echo "    [-v -L]          : Shows whether the latest update is available"
-        echo "    [-cp -crt]       : Copying CA to HOME Directory"
+        echo "    [-c --crt]       : Copying CA to HOME Directory"
         echo "    [--update]       : Update to the latest version"
+        echo
         ;;
 
     "")
@@ -119,7 +121,7 @@ case "${1:-}" in
         ;;
 
     *)
-        echo "[*] Invalid arguments: $*" >&2
+        echo "[*] Invalid arguments: $* > Use: $0 --help" >&2
         exit 1
         ;;
 esac
