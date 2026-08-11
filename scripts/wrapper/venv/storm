@@ -55,7 +55,7 @@ case "${1:-}" in
 
     -c)
         if [ "${2:-}" != "--crt" ] || [ "$#" -ne 2 ]; then
-            echo "[*] Invalid arguments: $*"
+            echo "[*] Invalid arguments: $*" >&2
             exit 1
         fi
 
