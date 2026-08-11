@@ -20,6 +20,10 @@ case "${OS}" in
         echo -e "${GREEN}[+] OS Detected: ${OS}${NC}"
         ;;
     *)
+    Win32*)
+        echo -e "${GREEN}[+] OS Detected: ${OS}${NC}"
+        ;;
+    *)
         echo -e "${RED}[*] OS not recognized: ${OS}${NC}"
         exit 1
         ;;
