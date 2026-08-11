@@ -1,7 +1,7 @@
 .SILENT:
 
 RAW_NAME := smf
-NAME     := smf.so
+NAME     := smf.$(EXT)
 OUT_DIR  ?= build
 OUT      := $(OUT_ROOT)
 TARGET   := $(OUT)/$(NAME)
