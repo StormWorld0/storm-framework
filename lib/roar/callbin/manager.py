@@ -16,9 +16,7 @@ _VALID_EXTENSIONS = {".so", ".dll", ".dylib", ".exe", ".bin", ".pyd"}
 def _get_db_connection() -> sqlite3.Connection:
     if not _DB_PATH.parent.exists():
         _DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-        smf.printd(
-            f"The cache.db directory is created on", _DB_PATH.parent, level="INFO"
-        )
+        smf.printd(f"The cache.db directory is created on", _DB_PATH.parent, level="INFO")
 
     conn = sqlite3.connect(_DB_PATH, check_same_thread=False)
     conn.execute("PRAGMA journal_mode=WAL;")
