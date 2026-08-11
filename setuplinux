@@ -209,74 +209,7 @@ cd "$INSTALL_DIR" || { echo -e "${RED}[x] ERROR: Lost track of directory!${NC}";
 "$PYTHON_CMD" -m scripts.security.sign
 
 # Creating a Dynamic Wrapper Script
-WRAPPER_DST="$BIN_DIR/$TOOL_NAME"
-
-# Create wrapper content in variables for easy management
-CREATE_WRAPPER=$(cat << EOF
-${SHEBANG_PATH}
-
-PROJECT_DIR="$INSTALL_DIR"
-cd "\$PROJECT_DIR" || { echo "[x] ERROR: Failed to access project directory."; exit 1; }
-
-if [ "\$1" = "--update" ] && [ \$# -eq 1 ]; then
-    exec ./smfupdate
-
-elif [ "\$1" = "-cp" ] && [ "\$2" = "-crt" ] && [ \$# -eq 2 ]; then
-
-    if [ ! -f "./data/smf_ca.crt" ]; then
-        echo "[x] ERROR: smf_ca.crt not found."
-        exit 1
-    fi
-
-    TARGET_HOME=\$(getent passwd "\$SUDO_USER" | cut -d: -f6)
-    : "\${TARGET_HOME:=\$HOME}"
-
-    cp ./data/smf_ca.crt "\$TARGET_HOME/smf_ca.crt" || { echo "[x] Failed to copy certificate."; exit 1; }
-
-    echo "[+] Certificate copied to: \$TARGET_HOME/smf_ca.crt"
-
-elif [ "\$1" = "-v" ] || [ "\$1" = "--version" ] && [ \$# -eq 1 ]; then
-
-    version=\$(jq -r '.version' data/data.json)
-    echo "[*] Version: \$version"
-
-elif [ "\$1" = "-v" ] && [ "\$2" = "-L" ] && [ \$# -eq 2 ]; then
-
-    latest_version=$(curl -fsSL "https://raw.githubusercontent.com/StormWorld0/storm-framework/main/data/data.json" | jq -r '.version')
-    current_version=\$(jq -r '.version' data/data.json)
-
-    if [ "\$(printf '%s\n' "\$current_version" "\$latest_version" | sort -V | tail -n1)" != "\$current_version" ]; then
-        echo "[*] Update available: \$current_version -> \$latest_version"
-    else
-        echo "[*] Already up to date: \$current_version"
-
-elif [ "\$1" = "-h" ] || [ "\$1" = "--help" ] && [ \$# -eq 1 ]; then
-
-    echo "Arguments:"
-    echo "    [-h][--help]     : Displays existing commands"
-    echo "    [-v][--version]  : Displays the current version"
-    echo "    [-v -L]          : Shows whether the latest update is available"
-    echo "    [-cp -crt]       : Copying CA to HOME Directory"
-    echo "    [--update]       : Update to the latest version"
-
-elif [ \$# -eq 0 ]; then
-
-    if [ ! -f "./smfstart" ]; then
-        exec ./smfupdate
-    else
-        exec ./smfstart
-    fi
-
-else
-    echo "[*] Invalid arguments: \$@"
-    exit 1
-fi
-EOF
-)
-
-write_to_file "$CREATE_WRAPPER" "$WRAPPER_DST" false
-
-chmod +x "$WRAPPER_DST"
+"$PYTHON_CMD" -m scripts.wrapper.wrapper_data --data Linux
 
 echo -e "${GREEN}####################################################${NC}"
 echo -e "${GREEN}[✓] INSTALLATION COMPLETE${NC}"
