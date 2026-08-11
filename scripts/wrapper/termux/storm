@@ -79,12 +79,14 @@ case "${1:-}" in
             echo "[*] Invalid arguments: $*"
             exit 1
         fi
+        echo ""
         echo "Arguments:"
         echo "    [-h][--help]     : Displays existing commands"
         echo "    [-v][--version]  : Displays the current version"
         echo "    [-v -L]          : Shows whether the latest update is available"
         echo "    [--cp --crt]     : Copying CA to HOME Directory"
         echo "    [--update]       : Update to the latest version"
+        echo ""
         ;;
 
     "")
