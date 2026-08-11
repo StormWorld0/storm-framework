@@ -24,10 +24,7 @@ def get_cpu_info(core):
 
     max_capacity = max(capacities)
     threshold = max_capacity * 0.75
-    strong_cores = sum(
-        capacity >= threshold
-        for capacity in capacities
-    )
+    strong_cores = sum(capacity >= threshold for capacity in capacities)
 
     return {
         "total": core,
@@ -42,7 +39,7 @@ def get_make_jobs(total_cores, strong_cores):
         return round(total_cores * 0.75)
     if ratio >= 0.25:
         return round(total_cores * 0.50)
-        
+
     return round(total_cores * 0.375)
 
 
@@ -50,7 +47,7 @@ def safe_mode():
     """Determining the number of CPU cores"""
     term = "TERMUX_VERSION" in os.environ
     core = os.cpu_count() or 1
-    
+
     if term:
         info = get_cpu_info(core)
         if not info:
@@ -62,7 +59,7 @@ def safe_mode():
         cores = get_make_jobs(t, s)
         if not cores:
             return core
-            
+
         workers = cores
         print(f"[*] Linux detected > {core} cores. Used > {workers} cores")
     else:
