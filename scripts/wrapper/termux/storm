@@ -5,13 +5,13 @@ set -euo pipefail
 PROJECT_DIR="${PREFIX:-}/share/storm-framework"
 
 # Access project directory
-cd "$PROJECT_DIR" || { echo "[x] ERROR: Failed to access project directory."; exit 1; }
+cd "$PROJECT_DIR" || { echo "[*] ERROR: Failed to access project directory."; exit 1; }
 
 # Helper: Validasi dependency
 check_deps() {
     for cmd in jq curl; do
         if ! command -v "$cmd" >/dev/null 2>&1; then
-            echo "[x] ERROR: Required command '$cmd' is not installed." >&2
+            echo "[*] ERROR: Required command '$cmd' is not installed." >&2
             exit 1
         fi
     done
@@ -27,14 +27,14 @@ case "${1:-}" in
         exec ./smfupdate --data Termux
         ;;
 
-    --cp)
+    -c)
         if [ "${2:-}" != "--crt" ] || [ "$#" -ne 2 ]; then
             echo "[*] Invalid arguments: $*"
             exit 1
         fi
 
         if [ ! -f "./data/smf_ca.crt" ]; then
-            echo "[x] ERROR: ./data/smf_ca.crt not found." >&2
+            echo "[*] ERROR: ./data/smf_ca.crt not found." >&2
             exit 1
         fi
 
@@ -47,7 +47,7 @@ case "${1:-}" in
             check_deps
             version=$(jq -r '.version // empty' data/data.json 2>/dev/null)
             if [ -z "$version" ]; then
-                echo "[x] ERROR: Failed to read version from data/data.json" >&2
+                echo "[*] ERROR: Failed to read version from data/data.json" >&2
                 exit 1
             fi
             echo "[*] Version: $version"
@@ -59,7 +59,7 @@ case "${1:-}" in
             latest_version=$(curl -fsSL "https://raw.githubusercontent.com/StormWorld0/storm-framework/main/data/data.json" | jq -r '.version // empty' 2>/dev/null)
 
             if [ -z "$current_version" ] || [ -z "$latest_version" ]; then
-                echo "[x] ERROR: Failed to fetch version data." >&2
+                echo "[*] ERROR: Failed to fetch version data." >&2
                 exit 1
             fi
 
@@ -84,7 +84,7 @@ case "${1:-}" in
         echo "    [-h][--help]     : Displays existing commands"
         echo "    [-v][--version]  : Displays the current version"
         echo "    [-v -L]          : Shows whether the latest update is available"
-        echo "    [--cp --crt]     : Copying CA to HOME Directory"
+        echo "    [-c --crt]       : Copying CA to HOME Directory"
         echo "    [--update]       : Update to the latest version"
         echo
         ;;
