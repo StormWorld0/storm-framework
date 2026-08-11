@@ -17,7 +17,7 @@ def _get_db_connection() -> sqlite3.Connection:
     if not _DB_PATH.parent.exists():
         _DB_PATH.parent.mkdir(parents=True, exist_ok=True)
         smf.printd(
-            f"The cache.db directory is created on {_DB_PATH.parent}", level="INFO"
+            f"The cache.db directory is created on", _DB_PATH.parent, level="INFO"
         )
 
     conn = sqlite3.connect(_DB_PATH, check_same_thread=False)
@@ -53,7 +53,7 @@ def sync_bin() -> None:
 
     for cat, folder in search_targets.items():
         if not folder.exists():
-            smf.printd(f"Target directory not found and skipped: {folder}", level="WARN")
+            smf.printd(f"Target directory not found and skipped", folder, level="WARN")
             continue
 
         # Scan recursive
@@ -64,9 +64,9 @@ def sync_bin() -> None:
             # Taking the very end extension
             suffix = entry.suffix.lower()
             is_valid = suffix in _VALID_EXTENSIONS
-            is_linux_executable = (suffix == "") and os.access(entry, os.X_OK)
+            is_linux = (suffix == "") and os.access(entry, os.X_OK)
 
-            if is_valid or is_linux_executable:
+            if is_valid or is_linux:
                 # Dealing with multi-dot suffixes (example: 'lib.abi3.so' -> 'lib')
                 # This ensures that 'stem' is actually the base name of the binary
                 base_name = entry.name.split(".")[0]
@@ -77,7 +77,7 @@ def sync_bin() -> None:
                     "category": cat,
                     "mtime": entry.stat().st_mtime,
                 }
-                smf.printd(f"Binary extracted: {entry.name} ({cat})", level="DEBUG")
+                smf.printd(f"Binary extracted: {entry.name}", cat, level="DEBUG")
 
     try:
         with _get_db_connection() as conn:
