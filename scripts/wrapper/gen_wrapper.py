@@ -3,10 +3,9 @@ import os
 import sys
 import ssl
 
-from rootmap import ROOT
 
 from urllib.error import URLError
-from urllib.request import Request, urlretrieve, urlopen
+from urllib.request import Request, urlopen
 
 
 # Update wrapper Termux
@@ -15,7 +14,7 @@ def Termux():
     prefix = os.environ.get("PREFIX")
     if not prefix:
         sys.exit(1)
-        
+
     path = os.path.join(prefix, "bin", "storm")
 
     # Enforce safe TLS context
@@ -29,7 +28,7 @@ def Termux():
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "wb") as f:
             f.write(payload)
-            
+
         os.chmod(path, 0o755)
 
     except URLError as e:
@@ -46,7 +45,7 @@ def Linux():
     path = os.path.join(os.sep, "usr", "local", "bin", "storm")
     if not path:
         sys.exit(1)
-        
+
     # Enforce safe TLS context
     context = ssl.create_default_context()
     try:
@@ -58,7 +57,7 @@ def Linux():
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "wb") as f:
             f.write(payload)
-            
+
         os.chmod(path, 0o755)
 
     except URLError as e:
@@ -75,7 +74,7 @@ def Venv():
     path = os.path.join(os.sep, "usr", "local", "bin", "storm")
     if not path:
         sys.exit(1)
-        
+
     # Enforce safe TLS context
     context = ssl.create_default_context()
     try:
@@ -87,7 +86,7 @@ def Venv():
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "wb") as f:
             f.write(payload)
-            
+
         os.chmod(path, 0o755)
 
     except URLError as e:
@@ -96,8 +95,6 @@ def Venv():
         smf.printf(f"[-] Insufficient permissions to write to {target_path}")
     except Exception as e:
         smf.printf("[-] Deployment failed =>", e)
-
-
 
 
 # Entry Point Generator Wrapper
@@ -112,5 +109,3 @@ def generate(data):
         Linux()
     else:
         Venv()
-
-
