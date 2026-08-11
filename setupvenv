@@ -207,7 +207,7 @@ cd "$INSTALL_DIR" || { echo -e "${RED}[x] ERROR: Lost track of directory!${NC}";
 "$VENV_PYTHON" -m scripts.security.sign
 
 # Creating a Dynamic Wrapper Script
-./scripts.wrapper.wrapper_data --data Venv
+"$VENV_PYTHON" -m scripts.wrapper.wrapper_data --data Venv
 
 echo -e "${GREEN}####################################################${NC}"
 echo -e "${GREEN}[✓] INSTALLATION COMPLETE${NC}"
