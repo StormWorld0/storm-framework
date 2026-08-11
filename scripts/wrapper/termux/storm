@@ -1,55 +1,102 @@
 #!/usr/bin/env bash
 
-PROJECT_DIR="$PREFIX/share/storm-framework"
+set -euo pipefail
+
+PROJECT_DIR="${PREFIX:-}/share/storm-framework"
+
+# Access project directory
 cd "$PROJECT_DIR" || { echo "[x] ERROR: Failed to access project directory."; exit 1; }
 
-if [ "$1" = "--update" ] && [ $# -eq 1 ]; then
-    exec ./smfupdate --data Termux
+# Helper: Validasi dependency
+check_deps() {
+    for cmd in jq curl; do
+        if ! command -v "$cmd" >/dev/null 2>&1; then
+            echo "[x] ERROR: Required command '$cmd' is not installed." >&2
+            exit 1
+        fi
+    done
+}
 
-elif [ "$1" = "--cp" ] && [ "$2" = "--crt" ] && [ $# -eq 2 ]; then
-
-    if [ ! -f "./data/smf_ca.crt" ]; then
-        echo "[x] ERROR: smf_ca.crt not found."
-        exit 1
-    fi
-
-    cp ./data/smf_ca.crt "$HOME/smf_ca.crt"
-
-    echo "[+] Certificate copied to: $HOME/smf_ca.crt"
-
-elif [ "$1" = "-v" ] || [ "$1" = "--version" ] && [ $# -eq 1 ]; then
-
-    version=$(jq -r '.version' data/data.json)
-    echo "[*] Version: $version"
-
-elif [ "$1" = "-v" ] && [ "$2" = "-L" ] && [ $# -eq 2 ]; then
-
-    latest_version=$(curl -fsSL "https://raw.githubusercontent.com/StormWorld0/storm-framework/main/data/data.json" | jq -r '.version')
-    current_version=$(jq -r '.version' data/data.json)
-
-    if [ "$(printf '%s\n' "$current_version" "$latest_version" | sort -V | tail -n1)" != "$current_version" ]; then
-        echo "[*] Update available: $current_version -> $latest_version"
-    else
-        echo "[*] Already up to date: $current_version"
-
-elif [ "$1" = "-h" ] || [ "$1" = "--help" ] && [ $# -eq 1 ]; then
-
-    echo "Arguments:"
-    echo "    [-h][--help]     : Displays existing commands"
-    echo "    [-v][--version]  : Displays the current version"
-    echo "    [-v -L]          : Shows whether the latest update is available"
-    echo "    [-cp -crt]       : Copying CA to HOME Directory"
-    echo "    [--update]       : Update to the latest version"
-
-elif [ $# -eq 0 ]; then
-
-    if [ ! -f "./smfstart" ]; then
+# Argument Parsing via Pattern Matching
+case "${1:-}" in
+    --update)
+        if [ "$#" -ne 1 ]; then
+            echo "[*] Invalid usage. Use: $0 --update"
+            exit 1
+        fi
         exec ./smfupdate --data Termux
-    else
-        exec ./smfstart
-    fi
+        ;;
 
-else
-    echo "[*] Invalid arguments: $@"
-    exit 1
-fi
+    --cp)
+        if [ "${2:-}" != "--crt" ] || [ "$#" -ne 2 ]; then
+            echo "[*] Invalid arguments: $*"
+            exit 1
+        fi
+
+        if [ ! -f "./data/smf_ca.crt" ]; then
+            echo "[x] ERROR: ./data/smf_ca.crt not found." >&2
+            exit 1
+        fi
+
+        cp ./data/smf_ca.crt "$HOME/smf_ca.crt"
+        echo "[+] Certificate copied to: $HOME/smf_ca.crt"
+        ;;
+
+    -v|--version)
+        if [ "$#" -eq 1 ]; then
+            check_deps
+            version=$(jq -r '.version // empty' data/data.json 2>/dev/null)
+            if [ -z "$version" ]; then
+                echo "[x] ERROR: Failed to read version from data/data.json" >&2
+                exit 1
+            fi
+            echo "[*] Version: $version"
+
+        elif [ "$#" -eq 2 ] && [ "${2:-}" = "-L" ]; then
+            check_deps
+            
+            current_version=$(jq -r '.version // empty' data/data.json 2>/dev/null)
+            latest_version=$(curl -fsSL "https://raw.githubusercontent.com/StormWorld0/storm-framework/main/data/data.json" | jq -r '.version // empty' 2>/dev/null)
+
+            if [ -z "$current_version" ] || [ -z "$latest_version" ]; then
+                echo "[x] ERROR: Failed to fetch version data." >&2
+                exit 1
+            fi
+
+            if [ "$(printf '%s\n%s\n' "$current_version" "$latest_version" | sort -V | tail -n1)" != "$current_version" ]; then
+                echo "[*] Update available: $current_version -> $latest_version"
+            else
+                echo "[*] Already up to date: $current_version"
+            fi
+        else
+            echo "[*] Invalid arguments: $*"
+            exit 1
+        fi
+        ;;
+
+    -h|--help)
+        if [ "$#" -ne 1 ]; then
+            echo "[*] Invalid arguments: $*"
+            exit 1
+        fi
+        echo "Arguments:"
+        echo "    [-h][--help]     : Displays existing commands"
+        echo "    [-v][--version]  : Displays the current version"
+        echo "    [-v -L]          : Shows whether the latest update is available"
+        echo "    [--cp --crt]     : Copying CA to HOME Directory"
+        echo "    [--update]       : Update to the latest version"
+        ;;
+
+    "")
+        if [ ! -f "./smfstart" ]; then
+            exec ./smfupdate --data Termux
+        else
+            exec ./smfstart
+        fi
+        ;;
+
+    *)
+        echo "[*] Invalid arguments: $*"
+        exit 1
+        ;;
+esac
