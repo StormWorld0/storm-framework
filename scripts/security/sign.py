@@ -1,6 +1,5 @@
 import sys
 import smf
-from lib.roar.calling import call_bin
 
 
 def run_sign():
