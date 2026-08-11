@@ -9,7 +9,7 @@ from .callbin.manager import _query_db
 
 IS_WINDOWS = sys.platform.startswith("win")
 IS_MACOS = sys.platform == "darwin"
-IS_LINUX_OR_ANDROID = sys.platform.startswith("linux") or hasattr(
+IS_LINUX = sys.platform.startswith("linux") or hasattr(
     sys, "getandroidapilevel"
 )
 
@@ -27,15 +27,23 @@ def resolve_bin_path(query_name: str) -> str:
     # 2. OS-Aware Smart Fallback
     candidates = []
     if IS_WINDOWS:
-        candidates = [f"{query_name}.pyd", f"{query_name}.dll", f"{query_name}.exe"]
+        candidates = [
+            f"{query_name}.pyd", 
+            f"{query_name}.dll", 
+            f"{query_name}.exe",
+        ]
     elif IS_MACOS:
         candidates = [
             f"{query_name}.dylib",
             f"lib{query_name}.dylib",
             f"{query_name}.so",
         ]
-    elif IS_LINUX_OR_ANDROID:
-        candidates = [f"{query_name}.so", f"lib{query_name}.so", query_name]
+    elif IS_LINUX:
+        candidates = [
+            f"{query_name}.so", 
+            f"lib{query_name}.so", 
+            query_name,
+        ]
 
     for candidate in candidates:
         candidate_path = _query_db("filename", candidate)
@@ -115,5 +123,5 @@ def call_so(query_name: str, module_name: str = None):
         spec.loader.exec_module(module)
         return module
     except Exception as e:
-        smf.printd(f"Failed to load Python extension '{lib_path}'.", e, level="CRITICAL")
+        smf.printd(f"Failed to load Python extension '{lib_path}'", e, level="CRITICAL")
         raise
