@@ -30,7 +30,7 @@ write_to_file() {
 # Termux Environment
 BIN_DIR="$PREFIX/bin"
 SHEBANG_PATH="#!/usr/bin/env bash"
-PYTHON_CMD="python"
+PYTHON_CMD="python3"
 INSTALL_DIR="$PREFIX/share/$REPO_NAME"
 
 pkg install -y jq python git golang rust build-essential libpcap clang cmake ffmpeg openssl binutils pkg-config
@@ -155,8 +155,11 @@ fi
 # Go to root folder
 cd "$INSTALL_DIR" || { echo -e "${RED}[x] ERROR: Lost track of directory!${NC}"; exit 1; }
 
+# sync binary signed
+"$PYTHON_CMD" -c "from lib.roar.callbin.manager import sync_bin; sync_bin()"
+
 # Sign all files
-python3 -m scripts.security.sign
+"$PYTHON_CMD" -m scripts.security.sign
 
 # Creating a Dynamic Wrapper Script
 WRAPPER_DST="$BIN_DIR/$TOOL_NAME"
