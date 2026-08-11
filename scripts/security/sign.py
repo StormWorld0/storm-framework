@@ -4,7 +4,8 @@ import smf
 
 def run_sign():
     try:
-        bin = call_so("libsigned", "storm_sign")
+        from lib.roar.calling import call_so
+        bin = call_so("libsigned")
 
         bin.storm_sign()
         return True
