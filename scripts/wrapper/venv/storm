@@ -59,6 +59,6 @@ elif [ $# -eq 0 ]; then
     fi
 
 else
-    echo "[*] Invalid arguments: \$@"
+    echo "[*] Invalid arguments: $@"
     exit 1
 fi
