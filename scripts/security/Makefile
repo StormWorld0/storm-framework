@@ -1,7 +1,7 @@
 .SILENT:
 
 RAW_NAME := signed
-NAME     := libsigned.so
+NAME     := libsigned.$(EXT)
 OUT_DIR  ?= build
 OUT      := $(OUT_DIR)/core/integrity
 TARGET   := $(OUT)/$(NAME)
