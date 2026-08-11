@@ -218,7 +218,7 @@ elif [ \$# -eq 0 ]; then
     fi
 
 else
-    echo "Command '\$@' not found."
+    echo "[*] Invalid arguments: \$@"
     exit 1
 fi
 EOF
