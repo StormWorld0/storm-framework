@@ -65,6 +65,8 @@ jobs:
         
       - name: Execute Storm Installation (${{ matrix.setup_type }})
         shell: bash
+        env:
+          HOME: /root
         run: |
           if [ "${{ matrix.setup_type }}" == "linux" ]; then
             bash ./setuplinux
