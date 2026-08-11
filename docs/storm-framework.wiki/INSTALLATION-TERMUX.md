@@ -33,7 +33,7 @@ storm --update
 This Root CA can be copied from internal to `$HOME` and is usually used when you want to run a module `https_proxy`, the command is as below:
 
 ```bash
-storm --cp --crt
+storm -c --crt
 ```
 
 Next after copying CA `$HOME` use the command below to copy to `sdcard` Android internal storage:
@@ -49,3 +49,15 @@ After the previous copy is complete, use it directly by:
 3. **Go to Install certificate from storage**
 4. **Install CA Certificate**
 5. **Import smf_ca.crt from storage**
+
+### 5. Help
+
+Use this argument to display all valid arguments.
+
+```bash
+storm -h
+```
+or
+```bash
+storm --help
+```
