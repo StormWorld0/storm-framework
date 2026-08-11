@@ -16,7 +16,7 @@ elif [ "$1" = "-cp" ] && [ "$2" = "-crt" ] && [ $# -eq 2 ]; then
     TARGET_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
     : "${TARGET_HOME:=$HOME}"
 
-    cp ./data/smf_ca.crt "\$TARGET_HOME/smf_ca.crt" || { echo "[x] Failed to copy certificate."; exit 1; }
+    cp ./data/smf_ca.crt "$TARGET_HOME/smf_ca.crt" || { echo "[x] Failed to copy certificate."; exit 1; }
 
     echo "[+] Certificate copied to: $TARGET_HOME/smf_ca.crt"
 
