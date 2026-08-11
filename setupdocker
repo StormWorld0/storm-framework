@@ -15,13 +15,13 @@ NC='\033[0m'
 
 # --- OS DETECTION ---
 OS="$(uname -s)"
+
 case "${OS}" in
-    Linux*|Darwin*)
-        echo -e "${GREEN}[+] OS Detected: ${OS}${NC}"
+    Linux*)
+        echo -e "${GREEN}[+] Linux Detected: ${OS}${NC}"
         ;;
-    *)
-    Win32*)
-        echo -e "${GREEN}[+] OS Detected: ${OS}${NC}"
+    Darwin*)
+        echo -e "${GREEN}[+] MacOS Detected: ${OS}${NC}"
         ;;
     *)
         echo -e "${RED}[*] OS not recognized: ${OS}${NC}"
