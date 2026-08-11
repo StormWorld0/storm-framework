@@ -1,0 +1,13 @@
+IGNORED_SYSTEM_COMMANDS = {
+    # Shell Built-ins
+    "cd", "alias", "source", "exec",
+    # Text Editors & Pagers
+    "nano", "vim", "vi", "emacs",
+    "neovim", "less", "more", "head",
+    "tail", "cat",
+    # File / Directory Operations
+    "mkdir", "touch", "rm", "rmdir",
+    "cp", "mv", "chmod", "chown", 
+    "ln", "wget", "curl", "apt",
+    "pkg", "cargo", "go", "build",
+}
