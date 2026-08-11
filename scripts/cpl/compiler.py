@@ -3,7 +3,8 @@ import subprocess
 
 from rootmap import ROOT
 from apps.utility.spin import StormSpin
-from scripts.cpl.advcore import safe_mode
+from .advcore import safe_mode
+from .detect_os import osext
 
 
 def start_build():
@@ -24,6 +25,7 @@ def start_build():
     os.environ["CARGO_TARGET_DIR"] = rust_cache
     os.environ["OUT_DIR"] = bin_path
     os.environ["OUT_ROOT"] = root_path
+    os.environ["EXT"] = osext
 
     # Ignore folder list
     ignore_dirs = {".git", "__pycache__", "node_modules", "cache", "vendor"}
