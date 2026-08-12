@@ -25,8 +25,6 @@ IGNORED_SYSTEM_COMMANDS = {
     "chmod",
     "chown",
     "ln",
-    "wget",
-    "curl",
     "apt",
     "pkg",
     "cargo",
