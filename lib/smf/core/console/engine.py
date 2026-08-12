@@ -3,7 +3,6 @@
 import typing
 import smf
 import os
-import sys
 import shutil
 import subprocess
 import data.option.session as ops
@@ -64,10 +63,11 @@ class Context:
         if sudo_user:
             try:
                 import pwd
+
                 return Path(pwd.getpwnam(sudo_user).pw_dir)
             except (KeyError, ImportError) as e:
                 smf.printd("(KeyError, ImportError)", e, level="WARN")
-                
+
         return Path.home()
 
     def _execute_external(self, cmd: str, args: list[str]) -> bool:
@@ -75,7 +75,7 @@ class Context:
         cmd_clean = os.path.basename(cmd).strip().lower()
         home = self._get_home()
         smf.printd("Normalization of the HOME USER directory", home, level="INFO")
-        
+
         if cmd_clean in IGNORED_SYSTEM_COMMANDS:
             smf.printd(
                 f"Execution ignored: '{cmd_clean}' is a system utility/built-in",
