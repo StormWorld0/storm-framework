@@ -88,7 +88,7 @@ class Context:
             smf.printd("Command execution external Not found", path, level="INFO")
             return False
 
-        smf.printd("Monitoring execution external", path, level="INFO")
+        smf.printd("Execution of external commands", path, level="INFO")
         smf.printf()
         try:
             subprocess.run([path, *args], cwd=home, check=True)
