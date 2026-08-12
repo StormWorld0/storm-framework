@@ -1,30 +1,15 @@
-<p align="center">
-  <img src="https://github.com/StormWorld0/storm-framework/blob/main/assets/images/storm-framework.jpg">
-</p>
 
 <h1 align="center">Storm-Framework</h1>
 
 <p align="center">
-  <a href="https://github.com/StormWorld0/storm-framework/blob/main/LICENSE">
-    <img src="https://img.shields.io/badge/license-GPL-blue">
-  </a>
-  <a href="https://github.com/kalilinux">
-    <img src="https://img.shields.io/badge/Kali%20Linux-supported-black?logo=kalilinux">
-  </a>
-  <a href="https://github.com/termux">
-    <img src="https://img.shields.io/badge/Termux-supported-black?logo=android">
-  </a>
-  <a href="https://github.com/ubuntu">
-    <img src="https://img.shields.io/badge/Ubuntu-supported-black?logo=ubuntu">
-  </a>
   <a href="https://github.com/debian">
-    <img src="https://img.shields.io/badge/Debian-supported-black?logo=debian">
+    <img src="https://img.shields.io/badge/Linux-supported-green?logo=linux">
   </a>
   <a href="https://github.com/windows">
-    <img src="https://img.shields.io/badge/Windows-supported-black?logo=windows">
+    <img src="https://img.shields.io/badge/Windows-supported-green?logo=windows">
   </a>
-  <a href="https://github.com/StormWorld0/storm-framework/blob/main/README_ID.md">
-    <img src="https://img.shields.io/badge/Language-Indonesian-red?logo=indonesia&logoColor=white">
+  <a href="https://github.com/darwin">
+    <img src="https://img.shields.io/badge/MacOS-supported-green?logo=macos">
   </a>
 </p>
 
