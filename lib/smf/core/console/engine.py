@@ -115,14 +115,14 @@ class Context:
         This method is the gateway to the handler.
         Pipeline: Input -> Core (self) -> Handler -> Commands
         """
-        # Pass 'self' (this context object itself) to the handler.
-        # ex.execute now does not need to return a new dict,
-        handled = i.execute(cmd, args, self)
-
         # Log all to internal
         smf.printd("Capture cmd dispatch", cmd, level="DEBUG")
         smf.printd("Capture dispatch args", args, level="DEBUG")
 
+        # Pass 'self' (this context object itself) to the handler.
+        # ex.execute now does not need to return a new dict,
+        handled = i.execute(cmd, args, self)
+        
         if not handled:
             success = self._execute_external(cmd, args)
             if not success:
