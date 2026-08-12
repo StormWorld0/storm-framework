@@ -122,7 +122,7 @@ class Context:
         # Pass 'self' (this context object itself) to the handler.
         # ex.execute now does not need to return a new dict,
         handled = i.execute(cmd, args, self)
-        
+
         if not handled:
             success = self._execute_external(cmd, args)
             if not success:
