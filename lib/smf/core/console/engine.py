@@ -3,6 +3,7 @@
 import typing
 import smf
 import os
+import sys
 import shutil
 import subprocess
 import data.option.session as ops
@@ -14,6 +15,7 @@ from lib.roar.crs import net_api as api
 from dataclasses import dataclass, field
 
 from .ignore import IGNORED_SYSTEM_COMMANDS
+from pathlib import Path
 
 
 # ----------------------
@@ -53,10 +55,27 @@ class Context:
         smf.printd("CONTEXT PLUGIN", self.plugin, level="DEBUG")
         smf.printd("CONTEXT RUNTIME", self.net, level="DEBUG")
 
+    def _get_home(self) -> Path:
+        """
+        Restores the original user home path.
+        Avoid resolution to /root.
+        """
+        sudo_user = os.environ.get("SUDO_USER")
+        if sudo_user:
+            try:
+                import pwd
+                return Path(pwd.getpwnam(sudo_user).pw_dir)
+            except (KeyError, ImportError) as e:
+                smf.printd("(KeyError, ImportError)", e, level="WARN")
+                
+        return Path.home()
+
     def _execute_external(self, cmd: str, args: list[str]) -> bool:
         """Throwing commands to external devices."""
         cmd_clean = os.path.basename(cmd).strip().lower()
-
+        home = self._get_home()
+        smf.printd("Normalization of the HOME USER directory", home, level="INFO")
+        
         if cmd_clean in IGNORED_SYSTEM_COMMANDS:
             smf.printd(
                 f"Execution ignored: '{cmd_clean}' is a system utility/built-in",
@@ -72,7 +91,7 @@ class Context:
         smf.printd("Monitoring execution external", path, level="INFO")
         smf.printf()
         try:
-            subprocess.run([path, *args], check=True)
+            subprocess.run([path, *args], cwd=home, check=True)
             return True
         except KeyboardInterrupt:
             return True
