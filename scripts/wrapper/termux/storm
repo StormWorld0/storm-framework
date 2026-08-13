@@ -108,7 +108,7 @@ case "${1:-}" in
         ;;
 
     *)
-        echo "[*] Invalid arguments: $* > Use: $0 --help" >&2
+        echo "[*] Invalid arguments: $* > Use: storm --help" >&2
         exit 1
         ;;
 esac
