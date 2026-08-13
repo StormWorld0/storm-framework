@@ -9,7 +9,7 @@ from pathlib import Path
 
 def cleaner() -> None:
     root = os.path.join(ROOT, "lib", "smf", "core")
-    path = os.path.join(root, "fs", "cache", "integrity", "injection.state")
+    path = os.path.join(root, "sf", "cache", "integrity", "injection.state")
 
     state_file = Path(path).resolve()
     root_dir = Path(ROOT).resolve()
