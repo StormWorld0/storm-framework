@@ -74,7 +74,7 @@ case "${1:-}" in
         fi
         ;;
 
-    --cleen)
+    --clean)
         if [ "$#" -eq 1 ]; then
             python3 -m scripts.cleaning.clean
         else
