@@ -2,8 +2,8 @@
 // Copyright (c) 2026 Storm Framework
 // See LICENSE file in the project root for full license information.
 use sha2::{Sha256, Digest};
-use std::fs;
-use std::io;
+use std::fs::{self, File};
+use std::io::{self, BufWriter, Write};
 use std::collections::{BTreeMap, HashSet};
 use std::path::Path;
 use walkdir::WalkDir;
@@ -127,13 +127,13 @@ fn main() {
             }
         }
         
-        match fs::File::create(path_obj) {
+        match File::create(path_obj) {
             Ok(file) => {
-                let mut writer = io::BufWriter::new(file);
+                let mut writer = BufWriter::new(file);
                 let mut write_success = true;
 
                 for untracked in &untracked_files {
-                    if let Err(e) = io::writeln!(writer, "{}", untracked) {
+                    if let Err(e) = writeln!(writer, "{}", untracked) {
                         eprintln!("I/O Error saat menulis string ke buffer: {}", e);
                         write_success = false;
                         break;
