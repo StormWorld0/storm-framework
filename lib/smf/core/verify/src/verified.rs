@@ -146,7 +146,7 @@ fn main() {
                 }
             }
             Err(e) => {
-                eprintln!("Failed to create/open file at path '{}': {}", path_obj.display(), e),
+                eprintln!("Failed to create/open file at path '{}': {}", path_obj.display(), e);
             }
         }
     }
