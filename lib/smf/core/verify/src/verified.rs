@@ -134,14 +134,14 @@ fn main() {
 
                 for untracked in &untracked_files {
                     if let Err(e) = writeln!(writer, "{}", untracked) {
-                        eprintln!("I/O Error saat menulis string ke buffer: {}", e);
+                        eprintln!("I/O Error writing string to buffer: {}", e);
                         write_success = false;
                         break;
                     }
                 }
                 if write_success {
-                    match writer.flush() {
-                        Err(e) => eprintln!("I/O Error flushing disk: {}", e),
+                    if let Err(e) = writer.flush() {
+                        eprintln!("I/O Error flushing disk: {}", e);
                     }
                 }
             }
