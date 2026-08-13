@@ -25,7 +25,7 @@ def run_verif():
         if result.returncode == 203:
             # Priority 1: Pure Injection or Compound Threat (Injection + Tampering)
             smf.printf(
-                "\n[!] CRITICAL => Integrity detects file injection anomalies against the internal ecosystem"
+                "[!] Integrity detects file injection anomalies against the internal ecosystem"
             )
             smf.printd(
                 "Integrity detects file Injection danger", result, level="CRITICAL"
@@ -35,7 +35,7 @@ def run_verif():
         elif result.returncode != 0:
             # Priority 2: Pure tampering (Modified / Missing files)
             smf.printf(
-                "\n[!] WARNING => System refuses to boot in favor of internal integration"
+                "[!] WARNING => System refuses to boot in favor of internal integration"
             )
             smf.printd(
                 "Integrity detects modified/missing files", result, level="WARNING"
