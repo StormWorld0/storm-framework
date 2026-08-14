@@ -11,6 +11,7 @@ from rootmap import ROOT
 from dotenv import load_dotenv
 from cryptography.hazmat.primitives import serialization
 
+__autorun__ = True
 
 class SMFHandler(logging.Handler):
     def emit(self, record):
@@ -128,8 +129,9 @@ class Plugin:
             self.logger.error(f"API request failed: {req_err}")
             raise
 
-    def execute(self, interval_seconds: int = 10):
+    def execute(self):
         """Entry point daemon."""
+        interval_seconds = 10
         self.logger.info("Starting the Secure Log Forwarder service...")
         while True:
             self._fetch_and_forward()
