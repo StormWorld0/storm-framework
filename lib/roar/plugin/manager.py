@@ -112,13 +112,13 @@ def load_module(plugin_name: str) -> bool:
                 # Jika ini OOP dan punya fungsi start, jalankan sebagai Background Daemon
                 smf.printd(f"Starting OOP Daemon for => {plugin_name}", level="INFO")
                 runner = threading.Thread(
-                    target=plugin_obj.start, name=f"Daemon-{plugin_name}", daemon=True
+                    target=plugin_obj.execute, name=f"Daemon-{plugin_name}", daemon=True
                 )
                 runner.start()
 
             elif plugin_type == "FUNCTIONAL" and getattr(module, "__autorun__", False):
                 # Jika ini fungsional dan punya metadata autorun (seperti saran sebelumnya)
-                start_routine = getattr(module, "start", None)
+                start_routine = getattr(module, "execute", None)
                 if start_routine:
                     smf.printd(
                         f"Spawning background thread for autorun plugin =>",
