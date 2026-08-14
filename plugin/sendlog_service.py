@@ -156,10 +156,6 @@ class Plugin:
     def execute(self):
         """Entry point daemon."""
         self.logger.info("Starting the Secure Log Forwarder service...")
-        try:
-            while True:
-                self._fetch_and_forward()
-                time.sleep(30)
-        except Exception as e:
-            self.logger.error(f"Error in loop: {e}")
-            raise
+        while True:
+            self._fetch_and_forward()
+            time.sleep(30)
