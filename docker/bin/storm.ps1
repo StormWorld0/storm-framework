@@ -10,7 +10,7 @@ $AppHome = "/opt/storm-framework"
 $DockerImage = "stormworld0/storm-framework:latest"
 
 # Interception of Copy CA Certificate Command
-if ($args.Count -eq 2 -and $args[0] -eq "-cp" -and $args[1] -eq "-crt") {
+if ($args.Count -eq 2 -and $args[0] -eq "-c" -and $args[1] -eq "--crt") {
     # $HOME path resolution (C:\Users\Username)
     $TargetHome = [System.Environment]::GetFolderPath("UserProfile")
     $TargetFile = Join-Path $TargetHome "smf_ca.crt"
