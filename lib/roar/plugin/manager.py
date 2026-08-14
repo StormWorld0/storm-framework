@@ -87,7 +87,8 @@ def load_module(plugin_name: str) -> bool:
 
             spec = importlib.util.spec_from_file_location(plugin_name, str(plugin_path))
             if spec is None or spec.loader is None:
-                raise ImportError(f"Cannot create module spec for {plugin_path}")
+                smf.printd(f"Cannot create module spec for {plugin_path}")
+                return False
 
             module = importlib.util.module_from_spec(spec)
             sys.modules[plugin_name] = module
@@ -98,36 +99,48 @@ def load_module(plugin_name: str) -> bool:
 
             if plugin_type == "BROKEN":
                 purge_module_from_memory(plugin_name)
-                smf.printd(
-                    "Plugin does not pass OOP/FUNC validation", plugin_type, level="WARN"
-                )
+                smf.printd("Plugin does not pass OOP/FUNC validation", plugin_type, level="WARN")
                 return False
 
-            # Bungkus dengan SafePluginProxy Anda agar tetap aman
+            # Wrap with SafePluginProxy 
             safe_instance = SafePluginProxy(plugin_name, plugin_obj)
             REGISTRY[plugin_name] = safe_instance
 
-            # --- LOGIKA ENTRY POINT ---
+            # --- WRAPPER DAEMON UNTUK ISOLASI CRASH ---
+            def daemon_runner(target_func, p_name):
+                """Wrapper thread untuk menangkap runtime exception & melakukan teardown."""
+                try:
+                    target_func()
+                except Exception as e:
+                    smf.printd(f"FATAL Plugin Daemon CRASHED => {p_name}", e, level="ERROR")
+                    # Menggunakan global lock saat memodifikasi state manager dari thread anak
+                    with _lock:
+                        REGISTRY[p_name] = NullPlugin(p_name)
+                        purge_module_from_memory(p_name)
+                        smf.printd(f"Cleanup complete for crashed plugin: {p_name}", level="INFO")
+
+            # --- ENTRY POINT LOGIC ---
             if plugin_type == "OOP" and hasattr(plugin_obj, "execute"):
-                # Jika ini OOP dan punya fungsi start, jalankan sebagai Background Daemon
                 smf.printd(f"Starting OOP Daemon for => {plugin_name}", level="INFO")
+                
                 runner = threading.Thread(
-                    target=plugin_obj.execute, name=f"Daemon-{plugin_name}", daemon=True
+                    target=daemon_runner, 
+                    args=(plugin_obj.execute, plugin_name), # Passing target ke wrapper
+                    name=f"Daemon-{plugin_name}", 
+                    daemon=True
                 )
                 runner.start()
 
             elif plugin_type == "FUNCTIONAL" and getattr(module, "__autorun__", False):
-                # Jika ini fungsional dan punya metadata autorun (seperti saran sebelumnya)
                 start_routine = getattr(module, "execute", None)
                 if start_routine:
-                    smf.printd(
-                        f"Spawning background thread for autorun plugin =>",
-                        plugin_name,
-                        level="INFO",
-                    )
-
+                    smf.printd(f"Spawning background thread for autorun plugin =>", plugin_name, level="INFO")
+                    
                     runner = threading.Thread(
-                        target=start_routine, name=f"Daemon-{plugin_name}", daemon=True
+                        target=daemon_runner, 
+                        args=(start_routine, plugin_name), # Passing target ke wrapper
+                        name=f"Daemon-{plugin_name}", 
+                        daemon=True
                     )
                     runner.start()
 
@@ -136,6 +149,8 @@ def load_module(plugin_name: str) -> bool:
         except Exception as e:
             smf.printf(f"Failed to load plugin =>", plugin_name)
             smf.printd(f"Failed to load plugin [{plugin_name}]", e, level="ERROR")
+            
+            # Delete from Memory (existing or not) on validation error
             REGISTRY[plugin_name] = NullPlugin(plugin_name)
             purge_module_from_memory(plugin_name)
             return False
