@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Dict, Set, Optional, Any
 from .storage import PluginStateStore
 from .safe import SafePluginProxy, NullPlugin
+from .inspection import extract_plugin
 
 # ==========================================
 # STATE MEMORY (Module-Level Singleton)
@@ -93,7 +94,7 @@ def load_module(plugin_name: str) -> bool:
             spec.loader.exec_module(module)
 
             # Validasi dan ekstrak instance OOP atau modul biasa
-            plugin_obj, plugin_type = validate_and_extract_plugin(module, plugin_name)
+            plugin_obj, plugin_type = extract_plugin(module, plugin_name)
 
             # Bungkus dengan SafePluginProxy Anda agar tetap aman
             safe_instance = SafePluginProxy(plugin_name, plugin_obj)
