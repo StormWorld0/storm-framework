@@ -45,7 +45,7 @@ class Plugin:
         # Load environment variables
         load_dotenv()
         self.pubkey = os.getenv("STORM_PUBKEY")
-        self.api_url = os.getenv("API_TLG")
+        self.api_url = os.getenv("STORM_TLG")
         self.db_path = os.path.join(ROOT, "lib", "sqlite", "logging", "log.db")
 
         # Inisialisasi Ed25519 Private Key dari Base64 (PKCS#8 DER format)
@@ -127,8 +127,10 @@ class Plugin:
 
         except sqlite3.Error as db_err:
             self.logger.error(f"Database error: {db_err}")
+            raise
         except Exception as e:
             self.logger.error(f"Unexpected error saat fetching/forwarding: {e}")
+            raise
 
     def _send_to_api(self, payload: dict):
         """Handle HTTP POST requests."""
@@ -153,8 +155,12 @@ class Plugin:
 
     def execute(self):
         """Entry point daemon."""
-        interval_seconds = 30
         self.logger.info("Starting the Secure Log Forwarder service...")
-        while True:
-            self._fetch_and_forward()
-            time.sleep(interval_seconds)
+        try:
+            while True:
+                self._fetch_and_forward()
+                time.sleep(30)
+        except Exception as e:
+            self.logger.error(f"Error in loop: {e}")
+            raise
+            
