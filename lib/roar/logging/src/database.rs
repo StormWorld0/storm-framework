@@ -1,26 +1,26 @@
 // File: src/database.rs
 use pyo3::prelude::*;
-use rusqlite::Connection;
+use rusqlite::{Connection, TransactionBehavior};
 use std::fs;
 use std::path::PathBuf;
 use crate::errors::PrintResult;
 
 pub fn get_db_connection(py: Python<'_>) -> PrintResult<Connection> {
-    // 1. Ekstrak Path dari Python (Butuh GIL Token)
+    // Ekstrak Path dari Python (Butuh GIL Token)
     let rootmap_mod = PyModule::import(py, "rootmap")?;
     let root_py = rootmap_mod.getattr("ROOT")?;
     let root_path_str: String = root_py.call_method0("__str__")?.extract()?;
     let root_path = PathBuf::from(root_path_str);
 
-    // 2. Susun Path Direktori
+    // Susun Path Direktori
     // Hasil: ROOT/lib/sqlite/logging
     let output_dir = root_path.join("lib").join("sqlite").join("logging");
     
-    // 3. Susun Path File Lengkap
+    // Susun Path File Lengkap
     // Hasil: ROOT/lib/sqlite/logging/log.db
     let file_path = output_dir.join("log.db");
 
-    // 4. Pastikan Direktori Tersedia (Pre-flight check)
+    // Pastikan Direktori Tersedia (Pre-flight check)
     if !output_dir.exists() {
         // Kita tangkap error IO dan ubah menjadi PrintResult (via ? operator)
         fs::create_dir_all(&output_dir)?;
@@ -35,6 +35,7 @@ pub fn get_db_connection(py: Python<'_>) -> PrintResult<Connection> {
         "PRAGMA journal_mode = WAL;
          PRAGMA synchronous = NORMAL;
          PRAGMA temp_store = MEMORY;
+         PRAGMA busy_timeout = 5000;
          
          CREATE TABLE IF NOT EXISTS system_logs (
              id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -44,14 +45,16 @@ pub fn get_db_connection(py: Python<'_>) -> PrintResult<Connection> {
              payload TEXT,
              traceback TEXT,
              caller_info TEXT
-         );",
+         );
+         CREATE INDEX IF NOT EXISTS idx_system_logs_timestamp ON system_logs(timestamp);
+         ",
     )?;
     
     Ok(conn)
 }
 
 pub fn insert_log(
-    conn: &Connection, 
+    conn: &mut Connection, 
     timestamp: f64, 
     level: &str, 
     label: &str, 
@@ -59,7 +62,11 @@ pub fn insert_log(
     traceback: &str, 
     caller_info: &str
 ) -> PrintResult<()> {
-    conn.execute(
+    // Transaction Immediate: Kunci database secara eksplisit sebelum penulisan.
+    // Ini mengisolasi Rust INSERT/DELETE agar Python tidak membaca B-Tree setengah-jadi.
+    let tx = conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
+    
+    tx.execute(
         "INSERT INTO system_logs (timestamp, level, label, payload, traceback, caller_info) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
         (timestamp, level, label, payload, traceback, caller_info),
     )?;
@@ -67,18 +74,19 @@ pub fn insert_log(
     let should_cleanup = rand::random::<u8>() < 3; // Probabilitas ~1% (membutuhkan crate `rand`)
     
     if should_cleanup {
-        let retention_period = 7 * 24 * 60 * 60; // 7 Hari
+        // Hitung cutoff langsung dari f64 `timestamp`
+        let retention_seconds = (7 * 24 * 60 * 60) as f64; // 7 Hari
+        let cutoff_timestamp = timestamp - retention_seconds;
         
         // Hapus berdasarkan waktu
-        conn.execute(
+        tx.execute(
             "DELETE FROM system_logs
-             WHERE timestamp < (strftime('%s','now') - ?1)",
-            [retention_period],
+             WHERE timestamp < ?1",
+            [cutoff_timestamp],
         )?;
 
-        // Hapus berdasarkan batas maksimal 10.000 row
-        // Menggunakan OFFSET pada Primary Key index (O(1)) jauh lebih cepat daripada menghitung COUNT(*)
-        conn.execute(
+        //  O(1) Safe Clean-up 10.000 rows limit
+        tx.execute(
             "DELETE FROM system_logs 
              WHERE id <= (
                  SELECT id FROM system_logs 
@@ -89,5 +97,6 @@ pub fn insert_log(
         )?;
     }
     
+    tx.commit()?;
     Ok(())
 }
