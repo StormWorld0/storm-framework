@@ -98,7 +98,9 @@ def load_module(plugin_name: str) -> bool:
 
             if plugin_type == "BROKEN":
                 purge_module_from_memory(plugin_name)
-                smf.printd("Plugin does not pass OOP/FUNC validation", plugin_type, level="WARN")
+                smf.printd(
+                    "Plugin does not pass OOP/FUNC validation", plugin_type, level="WARN"
+                )
                 return False
 
             # Bungkus dengan SafePluginProxy Anda agar tetap aman
