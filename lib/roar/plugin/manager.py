@@ -3,11 +3,12 @@
 import importlib.util
 import sys
 import threading
-from pathlib import Path
-from typing import Dict, Set, Optional, Any
-
 import smf
+
 from rootmap import ROOT
+from pathlib import Path
+
+from typing import Dict, Set, Optional, Any
 from .storage import PluginStateStore
 from .safe import SafePluginProxy, NullPlugin
 
