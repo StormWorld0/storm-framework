@@ -2,7 +2,7 @@
 # -- SMF License
 
 import inspect
-from typing import List, Any, TypedDict, Optional, Type
+from typing import List, Any, TypedDict, Optional
 from .safe import NullPlugin
 
 
@@ -15,13 +15,11 @@ class PluginMethodManifest(TypedDict):
 
 
 def get_plugin_manifest(
-    plugin_instance: Any,
-    require_class: bool = False,
-    expected_class_name: str = "Plugin"
+    plugin_instance: Any, require_class: bool = False, expected_class_name: str = "Plugin"
 ) -> List[PluginMethodManifest]:
     """
     Mengekstrak manifest dari plugin.
-    
+
     :param plugin_instance: Modul atau instance plugin (akan menembus proxy).
     :param require_class: Flag untuk memvalidasi apakah target HARUS berupa Class/Instance.
     :param expected_class_name: Nama class yang diharapkan jika require_class=True.
@@ -39,14 +37,18 @@ def get_plugin_manifest(
     if require_class:
         # Pengecekan A: Apakah target ini adalah Class Uninstantiated atau Instance dari sebuah Class?
         is_class_obj = inspect.isclass(actual_target)
-        is_instance_obj = hasattr(actual_target, "__class__") and not inspect.ismodule(actual_target)
+        is_instance_obj = hasattr(actual_target, "__class__") and not inspect.ismodule(
+            actual_target
+        )
 
         if not (is_class_obj or is_instance_obj):
             # Target bukan class maupun instance (misal: murni modul Python)
             return []
 
         # Pengecekan B: Validasi Nama Class
-        class_name = actual_target.__name__ if is_class_obj else actual_target.__class__.__name__
+        class_name = (
+            actual_target.__name__ if is_class_obj else actual_target.__class__.__name__
+        )
         if class_name != expected_class_name:
             # Nama class tidak sesuai spesifikasi (bukan "Plugin")
             return []
@@ -68,13 +70,13 @@ def get_plugin_manifest(
         # 5. Resolusi Signature
         try:
             sig = inspect.signature(member)
-            
+
             # Jika memindai Uninstantiated Class, hapus parameter 'self' dari signature
             # agar output manifest tetap bersih bagi caller.
             params = list(sig.parameters.values())
             if params and params[0].name == "self":
                 sig = sig.replace(parameters=params[1:])
-                
+
             clean_params = str(sig)
         except (ValueError, TypeError):
             clean_params = "(...)"
@@ -89,4 +91,3 @@ def get_plugin_manifest(
         )
 
     return manifest
-    
