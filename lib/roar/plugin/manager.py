@@ -4,6 +4,7 @@ import importlib.util
 import sys
 import threading
 import smf
+import inspect
 
 from rootmap import ROOT
 from pathlib import Path
@@ -11,6 +12,7 @@ from pathlib import Path
 from typing import Dict, Set, Optional, Any
 from .storage import PluginStateStore
 from .safe import SafePluginProxy, NullPlugin
+from .inspect import extract_plugin
 
 # ==========================================
 # STATE MEMORY (Module-Level Singleton)
@@ -82,7 +84,7 @@ def load_module(plugin_name: str) -> bool:
             return False
 
         try:
-            smf.printd("Resolving module path", plugin_name, level="DEBUG")
+            smf.printd("Resolving module path", plugin_name, level="INFO")
 
             spec = importlib.util.spec_from_file_location(plugin_name, str(plugin_path))
             if spec is None or spec.loader is None:
@@ -91,19 +93,43 @@ def load_module(plugin_name: str) -> bool:
             module = importlib.util.module_from_spec(spec)
             sys.modules[plugin_name] = module
             spec.loader.exec_module(module)
-
-            # [REKAYASA ARSITEKTUR]
-            # Tidak ada lagi inisiasi class instance = module.Plugin().
-            # Karena plugin sekarang murni fungsional, kita jadikan modul itu sendiri sebagai objeknya!
-            safe_instance = SafePluginProxy(plugin_name, module)
+            
+            # Validasi dan ekstrak instance OOP atau modul biasa
+            plugin_obj, plugin_type = validate_and_extract_plugin(module, plugin_name)
+                
+            # Bungkus dengan SafePluginProxy Anda agar tetap aman
+            safe_instance = SafePluginProxy(plugin_name, plugin_obj)
             REGISTRY[plugin_name] = safe_instance
-
+                
+            # --- LOGIKA ENTRY POINT ---
+            if plugin_type == "OOP" and hasattr(plugin_obj, 'execute'):
+                # Jika ini OOP dan punya fungsi start, jalankan sebagai Background Daemon
+                smf.printd(f"Starting OOP Daemon for => {plugin_name}", level="INFO")
+                runner = threading.Thread(
+                    target=plugin_obj.start, 
+                    name=f"Daemon-{plugin_name}",
+                    daemon=True
+                )
+                runner.start()
+                
+            elif plugin_type == "FUNCTIONAL" and getattr(module, '__autorun__', False):
+                # Jika ini fungsional dan punya metadata autorun (seperti saran sebelumnya)
+                start_routine = getattr(module, 'start', None)
+                if start_routine:
+                    smf.printd(f"Spawning background thread for autorun plugin =>", plugin_name, level="INFO")
+                        
+                    runner = threading.Thread(
+                        target=start_routine, 
+                        name=f"Daemon-{plugin_name}", 
+                        daemon=True
+                    )
+                    runner.start()
+                    
             smf.printd("Plugin loaded successfully", plugin_name, level="INFO")
             return True
-
         except Exception as e:
             smf.printf(f"Failed to load plugin =>", plugin_name)
-            smf.printd(f"Failed to load plugin [{plugin_name}]", e, level="CRITICAL")
+            smf.printd(f"Failed to load plugin [{plugin_name}]", e, level="ERROR")
             REGISTRY[plugin_name] = NullPlugin(plugin_name)
             purge_module_from_memory(plugin_name)
             return False
@@ -154,13 +180,13 @@ def broadcast(event_name: str, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         current_registry = list(REGISTRY.items())
 
     for plugin_name, safe_proxy in current_registry:
-        # 1. Deteksi hook fungsi secara dinamis pada module/proxy.
+        #    Deteksi hook fungsi secara dinamis pada module/proxy.
         #    Mendukung format 'pre_execute' langsung sebagai nama fungsi di dalam modul plugin.
         event_hook = getattr(safe_proxy, event_name, None)
 
         if event_hook and callable(event_hook):
             try:
-                # 2. Eksekusi hook dan simpan hasilnya
+                # Eksekusi hook dan simpan hasilnya
                 res = event_hook(*args, **kwargs)
 
                 # Kita hanya mencatat plugin yang mengembalikan data (bukan None)
@@ -168,7 +194,6 @@ def broadcast(event_name: str, *args: Any, **kwargs: Any) -> Dict[str, Any]:
                     results[plugin_name] = res
 
             except Exception as e:
-                # Log internal menggunakan sistem smf internal tanpa menghentikan broadcast ke plugin lain
                 smf.printd(
                     f"Broadcast event [{event_name}] failed in plugin [{plugin_name}]",
                     e,
