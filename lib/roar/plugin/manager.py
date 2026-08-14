@@ -4,7 +4,6 @@ import importlib.util
 import sys
 import threading
 import smf
-import inspect
 
 from rootmap import ROOT
 from pathlib import Path
@@ -12,7 +11,6 @@ from pathlib import Path
 from typing import Dict, Set, Optional, Any
 from .storage import PluginStateStore
 from .safe import SafePluginProxy, NullPlugin
-from .inspect import extract_plugin
 
 # ==========================================
 # STATE MEMORY (Module-Level Singleton)
@@ -93,38 +91,38 @@ def load_module(plugin_name: str) -> bool:
             module = importlib.util.module_from_spec(spec)
             sys.modules[plugin_name] = module
             spec.loader.exec_module(module)
-            
+
             # Validasi dan ekstrak instance OOP atau modul biasa
             plugin_obj, plugin_type = validate_and_extract_plugin(module, plugin_name)
-                
+
             # Bungkus dengan SafePluginProxy Anda agar tetap aman
             safe_instance = SafePluginProxy(plugin_name, plugin_obj)
             REGISTRY[plugin_name] = safe_instance
-                
+
             # --- LOGIKA ENTRY POINT ---
-            if plugin_type == "OOP" and hasattr(plugin_obj, 'execute'):
+            if plugin_type == "OOP" and hasattr(plugin_obj, "execute"):
                 # Jika ini OOP dan punya fungsi start, jalankan sebagai Background Daemon
                 smf.printd(f"Starting OOP Daemon for => {plugin_name}", level="INFO")
                 runner = threading.Thread(
-                    target=plugin_obj.start, 
-                    name=f"Daemon-{plugin_name}",
-                    daemon=True
+                    target=plugin_obj.start, name=f"Daemon-{plugin_name}", daemon=True
                 )
                 runner.start()
-                
-            elif plugin_type == "FUNCTIONAL" and getattr(module, '__autorun__', False):
+
+            elif plugin_type == "FUNCTIONAL" and getattr(module, "__autorun__", False):
                 # Jika ini fungsional dan punya metadata autorun (seperti saran sebelumnya)
-                start_routine = getattr(module, 'start', None)
+                start_routine = getattr(module, "start", None)
                 if start_routine:
-                    smf.printd(f"Spawning background thread for autorun plugin =>", plugin_name, level="INFO")
-                        
+                    smf.printd(
+                        f"Spawning background thread for autorun plugin =>",
+                        plugin_name,
+                        level="INFO",
+                    )
+
                     runner = threading.Thread(
-                        target=start_routine, 
-                        name=f"Daemon-{plugin_name}", 
-                        daemon=True
+                        target=start_routine, name=f"Daemon-{plugin_name}", daemon=True
                     )
                     runner.start()
-                    
+
             smf.printd("Plugin loaded successfully", plugin_name, level="INFO")
             return True
         except Exception as e:
