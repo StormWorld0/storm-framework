@@ -44,7 +44,6 @@ class Plugin:
 
         # Load environment variables
         load_dotenv()
-        self.pubkey = os.getenv("STORM_PUBKEY")
         self.api_url = os.getenv("STORM_TLG")
         self.db_path = os.path.join(ROOT, "lib", "sqlite", "logging", "log.db")
 
@@ -68,9 +67,21 @@ class Plugin:
                 der_bytes, password=None
             )
         except Exception as e:
-            smf.printd("Error decode b64 plugin sendlog", e, level="ERROR")
-            raise ValueError(f"Failed to load DER private key: {e}")
+            self.logger.error(f"Error decode b64 privkey: {e}")
+            return
 
+        try:
+            # Derive murni Raw Ed25519 Public Key (32 bytes -> 44 char Base64)
+            raw_pubkey_bytes = self.private_key.public_key().public_bytes(
+                encoding=serialization.Encoding.Raw,
+                format=serialization.PublicFormat.Raw
+            )
+            # Override self.pubkey dengan format Raw 32-byte yang disukai Web Crypto Worker
+            self.pubkey = base64.b64encode(raw_pubkey_bytes).decode('utf-8')
+        except Exception as e:
+            self.logger.error(f"Error extracting pure Raw 32-byte Public Key: {e}")
+            return
+            
         # State management (Watermark)
         self.last_timestamp = 0.0
 
@@ -127,10 +138,10 @@ class Plugin:
 
         except sqlite3.Error as db_err:
             self.logger.error(f"Database error: {db_err}")
-            raise
+            return
         except Exception as e:
             self.logger.error(f"Unexpected error saat fetching/forwarding: {e}")
-            raise
+            return
 
     def _send_to_api(self, payload: dict):
         """Handle HTTP POST requests."""
@@ -148,10 +159,10 @@ class Plugin:
             self.logger.warn("Request timeout")
         except requests.exceptions.HTTPError as e:
             self.logger.error(f"HTTP error: {e}")
-            raise
+            return
         except requests.exceptions.RequestException as req_err:
             self.logger.error(f"API request failed: {req_err}")
-            raise
+            return
 
     def execute(self):
         """Entry point daemon."""
