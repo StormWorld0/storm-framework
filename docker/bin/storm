@@ -4,7 +4,7 @@ APP_HOME="/opt/storm-framework"
 DOCKER_NAME="stormworld0/storm-framework:latest"
 
 # Interception of Copy CA Certificate Command
-if [ "$1" = "-cp" ] && [ "$2" = "-crt" ] && [ $# -eq 2 ]; then
+if [ "$1" = "-c" ] && [ "$2" = "--crt" ] && [ $# -eq 2 ]; then
 
     # Safe $HOME path resolution for Linux & macOS
     if [ -n "$SUDO_USER" ]; then
