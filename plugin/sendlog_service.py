@@ -73,15 +73,14 @@ class Plugin:
         try:
             # Derive murni Raw Ed25519 Public Key (32 bytes -> 44 char Base64)
             raw_pubkey_bytes = self.private_key.public_key().public_bytes(
-                encoding=serialization.Encoding.Raw,
-                format=serialization.PublicFormat.Raw
+                encoding=serialization.Encoding.Raw, format=serialization.PublicFormat.Raw
             )
             # Override self.pubkey dengan format Raw 32-byte yang disukai Web Crypto Worker
-            self.pubkey = base64.b64encode(raw_pubkey_bytes).decode('utf-8')
+            self.pubkey = base64.b64encode(raw_pubkey_bytes).decode("utf-8")
         except Exception as e:
             self.logger.error(f"Error extracting pure Raw 32-byte Public Key: {e}")
             return
-            
+
         # State management (Watermark)
         self.last_timestamp = 0.0
 
