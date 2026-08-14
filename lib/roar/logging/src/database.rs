@@ -1,6 +1,6 @@
 // File: src/database.rs
 use pyo3::prelude::*;
-use rusqlite::{Connection, TransactionBehavior};
+use rusqlite::Connection;
 use std::fs;
 use std::path::PathBuf;
 use crate::errors::PrintResult;
@@ -54,7 +54,7 @@ pub fn get_db_connection(py: Python<'_>) -> PrintResult<Connection> {
 }
 
 pub fn insert_log(
-    conn: &mut Connection, 
+    conn: &Connection, 
     timestamp: f64, 
     level: &str, 
     label: &str, 
@@ -64,7 +64,7 @@ pub fn insert_log(
 ) -> PrintResult<()> {
     // Transaction Immediate: Kunci database secara eksplisit sebelum penulisan.
     // Ini mengisolasi Rust INSERT/DELETE agar Python tidak membaca B-Tree setengah-jadi.
-    let tx = conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
+    let tx = conn.unchecked_transaction()?;
     
     tx.execute(
         "INSERT INTO system_logs (timestamp, level, label, payload, traceback, caller_info) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
