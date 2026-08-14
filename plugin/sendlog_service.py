@@ -163,4 +163,3 @@ class Plugin:
         except Exception as e:
             self.logger.error(f"Error in loop: {e}")
             raise
-            
