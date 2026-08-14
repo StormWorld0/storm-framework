@@ -1,6 +1,8 @@
 import inspect
 import smf
 
+from typing import Any
+
 
 def extract_plugin(module: Any, plugin_name: str) -> tuple[Any, str]:
     """
