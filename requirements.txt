@@ -13,3 +13,4 @@ ipwhois
 ipaddress>=1.0.23
 whoisdomain
 telnetlib3
+python-dotenv
