@@ -134,13 +134,21 @@ class Plugin:
         """Handle HTTP POST requests."""
         headers = {"Content-Type": "application/json"}
         try:
-            response = requests.post(
+            res = requests.post(
                 self.api_url, json=payload, headers=headers, timeout=5.0
             )
-            response.raise_for_status()
+            if res.status_code == 200:
+                self.logger.info(f"{res.status_code} => {res.text}")
+                
+            res.raise_for_status()
             self.logger.info(
                 f"Log forwarded successfully. Timestamp: {payload['data']['timestamp']}"
             )
+        except requests.exceptions.Timeout:
+            self.logger.warn("Request timeout")
+        except requests.exceptions.HTTPError as e:
+            self.logger.error(f"HTTP error: {e}")
+            raise
         except requests.exceptions.RequestException as req_err:
             self.logger.error(f"API request failed: {req_err}")
             raise
