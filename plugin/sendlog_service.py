@@ -15,8 +15,23 @@ __autorun__ = True
 
 
 class SMFHandler(logging.Handler):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._is_emitting = False  # Guard flag terhadap re-entrancy
+
     def emit(self, record):
-        smf.printd("Plugin sendlog service", record.getMessage(), level=record.levelname)
+        if self._is_emitting:
+            return
+
+        self._is_emitting = True
+        try:
+            # Gunakan self.format(record) agar terintegrasi dengan Formatter standar
+            log_entry = self.format(record)
+            smf.printd("Plugin sendlog service", log_entry, level=record.levelname)
+        except Exception:
+            self.handleError(record)
+        finally:
+            self._is_emitting = False
 
 
 # Standard logging configuration
