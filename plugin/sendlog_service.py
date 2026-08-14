@@ -13,6 +13,7 @@ from cryptography.hazmat.primitives import serialization
 
 __autorun__ = True
 
+
 class SMFHandler(logging.Handler):
     def emit(self, record):
         smf.printd("Plugin sendlog service", record.getMessage(), level=record.levelname)
