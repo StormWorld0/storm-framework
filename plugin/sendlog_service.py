@@ -153,7 +153,7 @@ class Plugin:
 
     def execute(self):
         """Entry point daemon."""
-        interval_seconds = 10
+        interval_seconds = 30
         self.logger.info("Starting the Secure Log Forwarder service...")
         while True:
             self._fetch_and_forward()
