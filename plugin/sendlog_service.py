@@ -102,7 +102,7 @@ class Plugin:
         fetch_since = max(today_start, self.last_timestamp)
 
         try:
-            with sqlite3.connect(self.db_path, timeout=5.0) as conn:
+            with sqlite3.connect(self.db_path, timeout=15.0) as conn:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
 
