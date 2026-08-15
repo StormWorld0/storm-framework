@@ -9,6 +9,7 @@ import requests
 
 from rootmap import ROOT
 from dotenv import load_dotenv
+from datetime import datetime, time
 from cryptography.hazmat.primitives import serialization
 
 __autorun__ = True
@@ -96,8 +97,14 @@ class Plugin:
 
     def _fetch_and_forward(self):
         """Read SQLite and send data sequentially."""
+        # Hitung timestamp awal hari ini (00:00:00)
+        today_start = datetime.combine(datetime.now().date(), time.min).timestamp()
+        fetch_since = max(today_start, self.last_timestamp)
+        
+        db_uri = f"file:{self.db_path}?mode=ro"
+        
         try:
-            with sqlite3.connect(self.db_path) as conn:
+            with sqlite3.connect(db_uri, uri=True, timeout=5.0) as conn:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
 
@@ -105,18 +112,24 @@ class Plugin:
                     SELECT timestamp, level, label, payload, traceback, caller_info 
                     FROM system_logs 
                     WHERE level IN ('ERROR', 'CRITICAL') 
-                      AND timestamp > ?
+                      AND timestamp => ?
+                      AND label NOT LIKE '%sendlog%'
                     ORDER BY timestamp ASC
                 """
-                cursor.execute(query, (self.last_timestamp,))
+                cursor.execute(query, (fetch_since,))
                 rows = cursor.fetchall()
 
                 if not rows:
                     return
 
                 for row in rows:
+                    row_ts = float(row["timestamp"])
+                    
+                    if row_ts <= self.last_timestamp and self.last_timestamp != 0.0:
+                        continue
+                        
                     data_payload = {
-                        "timestamp": row["timestamp"],
+                        "timestamp": row_ts,
                         "level": row["level"],
                         "label": row["label"],
                         "payload": row["payload"],
@@ -125,24 +138,27 @@ class Plugin:
                     }
 
                     signature_b64 = self._sign_payload(data_payload)
-
                     request_body = {
                         "pubkey": self.pubkey,
                         "signature": signature_b64,
                         "data": data_payload,
                     }
 
-                    self._send_to_api(request_body)
-                    self.last_timestamp = row["timestamp"]
+                    # Coba kirim ke API. Jika gagal,
+                    # stop loop iterasi ini (retry 30s lagi)
+                    if not self._send_to_api(request_body):
+                        break
+
+                    # Update watermark HANYA jika HTTP 200 OK
+                    self.last_timestamp = row_ts
 
         except sqlite3.Error as db_err:
             self.logger.error(f"Database error: {db_err}")
-            return
         except Exception as e:
             self.logger.error(f"Unexpected error saat fetching/forwarding: {e}")
-            return
+            
 
-    def _send_to_api(self, payload: dict):
+    def _send_to_api(self, payload: dict) -> bool:
         """Handle HTTP POST requests."""
         headers = {"Content-Type": "application/json"}
         try:
@@ -154,14 +170,16 @@ class Plugin:
             self.logger.info(
                 f"Log forwarded successfully. Timestamp: {payload['data']['timestamp']}"
             )
+            return True
         except requests.exceptions.Timeout:
             self.logger.warn("Request timeout")
+            return False
         except requests.exceptions.HTTPError as e:
             self.logger.error(f"HTTP error: {e}")
-            return
-        except requests.exceptions.RequestException as req_err:
-            self.logger.error(f"API request failed: {req_err}")
-            return
+            return False
+        except requests.exceptions.RequestException as e:
+            self.logger.error(f"API request failed: {e}")
+            return False
 
     def execute(self):
         """Entry point daemon."""
