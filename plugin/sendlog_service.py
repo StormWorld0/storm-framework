@@ -100,9 +100,9 @@ class Plugin:
         # Hitung timestamp awal hari ini (00:00:00)
         today_start = datetime.combine(datetime.now().date(), time.min).timestamp()
         fetch_since = max(today_start, self.last_timestamp)
-        
+
         db_uri = f"file:{self.db_path}?mode=ro"
-        
+
         try:
             with sqlite3.connect(db_uri, uri=True, timeout=5.0) as conn:
                 conn.row_factory = sqlite3.Row
@@ -124,10 +124,10 @@ class Plugin:
 
                 for row in rows:
                     row_ts = float(row["timestamp"])
-                    
+
                     if row_ts <= self.last_timestamp and self.last_timestamp != 0.0:
                         continue
-                        
+
                     data_payload = {
                         "timestamp": row_ts,
                         "level": row["level"],
@@ -156,7 +156,6 @@ class Plugin:
             self.logger.error(f"Database error: {db_err}")
         except Exception as e:
             self.logger.error(f"Unexpected error saat fetching/forwarding: {e}")
-            
 
     def _send_to_api(self, payload: dict) -> bool:
         """Handle HTTP POST requests."""
