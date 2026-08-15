@@ -101,8 +101,9 @@ class Plugin:
         today_start = datetime.combine(datetime.now().date(), time.min).timestamp()
         fetch_since = max(today_start, self.last_timestamp)
 
+        uri_path = f"file:{self.db_path}?mode=ro"
         try:
-            with sqlite3.connect(self.db_path, timeout=15.0) as conn:
+            with sqlite3.connect(uri_path, uri=True, timeout=15.0) as conn:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
 
