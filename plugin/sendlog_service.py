@@ -3,7 +3,6 @@ import smf
 import json
 import base64
 import sqlite3
-import logging
 import requests
 
 from time import sleep
@@ -15,34 +14,8 @@ from cryptography.hazmat.primitives import serialization
 __autorun__ = True
 
 
-class SMFHandler(logging.Handler):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._is_emitting = False  # Guard flag terhadap re-entrancy
-
-    def emit(self, record):
-        if self._is_emitting:
-            return
-
-        self._is_emitting = True
-        try:
-            # Gunakan self.format(record) agar terintegrasi dengan Formatter standar
-            log_entry = self.format(record)
-            smf.printd("Plugin sendlog service", log_entry, level=record.levelname)
-        except Exception:
-            self.handleError(record)
-        finally:
-            self._is_emitting = False
-
-
-# Standard logging configuration
-logging.basicConfig(level=logging.INFO, handlers=[SMFHandler()], force=True)
-
-
 class Plugin:
     def __init__(self):
-        self.logger = logging.getLogger(self.__class__.__name__)
-
         # Load environment variables
         load_dotenv()
         self.api_url = os.getenv("STORM_TLG")
@@ -68,7 +41,7 @@ class Plugin:
                 der_bytes, password=None
             )
         except Exception as e:
-            self.logger.error(f"Error decode b64 privkey: {e}")
+            smf.printd("Error decode b64 privkey", e, level="ERROR")
             return
 
         try:
@@ -79,7 +52,7 @@ class Plugin:
             # Override self.pubkey dengan format Raw 32-byte yang disukai Web Crypto Worker
             self.pubkey = base64.b64encode(raw_pubkey_bytes).decode("utf-8")
         except Exception as e:
-            self.logger.error(f"Error extracting pure Raw 32-byte Public Key: {e}")
+            smf.printd("Error extracting pure Raw 32-byte Public Key", e, level="ERROR")
             return
 
         # State management (Watermark)
@@ -103,7 +76,7 @@ class Plugin:
 
         uri_path = f"file:{self.db_path}?mode=ro"
         try:
-            with sqlite3.connect(uri_path, uri=True, timeout=15.0) as conn:
+            with sqlite3.connect(uri_path, uri=True, timeout=10.0) as conn:
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
 
@@ -151,10 +124,10 @@ class Plugin:
                     # Update watermark HANYA jika HTTP 200 OK
                     self.last_timestamp = row_ts
 
-        except sqlite3.Error as db_err:
-            self.logger.error(f"Database error: {db_err}")
+        except sqlite3.Error as e:
+            smf.printd("Database error", e, level="ERROR")
         except Exception as e:
-            self.logger.error(f"Unexpected error saat fetching/forwarding: {e}")
+            smf.printd("Unexpected error saat fetching/forwarding", e, level="ERROR")
 
     def _send_to_api(self, payload: dict) -> bool:
         """Handle HTTP POST requests."""
@@ -162,26 +135,26 @@ class Plugin:
         try:
             res = requests.post(self.api_url, json=payload, headers=headers, timeout=5.0)
             if res.status_code == 200:
-                self.logger.info(f"{res.status_code} => {res.text}")
+                smf.printd(f"CODE: {res.status_code} => {res.text}", level="INFO")
 
             res.raise_for_status()
-            self.logger.info(
-                f"Log forwarded successfully. Timestamp: {payload['data']['timestamp']}"
+            smf.printd(
+                f"Log forwarded successfully. Timestamp:", payload['data']['timestamp'], level="INFO"
             )
             return True
         except requests.exceptions.Timeout:
-            self.logger.warn("Request timeout")
+            smf.printd("Request timeout", level="WARN")
             return False
         except requests.exceptions.HTTPError as e:
-            self.logger.error(f"HTTP error: {e}")
+            smf.printd("HTTP error", e, level="ERROR")
             return False
         except requests.exceptions.RequestException as e:
-            self.logger.error(f"API request failed: {e}")
+            smf.printd("API request failed", e, level="ERROR")
             return False
 
     def execute(self):
         """Entry point daemon."""
-        self.logger.info("Starting the Secure Log Forwarder service...")
+        smf.printd("Starting the Secure Log Forwarder service...", level="INFO")
         while True:
             self._fetch_and_forward()
-            sleep(30)
+            sleep(60)
