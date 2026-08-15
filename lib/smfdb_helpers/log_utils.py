@@ -24,7 +24,7 @@ def extract_logs(level_target: str, output_file: str = "log.txt"):
 
     try:
         # Open connection to SQLite (Read-Only Mode is safer)
-        uri_path = f"file:{db_path}?mode=ro"
+        uri_path = f"file:{db_path}?mode=ro&nolock=1&immutable=1"
         conn = sqlite3.connect(uri_path, uri=True)
         cursor = conn.cursor()
 
