@@ -1,14 +1,14 @@
 import os
 import smf
-import time
 import json
 import base64
 import sqlite3
 import logging
 import requests
 
-from rootmap import ROOT
+from time import sleep
 from dotenv import load_dotenv
+from rootmap import ROOT
 from datetime import datetime, time
 from cryptography.hazmat.primitives import serialization
 
@@ -112,7 +112,7 @@ class Plugin:
                     SELECT timestamp, level, label, payload, traceback, caller_info 
                     FROM system_logs 
                     WHERE level IN ('ERROR', 'CRITICAL') 
-                      AND timestamp => ?
+                      AND timestamp >= ?
                       AND label NOT LIKE '%sendlog%'
                     ORDER BY timestamp ASC
                 """
@@ -185,4 +185,4 @@ class Plugin:
         self.logger.info("Starting the Secure Log Forwarder service...")
         while True:
             self._fetch_and_forward()
-            time.sleep(30)
+            sleep(30)
