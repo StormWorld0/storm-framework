@@ -25,7 +25,7 @@ def dump_log():
             datetime.date.today(), datetime.time.min
         ).timestamp()
 
-        uri_path = f"{db_path.as_uri()}?mode=ro&nolock=1"
+        uri_path = f"{db_path.as_uri()}?mode=ro&nolock=1&immutable=1"
         smf.printd("Read uri log stream", uri_path, level="DEBUG")
 
         # 1. Gunakan contextlib.closing untuk menjamin koneksi SQLite benar-benar ditutup (conn.close())
