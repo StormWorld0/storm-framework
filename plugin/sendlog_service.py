@@ -139,7 +139,9 @@ class Plugin:
 
             res.raise_for_status()
             smf.printd(
-                f"Log forwarded successfully. Timestamp:", payload['data']['timestamp'], level="INFO"
+                f"Log forwarded successfully. Timestamp:",
+                payload["data"]["timestamp"],
+                level="INFO",
             )
             return True
         except requests.exceptions.Timeout:
