@@ -74,7 +74,8 @@ class Plugin:
         today_start = datetime.combine(datetime.now().date(), time.min).timestamp()
         fetch_since = max(today_start, self.last_timestamp)
 
-        uri_path = f"file:{self.db_path}?mode=ro&nolock=1"
+        uri_path = f"file:{self.db_path}?mode=ro&nolock=1&immutable=1"
+        smf.printd("Read uri sendlog service", uri_path, level="DEBUG")
         try:
             with sqlite3.connect(uri_path, uri=True, timeout=10.0) as conn:
                 conn.row_factory = sqlite3.Row
