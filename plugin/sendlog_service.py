@@ -182,7 +182,7 @@ class Plugin:
                     )
                 except Exception:
                     pass
-                    
+
             smf.printd(
                 f"Sendlog successfully. Timestamp:",
                 payload["data"]["timestamp"],
@@ -196,8 +196,6 @@ class Plugin:
             smf.printd("API sendlog request failed", e, level="ERROR")
             return False
 
-
-    
     def teardown(self):
         """SUICIDE FUNCTION"""
         smf.printd("Stopping sendlog service gracefully", level="INFO")
