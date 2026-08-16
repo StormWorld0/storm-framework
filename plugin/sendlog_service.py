@@ -1,11 +1,12 @@
 import os
 import smf
 import json
+import queue
 import base64
 import sqlite3
 import requests
 
-from time import sleep
+from time import sleep, monotonic
 from dotenv import load_dotenv
 from rootmap import ROOT
 from datetime import datetime, time
@@ -21,6 +22,10 @@ class Plugin:
         self.api_url = os.getenv("STORM_TLG")
         self.db_path = os.path.join(ROOT, "lib", "sqlite", "logging", "log.db")
 
+        self.log_queue = queue.Queue()
+        self.rate_limit_delay = 10.0
+        self.last_timestamp = 0.0
+        
         # Inisialisasi Ed25519 Private Key dari Base64 (PKCS#8 DER format)
         privkey_b64 = os.getenv("STORM_PRIVKEY")
         if not privkey_b64:
@@ -55,8 +60,6 @@ class Plugin:
             smf.printd("Error extracting pure Raw 32-byte Public Key", e, level="ERROR")
             return
 
-        # State management (Watermark)
-        self.last_timestamp = 0.0
 
     def _sign_payload(self, data: dict) -> str:
         """Signing a data dict using Ed25519."""
@@ -116,13 +119,8 @@ class Plugin:
                         "signature": signature_b64,
                         "data": data_payload,
                     }
-
-                    # Coba kirim ke API. Jika gagal,
-                    # stop loop iterasi ini (retry 30s lagi)
-                    if not self._send_to_api(request_body):
-                        break
-
-                    # Update watermark HANYA jika HTTP 200 OK
+                    
+                    self.log_queue.put(request_body)
                     self.last_timestamp = row_ts
 
         except sqlite3.Error as e:
@@ -130,13 +128,54 @@ class Plugin:
         except Exception as e:
             smf.printd("Unexpected error saat fetching/forwarding", e, level="ERROR")
 
+
+    
+    def _consumer_forward_logs(self):
+        """Pop queue, kirim API, lalu enforce delay minimal 10 detik."""
+        while True:
+            try:
+                # Blocking fetch dengan timeout agar thread bisa gracefully exit jika needed
+                request_body = self.log_queue.get(block=True, timeout=1.0)
+            except queue.Empty:
+                continue
+
+            start_time = monotonic()
+            
+            # Melakukan pengiriman data dengan mekanisme retry internal jika gagal
+            success = self._send_to_api(request_body)
+            
+            if not success:
+                # Jika HTTP request gagal/timeout, masukkan kembali ke antrean depan (re-queue)
+                # Catatan: Pada queue standard, re-queue ditaruh di belakang. Untuk requeue ke depan
+                # bisa menggunakan queue.Deque / collections.deque jika prioritas mutlak.
+                smf.printd("Delivery failed, requeue payload", level="WARN")
+                self.log_queue.put(request_body)
+            
+            self.log_queue.task_done()
+
+            # Enforce Throttling: Hitung durasi execution & pastikan interval minimum >= 10s
+            elapsed = monotonic() - start_time
+            sleep_duration = max(0.0, self.rate_limit_delay - elapsed)
+            sleep(sleep_duration)
+
+    
+
     def _send_to_api(self, payload: dict) -> bool:
         """Handle HTTP POST requests."""
-        headers = {"Content-Type": "application/json"}
+        headers = {
+            "User-Agent": "storm-framework/3.0 (Linux/x86_64)",
+            "Content-Type": "application/json",
+        }
         try:
             res = requests.post(self.api_url, json=payload, headers=headers, timeout=5.0)
             if res.status_code == 200:
-                smf.printd(f"CODE: {res.status_code} => {res.text}", level="INFO")
+                try:
+                    res_data = res.json()
+                    status = res_data.get("status")
+                    message = res_data.get("message")
+                    smf.printd(f"CODE: {res.status_code} : {status} =>", message, level="INFO")
+                except Exception:
+                    smf.printd(f"CODE: 200 OK", level="INFO")
 
             res.raise_for_status()
             smf.printd(
@@ -158,6 +197,13 @@ class Plugin:
     def execute(self):
         """Entry point daemon."""
         smf.printd("Starting the Secure Log Forwarder service...", level="INFO")
-        while True:
+        
+        # Start Consumer Thread
+        consumer_thread = threading.Thread(target=self._consumer_forward_logs, daemon=True)
+        consumer_thread.start()
+        
+        while True: 
             self._fetch_and_forward()
             sleep(60)
+
+
