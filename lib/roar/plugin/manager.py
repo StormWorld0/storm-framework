@@ -4,6 +4,7 @@ import importlib.util
 import sys
 import threading
 import smf
+import gc
 
 from rootmap import ROOT
 from pathlib import Path
@@ -18,22 +19,19 @@ from .inspection import extract_plugin
 # Menggantikan peran `self`
 # ==========================================
 PLUGIN_DIR: Path = Path(ROOT) / "plugin"
-REGISTRY: Dict[str, Any] = {}
-_store = PluginStateStore()
-ACTIVE_PLUGINS: Set[str] = _store.load_active_plugins()
+PLUGIN_DIR.mkdir(parents=True, exist_ok=True)
 
+_store = PluginStateStore()
 _lock = threading.RLock()
 _plugin_index: Dict[str, Path] = {}
 
-# Guaranteed existence of root plugin directory
-PLUGIN_DIR.mkdir(parents=True, exist_ok=True)
+REGISTRY: Dict[str, Any] = {}
+ACTIVE_PLUGINS: Set[str] = _store.load_active_plugins()
 
 
 # ==========================================
 # CORE LOGIC (Pure Functions)
 # ==========================================
-
-
 def build_index() -> None:
     """O(N) executed ONLY ONCE. Membangun Hash Map menggunakan Shallow Scan."""
     _plugin_index.clear()
@@ -65,6 +63,7 @@ def purge_module_from_memory(plugin_name: str) -> None:
     importlib.invalidate_caches()
 
 
+# DI PANGGIL OLEH API
 def get_plugin(plugin_name: str) -> Any:
     """Mengambil proxy plugin dari RAM."""
     plugin = REGISTRY.get(plugin_name)
@@ -72,6 +71,7 @@ def get_plugin(plugin_name: str) -> Any:
         smf.printd("Caller requested inactive/missing plugin", plugin_name, level="WARN")
         return NullPlugin(plugin_name)
     return plugin
+
 
 
 def load_module(plugin_name: str) -> bool:
@@ -163,32 +163,51 @@ def load_module(plugin_name: str) -> bool:
             # Delete from Memory (existing or not) on validation error
             REGISTRY[plugin_name] = NullPlugin(plugin_name)
             purge_module_from_memory(plugin_name)
+            _store.remove_plugin(plugin_name)
             return False
 
 
 def load(plugin_name: str) -> bool:
     with _lock:
         build_index()
-        purge_module_from_memory(plugin_name)
         success = load_module(plugin_name)
         if success:
             ACTIVE_PLUGINS.add(plugin_name)
-            _store.save_active_plugins(ACTIVE_PLUGINS)
+            _store.add_plugin(plugin_name)
             smf.printf("[✓] Plugin loaded successfully =>", plugin_name)
         return success
 
 
 def unload(plugin_name: str) -> bool:
     with _lock:
-        if plugin_name in REGISTRY:
+        if plugin_name not in REGISTRY:
+            return False
+        try:
+            plugin_instance = REGISTRY[plugin_name]
+            # Search function (teardown)
+            if hasattr(plugin_instance, "teardown") and callable(plugin_instance.teardown):
+                try:
+                    # Execute (teardown) the plugin's properties
+                    plugin_instance.teardown()
+                except Exception as e:
+                    smf.printd(f"Error during {plugin_name} teardown", e, level="ERROR")
+
+            # Remove from Register
             del REGISTRY[plugin_name]
+            # Remove from load plugin
             ACTIVE_PLUGINS.discard(plugin_name)
-            _store.save_active_plugins(ACTIVE_PLUGINS)
+            # Delete from cache
+            _store.remove_plugin(plugin_name)
+            # Remove from sys.modules
             purge_module_from_memory(plugin_name)
+            # Call the Garbage Collector
+            gc.collect()
+            
             smf.printf("[✓] Plugin unloaded completely =>", plugin_name)
             return True
-
-        return False
+        except Exception as e:
+            smf.printd(f"Failed to unload plugin {plugin_name}", e, level="CRITICAL")
+            return False
 
 
 def boot() -> None:
