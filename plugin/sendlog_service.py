@@ -53,11 +53,9 @@ class Plugin:
             raise
 
         try:
-            # Derive murni Raw Ed25519 Public Key (32 bytes -> 44 char Base64)
             raw_pubkey_bytes = self.private_key.public_key().public_bytes(
                 encoding=serialization.Encoding.Raw, format=serialization.PublicFormat.Raw
             )
-            # Override self.pubkey dengan format Raw 32-byte yang disukai Web Crypto Worker
             self.pubkey = base64.b64encode(raw_pubkey_bytes).decode("utf-8")
         except Exception as e:
             smf.printd("Error extracting pure Raw 32-byte Public Key", e, level="ERROR")
@@ -65,11 +63,8 @@ class Plugin:
 
     def _sign_payload(self, data: dict) -> str:
         """Signing a data dict using Ed25519."""
-        # Canonical JSON serialization untuk deterministic byte array
         canonical_json = json.dumps(data, separators=(",", ":"), sort_keys=True)
-        message_bytes = canonical_json.encode("utf-8")
-
-        # Sign data & encode signature ke Base64
+        message_bytes = canonical_json.encode("utf")
         signature = self.private_key.sign(message_bytes)
         return base64.b64encode(signature).decode("utf-8")
 
@@ -162,23 +157,32 @@ class Plugin:
     def _send_to_api(self, payload: dict) -> bool:
         """Handle HTTP POST requests."""
         headers = {
-            "User-Agent": "storm-framework/3.0 (Linux/x86_64)",
+            "User-Agent": "storm-framework/3.0 (sendlog)",
             "Content-Type": "application/json",
         }
         try:
             res = requests.post(self.api_url, json=payload, headers=headers, timeout=5.0)
+            res_data = res.json()
             if res.status_code == 200:
                 try:
-                    res_data = res.json()
                     status = res_data.get("status")
                     message = res_data.get("message")
                     smf.printd(
                         f"CODE: {res.status_code} : {status} =>", message, level="INFO"
                     )
                 except Exception:
-                    smf.printd(f"CODE: 200 OK", level="INFO")
+                    pass
 
-            res.raise_for_status()
+            elif res.status_code >= 400:
+                try:
+                    status = res_data.get("status")
+                    message = res_data.get("message")
+                    smf.printd(
+                        f"CODE: {res.status_code} : {status} =>", message, level="ERROR"
+                    )
+                except Exception:
+                    pass
+                    
             smf.printd(
                 f"Sendlog successfully. Timestamp:",
                 payload["data"]["timestamp"],
@@ -188,13 +192,12 @@ class Plugin:
         except requests.exceptions.Timeout:
             smf.printd("Request timeout sendlog", level="WARN")
             return False
-        except requests.exceptions.HTTPError as e:
-            smf.printd("HTTP error sendlog", e, level="ERROR")
-            return False
         except requests.exceptions.RequestException as e:
             smf.printd("API sendlog request failed", e, level="ERROR")
             return False
 
+
+    
     def teardown(self):
         """SUICIDE FUNCTION"""
         smf.printd("Stopping sendlog service gracefully", level="INFO")
