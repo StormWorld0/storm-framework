@@ -7,6 +7,7 @@ from rootmap import ROOT
 from pathlib import Path
 from typing import Set, Dict, Any
 
+
 class PluginStateStore:
     def __init__(self) -> None:
         self.cachepath: Path = (
@@ -43,7 +44,6 @@ class PluginStateStore:
         finally:
             if temp_filepath.exists():
                 temp_filepath.unlink(missing_ok=True)
-                
 
     def add_plugin(self, plugin_name: str) -> None:
         """
@@ -64,5 +64,3 @@ class PluginStateStore:
         if plugin_name in current_plugins:
             current_plugins.remove(plugin_name)
             self.save_active_plugins(current_plugins)
-
-            
