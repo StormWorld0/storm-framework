@@ -1,6 +1,7 @@
 # File: plugin/demo_plug.py
 import smf
 
+__autorun__ = True
 
 class Plugin:
     def __init__(self):
