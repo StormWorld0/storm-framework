@@ -73,7 +73,6 @@ def get_plugin(plugin_name: str) -> Any:
     return plugin
 
 
-
 def load_module(plugin_name: str) -> bool:
     """Fungsi kompilasi AST & Memory Allocation tingkat rendah."""
     with _lock:
@@ -185,7 +184,9 @@ def unload(plugin_name: str) -> bool:
         try:
             plugin_instance = REGISTRY[plugin_name]
             # Search function (teardown)
-            if hasattr(plugin_instance, "teardown") and callable(plugin_instance.teardown):
+            if hasattr(plugin_instance, "teardown") and callable(
+                plugin_instance.teardown
+            ):
                 try:
                     # Execute (teardown) the plugin's properties
                     plugin_instance.teardown()
@@ -202,7 +203,7 @@ def unload(plugin_name: str) -> bool:
             purge_module_from_memory(plugin_name)
             # Call the Garbage Collector
             gc.collect()
-            
+
             smf.printf("[✓] Plugin unloaded completely =>", plugin_name)
             return True
         except Exception as e:
