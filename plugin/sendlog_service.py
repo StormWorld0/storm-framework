@@ -32,7 +32,7 @@ class Plugin:
         # Inisialisasi Ed25519 Private Key dari Base64 (PKCS#8 DER format)
         privkey_b64 = os.getenv("STORM_PRIVKEY")
         if not privkey_b64:
-            raise ValueError("STORM_PRIVKEY not found.")
+            raise
 
         try:
             # Decode Base64 untuk mendapatkan byte DER (ASN.1)
@@ -50,7 +50,7 @@ class Plugin:
             )
         except Exception as e:
             smf.printd("Error decode b64 privkey", e, level="ERROR")
-            return
+            raise
 
         try:
             # Derive murni Raw Ed25519 Public Key (32 bytes -> 44 char Base64)
@@ -61,7 +61,7 @@ class Plugin:
             self.pubkey = base64.b64encode(raw_pubkey_bytes).decode("utf-8")
         except Exception as e:
             smf.printd("Error extracting pure Raw 32-byte Public Key", e, level="ERROR")
-            return
+            raise
 
     def _sign_payload(self, data: dict) -> str:
         """Signing a data dict using Ed25519."""
