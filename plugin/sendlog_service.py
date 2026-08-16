@@ -24,7 +24,7 @@ class Plugin:
         self.db_path = os.path.join(ROOT, "lib", "sqlite", "logging", "log.db")
 
         self.log_queue = queue.Queue()
-        self.rate_limit_delay = 10.0
+        self.rate_limit_delay = 15.0
         self.last_timestamp = 0.0
 
         # Inisialisasi Ed25519 Private Key dari Base64 (PKCS#8 DER format)
@@ -78,7 +78,6 @@ class Plugin:
         fetch_since = max(today_start, self.last_timestamp)
 
         uri_path = f"file:{self.db_path}?mode=ro&nolock=1&immutable=1"
-        smf.printd("Read uri sendlog service", uri_path, level="DEBUG")
         try:
             with sqlite3.connect(uri_path, uri=True, timeout=10.0) as conn:
                 conn.row_factory = sqlite3.Row
@@ -124,9 +123,9 @@ class Plugin:
                     self.last_timestamp = row_ts
 
         except sqlite3.Error as e:
-            smf.printd("Database error", e, level="ERROR")
+            smf.printd("Database error sendlog", e, level="ERROR")
         except Exception as e:
-            smf.printd("Unexpected error saat fetching/forwarding", e, level="ERROR")
+            smf.printd("Unexpected error sendlog when fetching/forwarding", e, level="ERROR")
 
     def _consumer_forward_logs(self):
         """Pop queue, kirim API, lalu enforce delay minimal 10 detik."""
@@ -177,24 +176,24 @@ class Plugin:
 
             res.raise_for_status()
             smf.printd(
-                f"Log forwarded successfully. Timestamp:",
+                f"Sendlog successfully. Timestamp:",
                 payload["data"]["timestamp"],
                 level="INFO",
             )
             return True
         except requests.exceptions.Timeout:
-            smf.printd("Request timeout", level="WARN")
+            smf.printd("Request timeout sendlog", level="WARN")
             return False
         except requests.exceptions.HTTPError as e:
-            smf.printd("HTTP error", e, level="ERROR")
+            smf.printd("HTTP error sendlog", e, level="ERROR")
             return False
         except requests.exceptions.RequestException as e:
-            smf.printd("API request failed", e, level="ERROR")
+            smf.printd("API sendlog request failed", e, level="ERROR")
             return False
 
     def execute(self):
         """Entry point daemon."""
-        smf.printd("Starting the Secure Log Forwarder service...", level="INFO")
+        smf.printd("Starting the sendlog service...", level="INFO")
 
         # Start Consumer Thread
         consumer_thread = threading.Thread(
