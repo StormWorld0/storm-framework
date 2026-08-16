@@ -125,7 +125,9 @@ class Plugin:
         except sqlite3.Error as e:
             smf.printd("Database error sendlog", e, level="ERROR")
         except Exception as e:
-            smf.printd("Unexpected error sendlog when fetching/forwarding", e, level="ERROR")
+            smf.printd(
+                "Unexpected error sendlog when fetching/forwarding", e, level="ERROR"
+            )
 
     def _consumer_forward_logs(self):
         """Pop queue, kirim API, lalu enforce delay minimal 10 detik."""
