@@ -171,7 +171,7 @@ class Plugin:
                         f"CODE: {res.status_code} : {status} =>", message, level="INFO"
                     )
                 except Exception:
-                    pass
+                    smf.printd(f"CODE: 200OK", level="INFO")
 
             elif res.status_code >= 400:
                 try:
@@ -180,8 +180,10 @@ class Plugin:
                     smf.printd(
                         f"CODE: {res.status_code} : {status} =>", message, level="ERROR"
                     )
+                    return False
                 except Exception:
-                    pass
+                    smf.printd(f"CODE: {res.status_code}", level="ERROR")
+                    return False
 
             smf.printd(
                 f"Sendlog successfully. Timestamp:",
@@ -198,8 +200,6 @@ class Plugin:
 
     def teardown(self):
         """SUICIDE FUNCTION"""
-        smf.printd("Stopping sendlog service gracefully", level="INFO")
-
         # Sinyalkan ke SEMUA thread untuk keluar dari loop
         self.stop_event.set()
 
