@@ -1,4 +1,5 @@
 import smf
+import traceback
 
 __autorun__ = True
 
@@ -8,8 +9,6 @@ class Plugin:
         self.status = "error"
 
     def _trigger_crash(self):
-        smf.printd("DemoPlugin", "Executing dangerous operation...", level="WARN")
-
         # Deliberately crash
         return self.status + 100
 
@@ -17,5 +16,6 @@ class Plugin:
         try:
             return self._trigger_crash()
         except Exception as e:
-            smf.printd("", e, level="ERROR")
+            smf.printd("Demo plugin crash", e, level="ERROR")
             raise
+            
