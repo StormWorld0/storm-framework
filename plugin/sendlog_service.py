@@ -23,6 +23,8 @@ class Plugin:
         self.api_url = os.getenv("STORM_TLG")
         self.db_path = os.path.join(ROOT, "lib", "sqlite", "logging", "log.db")
 
+        self.stop_event = threading.Event()
+        self.consumer_thread = None
         self.log_queue = queue.Queue()
         self.rate_limit_delay = 15.0
         self.last_timestamp = 0.0
@@ -131,7 +133,7 @@ class Plugin:
 
     def _consumer_forward_logs(self):
         """Pop queue, kirim API, lalu enforce delay minimal 10 detik."""
-        while True:
+        while not self.stop_event.is_set():
             try:
                 # Blocking fetch dengan timeout agar thread bisa gracefully exit jika needed
                 request_body = self.log_queue.get(block=True, timeout=1.0)
@@ -155,7 +157,7 @@ class Plugin:
             # Enforce Throttling: Hitung durasi execution & pastikan interval minimum >= 10s
             elapsed = monotonic() - start_time
             sleep_duration = max(0.0, self.rate_limit_delay - elapsed)
-            sleep(sleep_duration)
+            self.stop_event.wait(timeout=sleep_duration)
 
     def _send_to_api(self, payload: dict) -> bool:
         """Handle HTTP POST requests."""
@@ -193,16 +195,29 @@ class Plugin:
             smf.printd("API sendlog request failed", e, level="ERROR")
             return False
 
+    def teardown(self):
+        """SUICIDE FUNCTION"""
+        smf.printd("Stopping sendlog service gracefully", level="INFO")
+        
+        # Sinyalkan ke SEMUA thread untuk keluar dari loop
+        self.stop_event.set()
+
+        # Tunggu consumer thread benar-benar selesai
+        if self.consumer_thread and self.consumer_thread.is_alive():
+            self.consumer_thread.join(timeout=2.0)
+            
+        smf.printd("Sendlog service stopped.", level="INFO")
+
     def execute(self):
-        """Entry point daemon."""
-        smf.printd("Starting the sendlog service...", level="INFO")
+        """Entry point daemon"""
+        smf.printd("Starting the sendlog service", level="INFO")
 
         # Start Consumer Thread
-        consumer_thread = threading.Thread(
+        self.consumer_thread = threading.Thread(
             target=self._consumer_forward_logs, daemon=True
         )
-        consumer_thread.start()
+        self.consumer_thread.start()
 
-        while True:
+        while not self.stop_event.is_set():
             self._fetch_and_forward()
-            sleep(60)
+            self.stop_event.wait(timeout=60)
