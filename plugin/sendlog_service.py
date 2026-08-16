@@ -25,7 +25,7 @@ class Plugin:
         self.log_queue = queue.Queue()
         self.rate_limit_delay = 10.0
         self.last_timestamp = 0.0
-        
+
         # Inisialisasi Ed25519 Private Key dari Base64 (PKCS#8 DER format)
         privkey_b64 = os.getenv("STORM_PRIVKEY")
         if not privkey_b64:
@@ -59,7 +59,6 @@ class Plugin:
         except Exception as e:
             smf.printd("Error extracting pure Raw 32-byte Public Key", e, level="ERROR")
             return
-
 
     def _sign_payload(self, data: dict) -> str:
         """Signing a data dict using Ed25519."""
@@ -119,7 +118,7 @@ class Plugin:
                         "signature": signature_b64,
                         "data": data_payload,
                     }
-                    
+
                     self.log_queue.put(request_body)
                     self.last_timestamp = row_ts
 
@@ -128,8 +127,6 @@ class Plugin:
         except Exception as e:
             smf.printd("Unexpected error saat fetching/forwarding", e, level="ERROR")
 
-
-    
     def _consumer_forward_logs(self):
         """Pop queue, kirim API, lalu enforce delay minimal 10 detik."""
         while True:
@@ -140,25 +137,23 @@ class Plugin:
                 continue
 
             start_time = monotonic()
-            
+
             # Melakukan pengiriman data dengan mekanisme retry internal jika gagal
             success = self._send_to_api(request_body)
-            
+
             if not success:
                 # Jika HTTP request gagal/timeout, masukkan kembali ke antrean depan (re-queue)
                 # Catatan: Pada queue standard, re-queue ditaruh di belakang. Untuk requeue ke depan
                 # bisa menggunakan queue.Deque / collections.deque jika prioritas mutlak.
                 smf.printd("Delivery failed, requeue payload", level="WARN")
                 self.log_queue.put(request_body)
-            
+
             self.log_queue.task_done()
 
             # Enforce Throttling: Hitung durasi execution & pastikan interval minimum >= 10s
             elapsed = monotonic() - start_time
             sleep_duration = max(0.0, self.rate_limit_delay - elapsed)
             sleep(sleep_duration)
-
-    
 
     def _send_to_api(self, payload: dict) -> bool:
         """Handle HTTP POST requests."""
@@ -173,7 +168,9 @@ class Plugin:
                     res_data = res.json()
                     status = res_data.get("status")
                     message = res_data.get("message")
-                    smf.printd(f"CODE: {res.status_code} : {status} =>", message, level="INFO")
+                    smf.printd(
+                        f"CODE: {res.status_code} : {status} =>", message, level="INFO"
+                    )
                 except Exception:
                     smf.printd(f"CODE: 200 OK", level="INFO")
 
@@ -197,13 +194,13 @@ class Plugin:
     def execute(self):
         """Entry point daemon."""
         smf.printd("Starting the Secure Log Forwarder service...", level="INFO")
-        
+
         # Start Consumer Thread
-        consumer_thread = threading.Thread(target=self._consumer_forward_logs, daemon=True)
+        consumer_thread = threading.Thread(
+            target=self._consumer_forward_logs, daemon=True
+        )
         consumer_thread.start()
-        
-        while True: 
+
+        while True:
             self._fetch_and_forward()
             sleep(60)
-
-
