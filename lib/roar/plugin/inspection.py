@@ -22,10 +22,14 @@ def inspect_teardown(file_path: Path) -> dict:
                     uses_asyncio = True
 
         elif isinstance(node, ast.ImportFrom):
-            if node.module == "threading" or (node.module and node.module.startswith("threading.")):
+            if node.module == "threading" or (
+                node.module and node.module.startswith("threading.")
+            ):
                 uses_threading = True
 
-            elif node.module == "asyncio" or (node.module and node.module.startswith("asyncio.")):
+            elif node.module == "asyncio" or (
+                node.module and node.module.startswith("asyncio.")
+            ):
                 uses_asyncio = True
 
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -34,6 +38,7 @@ def inspect_teardown(file_path: Path) -> dict:
 
     requires_teardown = uses_threading or uses_asyncio
     return {"valid": not requires_teardown or has_teardown}
+
 
 def extract_plugin(module: Any, plugin_name: str) -> tuple[Any, str]:
     """
@@ -75,7 +80,6 @@ def extract_plugin(module: Any, plugin_name: str) -> tuple[Any, str]:
                 level="ERROR",
             )
             return module, "BROKEN"
-        
 
     # [STATE ALLOCATION]
     try:
@@ -84,5 +88,3 @@ def extract_plugin(module: Any, plugin_name: str) -> tuple[Any, str]:
     except Exception as e:
         smf.printd(f"Failed __init__ class Plugin on [{plugin_name}]", e, level="ERROR")
         return "BROKEN"
-
-
