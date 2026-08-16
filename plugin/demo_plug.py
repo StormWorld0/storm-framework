@@ -3,6 +3,7 @@ import smf
 
 __autorun__ = True
 
+
 class Plugin:
     def __init__(self):
         # Dipanggil otomatis saat modul di-load oleh manager
