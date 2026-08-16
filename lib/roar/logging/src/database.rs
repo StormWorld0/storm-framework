@@ -75,7 +75,7 @@ pub fn insert_log(
     
     if should_cleanup {
         // Hitung cutoff langsung dari f64 `timestamp`
-        let retention_seconds = (7 * 24 * 60 * 60) as f64; // 7 Hari
+        let retention_seconds = (3 * 24 * 60 * 60) as f64; // 3 Hari
         let cutoff_timestamp = timestamp - retention_seconds;
         
         // Hapus berdasarkan waktu
