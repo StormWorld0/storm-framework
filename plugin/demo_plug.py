@@ -1,5 +1,4 @@
 import smf
-import traceback
 
 __autorun__ = True
 
@@ -18,4 +17,3 @@ class Plugin:
         except Exception as e:
             smf.printd("Demo plugin crash", e, level="ERROR")
             raise
-            
