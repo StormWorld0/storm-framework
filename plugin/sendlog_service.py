@@ -7,7 +7,7 @@ import sqlite3
 import requests
 import threading
 
-from time import sleep, monotonic
+from time import monotonic
 from dotenv import load_dotenv
 from rootmap import ROOT
 from datetime import datetime, time
@@ -198,14 +198,14 @@ class Plugin:
     def teardown(self):
         """SUICIDE FUNCTION"""
         smf.printd("Stopping sendlog service gracefully", level="INFO")
-        
+
         # Sinyalkan ke SEMUA thread untuk keluar dari loop
         self.stop_event.set()
 
         # Tunggu consumer thread benar-benar selesai
         if self.consumer_thread and self.consumer_thread.is_alive():
             self.consumer_thread.join(timeout=2.0)
-            
+
         smf.printd("Sendlog service stopped.", level="INFO")
 
     def execute(self):
