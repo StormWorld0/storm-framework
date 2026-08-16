@@ -99,7 +99,7 @@ def load_module(plugin_name: str) -> bool:
             if plugin_type == "BROKEN":
                 purge_module_from_memory(plugin_name)
                 smf.printd(
-                    "Plugin does not pass OOP/FUNC validation", plugin_type, level="WARN"
+                    "Plugin does not pass OOP/FUNC validation", plugin_type, level="ERROR"
                 )
                 return False
 
@@ -120,6 +120,7 @@ def load_module(plugin_name: str) -> bool:
                     with _lock:
                         REGISTRY[p_name] = NullPlugin(p_name)
                         purge_module_from_memory(p_name)
+                        _store.remove_plugin(plugin_name)
                         smf.printd(
                             f"Cleanup complete for crashed plugin: {p_name}", level="INFO"
                         )
