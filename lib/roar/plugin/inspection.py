@@ -3,7 +3,7 @@ import smf
 import ast
 
 from typing import Any
-
+from pathlib import Path
 
 def inspect_teardown(file_path: Path) -> dict:
     source = file_path.read_text(encoding="utf-8")
