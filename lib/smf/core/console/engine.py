@@ -1,5 +1,9 @@
-# -- https://github.com/StormWorld0/storm-framework
-# -- SMF License
+# --- https://github.com/StormWorld0/storm-framework ---
+# SMF License
+# copyright (c) 2026
+# Complete information about the License is in the root directory.
+# Author: zxelzy
+
 import typing
 import smf
 import os
