@@ -4,6 +4,7 @@ import smf
 
 __autorun__ = False
 
+
 class Plugin:
     def __init__(self):
         self.name = "Advanced Dynamic Multi-Decoder"
@@ -31,7 +32,7 @@ class Plugin:
         for transform_key, decoder_func in self._dispatch_table.items():
             if transforms.get(transform_key) is True:
                 decoded_result = decoder_func(current_payload)
-                
+
                 if decoded_result != current_payload:
                     current_payload = decoded_result
 
@@ -41,7 +42,6 @@ class Plugin:
 
         return {"handled": False}
 
-    
     # ==========================================
     #    --- PRIVATE DECODER STRATEGIES ---
     # ==========================================
