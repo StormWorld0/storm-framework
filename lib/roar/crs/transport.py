@@ -55,8 +55,9 @@ class CRS:
                     cls._process.stdin.close()
                 cls._process.terminate()
                 cls._process.wait(timeout=1)
-            except Exception:
-                pass
+            except subprocess.TimeoutExpired:
+                cls._process.kill()
+                cls._process.wait()
             finally:
                 cls._process = None
 
