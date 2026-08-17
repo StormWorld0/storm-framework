@@ -1,5 +1,7 @@
 # -- https://github.com/StormWorld0/storm-framework
 # -- License SMF
+# -- Author: zxelzy
+
 import json
 import subprocess
 import os
@@ -13,7 +15,6 @@ from apps.utility.colors import *
 
 class CRS:
     """IPC (Inter-Process Communication) via Subprocess."""
-
     _process = None
 
     @classmethod
@@ -39,8 +40,8 @@ class CRS:
             bufsize=1,
         )
 
-    atexit.register(cls._cleanup)
-    return cls._process
+        atexit.register(cls._cleanup)
+        return cls._process
 
     @classmethod
     def _cleanup(cls):
