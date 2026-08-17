@@ -7,6 +7,7 @@
 import readline  # noqa: F401
 import sys
 import smf
+
 try:
     from lib.smf.core.booting.boot import boot as sysb
     from ..banner import banner as style_ui
