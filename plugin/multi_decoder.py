@@ -30,7 +30,7 @@ class Plugin:
 
         # Iterasi pipeline decoder secara sekuensial
         for transform_key, decoder_func in self._dispatch_table.items():
-            if transforms.get(transform_key).lower is True:
+            if transforms.get(transform_key) is True:
                 decoded_result = decoder_func(current_payload)
                 
                 if decoded_result != current_payload:
