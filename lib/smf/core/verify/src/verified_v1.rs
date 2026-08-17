@@ -4,8 +4,8 @@
 use rayon::prelude::*;
 use sha2::{Sha256, Digest};
 use std::sync::{mpsc, Arc};
-use std::fs;
-use std::io;
+use std::fs::{self, File};
+use std::io::{self, BufWriter, Write};
 use std::collections::{BTreeMap, HashSet};
 use std::path::Path;
 use walkdir::{WalkDir, DirEntry};
@@ -145,7 +145,7 @@ fn main() {
 
     // The main thread executes the UI loop smoothly.
     while let Ok(message) = rx.recv() {
-        // 1. Kumpulkan state secara silent (tanpa mencetak angka)
+        // Kumpulkan state secara silent (tanpa mencetak angka)
         match message {
             VerifyResult::Verified(path) => {
                 verified_count += 1;
@@ -157,6 +157,43 @@ fn main() {
             }
             VerifyResult::Untracked(path) => {
                 untracked_files.push(path);
+            }
+        }
+    }
+
+    // Path to cache state injection
+    let inj_path = "lib/smf/core/sf/cache/integrity/injection.state";
+
+    if !untracked_files.is_empty() {
+        let path_obj = Path::new(inj_path);
+        if let Some(parent) = path_obj.parent() {
+            if !parent.exists() {
+                if let Err(e) = fs::create_dir_all(parent) {
+                    eprintln!("I/O Error: Failed to create directory hierarchy in '{}': {}", parent.display(), e);
+                }
+            }
+        }
+        
+        match File::create(path_obj) {
+            Ok(file) => {
+                let mut writer = BufWriter::new(file);
+                let mut write_success = true;
+
+                for untracked in &untracked_files {
+                    if let Err(e) = writeln!(writer, "{}", untracked) {
+                        eprintln!("I/O Error writing string to buffer: {}", e);
+                        write_success = false;
+                        break;
+                    }
+                }
+                if write_success {
+                    if let Err(e) = writer.flush() {
+                        eprintln!("I/O Error flushing disk: {}", e);
+                    }
+                }
+            }
+            Err(e) => {
+                eprintln!("Failed to create/open file at path '{}': {}", path_obj.display(), e);
             }
         }
     }
