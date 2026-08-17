@@ -128,8 +128,8 @@ def load_module(plugin_name: str) -> bool:
                     )
 
             # --- ENTRY POINT LOGIC ---
-            if plugin_type == "OOP" and hasattr(plugin_obj, "execute"):
-                smf.printd(f"Starting OOP Daemon for => {plugin_name}", level="INFO")
+            if plugin_type == "OOP" and getattr(module, "__autorun__", False):
+                smf.printd(f"Starting OOP Daemon for =>", plugin_name, level="INFO")
 
                 runner = threading.Thread(
                     target=daemon_runner,
@@ -142,11 +142,7 @@ def load_module(plugin_name: str) -> bool:
             elif plugin_type == "FUNCTIONAL" and getattr(module, "__autorun__", False):
                 start_routine = getattr(module, "execute", None)
                 if start_routine:
-                    smf.printd(
-                        f"Spawning background thread for autorun plugin =>",
-                        plugin_name,
-                        level="INFO",
-                    )
+                    smf.printd("Starting FUCNTIONAL Daemon for =>", plugin_name, level="INFO")
 
                     runner = threading.Thread(
                         target=daemon_runner,
@@ -222,10 +218,9 @@ def boot() -> None:
 def broadcast(event_name: str, *args: Any, **kwargs: Any) -> Dict[str, Any]:
     """
     Mengirimkan event ke semua plugin yang terdaftar di REGISTRY secara dinamis.
-
     Returns:
         Dict[str, Any]: Mapping antara nama plugin dan hasil return dari plugin tersebut.
-                        Contoh: {"decode_plugin": {"handled": True}}
+                        Contoh: {"payload": {"handled": True}}
     """
     results: Dict[str, Any] = {}
 
@@ -235,7 +230,7 @@ def broadcast(event_name: str, *args: Any, **kwargs: Any) -> Dict[str, Any]:
 
     for plugin_name, safe_proxy in current_registry:
         #    Deteksi hook fungsi secara dinamis pada module/proxy.
-        #    Mendukung format 'pre_execute' langsung sebagai nama fungsi di dalam modul plugin.
+        #    Mendukung format 'execute' langsung sebagai nama fungsi di dalam modul plugin.
         event_hook = getattr(safe_proxy, event_name, None)
 
         if event_hook and callable(event_hook):
@@ -246,7 +241,7 @@ def broadcast(event_name: str, *args: Any, **kwargs: Any) -> Dict[str, Any]:
                 # Kita hanya mencatat plugin yang mengembalikan data (bukan None)
                 if res is not None:
                     results[plugin_name] = res
-
+                    
             except Exception as e:
                 smf.printd(
                     f"Broadcast event [{event_name}] failed in plugin [{plugin_name}]",
