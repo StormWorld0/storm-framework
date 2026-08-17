@@ -3,7 +3,7 @@
 import smf
 import apps.utility.utils as utils
 
-from apps.utility.colors import *
+from apps.utility.colors import CC
 
 
 # Command use to lock or use a module that you want to use.
