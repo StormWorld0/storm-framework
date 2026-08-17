@@ -182,7 +182,8 @@ fn main() {
                 // Priority 1: Pure Injection
                 println!("\n[*] STATUS: CRITICAL");
                 println!("[*] MESSAGE: File injection detected.");
-                println!("[*] ACTION: Delete the files that injection detects OR Reinstall Storm Framework.");
+                println!("[*] ACTION: Delete the files that injection detects.");
+                println!("[*]         Run (storm --clean) to remove the injected files before restarting.")
                 std::process::exit(203);
             }
             (false, true) => {
