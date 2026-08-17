@@ -4,7 +4,8 @@ import readline  # noqa: F401
 import sys
 import smf
 try:
-    from lib.ui.interface import sys_boot # noqa: F401
+    from lib.ui.interface.sys_boot import system_booting
+    system_booting()
 except ImportError as e:
     smf.printf(f"Error import smfstart =>", e, file=sys.stderr)
     sys.exit(100)
