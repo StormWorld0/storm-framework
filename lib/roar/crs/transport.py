@@ -13,6 +13,7 @@ from apps.utility.colors import *
 
 class CRS:
     """IPC (Inter-Process Communication) via Subprocess."""
+
     _process = None
 
     @classmethod
@@ -37,7 +38,7 @@ class CRS:
             text=True,
             bufsize=1,
         )
-        
+
     atexit.register(cls._cleanup)
     return cls._process
 
@@ -46,7 +47,7 @@ class CRS:
         """Universal cleanup handler when parent exit is normal/graceful."""
         if cls._process is not None:
             try:
-                # Menutup stdin mengirimkan EOF 
+                # Menutup stdin mengirimkan EOF
                 # ke child process di OS manapun
                 if cls._process.stdin:
                     cls._process.stdin.close()
