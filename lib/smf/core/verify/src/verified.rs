@@ -183,7 +183,7 @@ fn main() {
                 println!("\n[*] STATUS: CRITICAL");
                 println!("[*] MESSAGE: File injection detected.");
                 println!("[*] ACTION: Delete the files that injection detects.");
-                println!("[*]         Run (storm --clean) to remove the injected files before restarting.")
+                println!("[*]         Run (storm --clean) to remove the injected files before restarting.");
                 std::process::exit(203);
             }
             (false, true) => {
