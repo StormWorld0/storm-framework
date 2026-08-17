@@ -63,16 +63,6 @@ def purge_module_from_memory(plugin_name: str) -> None:
     importlib.invalidate_caches()
 
 
-# DI PANGGIL OLEH API
-def get_plugin(plugin_name: str) -> Any:
-    """Mengambil proxy plugin dari RAM."""
-    plugin = REGISTRY.get(plugin_name)
-    if plugin is None:
-        smf.printd("Caller requested inactive/missing plugin", plugin_name, level="WARN")
-        return NullPlugin(plugin_name)
-    return plugin
-
-
 def load_module(plugin_name: str) -> bool:
     """Fungsi kompilasi AST & Memory Allocation tingkat rendah."""
     with _lock:
@@ -166,7 +156,9 @@ def load_module(plugin_name: str) -> bool:
             _store.remove_plugin(plugin_name)
             return False
 
-
+# ==========================================
+# Called by API
+# ==========================================
 def load(plugin_name: str) -> bool:
     with _lock:
         build_index()
@@ -176,7 +168,6 @@ def load(plugin_name: str) -> bool:
             _store.add_plugin(plugin_name)
             smf.printf("[✓] Plugin loaded successfully =>", plugin_name)
         return success
-
 
 def unload(plugin_name: str) -> bool:
     with _lock:
@@ -211,19 +202,20 @@ def unload(plugin_name: str) -> bool:
             smf.printd(f"Failed to unload plugin {plugin_name}", e, level="CRITICAL")
             return False
 
-
 def boot() -> None:
     for p_name in tuple(ACTIVE_PLUGINS):
         load_module(p_name)
 
+def get_plugin(plugin_name: str) -> Any:
+    """Mengambil proxy plugin dari RAM."""
+    plugin = REGISTRY.get(plugin_name)
+    if plugin is None:
+        smf.printd("Caller requested inactive/missing plugin", plugin_name, level="WARN")
+        return NullPlugin(plugin_name)
+    return plugin
 
 def broadcast(event_name: str, *args: Any, **kwargs: Any) -> Dict[str, Any]:
-    """
-    Mengirimkan event ke semua plugin yang terdaftar di REGISTRY secara dinamis.
-    Returns:
-        Dict[str, Any]: Mapping antara nama plugin dan hasil return dari plugin tersebut.
-                        Contoh: {"payload": {"handled": True}}
-    """
+    """Sends events to all active and compatible Plugins"""
     results: Dict[str, Any] = {}
 
     with _lock:
@@ -231,23 +223,16 @@ def broadcast(event_name: str, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         current_registry = list(REGISTRY.items())
 
     for plugin_name, safe_proxy in current_registry:
-        #    Deteksi hook fungsi secara dinamis pada module/proxy.
-        #    Mendukung format 'execute' langsung sebagai nama fungsi di dalam modul plugin.
         event_hook = getattr(safe_proxy, event_name, None)
-
         if event_hook and callable(event_hook):
             try:
                 # Eksekusi hook dan simpan hasilnya
                 res = event_hook(*args, **kwargs)
-
-                # Kita hanya mencatat plugin yang mengembalikan data (bukan None)
-                if res is not None:
-                    results[plugin_name] = {
-                        "executed": True,
-                        "status": "SUCCESS",
-                        "data": res,
-                    }
-
+                results[plugin_name] = {
+                    "executed": True,
+                    "status": "SUCCESS",
+                    "data": res,
+                }
             except Exception as e:
                 smf.printd(
                     f"Broadcast event [{event_name}] failed in plugin [{plugin_name}]",
