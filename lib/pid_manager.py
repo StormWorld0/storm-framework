@@ -31,7 +31,9 @@ class PIDManager:
                 # PID sudah bukan child process aktif
                 dead_pids.add(pid)
             except Exception as e:
-                smf.printd("Failed to reap zombie process throwing exception", e, level="WARN")
+                smf.printd(
+                    "Failed to reap zombie process throwing exception", e, level="WARN"
+                )
 
         cls._tracked_pids -= dead_pids
 
@@ -47,7 +49,9 @@ class PIDManager:
             except (ProcessLookupError, ChildProcessError) as e:
                 smf.printd("ProcessLookupError, ChildProcessError", e, level="WARN")
             except Exception as e:
-                smf.printd("Failed to execute SIGTERM process. Fallback SIGKILL", e, level="WARN")
+                smf.printd(
+                    "Failed to execute SIGTERM process. Fallback SIGKILL", e, level="WARN"
+                )
                 # Fallback SIGKILL
                 try:
                     os.kill(pid, signal.SIGKILL)
