@@ -6,7 +6,7 @@ try:
     from ..banner import *
     from .start_interfc import *
 except ImportError as e:
-    smf.printf(f"Error import =>", e, file=sys.stderr)
+    smf.printf(f"Error import interface =>", e, file=sys.stderr)
     sys.exit(100)
 
 
