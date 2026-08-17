@@ -2,6 +2,7 @@ import base64
 import urllib.parse
 import smf
 
+__autorun__ = False
 
 class Plugin:
     def __init__(self):
@@ -10,47 +11,41 @@ class Plugin:
 
         # Register function decode machine
         self._dispatch_table = {
-            "Base64": self._decode_base64,
-            "URL": self._decode_url,
-            "Hex": self._decode_hex,
+            "b64": self._decode_base64,
+            "url": self._decode_url,
+            "hex": self._decode_hex,
         }
 
     def execute(self, *args, **kwargs) -> dict:
-        """
-        Entry point baru yang sinkron dengan SmartOptions / RuntimeContext.
-        Menerima 'payload' tunggal (string) lalu mentransformasikannya.
-        """
+                """Entry Point"""
         payload = kwargs.get("payload", "")
         metadata = kwargs.get("metadata", {})
 
-        # 1. Validasi keberadaan node Transforms
+        # Validasi keberadaan node Transforms
         transforms = metadata.get("Transforms", {})
         if not transforms or not payload:
             return {"handled": False}
 
         current_payload = payload
 
-        # 2. Iterasi pipeline decoder secara sekuensial (berantai)
+        # Iterasi pipeline decoder secara sekuensial
         for transform_key, decoder_func in self._dispatch_table.items():
-            if transforms.get(transform_key) is True:
-                # Lakukan decode pada payload saat ini
+            if transforms.get(transform_key).lower is True:
                 decoded_result = decoder_func(current_payload)
-
-                # Jika ada perubahan, perbarui payload untuk iterasi decoder selanjutnya
+                
                 if decoded_result != current_payload:
                     current_payload = decoded_result
 
-        # 3. Jika payload berhasil bermutasi, kirim balik ke engine
         if current_payload != payload:
-            smf.printd(f"[{self.name}] Payload successfully transformed.", level="DEBUG")
-            return {"mutated_payload": current_payload}
+            smf.printd(f"[{self.name}] Payload successfully transformed.", level="INFO")
+            return {"payload": current_payload}
 
         return {"handled": False}
 
+    
     # ==========================================
-    # PRIVATE DECODER STRATEGIES (Tidak Berubah)
+    #    --- PRIVATE DECODER STRATEGIES ---
     # ==========================================
-
     def _decode_base64(self, data: str) -> str:
         try:
             padded_data = data + "=" * (-len(data) % 4)
