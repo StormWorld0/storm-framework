@@ -245,7 +245,7 @@ def broadcast(event_name: str, *args: Any, **kwargs: Any) -> Dict[str, Any]:
                     results[plugin_name] = {
                         "executed": True,
                         "status": "SUCCESS",
-                        "data": res
+                        "data": res,
                     }
 
             except Exception as e:
@@ -257,7 +257,7 @@ def broadcast(event_name: str, *args: Any, **kwargs: Any) -> Dict[str, Any]:
                 results[plugin_name] = {
                     "executed": False,
                     "status": "ERROR",
-                    "data": str(e)
+                    "data": str(e),
                 }
 
     return results
