@@ -119,11 +119,13 @@ def load_module(plugin_name: str) -> bool:
                     # Menggunakan global lock saat memodifikasi state manager dari thread anak
                     with _lock:
                         REGISTRY[p_name] = NullPlugin(p_name)
-                        purge_module_from_memory(p_name)
-                        _store.remove_plugin(plugin_name)
-                        smf.printd(
-                            f"Cleanup complete for crashed plugin: {p_name}", level="INFO"
-                        )
+                        _store.remove_plugin(p_name)
+
+                    # menjalankan di luar supaya tidak deadlock
+                    purge_module_from_memory(p_name)
+                    smf.printd(
+                        f"Cleanup complete for crashed plugin: {p_name}", level="INFO"
+                    )
 
             # --- ENTRY POINT LOGIC ---
             if plugin_type == "OOP" and hasattr(plugin_obj, "execute"):
