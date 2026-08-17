@@ -5,6 +5,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -16,6 +17,16 @@ import (
 )
 
 func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-sigChan
+		cancel() // Batalkan semua konteks worker jika OS mengirim signal TERM/INT
+	}()
+	
 	crs := bufio.NewScanner(os.Stdin)
 	const maxCapacity = 10 * 1024 * 1024 // Max 10MB per JSON line
 	buf := make([]byte, 64*1024)
@@ -36,15 +47,13 @@ func main() {
 	writerDone := make(chan struct{})
 
 	// DEDICATED WRITER GOROUTINE
-	// Hanya goroutine ini yang diizinkan menulis ke os.Stdout
 	go func() {
+		defer close(writerDone)
 		for res := range responseChan {
 			sendResponse(res)
 		}
-		// Kirim sinyal bahwa semua data di channel sudah di-flush ke stdout
-		close(writerDone) 
 	}()
-
+	
 	// READER & DISPATCHER LOOP
 	for crs.Scan() {
 		line := crs.Bytes()
@@ -53,9 +62,10 @@ func main() {
 		// terhadap memory internal buffer scanner.Bytes()
 		var req packet.RequestPacket
 		if err := json.Unmarshal(line, &req); err != nil {
-			responseChan <- packet.ResponsePacket{
-				Status: "ERROR", 
-				Message: "Invalid JSON: " + err.Error(),
+			select {
+			case responseChan <- packet.ResponsePacket{Status: "ERROR", Message: "Invalid JSON: " + err.Error()}:
+			case <-ctx.Done():
+				return
 			}
 			continue
 		}
@@ -72,7 +82,11 @@ func main() {
 			} else {
 				res = handler(req) // Eksekusi memblokir scanner loop
 			}
-			responseChan <- res
+			select {
+			case responseChan <- res:
+			case <-ctx.Done():
+				return
+			}
 			continue
 		}
 
@@ -81,10 +95,13 @@ func main() {
 		semIntf, _ := semaphores.LoadOrStore(req.Primitive, make(chan struct{}, req.Go))
 		sem := semIntf.(chan struct{})
 
-		// Acquire Token: Akan memblokir scanner JIKA goroutine untuk protokol ini 
-		// sudah mencapai batas maksimal (req.Go).
-		sem <- struct{}{}
-
+		// Acquire Token dengan Cancellation Aware
+		select {
+		case sem <- struct{}{}:
+		case <-ctx.Done():
+			return
+		}
+		
 		wgWorkers.Add(1)
 
 		// FAN-OUT WORKER GOROUTINE
@@ -105,9 +122,17 @@ func main() {
 				res = handler(r)
 			}
 
-			responseChan <- res
+			// Safe send: Cegah deadlock jika writer/main sudah shutdown
+			select {
+			case responseChan <- res:
+			case <-ctx.Done():
+				return
+			}
 		}(req, sem)
 	}
+	// Stdin EOF terdeteksi -> Trigger cancellation untuk sisa worker
+	cancel()
+	
 	if err := crs.Err(); err != nil {
 		fmt.Fprintf(os.Stderr, "CRS Engine Stdin Error: %v\n", err)
 	}
