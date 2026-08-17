@@ -242,7 +242,11 @@ def broadcast(event_name: str, *args: Any, **kwargs: Any) -> Dict[str, Any]:
 
                 # Kita hanya mencatat plugin yang mengembalikan data (bukan None)
                 if res is not None:
-                    results[plugin_name] = res
+                    results[plugin_name] = {
+                        "executed": True,
+                        "status": "SUCCESS",
+                        "data": res
+                    }
 
             except Exception as e:
                 smf.printd(
@@ -250,7 +254,11 @@ def broadcast(event_name: str, *args: Any, **kwargs: Any) -> Dict[str, Any]:
                     e,
                     level="ERROR",
                 )
-                results[plugin_name] = {"handled": False, "error": str(e)}
+                results[plugin_name] = {
+                    "executed": False,
+                    "status": "ERROR",
+                    "data": str(e)
+                }
 
     return results
 
