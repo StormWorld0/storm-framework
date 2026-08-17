@@ -17,7 +17,6 @@ class Plugin:
         }
 
     def execute(self, *args, **kwargs) -> dict:
-                """Entry Point"""
         payload = kwargs.get("payload", "")
         metadata = kwargs.get("metadata", {})
 
