@@ -1,4 +1,5 @@
 import readline  # noqa: F401
+import sys
 
 try:
     from lib.smf.core.booting.boot import *
