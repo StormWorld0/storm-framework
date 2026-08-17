@@ -1,3 +1,7 @@
+# -- https://github.com/StormWorld0/storm-framework
+# -- License SMF
+# -- Author: zxelzy
+
 import os
 import smf
 import signal
