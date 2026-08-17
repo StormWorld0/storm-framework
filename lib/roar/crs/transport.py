@@ -11,6 +11,7 @@ import atexit
 
 from ..calling import call_bin
 from apps.utility.colors import *
+from lib.pid_manager import PIDManager as pid
 
 
 class CRS:
@@ -24,13 +25,10 @@ class CRS:
             if cls._process.poll() is None:
                 return cls._process
 
-            cls._process.wait()
-            cls._process = None
-
         binary_path = call_bin("crs_engine")
-
         if not os.path.exists(binary_path):
             smf.printf(f"[!]{CC.YELLOW} Binary not found =>{CC.RESET}", binary_path)
+            return cls._process
 
         cls._process = subprocess.Popen(
             [binary_path],
@@ -41,25 +39,8 @@ class CRS:
             bufsize=1,
         )
 
-        atexit.register(cls._cleanup)
+        pid.prepare(cls._process.pid)
         return cls._process
-
-    @classmethod
-    def _cleanup(cls):
-        """Universal cleanup handler when parent exit is normal/graceful."""
-        if cls._process is not None:
-            try:
-                # Menutup stdin mengirimkan EOF
-                # ke child process di OS manapun
-                if cls._process.stdin:
-                    cls._process.stdin.close()
-                cls._process.terminate()
-                cls._process.wait(timeout=1)
-            except subprocess.TimeoutExpired:
-                cls._process.kill()
-                cls._process.wait()
-            finally:
-                cls._process = None
 
     @classmethod
     def send(cls, data: dict) -> dict:
@@ -81,6 +62,8 @@ class CRS:
 
             if not response_line:
                 smf.printd("CRS Engine suddenly stopped", response_line, level="WARN")
+                cls._process = None
+                pid.reap_zombie()
                 return {"status": "ERROR", "message": "Engine suddenly dies"}
 
             # Convert JSON back to Dict
@@ -100,4 +83,6 @@ class CRS:
             return res_dict
         except Exception as e:
             smf.printd("Error CRS send", e, level="ERROR")
+            cls._process = None
+            pid.reap_zombie()
             return {"status": "ERROR", "message": str(e)}
