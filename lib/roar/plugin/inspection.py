@@ -62,7 +62,7 @@ def extract_plugin(module: Any, plugin_name: str) -> tuple[Any, str]:
         smf.printd(
             f"[{plugin_name}] The 'Plugin' attribute is not a Class", level="ERROR"
         )
-        return NullPlugin(module), "BROKEN"
+        return NullPlugin(plugin_name), "BROKEN"
 
     # [VALIDASI 2] Cek entry point 'execute()'
     if not hasattr(plugin_class, "execute") or not callable(
@@ -71,7 +71,7 @@ def extract_plugin(module: Any, plugin_name: str) -> tuple[Any, str]:
         smf.printd(
             f"OOP Plugin [{plugin_name}] has no entry point 'execute()'", level="ERROR"
         )
-        return NullPlugin(module), "BROKEN"
+        return NullPlugin(plugin_name), "BROKEN"
 
     if hasattr(module, "__file__"):
         teardown_info = inspect_teardown(Path(module.__file__))
@@ -82,7 +82,7 @@ def extract_plugin(module: Any, plugin_name: str) -> tuple[Any, str]:
                 f"but has no teardown()",
                 level="ERROR",
             )
-            return NullPlugin(module), "BROKEN"
+            return NullPlugin(plugin_name), "BROKEN"
 
     # [STATE ALLOCATION]
     try:
@@ -90,4 +90,4 @@ def extract_plugin(module: Any, plugin_name: str) -> tuple[Any, str]:
         return plugin_instance, "OOP"
     except Exception as e:
         smf.printd(f"Failed __init__ class Plugin on [{plugin_name}]", e, level="ERROR")
-        return NullPlugin(module), "BROKEN"
+        return NullPlugin(plugin_name), "BROKEN"
