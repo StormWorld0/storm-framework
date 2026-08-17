@@ -156,6 +156,7 @@ def load_module(plugin_name: str) -> bool:
             _store.remove_plugin(plugin_name)
             return False
 
+
 # ==========================================
 # Called by API
 # ==========================================
@@ -168,6 +169,7 @@ def load(plugin_name: str) -> bool:
             _store.add_plugin(plugin_name)
             smf.printf("[✓] Plugin loaded successfully =>", plugin_name)
         return success
+
 
 def unload(plugin_name: str) -> bool:
     with _lock:
@@ -202,9 +204,11 @@ def unload(plugin_name: str) -> bool:
             smf.printd(f"Failed to unload plugin {plugin_name}", e, level="CRITICAL")
             return False
 
+
 def boot() -> None:
     for p_name in tuple(ACTIVE_PLUGINS):
         load_module(p_name)
+
 
 def get_plugin(plugin_name: str) -> Any:
     """Mengambil proxy plugin dari RAM."""
@@ -213,6 +217,7 @@ def get_plugin(plugin_name: str) -> Any:
         smf.printd("Caller requested inactive/missing plugin", plugin_name, level="WARN")
         return NullPlugin(plugin_name)
     return plugin
+
 
 def broadcast(event_name: str, *args: Any, **kwargs: Any) -> Dict[str, Any]:
     """Sends events to all active and compatible Plugins"""
