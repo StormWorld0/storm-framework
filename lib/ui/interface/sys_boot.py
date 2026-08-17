@@ -15,6 +15,7 @@ except ImportError as e:
     smf.printf(f"Error import interface =>", e, file=sys.stderr)
     sys.exit(100)
 
+
 # Perform step by step initialization starting before entering the interface
 # Booting to run the initial steps and determine security and stability
 # Loading banner for style framework
