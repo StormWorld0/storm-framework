@@ -9,7 +9,7 @@ import sys
 import smf
 
 try:
-    from apps.utility.colors import *
+    from apps.utility.colors import CC
     from lib.smf.core.console.engine import Context
 except ImportError as e:
     smf.printf(f"Error import interface =>", e, file=sys.stderr)
