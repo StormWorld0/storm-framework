@@ -1,6 +1,9 @@
+// --- https://github.com/StormWorld0/storm-framework ---
 // GPL License.
 // Copyright (c) 2026 Storm Framework
 // See LICENSE file in the project root for full license information.
+// Author: zxelzy
+
 use sha2::{Sha256, Digest};
 use std::fs::{self, File};
 use std::io::{self, BufWriter, Write};
@@ -174,7 +177,7 @@ fn main() {
                 // Priority 1: Compound Threat (Injection + Modification/Loss)
                 println!("\n[*] STATUS: CRITICAL");
                 println!("[*] MESSAGE: Compound threat detected (File Injection + Tampering).");
-                println!("[*] ACTION:  1. Delete the files that injection detects.");
+                println!("[*] ACTION:  1. Run (storm --clean) to remove the injected files.");
                 println!("             2. Run (storm --update) to re-sign and back to default.");
                 std::process::exit(203);
             }
@@ -183,7 +186,7 @@ fn main() {
                 println!("\n[*] STATUS: CRITICAL");
                 println!("[*] MESSAGE: File injection detected.");
                 println!("[*] ACTION: Delete the files that injection detects.");
-                println!("[*]         Run (storm --clean) to remove the injected files before restarting.");
+                println!("            Run (storm --clean) to remove the injected files before restarting.");
                 std::process::exit(203);
             }
             (false, true) => {
