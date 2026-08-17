@@ -142,7 +142,9 @@ def load_module(plugin_name: str) -> bool:
             elif plugin_type == "FUNCTIONAL" and getattr(module, "__autorun__", False):
                 start_routine = getattr(module, "execute", None)
                 if start_routine:
-                    smf.printd("Starting FUCNTIONAL Daemon for =>", plugin_name, level="INFO")
+                    smf.printd(
+                        "Starting FUCNTIONAL Daemon for =>", plugin_name, level="INFO"
+                    )
 
                     runner = threading.Thread(
                         target=daemon_runner,
@@ -241,7 +243,7 @@ def broadcast(event_name: str, *args: Any, **kwargs: Any) -> Dict[str, Any]:
                 # Kita hanya mencatat plugin yang mengembalikan data (bukan None)
                 if res is not None:
                     results[plugin_name] = res
-                    
+
             except Exception as e:
                 smf.printd(
                     f"Broadcast event [{event_name}] failed in plugin [{plugin_name}]",
