@@ -46,9 +46,8 @@ def run_verif():
 
         # If returncode == 0, execution continues (Safe)
         return True
-
     except KeyboardInterrupt:
-        return
+        sys.exit(11)
     except Exception as e:
         smf.printd("INTEGRITY VERIFICATION", e, level="CRITICAL")
         smf.printf("[!] ERROR INTEGRITY CHECK =>", e, file=sys.stderr, flush=True)
