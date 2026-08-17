@@ -2,9 +2,10 @@ import os
 import signal
 from typing import Set
 
+
 class PIDManager:
     """Centralized PID Manager & Zombie Reaper."""
-    
+
     _tracked_pids: Set[int] = set()
 
     @classmethod
@@ -51,7 +52,7 @@ class PIDManager:
                     os.waitpid(pid, 0)
                 except Exception:
                     pass
-        
+
         cls._tracked_pids.clear()
 
     @classmethod
@@ -59,4 +60,3 @@ class PIDManager:
         """Mencatat PID proses baru & Mematikan PID proses zombie"""
         cls.reap_zombies()
         cls.register(new_pid)
-      
