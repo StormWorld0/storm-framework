@@ -15,6 +15,7 @@ from apps.utility.colors import *
 
 class CRS:
     """IPC (Inter-Process Communication) via Subprocess."""
+
     _process = None
 
     @classmethod
