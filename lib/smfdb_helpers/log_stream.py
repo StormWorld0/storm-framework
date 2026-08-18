@@ -32,7 +32,7 @@ def dump_log():
             cursor = conn.cursor()
 
             query = """
-                SELECT timestamp, level, label, payload, traceback, caller_info 
+                SELECT timestamp, level, label, payload, caller, location, traceback 
                 FROM system_logs 
                 WHERE timestamp >= ?
                 ORDER BY timestamp DESC
@@ -46,7 +46,7 @@ def dump_log():
 
         # 4. Operasi I/O (print terminal) yang memakan waktu dilakukan DI LUAR koneksi database.
         for row in rows:
-            ts, lvl, label, payload, traceback, caller = row
+            ts, lvl, label, payload, caller, location, traceback = row
 
             dt_str = datetime.datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S.%f")[
                 :-3
@@ -55,6 +55,7 @@ def dump_log():
             smf.printf(f"{CC.MAGENTA}-{CC.RESET}" * 60)
             smf.printf(f"[{CC.CYAN}{dt_str}{CC.RESET}] [{lvl}]")
             smf.printf(f"{CC.CYAN} CALLER {CC.RESET} : {CC.YELLOW}{caller}{CC.RESET}")
+            smf.printf(f"{CC.CYAN} LOCATION{CC.RESET}: {CC.YELLOW}{location}{CC.RESET}")
             smf.printf(f"{CC.CYAN} LABEL {CC.RESET}  : {CC.YELLOW}{label}{CC.RESET}")
 
             if payload:
