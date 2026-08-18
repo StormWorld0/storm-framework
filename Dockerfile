@@ -78,6 +78,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /var/lib/dpkg/status-old \
+    && rm -rf "${APP_HOME}/external/source/dep" \
     && mkdir -p /go/bin /go/pkg /go/src
 
 # Copy the build wheels results
