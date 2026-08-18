@@ -3,7 +3,7 @@
 import smf
 import apps.utility.utils as utils
 
-from apps.utility.colors import *
+from apps.utility.colors import CC
 
 
 # The set command is used to save data to global variables and module variables.
