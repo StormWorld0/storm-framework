@@ -15,8 +15,6 @@ class StormSmartCache:
         self.modules_dir = os.path.join(ROOT, "modules")
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
 
-        smf.printd(f"Initializing StormSmartCache at {self.db_path}", level="INFO")
-
         try:
             self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
             self.cursor = self.conn.cursor()
