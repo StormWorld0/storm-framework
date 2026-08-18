@@ -4,7 +4,7 @@ import smf
 import inspect
 import apps.utility.utils as utils
 
-from apps.utility.colors import *
+from apps.utility.colors import CC
 
 
 # Run command to run a module that we want to execute
