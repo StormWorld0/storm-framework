@@ -50,27 +50,29 @@ class PIDManager:
             try:
                 # Send SIGTERM (graceful shutdown)
                 os.kill(pid, signal.SIGTERM)
-                
+
                 # Non-blocking polling with time limit
                 start_time = time.time()
                 killed_gracefully = False
-                
+
                 while time.time() - start_time < timeout:
                     # os.WNOHANG prevents waitpid from blocking
                     pid_reaped, _ = os.waitpid(pid, os.WNOHANG)
                     if pid_reaped == pid:
                         killed_gracefully = True
                         break
-                    
-                    time.sleep(0.1) # Prevent CPU spin-lock
-                
+
+                    time.sleep(0.1)  # Prevent CPU spin-lock
+
                 if not killed_gracefully:
-                    smf.printd(f"PID {pid} ignored SIGTERM. Fallback to SIGKILL.", level="WARN")
+                    smf.printd(
+                        f"PID {pid} ignored SIGTERM. Fallback to SIGKILL.", level="WARN"
+                    )
                     os.kill(pid, signal.SIGKILL)
                     os.waitpid(pid, 0)
-                    
+
             except ProcessLookupError:
-                pass 
+                pass
             except ChildProcessError:
                 smf.printd(f"PID {pid} is not a child process. Skipping.", level="WARN")
             except Exception as e:
