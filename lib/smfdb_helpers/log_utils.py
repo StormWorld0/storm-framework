@@ -4,7 +4,7 @@ import rootmap
 import smf
 
 from pathlib import Path
-from apps.utility.colors import *
+from apps.utility.colors import CC
 
 
 def extract_logs(level_target: str, output_file: str = "log.txt"):
@@ -30,7 +30,7 @@ def extract_logs(level_target: str, output_file: str = "log.txt"):
 
         # Advanced SQL Queries (Take from the most recent)
         query = """
-            SELECT timestamp, level, label, payload, traceback, caller_info 
+            SELECT timestamp, level, label, payload, caller, location, traceback
             FROM system_logs 
             WHERE level = ? 
             ORDER BY timestamp DESC
@@ -63,7 +63,7 @@ def extract_logs(level_target: str, output_file: str = "log.txt"):
 
             # Data Iteration
             for row in rows:
-                ts, lvl, label, payload, traceback, caller = row
+                ts, lvl, label, payload, caller, location, traceback = row
 
                 # Convert f64 Unix Epoch to common Date Format
                 dt_str = datetime.datetime.fromtimestamp(ts).strftime(
@@ -73,6 +73,7 @@ def extract_logs(level_target: str, output_file: str = "log.txt"):
                 # Writing format like server log
                 f.write(f"[{dt_str}] [{lvl}]\n")
                 f.write(f" CALLER  : {caller}\n")
+                f.write(f" LOCATION: {location}\n")
                 f.write(f" LABEL   : {label}\n")
 
                 # If the payload contains any content, display it. Otherwise, ignore it.
