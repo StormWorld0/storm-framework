@@ -1,6 +1,9 @@
 import sys
-import smf
 
+try:
+    import smf
+except ImportError:
+    print("[!] Error import smf")
 
 def run_sign():
     try:
@@ -11,7 +14,7 @@ def run_sign():
         bin.storm_sign()
         return True
     except ImportError as e:
-        smf.printf(
+        smf.print(
             "[!] Critical => Binary not found.",
             file=sys.stderr,
             flush=True,
