@@ -68,9 +68,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     procps \
     libpcap0.8 \
-    libpcap-dev \
-    libssl-dev \
-    libffi-dev \
     ca-certificates \
     ffmpeg \
     openssl \
