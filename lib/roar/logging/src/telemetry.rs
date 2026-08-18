@@ -41,9 +41,9 @@ pub fn execute_telemetry(
         Ok(getframe) => {
             if let Ok(frame) = getframe.call1((1,)) {
                 let f_code = frame.getattr("f_code");
-                let filename = f_code.as_ref().and_then(|c| c.getattr("co_filename"));
-                let funcname = f_code.as_ref().and_then(|c| c.getattr("co_name"));
                 let lineno = frame.getattr("f_lineno");
+                let filename = f_code.getattr("co_filename"));
+                let funcname = f_code.getattr("co_name"));
                 
                 if let (Ok(f), Ok(func), Ok(l)) = (filename, funcname, lineno) {
                     let file_str = f.extract::<String>().unwrap_or_else(|_| "UnknownLocation".to_string());
@@ -65,9 +65,9 @@ pub fn execute_telemetry(
         Ok(getframe) => {
             if let Ok(frame) = getframe.call1((0,)) {
                 let f_code = frame.getattr("f_code");
-                let filename = f_code.as_ref().and_then(|c| c.getattr("co_filename"));
-                let funcname = f_code.as_ref().and_then(|c| c.getattr("co_name"));
                 let lineno = frame.getattr("f_lineno");
+                let filename = f_code.getattr("co_filename"));
+                let funcname = f_code.getattr("co_name"));
                 
                 if let (Ok(f), Ok(func), Ok(l)) = (filename, funcname, lineno) {
                     let file_str = f.extract::<String>().unwrap_or_else(|_| "UnknownLocation".to_string());
