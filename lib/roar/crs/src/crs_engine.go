@@ -27,6 +27,7 @@ func main() {
 	go func() {
 		<-sigChan
 		cancel() // Batalkan semua konteks worker jika OS mengirim signal TERM/INT
+		os.Stdin.Close()
 	}()
 	
 	crs := bufio.NewScanner(os.Stdin)
@@ -60,6 +61,12 @@ func main() {
 	for crs.Scan() {
 		line := crs.Bytes()
 
+		select {
+		case <-ctx.Done():
+			goto Shutdown
+		default:
+		}
+
 		// Unmarshal dilakukan di main goroutine agar aman dari race condition 
 		// terhadap memory internal buffer scanner.Bytes()
 		var req packet.RequestPacket
@@ -67,7 +74,7 @@ func main() {
 			select {
 			case responseChan <- packet.ResponsePacket{Status: "ERROR", Message: "Invalid JSON: " + err.Error()}:
 			case <-ctx.Done():
-				return
+				goto Shutdown
 			}
 			continue
 		}
@@ -87,7 +94,7 @@ func main() {
 			select {
 			case responseChan <- res:
 			case <-ctx.Done():
-				return
+				goto Shutdown
 			}
 			continue
 		}
@@ -101,7 +108,7 @@ func main() {
 		select {
 		case sem <- struct{}{}:
 		case <-ctx.Done():
-			return
+			goto Shutdown
 		}
 		
 		wgWorkers.Add(1)
@@ -133,16 +140,29 @@ func main() {
 		}(req, sem)
 	}
 	// Stdin EOF terdeteksi -> Trigger cancellation untuk sisa worker
+	Shutdown:
 	cancel()
 	
 	if err := crs.Err(); err != nil {
 		fmt.Fprintf(os.Stderr, "CRS Engine Stdin Error: %v\n", err)
 	}
 
-	// GRACEFUL SHUTDOWN
-	wgWorkers.Wait()
-	close(responseChan)
-	<-writerDone
+	// Memastikan Go exited sebelum timeout dan mengirim SIGKILL
+	shutdownComplete := make(chan struct{})
+	go func() {
+		wgWorkers.Wait()
+		close(responseChan)
+		<-writerDone
+		close(shutdownComplete)
+	}()
+
+	select {
+	case <-shutdownComplete:
+		os.Exit(0)
+	case <-time.After(1000 * time.Millisecond):
+		fmt.Fprintf(os.Stderr, "CRS Engine: Force exit due to worker timeout\n")
+		os.Exit(1)
+	}
 }
 
 func sendResponse(res packet.ResponsePacket) {
@@ -154,5 +174,5 @@ func sendResponse(res packet.ResponsePacket) {
 	}
 	os.Stdout.Write(out)
 	os.Stdout.WriteString("\n")
-	os.Stdout.Sync() // Memastikan flush per baris untuk interaksi pipe dengan Python
+	os.Stdout.Sync()
 }
