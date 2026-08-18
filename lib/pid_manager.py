@@ -63,7 +63,7 @@ class PIDManager:
                 except Exception as e:
                     smf.printd("Failed to SIGKILL process", e, level="WARN")
 
-        cls._tracked_pids.clear()
+        return cls._tracked_pids.clear()
 
     @classmethod
     def prepare(cls, new_pid: int) -> None:
