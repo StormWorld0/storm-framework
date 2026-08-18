@@ -40,16 +40,19 @@ pub fn execute_telemetry(
     let caller_info = match py.import("sys").and_then(|sys| sys.getattr("_getframe")) {
         Ok(getframe) => {
             if let Ok(frame) = getframe.call1((1,)) {
-                let f_code = frame.getattr("f_code");
-                let lineno = frame.getattr("f_lineno");
-                let filename = f_code.getattr("co_filename");
-                let funcname = f_code.getattr("co_name");
+                if let Ok(f_code) = frame.getattr("f_code") {
+                    let lineno = frame.getattr("f_lineno");
+                    let filename = f_code.getattr("co_filename");
+                    let funcname = f_code.getattr("co_name");
                 
-                if let (Ok(f), Ok(func), Ok(l)) = (filename, funcname, lineno) {
-                    let file_str = f.extract::<String>().unwrap_or_else(|_| "UnknownLocation".to_string());
-                    let func_str = func.extract::<String>().unwrap_or_else(|_| "unknown_func".to_string());
-                    let line_num = l.extract::<usize>().unwrap_or(0);
-                    format!("{}:{} -> [function: {}]", file_str, line_num, func_str)
+                    if let (Ok(f), Ok(func), Ok(l)) = (filename, funcname, lineno) {
+                        let file_str = f.extract::<String>().unwrap_or_else(|_| "UnknownLocation".to_string());
+                        let func_str = func.extract::<String>().unwrap_or_else(|_| "unknown_func".to_string());
+                        let line_num = l.extract::<usize>().unwrap_or(0);
+                        format!("{}:{} -> [function: {}]", file_str, line_num, func_str)
+                    } else {
+                        "UnknownLocation".to_string()
+                    }
                 } else {
                     "UnknownLocation".to_string()
                 }
@@ -64,16 +67,19 @@ pub fn execute_telemetry(
     let location_info = match py.import("sys").and_then(|sys| sys.getattr("_getframe")) {
         Ok(getframe) => {
             if let Ok(frame) = getframe.call1((0,)) {
-                let f_code = frame.getattr("f_code");
-                let lineno = frame.getattr("f_lineno");
-                let filename = f_code.getattr("co_filename");
-                let funcname = f_code.getattr("co_name");
+                if let Ok(f_code) = frame.getattr("f_code") {
+                    let lineno = frame.getattr("f_lineno");
+                    let filename = f_code.getattr("co_filename");
+                    let funcname = f_code.getattr("co_name");
                 
-                if let (Ok(f), Ok(func), Ok(l)) = (filename, funcname, lineno) {
-                    let file_str = f.extract::<String>().unwrap_or_else(|_| "UnknownLocation".to_string());
-                    let func_str = func.extract::<String>().unwrap_or_else(|_| "unknown_func".to_string());
-                    let line_num = l.extract::<usize>().unwrap_or(0);
-                    format!("{}:{} -> [function: {}]", file_str, line_num, func_str)
+                    if let (Ok(f), Ok(func), Ok(l)) = (filename, funcname, lineno) {
+                        let file_str = f.extract::<String>().unwrap_or_else(|_| "UnknownLocation".to_string());
+                        let func_str = func.extract::<String>().unwrap_or_else(|_| "unknown_func".to_string());
+                        let line_num = l.extract::<usize>().unwrap_or(0);
+                        format!("{}:{} -> [function: {}]", file_str, line_num, func_str)
+                    } else {
+                        "UnknownLocation".to_string()
+                    }
                 } else {
                     "UnknownLocation".to_string()
                 }
