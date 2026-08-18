@@ -65,7 +65,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     nmap \
     git \
-    wget \
     pkg-config \
     procps \
     libpcap0.8 \
