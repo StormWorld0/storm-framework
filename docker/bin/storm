@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+
 APP_HOME="/opt/storm-framework"
 DOCKER_NAME="stormworld0/storm-framework:latest"
 
