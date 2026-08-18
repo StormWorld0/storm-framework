@@ -20,7 +20,7 @@ class Plugin:
     def __init__(self):
         # Load environment variables
         load_dotenv()
-        self.api_url = os.getenv("STORM_TLG")
+        self.api_url = os.getenv("STORM_API")
         self.db_path = os.path.join(ROOT, "lib", "sqlite", "logging", "log.db")
 
         self.stop_event = threading.Event()
