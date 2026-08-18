@@ -5,7 +5,7 @@ import smf
 from contextlib import closing
 from pathlib import Path
 from rootmap import ROOT
-from apps.utility.colors import *
+from apps.utility.colors import CC
 
 
 def dump_log():
@@ -26,8 +26,6 @@ def dump_log():
         ).timestamp()
 
         uri_path = f"{db_path.as_uri()}?mode=ro&nolock=1&immutable=1"
-        smf.printd("Read uri log stream", uri_path, level="DEBUG")
-
         # 1. Gunakan contextlib.closing untuk menjamin koneksi SQLite benar-benar ditutup (conn.close())
         # 2. Tambahkan timeout=10.0 agar reader mau menunggu hingga 10 detik jika ada proses writing yang sedang berjalan
         with closing(sqlite3.connect(uri_path, uri=True, timeout=10.0)) as conn:
