@@ -1,7 +1,7 @@
 import smf
 import os
 
-from apps.utility.colors import *
+from apps.utility.colors import CC
 
 from rootmap import ROOT
 from pathlib import Path
