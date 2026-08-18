@@ -43,8 +43,9 @@ pub fn get_db_connection(py: Python<'_>) -> PrintResult<Connection> {
              level TEXT,
              label TEXT,
              payload TEXT,
-             traceback TEXT,
-             caller_info TEXT
+             caller TEXT,
+             location TEXT,
+             traceback TEXT
          );
          CREATE INDEX IF NOT EXISTS idx_system_logs_timestamp ON system_logs(timestamp);
          ",
@@ -58,17 +59,18 @@ pub fn insert_log(
     timestamp: f64, 
     level: &str, 
     label: &str, 
-    payload: &str, 
-    traceback: &str, 
-    caller_info: &str
+    payload: &str,
+    caller: &str,
+    location: &str,
+    traceback: &str
 ) -> PrintResult<()> {
     // Transaction Immediate: Kunci database secara eksplisit sebelum penulisan.
     // Ini mengisolasi Rust INSERT/DELETE agar Python tidak membaca B-Tree setengah-jadi.
     let tx = conn.unchecked_transaction()?;
     
     tx.execute(
-        "INSERT INTO system_logs (timestamp, level, label, payload, traceback, caller_info) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-        (timestamp, level, label, payload, traceback, caller_info),
+        "INSERT INTO system_logs (timestamp, level, label, payload, caller, location, traceback) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+        (timestamp, level, label, payload, caller, location, traceback),
     )?;
 
     let should_cleanup = rand::random::<u8>() < 3; // Probabilitas ~1% (membutuhkan crate `rand`)
