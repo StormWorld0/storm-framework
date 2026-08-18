@@ -9,7 +9,7 @@ import smf
 import base64
 
 from ..calling import call_bin
-from apps.utility.colors import *
+from apps.utility.colors import CC
 from lib.pid_manager import PIDManager as pid
 
 
