@@ -5,6 +5,7 @@ try:
 except ImportError:
     print("[!] Error import smf")
 
+
 def run_sign():
     try:
         from lib.roar.calling import call_so
