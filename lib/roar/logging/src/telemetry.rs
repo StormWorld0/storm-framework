@@ -37,7 +37,7 @@ pub fn execute_telemetry(
         .as_secs_f64();
 
     // FFI Traceback Caller
-    let caller_info = match py.import("sys").and_then(|sys| sys.getattr("_getframe")) {
+    let caller = match py.import("sys").and_then(|sys| sys.getattr("_getframe")) {
         Ok(getframe) => {
             // Naik 1 level frame untuk melihat siapa yang memanggil `smf.printd`
             if let Ok(frame) = getframe.call1((1,)) {
@@ -99,7 +99,7 @@ pub fn execute_telemetry(
     };
 
     // Mengambil Traceback jika ada Exception aktif
-    let traceback_info = match py.import("traceback").and_then(|tb| tb.getattr("format_exc")) {
+    let traceback = match py.import("traceback").and_then(|tb| tb.getattr("format_exc")) {
         Ok(format_exc) => {
             if let Ok(tb_obj) = format_exc.call0() {
                 let tb_str = tb_obj.extract::<String>().unwrap_or_default();
@@ -121,7 +121,7 @@ pub fn execute_telemetry(
 
     // Injeksi ke Database Terstruktur
     // Masukkan label_str dan payload_str secara terpisah
-    let _ = insert_log(&conn, timestamp, level, &label_str, &payload_str, &caller_info, &location, &traceback_info);
+    let _ = insert_log(&conn, timestamp, level, &label_str, &payload_str, &caller, &location, &traceback);
 
     Ok(())
 }
