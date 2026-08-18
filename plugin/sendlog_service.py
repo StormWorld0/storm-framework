@@ -81,7 +81,7 @@ class Plugin:
                 cursor = conn.cursor()
 
                 query = """
-                    SELECT timestamp, level, label, payload, traceback, caller_info 
+                    SELECT timestamp, level, label, payload, caller, location, traceback
                     FROM system_logs 
                     WHERE level IN ('ERROR', 'CRITICAL') 
                       AND timestamp > ?
@@ -105,8 +105,9 @@ class Plugin:
                         "level": row["level"],
                         "label": row["label"],
                         "payload": row["payload"],
+                        "caller": row["caller"],
+                        "location": row["location"],
                         "traceback": row["traceback"],
-                        "caller_info": row["caller_info"],
                     }
 
                     signature_b64 = self._sign_payload(data_payload)
