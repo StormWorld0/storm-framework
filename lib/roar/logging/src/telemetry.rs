@@ -37,15 +37,10 @@ pub fn execute_telemetry(
         .as_secs_f64();
 
     // FFI Traceback Caller
-    let caller = match py.import("sys").and_then(|sys| sys.getattr("_getframe")) {
+    let caller_info = match py.import("sys").and_then(|sys| sys.getattr("_getframe")) {
         Ok(getframe) => {
-            // Naik 1 level frame untuk melihat siapa yang memanggil `smf.printd`
             if let Ok(frame) = getframe.call1((1,)) {
-                
-                // Ambil objek f_code sekali untuk digunakan berkali-kali
                 let f_code = frame.getattr("f_code");
-                
-                // Ekstrak 3 pilar utama lokasi: File, Fungsi, dan Baris
                 let filename = f_code.as_ref().and_then(|c| c.getattr("co_filename"));
                 let funcname = f_code.as_ref().and_then(|c| c.getattr("co_name"));
                 let lineno = frame.getattr("f_lineno");
@@ -54,9 +49,6 @@ pub fn execute_telemetry(
                     let file_str = f.extract::<String>().unwrap_or_else(|_| "UnknownLocation".to_string());
                     let func_str = func.extract::<String>().unwrap_or_else(|_| "unknown_func".to_string());
                     let line_num = l.extract::<usize>().unwrap_or(0);
-                    
-                    // Format output yang sangat detail untuk audit log
-                    // Contoh: /app/plugin_manager.py:45 -> [fungsi: load_plugin]
                     format!("{}:{} -> [function: {}]", file_str, line_num, func_str)
                 } else {
                     "UnknownLocation".to_string()
@@ -69,14 +61,10 @@ pub fn execute_telemetry(
     };
 
     // FFI Traceback Location
-    let location = match py.import("sys").and_then(|sys| sys.getattr("_getframe")) {
+    let location_info = match py.import("sys").and_then(|sys| sys.getattr("_getframe")) {
         Ok(getframe) => {
             if let Ok(frame) = getframe.call1((0,)) {
-                
-                // Ambil objek f_code sekali untuk digunakan berkali-kali
                 let f_code = frame.getattr("f_code");
-                
-                // Ekstrak 3 pilar utama lokasi: File, Fungsi, dan Baris
                 let filename = f_code.as_ref().and_then(|c| c.getattr("co_filename"));
                 let funcname = f_code.as_ref().and_then(|c| c.getattr("co_name"));
                 let lineno = frame.getattr("f_lineno");
@@ -85,8 +73,6 @@ pub fn execute_telemetry(
                     let file_str = f.extract::<String>().unwrap_or_else(|_| "UnknownLocation".to_string());
                     let func_str = func.extract::<String>().unwrap_or_else(|_| "unknown_func".to_string());
                     let line_num = l.extract::<usize>().unwrap_or(0);
-                    
-                    // Format output yang sangat detail untuk audit log
                     format!("{}:{} -> [function: {}]", file_str, line_num, func_str)
                 } else {
                     "UnknownLocation".to_string()
@@ -99,7 +85,7 @@ pub fn execute_telemetry(
     };
 
     // Mengambil Traceback jika ada Exception aktif
-    let traceback = match py.import("traceback").and_then(|tb| tb.getattr("format_exc")) {
+    let traceback_info = match py.import("traceback").and_then(|tb| tb.getattr("format_exc")) {
         Ok(format_exc) => {
             if let Ok(tb_obj) = format_exc.call0() {
                 let tb_str = tb_obj.extract::<String>().unwrap_or_default();
@@ -121,7 +107,7 @@ pub fn execute_telemetry(
 
     // Injeksi ke Database Terstruktur
     // Masukkan label_str dan payload_str secara terpisah
-    let _ = insert_log(&conn, timestamp, level, &label_str, &payload_str, &caller, &location, &traceback);
+    let _ = insert_log(&conn, timestamp, level, &label_str, &payload_str, &caller_info, &location_info, &traceback_info);
 
     Ok(())
 }
