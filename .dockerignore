@@ -1,23 +1,37 @@
 # Version Control & Metadata
 .git
 .gitignore
+.gitattributes
 .github
+.editorconfig
+.flake8
 .dockerignore
 
 # Python Cache
 __pycache__/
 *.py[cod]
 *$py.class
+*.md
+
+# folders
 .pytest_cache/
 .coverage
 .venv/
 env/
 venv/
+tests/
+docs/
+.idea/
+.vscode/
 
 # Compiler Build Cache (Go, Rust, C)
 target/
 .go-cache/
 
-# Sensitive Files
-.idea/
-.vscode/
+# Files
+setupvenv
+setuptermux
+setuplinux
+setupdocker
+smfupdate
+llms.txt
