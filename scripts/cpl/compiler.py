@@ -36,6 +36,8 @@ def start_build():
     print("[*] Run binary compilation.")
 
     cores = safe_mode()
+    failed_binary = []
+    build_failed = False
     try:
         # Setup loading
         with StormSpin():
@@ -49,13 +51,21 @@ def start_build():
                         cmd = ["make", "-C", root, f"-j{cores}"]
                         subprocess.run(cmd, check=True, capture_output=True)
                     except subprocess.CalledProcessError as e:
+                        build_failed = True
                         module = os.path.basename(root)
+                        failed_binary.append(module)
                         print(f"[!] Build failed in {module} => {e.stderr.decode()}")
                     except FileNotFoundError as e:
                         print(f"[!] Make => {e}")
                         break
 
-        print("[✓] Compilation successful.")
+        if build_failed:
+            print("[!] Compilation finished with errors.")
+            print("[*] List failed binary:")
+            for module in failed_binary:
+                print(f"      - {module}")
+        else:
+            print("[✓] Compilation successful.")
     except KeyboardInterrupt:
         print("Compiler Stop. Reinstall to continue.")
     except Exception as e:
