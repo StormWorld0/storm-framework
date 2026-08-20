@@ -1,8 +1,10 @@
 import os
 import subprocess
+import tempfile
 
 from rootmap import ROOT
 from apps.utility.spin import StormSpin
+
 from .advcore import safe_mode
 from .detect_os_ext import osext
 
@@ -11,7 +13,8 @@ def start_build():
     os.chdir(ROOT)
 
     # Cache is saved
-    rust_cache = os.path.abspath(os.path.join(ROOT, "lib/smf/core/sf/cache/rust-session"))
+    tmp_dir = tempfile.gettempdir()
+    rust_cache = os.path.join(tmp_dir, "smf-build")
     os.makedirs(rust_cache, exist_ok=True)
 
     # Binary output is saved
