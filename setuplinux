@@ -35,7 +35,7 @@ INSTALL_DIR="/opt/$REPO_NAME"
 
 apt update
 apt install -y --no-install-recommends \
-jq python3-full python3-venv python3-pip git \
+curl jq python3-full python3-venv python3-pip git \
 golang build-essential cmake libpcap-dev clang \
 ffmpeg openssl pkg-config libssl-dev
 
