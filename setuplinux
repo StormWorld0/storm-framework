@@ -69,7 +69,7 @@ if [ "$GITHUB_ACTIONS" == "true" ]; then
 else
     echo -e "${GREEN}[*] Production Environment detected${NC}"
     mkdir -p "$INSTALL_DIR"
-    git clone "$GITHUB_REPO" "$INSTALL_DIR"
+    git clone --progress "$GITHUB_REPO" "$INSTALL_DIR"
 fi
 
 if [ $? -ne 0 ]; then
