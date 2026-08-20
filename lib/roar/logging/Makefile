@@ -22,7 +22,7 @@ all: $(TARGET)
 $(TARGET): $(SRC)
 	mkdir -p $(OUT)
 	cargo build --release --offline --quiet
-	cp $(CACHE)/release/lib$(RAW_NAME).so $(TARGET)
+	cp $(CACHE)/release/lib$(RAW_NAME).$(EXT) $(TARGET)
 	strip --strip-unneeded $(TARGET)
 
 clean:
