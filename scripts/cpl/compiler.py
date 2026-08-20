@@ -56,6 +56,9 @@ def start_build():
                         failed_binary.append(module)
                         print(f"[!] Build failed in {module} => {e.stderr.decode()}")
                     except FileNotFoundError as e:
+                        build_failed = True
+                        module = os.path.basename(root)
+                        failed_binary.append(module)
                         print(f"[!] Make => {e}")
                         break
 
