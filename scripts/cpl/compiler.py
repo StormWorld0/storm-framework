@@ -4,7 +4,7 @@ import subprocess
 from rootmap import ROOT
 from apps.utility.spin import StormSpin
 from .advcore import safe_mode
-from .detect_os import osext
+from .detect_os_ext import osext
 
 
 def start_build():
