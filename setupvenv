@@ -35,7 +35,9 @@ INSTALL_DIR="/opt/$REPO_NAME"
 VENV_DIR="$INSTALL_DIR/venv"
 VENV_PYTHON="$VENV_DIR/bin/python"
 
-apt install -y jq python3-full python3-venv python3-pip git golang build-essential libpcap-dev clang cmake ffmpeg openssl pkg-config libssl-dev
+apt install -y --no-install-recommends \
+jq python3-full python3-venv python3-pip git golang build-essential libpcap-dev \
+clang cmake ffmpeg openssl pkg-config libssl-dev
 
 # -----------------------------------------------------------------------------
 
