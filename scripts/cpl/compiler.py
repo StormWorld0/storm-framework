@@ -36,7 +36,7 @@ def start_build():
     print("[*] Run binary compilation.")
 
     cores = safe_mode()
-    failed_binary = []
+    count_bin = 0
     build_failed = False
     try:
         # Setup loading
@@ -52,21 +52,16 @@ def start_build():
                         subprocess.run(cmd, check=True, capture_output=True)
                     except subprocess.CalledProcessError as e:
                         build_failed = True
-                        module = os.path.basename(root)
-                        failed_binary.append(module)
+                        count_bin += 1
                         print(f"[!] Build failed in {module} => {e.stderr.decode()}")
                     except FileNotFoundError as e:
                         build_failed = True
-                        module = os.path.basename(root)
-                        failed_binary.append(module)
+                        count_bin += 1
                         print(f"[!] Make => {e}")
                         break
 
         if build_failed:
-            print("[!] Compilation finished with errors.")
-            print("[*] List failed binary:")
-            for module in failed_binary:
-                print(f"      - {module}")
+            print(f"[!] Compilation complete. [{count_bin}] binary compile errors.")
         else:
             print("[✓] Compilation successful.")
     except KeyboardInterrupt:
