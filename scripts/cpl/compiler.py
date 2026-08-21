@@ -53,7 +53,7 @@ def start_build():
                     except subprocess.CalledProcessError as e:
                         build_failed = True
                         count_bin += 1
-                        print(f"[!] Build failed in {module} => {e.stderr.decode()}")
+                        print(f"[!] Build failed => {e.stderr.decode()}")
                     except FileNotFoundError as e:
                         build_failed = True
                         count_bin += 1
