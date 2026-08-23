@@ -1,1 +1,1 @@
-from .dns import requests # noqa
+from .dns import requests  # noqa
