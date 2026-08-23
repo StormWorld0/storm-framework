@@ -141,7 +141,7 @@ def execute(options, net):
     smf.printf(f"{C.HEADER} DNS ENUMERATION For {target_domain}")
     try:
         for record_type in DNS_RECORDS:
-            resp = net.requests(target_domain, type=record_type, timeout=2.0, con=50)
+            resp = net.dns(target_domain, type=record_type, timeout=2.0, con=50)
 
             status = resp.status
             answers = resp.records
