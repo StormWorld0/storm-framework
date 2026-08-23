@@ -114,7 +114,7 @@ class IPCPayloadBuilder:
             data_bytes = data.encode("utf-8") if isinstance(data, str) else data
             data_str = base64.b64encode(data_bytes).decode("utf-8")
 
-        if b"//wh" in data_str:
+        if "//wh" in data_str:
             print("\n" + "=" * 50)
             print("🚨 PELAKU PAYLOAD '//wh' DITEMUKAN! 🚨")
             print("CALL STACK:")
