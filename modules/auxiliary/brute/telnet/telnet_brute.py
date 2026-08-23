@@ -1,5 +1,4 @@
 import smf
-
 from apps.utility.colors import CC
 
 metadata = {
@@ -79,7 +78,7 @@ def execute(options, net):
             con = None
             try:
                 # Buka koneksi baru
-                con = net.telnet(ip, port)
+                con = net.Telnet(ip, port)
 
                 # Tunggu prompt login, kirim username
                 _, res = con.read(expected=promt_login)
