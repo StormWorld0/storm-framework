@@ -94,17 +94,8 @@ def execute(options, net):
                     smf.printf(f"{CC.YELLOW}[*] U:{user} {SYM_FAILED}{CC.RESET}")
                     break
 
-                # Username berhasil
-                if r >= 0:
-                    smf.printf(f"{CC.GREEN}[✓] U:{user} {SYM_SUCCESS}{CC.RESET}\n")
-                    continue
-
                 # Kirim password, tunggu prompt shell
                 _, r = con.send(password, expected=promt_shell)
-                if r < 0:
-                    smf.printf(f"{CC.YELLOW}[*] P:{password} {SYM_FAILED}{CC.RESET}")
-                    break
-
                 if r >= 0:
                     # Berhasil login!
                     smf.printf(
