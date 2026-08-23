@@ -159,7 +159,7 @@ class TelnetClient:
             expected_list = expected
 
         expected_bytes = [
-            item.encode('utf-8') if isinstance(item, str) else item 
+            item.encode("utf-8") if isinstance(item, str) else item
             for item in expected_list
         ]
 
