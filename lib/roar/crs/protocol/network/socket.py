@@ -27,7 +27,7 @@ class SocketState:
         ratelimit: int = 0,
         sessid: str = "",
         keepalive: bool = True,
-        mode: str = "send_only",
+        mode: str = "open",
         verify: bool = True,
         infotls: bool = False,
         cert: str = "",
@@ -272,7 +272,7 @@ class Socket(SocketState):
         self,
         data: str | bytes,
         timeout: float = 10.0,
-        mode: str = "send_only",
+        mode: str = "send",
         **kwargs,
     ) -> Dict:
         self._ensure_open("send")
@@ -295,7 +295,7 @@ class Socket(SocketState):
             state=self,
             readsize=readsize,
             infotls=False,
-            mode="recv_only",
+            mode="recv",
             close_session=False,
         )
 
@@ -331,7 +331,7 @@ class Socket(SocketState):
         if self._is_closed:
             return {"status": "already_closed", "session_id": self.sessid}
 
-        packet = IPCPayloadBuilder.build(state=self, mode="send_only", close_session=True)
+        packet = IPCPayloadBuilder.build(state=self, mode="close", close_session=True)
 
         resp = CRS.send(packet)
         self._is_closed = True
