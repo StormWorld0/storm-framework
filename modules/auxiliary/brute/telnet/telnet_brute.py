@@ -28,12 +28,13 @@ REQUIRED_OPTIONS = {
     "USER": "fill with wordlist username",
 }
 
+
 def read_wordlist(filepath):
     """
     Generator untuk membaca file wordlist baris per baris.
     """
     try:
-        with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+        with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
             for line in f:
                 # Hapus newline dan spasi di ujung
                 word = line.strip()
@@ -47,13 +48,14 @@ def read_wordlist(filepath):
         smf.printf(f"Failed to read file {filepath}", e, level="ERROR")
         return
 
+
 def execute(options, net):
     # Ambil parameter dari dictionary
     ip = options.get("IP")
     port = 23
     user = options.get("USER")
     passwd = options.get("PASS")
-    
+
     # Prompt yang umum
     promt_login = ["login:", "Login:"]
     promt_pass = ["password:", "pass:", "Password:", "Pass:"]
