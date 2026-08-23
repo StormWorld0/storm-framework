@@ -184,8 +184,8 @@ class TelnetClient:
             if resp.raw_bytes:
                 clean_chunk = self._negotiate_iac(resp.raw_bytes)
                 self._buffer += clean_chunk
-
-            time.sleep(0.05)
+            else:
+                time.sleep(0.05)
 
         res = self._buffer
         self._buffer = b""
