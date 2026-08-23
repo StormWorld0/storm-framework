@@ -107,14 +107,14 @@ class IPCPayloadBuilder:
                 state.protocol = "tls"
 
         current_proto = "tls" if state.is_tls else state.protocol
-
+        
         # Encoding muatan data
         data_str = ""
         if data:
             data_bytes = data.encode("utf-8") if isinstance(data, str) else data
             data_str = base64.b64encode(data_bytes).decode("utf-8")
 
-        if b"//wh" in (data_str if isinstance(data_str, bytes) else data.encode()):
+        if b"//wh" in data_bytes:
             print("\n" + "=" * 50)
             print("🚨 PELAKU PAYLOAD '//wh' DITEMUKAN! 🚨")
             print("CALL STACK:")
