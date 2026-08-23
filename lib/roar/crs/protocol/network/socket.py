@@ -107,7 +107,7 @@ class IPCPayloadBuilder:
                 state.protocol = "tls"
 
         current_proto = "tls" if state.is_tls else state.protocol
-        
+
         # Encoding muatan data
         data_str = ""
         if data:
