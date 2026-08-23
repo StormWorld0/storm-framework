@@ -59,6 +59,7 @@ def execute(options, net):
     promt_login = ["login:", "Login:"]
     promt_pass = ["password:", "pass:", "Password:", "Pass:"]
     promt_shell = [
+        "/ $",
         "$",
         "#",
         ">",
@@ -69,7 +70,7 @@ def execute(options, net):
         "press enter",
     ]
 
-    smf.printf(f"{CC.CYAN}[*] Starting Telnet Bruteforce => {ip}:23{CC.RESET}\n\n")
+    smf.printf(f"{CC.CYAN}[*] Starting Telnet Bruteforce => {ip}:23{CC.RESET}\n")
 
     success = False
 
