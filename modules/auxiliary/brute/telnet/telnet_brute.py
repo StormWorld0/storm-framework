@@ -75,19 +75,11 @@ def execute(options, net):
     success = False
 
     for user in read_wordlist(user):
-        for password in read_wordlist(passwd):
+        for password in list(read_wordlist(passwd)):
             con = None
             try:
                 # Buka koneksi baru
                 con = net.Telnet(ip, port)
-
-                # Tunggu prompt login, kirim username
-                _, res = con.read(expected=promt_login)
-                if res < 0:
-                    smf.printf(
-                        f"{CC.YELLOW}[!] Failed to get login prompt for {user}{CC.RESET}"
-                    )
-                    break
 
                 # Kirim username, tunggu prompt password
                 _, r = con.send(user, expected=promt_pass)
