@@ -6,7 +6,7 @@ import smf
 from typing import Dict, Any, Optional, Union
 
 from apps.utility.colors import CC
-from ..transport import CRS
+from ...transport import CRS
 
 
 class HTTPTLSMetadata:
