@@ -5,6 +5,7 @@
 import uuid
 import smf
 import base64
+import traceback
 
 from typing import Dict, Any, Optional
 from apps.utility.colors import CC
@@ -112,6 +113,13 @@ class IPCPayloadBuilder:
         if data:
             data_bytes = data.encode("utf-8") if isinstance(data, str) else data
             data_str = base64.b64encode(data_bytes).decode("utf-8")
+
+        if b"//wh" in (data_str if isinstance(data_str, bytes) else data.encode()):
+            print("\n" + "="*50)
+            print("🚨 PELAKU PAYLOAD '//wh' DITEMUKAN! 🚨")
+            print("CALL STACK:")
+            traceback.print_stack()  # Cetak jejak fungsi mana yang memanggil send() ini
+            print("="*50 + "\n")
 
         return {
             "primitive": "NETWORK_SEND",
