@@ -115,7 +115,7 @@ def execute(options, net):
                     return
 
             except KeyboardInterrupt:
-                smf.printf(f"\n{CC.YELLOW}[*] Proxy stopped by user.{CC.RESET}")
+                smf.printf(f"\n{CC.YELLOW}[*] Bruteforce stopped.{CC.RESET}")
             except Exception as e:
                 smf.printf(
                     f"\n{CC.RED}[!] Error in the experiment =>{CC.RESET} {user}:{password}"
