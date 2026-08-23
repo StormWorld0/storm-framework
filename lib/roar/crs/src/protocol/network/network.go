@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"net"
 	"reflect"
@@ -16,32 +17,31 @@ import (
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/utils"
 )
 
-// Network adalah entry point eksekusi koneksi
+// Network adalah entry point eksekusi koneksi menggunakan POSIX-like primitive operations.
 func Network(req packet.RequestPacket) packet.ResponsePacket {
 	utils.Take()
+	startTime := time.Now()
 
-	var (
-		conn     net.Conn
-		err      error
-		isReused bool
-		timeout  time.Duration
-	)
-
-	if req.Timeout <= 0 {
-		timeout = 5 * time.Second
-	} else {
+	timeout := 5 * time.Second
+	if req.Timeout > 0 {
 		timeout = time.Duration(req.Timeout * float64(time.Second))
 	}
 
-	// 1. Manajemen Sesi (Close)
+	// 1. Eksekusi Perintah Close Session secara eksplisit
 	if req.SessionID != "" && req.CloseSess {
 		if val, ok := utils.ActiveSessions.LoadAndDelete(req.SessionID); ok {
 			val.(net.Conn).Close()
 			return packet.ResponsePacket{Status: "SUCCESS", Message: "Session closed"}
 		}
+		// Jika tujuannya hanya menutup sesi (primitif 'close')
+		if req.Mode == "close" {
+			return packet.ResponsePacket{Status: "SUCCESS", Message: "No active session found to close"}
+		}
 	}
 
-	// 2. Manajemen Sesi (Reuse)
+	// 2. Ambil Sesi Aktif (Jika Ada)
+	var conn net.Conn
+	var isReused bool
 	if req.SessionID != "" {
 		if val, ok := utils.ActiveSessions.Load(req.SessionID); ok {
 			conn = val.(net.Conn)
@@ -49,26 +49,25 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		}
 	}
 
+	// Normalisasi Primitif
 	mode := strings.ToLower(req.Mode)
 	if mode == "" {
-		mode = "duplex"
-	}
-	protocol := strings.ToLower(req.Protocol)
-	if protocol == "" {
-		protocol = "tcp"
+		mode = "open" // Fallback primitive
 	}
 
-	addr, err := BuildTarget(req)
-	if err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: "Build target: " + err.Error()}
-	}
-
-	// 3. Fase Dialing
+	// 3. Auto-Dial: Pastikan Koneksi Tersedia
+	// (Mengizinkan arsitektur 'single-shot' di mana user bisa panggil recv/send tanpa open)
 	if conn == nil {
+		addr, err := BuildTarget(req)
+		if err != nil {
+			return packet.ResponsePacket{Status: "ERROR", Message: "Build target failed: " + err.Error()}
+		}
+
 		fd := utils.GetDialer()
 		if fd == nil {
 			return packet.ResponsePacket{Status: "ERROR", Message: "Global dialer not initialized"}
 		}
+
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
 
@@ -77,46 +76,24 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			return packet.ResponsePacket{Status: "ERROR", Message: "TCP Dial failed: " + err.Error()}
 		}
 		conn = rawConn
+
+		// Evaluasi TLS State sejak awal (Jika protocol == tls)
+		protocol := strings.ToLower(req.Protocol)
+		hasCertKey := req.TLSCert != "" && req.TLSKey != ""
+		if protocol == "tls" || protocol == "ssl" || hasCertKey {
+			tlsConn, err := performTLSHandshake(ctx, conn, addr, req)
+			if err != nil {
+				conn.Close()
+				return packet.ResponsePacket{Status: "ERROR", Message: "Initial TLS Handshake failed: " + err.Error()}
+			}
+			conn = tlsConn
+		}
 	}
 
-	// 4. Fase TLS Upgrade
-	hasCertKey := req.TLSCert != "" && req.TLSKey != ""
-	shouldUseTLS := protocol == "tls" || protocol == "ssl" || hasCertKey
-
-	if req.Mode == "upgrade_tls" && shouldUseTLS && !isTLSConn(conn) {
-		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-		defer cancel()
-
-		tlsConfig, err := buildCustomTLSConfig(req)
-		if err != nil {
-			if !isReused {
-				conn.Close()
-			}
-			return packet.ResponsePacket{Status: "ERROR", Message: "TLS Config Error: " + err.Error()}
-		}
-
-		if tlsConfig.ServerName == "" {
-			hostOnly, _, _ := net.SplitHostPort(addr)
-			tlsConfig.ServerName = hostOnly
-		}
-
-		tlsConn := tls.Client(conn, tlsConfig)
-		if err := tlsConn.HandshakeContext(ctx); err != nil {
-			if !isReused {
-				conn.Close()
-			}
-			return packet.ResponsePacket{Status: "ERROR", Message: "TLS Handshake failed: " + err.Error()}
-		}
-
-		if req.SessionID != "" {
-			utils.ActiveSessions.Store(req.SessionID, tlsConn)
-		}
-		conn = tlsConn
-	}
-
+	// Manajemen Memori & Socket Leak Prevention
 	keepSession := false
 	defer func() {
-		if !keepSession {
+		if !keepSession && conn != nil {
 			if req.SessionID != "" {
 				utils.ActiveSessions.Delete(req.SessionID)
 			}
@@ -124,48 +101,72 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		}
 	}()
 
-	startTime := time.Now()
+	// Helper Closure untuk Assembly Metadata (Mencegah duplikasi kode)
+	generateMetadata := func(readBytes int) map[string]interface{} {
+		meta := map[string]interface{}{
+			"is_reused":    isReused,
+			"rtt_ms":       time.Since(startTime).Milliseconds(),
+			"Cheked":       reflect.TypeOf(conn).String(),
+			"isAlreadyTLS": strconv.FormatBool(isTLSConn(conn)),
+			"read_bytes":   readBytes,
+		}
+		if addr := conn.RemoteAddr(); addr != nil {
+			meta["remote_ip"] = addr.String()
+		}
+		if lAddr := conn.LocalAddr(); lAddr != nil {
+			meta["local_ip"] = lAddr.String()
+		}
+		if req.InfoTLS {
+			meta["info_tls"] = ExtractTLSInfo(conn)
+		}
+		return meta
+	}
 
-	// 5. Fase Write
-	if mode == "duplex" || mode == "send_only" {
+	// 4. Primitive State Machine (Routing Eksekusi)
+	switch mode {
+	case "open":
+		// Koneksi sudah terbuka di fase Auto-Dial. 
+		if req.SessionID != "" && req.KeepAlive {
+			utils.ActiveSessions.Store(req.SessionID, conn)
+			keepSession = true
+		}
+		return packet.ResponsePacket{Status: "SUCCESS", Data: generateMetadata(0)}
+
+	case "upgrade_tls":
+		// Mode khusus untuk kerentanan STARTTLS atau Protocol Smuggling
+		if isTLSConn(conn) {
+			return packet.ResponsePacket{Status: "ERROR", Message: "Connection is already TLS"}
+		}
+		
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		
+		addr, _ := BuildTarget(req) // Target di-rebuild hanya untuk hostname SNI
+		tlsConn, err := performTLSHandshake(ctx, conn, addr, req)
+		if err != nil {
+			return packet.ResponsePacket{Status: "ERROR", Message: "TLS Upgrade failed: " + err.Error()}
+		}
+		conn = tlsConn // Replace pointer dengan socket TLS baru
+		
+		if req.SessionID != "" && req.KeepAlive {
+			utils.ActiveSessions.Store(req.SessionID, conn)
+			keepSession = true
+		}
+		return packet.ResponsePacket{Status: "SUCCESS", Data: generateMetadata(0)}
+
+	case "send", "send_only":
 		if err := ExecuteWrite(conn, req.Data); err != nil {
-			if req.SessionID != "" {
-				utils.ActiveSessions.Delete(req.SessionID)
-				conn.Close()
-			}
 			return packet.ResponsePacket{Status: "ERROR", Message: "Write failed: " + err.Error()}
 		}
 
-		if mode == "send_only" {
-			if req.SessionID != "" {
-				if req.KeepAlive {
-					utils.ActiveSessions.Store(req.SessionID, conn)
-					keepSession = true
-				} else {
-					utils.ActiveSessions.Delete(req.SessionID)
-				}
-			}
-			return packet.ResponsePacket{
-				Status: "SUCCESS",
-				Data: map[string]interface{}{
-					"is_reused":    isReused,
-					"rtt_ms":       time.Since(startTime).Milliseconds(),
-					"Cheked":       reflect.TypeOf(conn).String(),
-					"isAlreadyTLS": strconv.FormatBool(isTLSConn(conn)),
-				},
-			}
+		if req.SessionID != "" && req.KeepAlive {
+			utils.ActiveSessions.Store(req.SessionID, conn)
+			keepSession = true
 		}
-	}
+		return packet.ResponsePacket{Status: "SUCCESS", Data: generateMetadata(0)}
 
-	// 6. Fase Read
-	var (
-		buffer []byte
-		n      int
-		bufPtr *[]byte
-	)
-
-	if mode == "recv_only" || mode == "duplex" {
-		buffer, n, bufPtr, err = ExecuteRead(conn, req.ReadSize, timeout)
+	case "recv", "recv_only":
+		buffer, n, bufPtr, err := ExecuteRead(conn, req.ReadSize, timeout)
 		defer ReleaseBuffer(bufPtr)
 
 		if err != nil && err != io.EOF {
@@ -173,64 +174,50 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 				return packet.ResponsePacket{
 					Status:  "ERROR",
 					Message: "Read failed: " + err.Error(),
-					Data: map[string]interface{}{
-						"buffer":       n,
-						"is_reused":    isReused,
-						"Cheked":       reflect.TypeOf(conn).String(),
-						"isAlreadyTLS": strconv.FormatBool(isTLSConn(conn)),
-					},
-				}
-			}
-		} else if err == io.EOF {
-			if n == 0 {
-				return packet.ResponsePacket{
-					Status:  "SUCCESS",
-					Message: "EOF - no more data",
-					Data: map[string]interface{}{
-						"read_bytes": 0,
-						"is_reused":  isReused,
-						"rtt_ms":     time.Since(startTime).Milliseconds(),
-					},
+					Data:    generateMetadata(0),
 				}
 			}
 		}
+
+		if req.SessionID != "" && req.KeepAlive {
+			utils.ActiveSessions.Store(req.SessionID, conn)
+			keepSession = true
+		}
+
+		meta := generateMetadata(n)
+		meta["raw_bytes"] = base64.StdEncoding.EncodeToString(buffer[:n])
+		meta["hex_bytes"] = hex.EncodeToString(buffer[:n])
+
+		msg := "SUCCESS"
+		if err == io.EOF {
+			msg = "EOF - no more data"
+		}
+
+		return packet.ResponsePacket{Status: "SUCCESS", Message: msg, Data: meta}
+
+	default:
+		return packet.ResponsePacket{Status: "ERROR", Message: "Unknown socket primitive: " + mode}
+	}
+}
+
+// performTLSHandshake adalah internal helper untuk membungkus logika upgrade TLS
+// Digunakan oleh primitive 'open' dan 'upgrade_tls'.
+func performTLSHandshake(ctx context.Context, conn net.Conn, addr string, req packet.RequestPacket) (net.Conn, error) {
+	tlsConfig, err := buildCustomTLSConfig(req)
+	if err != nil {
+		return nil, fmt.Errorf("TLS Config Error: %w", err)
 	}
 
-	// 7. Penentuan Sesi & Assembly Respon Akhir
-	if req.SessionID != "" && req.KeepAlive {
-		utils.ActiveSessions.Store(req.SessionID, conn)
-		keepSession = true
-	} else if req.SessionID != "" {
-		utils.ActiveSessions.Delete(req.SessionID)
+	// Set SNI secara otomatis jika kosong
+	if tlsConfig.ServerName == "" {
+		hostOnly, _, _ := net.SplitHostPort(addr)
+		tlsConfig.ServerName = hostOnly
 	}
 
-	var tlsData map[string]interface{}
-	if req.InfoTLS {
-		tlsData = ExtractTLSInfo(conn)
+	tlsConn := tls.Client(conn, tlsConfig)
+	if err := tlsConn.HandshakeContext(ctx); err != nil {
+		return nil, fmt.Errorf("handshake failed: %w", err)
 	}
 
-	remoteIP, localAddr := "unknown", "unknown"
-	if addr := conn.RemoteAddr(); addr != nil {
-		remoteIP = addr.String()
-	}
-	if lAddr := conn.LocalAddr(); lAddr != nil {
-		localAddr = lAddr.String()
-	}
-
-	return packet.ResponsePacket{
-		Status: "SUCCESS",
-		Data: map[string]interface{}{
-			"raw_bytes":    base64.StdEncoding.EncodeToString(buffer[:n]),
-			"hex_bytes":    hex.EncodeToString(buffer[:n]),
-			"read_bytes":   n,
-			"protocol":     protocol,
-			"remote_ip":    remoteIP,
-			"local_ip":     localAddr,
-			"is_reused":    isReused,
-			"rtt_ms":       time.Since(startTime).Milliseconds(),
-			"info_tls":     tlsData,
-			"Cheked":       reflect.TypeOf(conn).String(),
-			"isAlreadyTLS": strconv.FormatBool(isTLSConn(conn)),
-		},
-	}
+	return tlsConn, nil
 }
