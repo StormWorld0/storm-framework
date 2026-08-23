@@ -153,19 +153,28 @@ class TelnetClient:
         raw: bool = False,
     ) -> Union[str, bytes]:
         """Melihat Response Telnet"""
-        if isinstance(expected, str):
-            expected = expected.encode("utf-8")
+        if not isinstance(expected, list):
+            expected_list = [expected]
+        else:
+            expected_list = expected
+
+        expected_bytes = [
+            item.encode('utf-8') if isinstance(item, str) else item 
+            for item in expected_list
+        ]
 
         wait_time = timeout or self.timeout
         start_time = time.time()
 
         while (time.time() - start_time) < wait_time:
-            if expected in self._buffer:
-                idx = self._buffer.find(expected) + len(expected)
-                result = self._buffer[:idx]
-                self._buffer = self._buffer[idx:]
+            for idx, exp in enumerate(expected_bytes):
+                if exp in self._buffer:
+                    pos = self._buffer.find(exp) + len(exp)
+                    result = self._buffer[:pos]
+                    self._buffer = self._buffer[pos:]
 
-                return result if raw else result.decode("utf-8", errors="ignore")
+                    response = result if raw else result.decode("utf-8", errors="ignore")
+                    return response, idx
 
             resp = self.sock.recv(readsize=4096)
 
@@ -180,7 +189,8 @@ class TelnetClient:
 
         res = self._buffer
         self._buffer = b""
-        return res if raw else res.decode("utf-8", errors="ignore")
+        response = res if raw else res.decode("utf-8", errors="ignore")
+        return response, -1
 
     def send(
         self,
