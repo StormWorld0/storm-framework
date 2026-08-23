@@ -333,9 +333,7 @@ class Socket(SocketState):
         if self._is_closed:
             return {"status": "already_closed", "session_id": self.sessid}
 
-        packet = IPCPayloadBuilder.build(
-            state=self, mode="send_only", close_session=True
-        )
+        packet = IPCPayloadBuilder.build(state=self, mode="send_only", close_session=True)
 
         resp = CRS.send(packet)
         self._is_closed = True
