@@ -26,7 +26,6 @@ SYM_FAILED = "🔒"
 
 REQUIRED_OPTIONS = {
     "IP": "",
-    "THREAD": "Default 1 thread",
     "PASS": "fill with wordlist password",
     "USER": "fill with wordlist username",
 }
@@ -77,7 +76,7 @@ def execute(options, net):
                     smf.printf(f"{CC.YELLOW}[*] U:{user} {SYM_FAILED}{CC.RESET}")
                     break
 
-                if >= 0:
+                if r >= 0:
                     smf.printf(f"{CC.GREEN}[✓] U:{user} {SYM_SUCCESS}{CC.RESET}\n")
                     continue
 
