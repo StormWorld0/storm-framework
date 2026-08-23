@@ -45,7 +45,7 @@ def read_wordlist(filepath):
         smf.printd("File not found", filepath, level=WARN)
         return
     except Exception as e:
-        smf.printf(f"Failed to read file {filepath}", e, level="ERROR")
+        smf.printd(f"Failed to read file {filepath}", e, level="ERROR")
         return
 
 
