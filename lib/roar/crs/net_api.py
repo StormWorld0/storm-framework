@@ -1,13 +1,13 @@
 from .protocol.http import http_requests
-from .protocol.dns import requests
+from .protocol.dns import requests as dns
 from .protocol.network import Socket
-
-# from .ftp import ftp_login
-# from .smb import smb_enum
+from .protocol.telnet import TelnetClient as Telnet
 
 # Define wrapper protocol
+# For registration on high level API calls
 __all__ = [
     "http_requests",
-    "requests",
+    "dns",
     "Socket",
+    "Telnet",
 ]
