@@ -1,1 +1,1 @@
-from .socket import Socket # noqa
+from .socket import Socket  # noqa
