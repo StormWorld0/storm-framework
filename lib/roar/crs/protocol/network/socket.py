@@ -303,9 +303,7 @@ class Socket(SocketState):
 
         return SocketResponse(resp)
 
-    def uptls(
-        self, cert: str, key: str, ca: str = None, verify: bool = True
-    ) -> Dict:
+    def uptls(self, cert: str, key: str, ca: str = None, verify: bool = True) -> Dict:
         if self.is_tls:
             smf.printd("The connection is already using TLS", level="WARN")
             return {"status": "WARN", "message": "Already TLS"}
