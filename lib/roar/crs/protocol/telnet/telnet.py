@@ -115,7 +115,7 @@ class TelnetClient:
         self,
         expected: Union[str, bytes],
         timeout: Optional[float] = 30.0,
-        return_raw: bool = False,
+        raw: bool = False,
     ) -> Union[str, bytes]:
         """Untuk mengambil data response"""
         if isinstance(expected, str):
@@ -152,7 +152,7 @@ class TelnetClient:
         command: Union[str, bytes],
         expected: Union[str, bytes],
         timeout: Optional[float] = 30.0,
-        return_raw: bool = False,
+        raw: bool = False,
     ) -> Union[str, bytes]:
         """Untuk pengiriman data"""
         if isinstance(command, str):
