@@ -87,7 +87,7 @@ def execute(options, net):
                     smf.printf(
                         f"{CC.YELLOW}[!] Failed to get login prompt for {user}{CC.RESET}"
                     )
-                    return
+                    break
 
                 # Kirim username, tunggu prompt password
                 _, r = con.send(user, expected=promt_pass)
