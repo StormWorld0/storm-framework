@@ -5,7 +5,7 @@ import smf
 from typing import Dict, Any, List
 
 from apps.utility.colors import CC
-from ..transport import CRS
+from ...transport import CRS
 
 
 class DNSResponse:
