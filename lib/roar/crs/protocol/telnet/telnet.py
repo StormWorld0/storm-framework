@@ -105,11 +105,11 @@ class TelnetClient:
                     # Menolak semua Opsi agar server memberikan pure Plain Text
                     if cmd in (TelnetCmd.DO, TelnetCmd.DONT):
                         self.sock.send(
-                            TelnetCmd.IAC + TelnetCmd.WONT + opt, mode="send_only"
+                            TelnetCmd.IAC + TelnetCmd.WONT + opt
                         )
                     elif cmd in (TelnetCmd.WILL, TelnetCmd.WONT):
                         self.sock.send(
-                            TelnetCmd.IAC + TelnetCmd.DONT + opt, mode="send_only"
+                            TelnetCmd.IAC + TelnetCmd.DONT + opt
                         )
 
                     i += 3
@@ -200,7 +200,7 @@ class TelnetClient:
             cmd_payload = command + b"\r\n"
 
         self.sock.send(cmd_payload)
-        return self.read_until(expected, timeout, raw)
+        return self.read(expected, timeout, raw)
 
     def close(self):
         self.sock.close()
