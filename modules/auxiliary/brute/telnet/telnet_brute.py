@@ -28,21 +28,33 @@ REQUIRED_OPTIONS = {
     "USER": "fill with wordlist username",
 }
 
+def read_wordlist(filepath):
+    """
+    Generator untuk membaca file wordlist baris per baris.
+    """
+    try:
+        with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+            for line in f:
+                # Hapus newline dan spasi di ujung
+                word = line.strip()
+                # Lewati baris kosong
+                if word:
+                    yield word
+    except FileNotFoundError:
+        smf.printd("File not found", filepath, level=WARN)
+        return
+    except Exception as e:
+        smf.printf(f"Failed to read file {filepath}", e, level="ERROR")
+        return
 
 def execute(options, net):
     # Ambil parameter dari dictionary
     ip = options.get("IP")
     port = 23
-    user_list = options.get("USER")  # bisa list atau string tunggal
-    pass_list = options.get("PASS")  # bisa list atau string tunggal
-
-    # Pastikan berbentuk list
-    if isinstance(user_list, str):
-        user_list = [user_list]
-    if isinstance(pass_list, str):
-        pass_list = [pass_list]
-
-    # Prompt yang umum ditemui
+    user = options.get("USER")
+    passwd = options.get("PASS")
+    
+    # Prompt yang umum
     promt_login = ["login:", "Login:"]
     promt_pass = ["password:", "pass:", "Password:", "Pass:"]
     promt_shell = [
@@ -60,8 +72,8 @@ def execute(options, net):
 
     success = False
 
-    for user in user_list:
-        for password in pass_list:
+    for user in read_wordlist(user):
+        for password in read_wordlist(passwd):
             con = None
             try:
                 # Buka koneksi baru
@@ -73,7 +85,7 @@ def execute(options, net):
                     smf.printf(
                         f"{CC.YELLOW}[!] Failed to get login prompt for {user}{CC.RESET}"
                     )
-                    return  # Keluar jika promt tidak di temukan
+                    return
 
                 # Kirim username, tunggu prompt password
                 _, r = con.send(user, expected=promt_pass)
@@ -81,6 +93,7 @@ def execute(options, net):
                     smf.printf(f"{CC.YELLOW}[*] U:{user} {SYM_FAILED}{CC.RESET}")
                     break
 
+                # Username berhasil
                 if r >= 0:
                     smf.printf(f"{CC.GREEN}[✓] U:{user} {SYM_SUCCESS}{CC.RESET}\n")
                     continue
