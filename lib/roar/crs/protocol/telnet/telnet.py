@@ -130,7 +130,7 @@ class TelnetClient:
                 result = self._buffer[:idx]
                 self._buffer = self._buffer[idx:]
 
-                return result if return_raw else result.decode("utf-8", errors="ignore")
+                return result if raw else result.decode("utf-8", errors="ignore")
 
             resp = self.sock.recv(readsize=4096)
 
@@ -145,7 +145,7 @@ class TelnetClient:
 
         res = self._buffer
         self._buffer = b""
-        return res if return_raw else res.decode("utf-8", errors="ignore")
+        return res if raw else res.decode("utf-8", errors="ignore")
 
     def send(
         self,
@@ -161,7 +161,7 @@ class TelnetClient:
             cmd_payload = command + b"\r\n"
 
         self.sock.send(cmd_payload)
-        return self.read_until(expected, timeout, return_raw)
+        return self.read_until(expected, timeout, raw)
 
     def close(self):
         self.sock.close()
