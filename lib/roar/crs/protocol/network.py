@@ -83,7 +83,7 @@ class IPCPayloadBuilder:
     @staticmethod
     def build(
         state: SocketState,
-        data: str = "",
+        data: str | bytes = b"",
         infotls: bool = None,
         verify: bool = None,
         cert: str = None,
@@ -270,7 +270,7 @@ class Socket(SocketState):
 
     def send(
         self,
-        data: str,
+        data: str | bytes,
         timeout: float = 10.0,
         mode: str = "send_only",
         **kwargs,
@@ -293,7 +293,6 @@ class Socket(SocketState):
         self._ensure_open("receive")
         packet = IPCPayloadBuilder.build(
             state=self,
-            data="",
             readsize=readsize,
             infotls=False,
             mode="recv_only",
@@ -313,7 +312,6 @@ class Socket(SocketState):
 
         packet = IPCPayloadBuilder.build(
             state=self,
-            data="",
             verify=verify,
             mode="upgrade_tls",
             protocol="tls",
