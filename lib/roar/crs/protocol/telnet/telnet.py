@@ -104,13 +104,9 @@ class TelnetClient:
                     # Auto-Rejection / Hardened Fallback
                     # Menolak semua Opsi agar server memberikan pure Plain Text
                     if cmd in (TelnetCmd.DO, TelnetCmd.DONT):
-                        self.sock.send(
-                            TelnetCmd.IAC + TelnetCmd.WONT + opt
-                        )
+                        self.sock.send(TelnetCmd.IAC + TelnetCmd.WONT + opt)
                     elif cmd in (TelnetCmd.WILL, TelnetCmd.WONT):
-                        self.sock.send(
-                            TelnetCmd.IAC + TelnetCmd.DONT + opt
-                        )
+                        self.sock.send(TelnetCmd.IAC + TelnetCmd.DONT + opt)
 
                     i += 3
 
