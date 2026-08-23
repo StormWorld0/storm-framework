@@ -161,7 +161,7 @@ class TLSMetadata:
 
 class SocketResponse:
     """
-    Wrapper untuk mengelola respons dinamis dari CRS (Go IPC).
+    Wrapper untuk mengelola respons dinamis dari CRS (IPC).
     Menyediakan Type-Safety, Property Access, dan Lazy Decoding.
     """
 
@@ -170,7 +170,7 @@ class SocketResponse:
         self._status: str = raw_response.get("status", "UNKNOWN")
         self._message: str = raw_response.get("message", "UNKNOWN")
 
-        # Ambil payload "Data" dari respons
+        # Retrieve the "Data" payload from the response
         self._data: Dict[str, Any] = raw_response.get("data", {})
 
     @property
@@ -186,7 +186,19 @@ class SocketResponse:
     @property
     def raw_bytes(self) -> bytes:
         """Mengembalikan raw bytes apa adanya."""
-        return self._data.get("raw_bytes", b"")
+        raw_val = self._data.get("raw_bytes")
+        
+        if isinstance(raw_val, bytes):
+            return raw_val
+        
+        if isinstance(raw_val, str) and raw_val:
+            try:
+                return base64.b64decode(raw_val)
+            except Exception as e:
+                smf.printd(f"Base64 decode error", e, level="ERROR")
+                return raw_val.encode("utf-8")
+                
+        return b""
 
     @property
     def str_bytes(self) -> str:
@@ -262,7 +274,7 @@ class Socket(SocketState):
         timeout: float = 10.0,
         mode: str = "send_only",
         **kwargs,
-    ) -> dict:
+    ) -> SocketResponse:
         self._ensure_open("send")
         packet = IPCPayloadBuilder.build(
             state=self,
@@ -277,7 +289,7 @@ class Socket(SocketState):
 
         return SocketResponse(resp)
 
-    def recv(self, readsize: int = None) -> dict:
+    def recv(self, readsize: int = None) -> SocketResponse:
         self._ensure_open("receive")
         packet = IPCPayloadBuilder.build(
             state=self,
@@ -292,7 +304,13 @@ class Socket(SocketState):
 
         return SocketResponse(resp)
 
-    def uptls(self, cert: str, key: str, ca: str = None, verify: bool = True) -> dict:
+    def uptls(
+        self, 
+        cert: str, 
+        key: str, 
+        ca: str = None, 
+        verify: bool = True
+    ) -> SocketResponse:
         if self.is_tls:
             smf.printd("The connection is already using TLS", level="WARN")
             return {"status": "WARN", "message": "Already TLS"}
@@ -317,7 +335,7 @@ class Socket(SocketState):
 
         return SocketResponse(resp)
 
-    def close(self) -> dict:
+    def close(self) -> SocketResponse:
         if self._is_closed:
             return {"status": "already_closed", "session_id": self.sessid}
 
