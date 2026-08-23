@@ -68,16 +68,6 @@ class CRS:
             # Convert JSON back to Dict
             res_dict = json.loads(response_line)
 
-            if isinstance(res_dict, dict) and isinstance(res_dict.get("data"), dict):
-                raw_b64 = res_dict["data"].get("raw_bytes")
-                if isinstance(raw_b64, str):
-                    try:
-                        res_dict["data"]["raw_bytes"] = base64.b64decode(raw_b64)
-                    except Exception as b64_err:
-                        # Fallback if base64 decode fails
-                        res_dict["data"]["raw_bytes"] = b""
-                        smf.printd("Base64 decode failed", b64_err, level="ERROR")
-
             smf.printd("CRS Process Output dict format", res_dict, level="DEBUG")
             return res_dict
         except Exception as e:
