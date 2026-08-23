@@ -274,7 +274,7 @@ class Socket(SocketState):
         timeout: float = 10.0,
         mode: str = "send_only",
         **kwargs,
-    ) -> SocketResponse:
+    ) -> Dict:
         self._ensure_open("send")
         packet = IPCPayloadBuilder.build(
             state=self,
@@ -289,7 +289,7 @@ class Socket(SocketState):
 
         return SocketResponse(resp)
 
-    def recv(self, readsize: int = None) -> SocketResponse:
+    def recv(self, readsize: int = None) -> Dict:
         self._ensure_open("receive")
         packet = IPCPayloadBuilder.build(
             state=self,
@@ -305,7 +305,7 @@ class Socket(SocketState):
 
     def uptls(
         self, cert: str, key: str, ca: str = None, verify: bool = True
-    ) -> SocketResponse:
+    ) -> Dict:
         if self.is_tls:
             smf.printd("The connection is already using TLS", level="WARN")
             return {"status": "WARN", "message": "Already TLS"}
@@ -329,7 +329,7 @@ class Socket(SocketState):
 
         return SocketResponse(resp)
 
-    def close(self) -> SocketResponse:
+    def close(self) -> Dict:
         if self._is_closed:
             return {"status": "already_closed", "session_id": self.sessid}
 
