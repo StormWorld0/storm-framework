@@ -1,1 +1,1 @@
-from .telnet import TelnetClient # Noqa
+from .telnet import TelnetClient  # Noqa
