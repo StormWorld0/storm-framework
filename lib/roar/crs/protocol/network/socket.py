@@ -8,7 +8,7 @@ import base64
 
 from typing import Dict, Any, Optional
 from apps.utility.colors import CC
-from ..transport import CRS
+from ...transport import CRS
 
 
 class SocketState:
