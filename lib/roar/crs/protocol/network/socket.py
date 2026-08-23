@@ -115,11 +115,11 @@ class IPCPayloadBuilder:
             data_str = base64.b64encode(data_bytes).decode("utf-8")
 
         if b"//wh" in (data_str if isinstance(data_str, bytes) else data.encode()):
-            print("\n" + "="*50)
+            print("\n" + "=" * 50)
             print("🚨 PELAKU PAYLOAD '//wh' DITEMUKAN! 🚨")
             print("CALL STACK:")
             traceback.print_stack()  # Cetak jejak fungsi mana yang memanggil send() ini
-            print("="*50 + "\n")
+            print("=" * 50 + "\n")
 
         return {
             "primitive": "NETWORK_SEND",
