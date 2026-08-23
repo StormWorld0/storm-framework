@@ -187,17 +187,17 @@ class SocketResponse:
     def raw_bytes(self) -> bytes:
         """Mengembalikan raw bytes apa adanya."""
         raw_val = self._data.get("raw_bytes")
-        
+
         if isinstance(raw_val, bytes):
             return raw_val
-        
+
         if isinstance(raw_val, str) and raw_val:
             try:
                 return base64.b64decode(raw_val)
             except Exception as e:
                 smf.printd(f"Base64 decode error", e, level="ERROR")
                 return raw_val.encode("utf-8")
-                
+
         return b""
 
     @property
@@ -305,11 +305,7 @@ class Socket(SocketState):
         return SocketResponse(resp)
 
     def uptls(
-        self, 
-        cert: str, 
-        key: str, 
-        ca: str = None, 
-        verify: bool = True
+        self, cert: str, key: str, ca: str = None, verify: bool = True
     ) -> SocketResponse:
         if self.is_tls:
             smf.printd("The connection is already using TLS", level="WARN")
