@@ -4,7 +4,7 @@
 
 import time
 from typing import Optional, Union
-from ..network.network import Socket
+from ..network import Socket
 
 
 class TelnetClient:
@@ -111,12 +111,13 @@ class TelnetClient:
 
         return bytes(clean_data)
 
-    def read_until(
+    def read(
         self,
         expected: Union[str, bytes],
-        timeout: Optional[float] = None,
+        timeout: Optional[float] = 30.0,
         return_raw: bool = False,
     ) -> Union[str, bytes]:
+        """Untuk mengambil data response"""
         if isinstance(expected, str):
             expected = expected.encode("utf-8")
 
@@ -146,20 +147,21 @@ class TelnetClient:
         self._buffer = b""
         return res if return_raw else res.decode("utf-8", errors="ignore")
 
-    def execute(
+    def send(
         self,
         command: Union[str, bytes],
-        expect_prompt: Union[str, bytes],
-        timeout: Optional[float] = None,
+        expected: Union[str, bytes],
+        timeout: Optional[float] = 30.0,
         return_raw: bool = False,
     ) -> Union[str, bytes]:
+        """Untuk pengiriman data"""
         if isinstance(command, str):
             cmd_payload = f"{command}\r\n".encode("utf-8")
         else:
             cmd_payload = command + b"\r\n"
 
         self.sock.send(cmd_payload)
-        return self.read_until(expect_prompt, timeout, return_raw)
+        return self.read_until(expected, timeout, return_raw)
 
     def close(self):
         self.sock.close()
