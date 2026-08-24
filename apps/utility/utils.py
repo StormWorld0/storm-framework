@@ -74,13 +74,12 @@ def resolve_wordlist():
             if file.endswith(EXT):
                 # Remove extension from file name
                 file_without_ext, _ = os.path.splitext(file)
-                
+
                 # Relative path construction with file names without extensions
                 rel_path = os.path.relpath(os.path.join(root, file_without_ext), word)
                 results.append(os.path.join("wordlist", rel_path))
-                
-    return results
 
+    return results
 
 
 # LOGIC USE
