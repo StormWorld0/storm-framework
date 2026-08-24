@@ -189,7 +189,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		meta["hex_bytes"] = hex.EncodeToString(buffer[:n])
 
 		if err == io.EOF {
-			msg = "EOF - no more data"
+			return packet.ResponsePacket{Status: "INFO", Message: "EOF Read: " + err.Error()}
 		}
 
 		return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
