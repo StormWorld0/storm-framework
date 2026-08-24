@@ -174,7 +174,12 @@ class SocketResponse:
         self._data: Dict[str, Any] = raw_response.get("data", {})
 
     @property
-    def status(self) -> bool:
+    def success(self) -> bool:
+        """Mengembalikan True jika response berhasil"""
+        return self._status.upper() == "SUCCESS"
+        
+    @property
+    def status(self) -> str:
         """Mempermudah pengecekan status respons."""
         return self._status
 
@@ -267,6 +272,26 @@ class Socket(SocketState):
     Mewarisi SocketState untuk mempertahankan kompatibilitas atribut (Backward Compatibility).
     Hanya berfokus pada eksekusi instruksi jaringan ke Engine Go.
     """
+    def __init__(self, *args, **kwargs):
+        # 1. Setup semua variabel dan state dari SocketState
+        super().__init__(*args, **kwargs)
+        
+        # 2. Langsung tembak instruksi 'open' ke Go Engine
+        self.initial_response = self.open()
+
+    def open(self, timeout: float = None) -> SocketResponse:
+        self._ensure_open("open")
+        packet = IPCPayloadBuilder.build(
+            state=self,
+            mode="open",
+            timeout=timeout,
+            infotls=False,
+            close_session=False,
+        )
+        
+        resp = CRS.send(packet)
+        
+        return SocketResponse(resp)
 
     def send(
         self,
@@ -274,7 +299,7 @@ class Socket(SocketState):
         timeout: float = 10.0,
         mode: str = "send",
         **kwargs,
-    ) -> Dict:
+    ) -> SocketResponse:
         self._ensure_open("send")
         packet = IPCPayloadBuilder.build(
             state=self,
@@ -289,7 +314,7 @@ class Socket(SocketState):
 
         return SocketResponse(resp)
 
-    def recv(self, readsize: int = None) -> Dict:
+    def recv(self, readsize: int = None) -> SocketResponse:
         self._ensure_open("receive")
         packet = IPCPayloadBuilder.build(
             state=self,
@@ -303,7 +328,7 @@ class Socket(SocketState):
 
         return SocketResponse(resp)
 
-    def uptls(self, cert: str, key: str, ca: str = None, verify: bool = True) -> Dict:
+    def uptls(self, cert: str, key: str, ca: str = None, verify: bool = True) -> SocketResponse:
         if self.is_tls:
             smf.printd("The connection is already using TLS", level="WARN")
             return {"status": "WARN", "message": "Already TLS"}
@@ -327,7 +352,7 @@ class Socket(SocketState):
 
         return SocketResponse(resp)
 
-    def close(self) -> Dict:
+    def close(self) -> SocketResponse:
         if self._is_closed:
             return {"status": "already_closed", "session_id": self.sessid}
 
