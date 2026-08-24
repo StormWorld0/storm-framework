@@ -280,7 +280,7 @@ class Socket(SocketState):
         # 2. Langsung tembak instruksi 'open' ke Go Engine
         self.initial_response = self.open()
 
-    def open(self, timeout: float = 10.0) -> SocketResponse:
+    def open(self, timeout: float = None) -> SocketResponse:
         self._ensure_open("open")
         packet = IPCPayloadBuilder.build(
             state=self,
@@ -297,7 +297,7 @@ class Socket(SocketState):
     def send(
         self,
         data: str | bytes,
-        timeout: float = 10.0,
+        timeout: float = None,
         mode: str = "send",
         **kwargs,
     ) -> SocketResponse:
@@ -315,11 +315,12 @@ class Socket(SocketState):
 
         return SocketResponse(resp)
 
-    def recv(self, readsize: int = None) -> SocketResponse:
+    def recv(self, readsize: int = None, timeout: float = None) -> SocketResponse:
         self._ensure_open("receive")
         packet = IPCPayloadBuilder.build(
             state=self,
             readsize=readsize,
+            timeout=timeout,
             infotls=False,
             mode="recv",
             close_session=False,
