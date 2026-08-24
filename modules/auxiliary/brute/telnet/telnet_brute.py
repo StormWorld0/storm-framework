@@ -94,8 +94,10 @@ def execute(options, net):
                 # Username diterima, kirim password
                 _, r = con.send(password, expected=promt_shell)
                 if r < 0:
-                    smf.printf(f"{CC.YELLOW}[*] U:{username} P:{password} {SYS_FAILED}{CC.RESET}")
-                    
+                    smf.printf(
+                        f"{CC.YELLOW}[*] U:{username} P:{password} {SYS_FAILED}{CC.RESET}"
+                    )
+
                 if r >= 0:
                     # Berhasil login!
                     smf.printf(
