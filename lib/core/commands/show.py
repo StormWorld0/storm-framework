@@ -97,7 +97,7 @@ def execute(args, ctx):
 
     elif target_show == "wordlist" or target_show == "word":
         word = utils.resolve_wordlist()
-        
+
         if not word:
             smf.printf(f"{CC.YELLOW}[!] Wordlist not available.{CC.RESET}")
             return
