@@ -66,7 +66,7 @@ class TelnetClient:
     def __init__(self, host: str, port: int = 23, timeout: float = 10.0, **kwargs):
         """Open koneksi Telnet di atas TCP Socket"""
         self.sock = Socket(
-            host=host, port=port, protocol="tcp", timeout=timeout, **kwargs
+            host=host, port=port, timeout=timeout, **kwargs
         )
         self.timeout = timeout
         self._buffer = b""
@@ -182,7 +182,7 @@ class TelnetClient:
 
             resp = self.sock.recv(readsize=4096)
 
-            if not resp.status and not resp.raw_bytes:
+            if resp.success == "SUCCESS" and not resp.raw_bytes:
                 break
 
             if resp.raw_bytes:
