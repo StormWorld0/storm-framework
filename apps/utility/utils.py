@@ -61,7 +61,7 @@ def resolve_path(options):
 
 
 # Extensions wordlist
-EXT = (".txt", ".json")
+EXT = (".py", ".json")
 
 
 def resolve_wordlist():
@@ -74,9 +74,9 @@ def resolve_wordlist():
     word_var = []
 
     for root, dirs, files in os.walk(word):
-        for f in files:
-            if f.lower().endswith(EXT):
-                rel_path = os.path.relpath(os.path.join(root, f), word)
+        for file in files:
+            if file.endswith(EXT):
+                rel_path = os.path.relpath(os.path.join(root, file), word)
 
                 word_var.append(os.path.join("wordlist", rel_path))
 
