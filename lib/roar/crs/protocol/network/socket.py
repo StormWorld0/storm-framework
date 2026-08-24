@@ -22,7 +22,7 @@ class SocketState:
         host: str = "",
         port: int = 0,
         protocol: str = "tcp",
-        timeout: float = None,
+        timeout: float = 10.0,
         readsize: int = 0,
         ratelimit: int = 0,
         sessid: str = "",
