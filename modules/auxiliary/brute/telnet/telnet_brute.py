@@ -99,11 +99,13 @@ def execute(options, net):
 
             except KeyboardInterrupt:
                 smf.printf(f"\n{CC.YELLOW}[*] Bruteforce stopped.{CC.RESET}")
+                return
             except Exception as e:
                 smf.printf(
                     f"\n{CC.RED}[!] Error in the experiment =>{CC.RESET} {user}:{password}"
                 )
                 smf.printd("Exception Telnet Bruteforce", e, level="ERROR")
+                return
             finally:
                 if con:
                     con.close()
