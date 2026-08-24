@@ -87,7 +87,7 @@ def execute(options, net):
                 if r < 0:
                     # Username ditolak, tidak perlu lanjut ke password
                     smf.printf(
-                        f"{CC.YELLOW}[*] Username: {username} {SYS_FAILED}{CC.RESET}"
+                        f"{CC.YELLOW}[*] Username: {username} {SYM_FAILED}{CC.RESET}"
                     )
                     break  # keluar dari loop password, lanjut ke username berikutnya
 
@@ -95,7 +95,7 @@ def execute(options, net):
                 _, r = con.send(password, expected=promt_shell)
                 if r < 0:
                     smf.printf(
-                        f"{CC.YELLOW}[*] U:{username} P:{password} {SYS_FAILED}{CC.RESET}"
+                        f"{CC.YELLOW}[*] U:{username} P:{password} {SYM_FAILED}{CC.RESET}"
                     )
 
                 if r >= 0:
