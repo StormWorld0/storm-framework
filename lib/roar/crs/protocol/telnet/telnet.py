@@ -169,7 +169,6 @@ class TelnetClient:
                         pos = self._buffer.find(exp) + len(exp)
                         result = self._buffer[:pos]
                         self._buffer = self._buffer[pos:]
-
                         return (
                             result if raw else result.decode("utf-8", errors="ignore")
                         ), idx
@@ -178,17 +177,19 @@ class TelnetClient:
             if (time.time() - start_time) >= wait_time:
                 break
 
-            resp = self.sock.recv(readsize=4096)
+            read_timeout = 0.3 if self._buffer else wait_time
+            resp = self.sock.recv(readsize=4096, timeout=read_timeout)
 
-            if resp.success == "SUCCESS" and not resp.raw_bytes:
+            if resp.success != "SUCCESS" and not resp.raw_bytes:
+                if self._buffer:
+                    break
+                continue
+
+            clean_chunk = self._negotiate_iac(resp.raw_bytes)
+            self._buffer += clean_chunk
+
+            if not expected_bytes:
                 break
-
-            if resp.raw_bytes:
-                clean_chunk = self._negotiate_iac(resp.raw_bytes)
-                self._buffer += clean_chunk
-            else:
-                # Cegah CPU Spiking jika soket non-blocking tapi belum ada data
-                time.sleep(0.01)
 
         # Timeout / Selesai membaca: Kembalikan sisa buffer (jika ada)
         res = self._buffer
