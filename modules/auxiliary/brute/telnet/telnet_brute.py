@@ -79,16 +79,16 @@ def execute(options, net):
             con = None
             try:
                 # Buka koneksi baru
-                con = net.Telnet(ip, port, timeout=2.0)
+                con = net.Telnet(ip, port, timeout=10.0)
 
                 # Kirim username, tunggu prompt password
-                _, r = con.send(user, expected=promt_pass, timeout=1.0)
+                _, r = con.send(user, expected=promt_pass)
                 if r < 0:
                     smf.printf(f"{CC.YELLOW}[*] U:{user} {SYM_FAILED}{CC.RESET}")
                     break
 
                 # Kirim password, tunggu prompt shell
-                _, r = con.send(password, expected=promt_shell, timeout=1.0)
+                _, r = con.send(password, expected=promt_shell)
                 if r >= 0:
                     # Berhasil login!
                     smf.printf(
