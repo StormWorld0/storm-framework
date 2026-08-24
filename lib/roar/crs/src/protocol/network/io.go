@@ -34,7 +34,7 @@ func ExecuteWrite(conn net.Conn, data string, timeout time.Duration) error {
 // ExecuteRead menangani alokasi buffer efisien dan timeout untuk operasi baca.
 func ExecuteRead(conn net.Conn, readSize int, timeout time.Duration) ([]byte, int, *[]byte, error) {
 	if readSize <= 0 {
-		readSize = 0
+		readSize = 4096
 	}
 
 	var buffer []byte
