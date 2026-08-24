@@ -95,22 +95,21 @@ def execute(args, ctx):
 
         smf.printf()
 
-    elif target_show == "wordlist" or target_show == "word":
+    elif target_show == "wordlist":
         word = utils.resolve_wordlist()
 
-        if not word:
+        if word:
+            smf.printf()
+            smf.printf(f"{CC.MAGENTA}{'-' * 30}{CC.RESET}")
+            smf.printf(f"{CC.CYAN}{'Wordlist Collection':>15}{CC.RESET}")
+            smf.printf(f"{CC.MAGENTA}{'-' * 30}{CC.RESET}")
+            smf.printf()
+
+            for w in word:
+                smf.printf(f"  - {CC.YELLOW}{w}{CC.RESET}")
+            smf.printf()
+        else:
             smf.printf(f"{CC.YELLOW}[!] Wordlist not available.{CC.RESET}")
-            return
-
-        smf.printf()
-        smf.printf(f"{CC.MAGENTA}{'-' * 30}{CC.RESET}")
-        smf.printf(f"{CC.CYAN}{'Wordlist Collection':>15}{CC.RESET}")
-        smf.printf(f"{CC.MAGENTA}{'-' * 30}{CC.RESET}")
-        smf.printf()
-
-        for w in word:
-            smf.printf(f"  - {CC.YELLOW}{w}{CC.RESET}")
-        smf.printf()
 
     # 5. show <category_name>
     else:
