@@ -23,7 +23,7 @@ def resolve_path(options):
         return os.path.abspath(normalized_path)
 
     # Search in Internal wordlist
-    assets_dir = os.path.join(ROOT, "assets/wordlist")
+    assets_dir = os.path.join(ROOT, "assets", "wordlist")
 
     try:
         if os.path.exists(assets_dir):
@@ -58,6 +58,23 @@ def resolve_path(options):
 
     # Return None if all resolution chains fail
     return None
+
+# Extensions wordlist
+EXT = (".txt", ".json")
+
+def resolve_wordlist():
+    word = os.path.join(ROOT, "assets", "wordlist")
+    if not os.path.isdir(word):
+        return []
+
+    word_var = []
+
+    for root, dirs, files in os.walk(word):
+        for f in files:
+            if f.endswith(EXT):
+                word_var.append(os.path.join(root, f).lstrip("/"))
+
+    return word_var
 
 
 # LOGIC USE
