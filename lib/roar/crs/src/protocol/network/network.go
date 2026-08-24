@@ -155,7 +155,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "SUCCESS", Data: generateMetadata(0)}
 
 	case "send", "send_only":
-		if err := ExecuteWrite(conn, req.Data); err != nil {
+		if err := ExecuteWrite(conn, req.Data, timeout); err != nil {
 			return packet.ResponsePacket{Status: "ERROR", Message: "Write failed: " + err.Error()}
 		}
 
