@@ -23,7 +23,7 @@ type RequestPacket struct {
 	Port      int               `json:"port,omitempty"`      // PORT 1 - 65535
 	
 	// General parameters
-	Timeout   float64           `json:"timeout,omitempty"`
+	Timeout   *float64          `json:"timeout,omitempty"`   // int / nil
 	RawMode   bool              `json:"rawmode"`             // True / False
 	Redirect  bool              `json:"redirect"`            // True / False
 	Verify    bool              `json:"verify"`              // True / False
