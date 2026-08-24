@@ -2,6 +2,7 @@ package packet
 
 // RequestPacket is a mirror of the dictionary that Python sends
 type RequestPacket struct {
+	MsgID     string            `json:"msg_id"`              // Concurrency specific ID
 	Primitive string            `json:"primitive"`           // Special flag to mark the protocol used
 	Go        int               `json:"goroutine"`           // Allocate the number of Goroutines
 	
@@ -45,6 +46,7 @@ type RequestPacket struct {
 
 // ResponsePacket
 type ResponsePacket struct {
+	MsgID     string            `json:"msg_id"`              // Concurrency response unique ID
 	Status    string            `json:"status"`              // ERROR / SUCCESS / TIMEOUT / ...
 	Message   string            `json:"message,omitempty"`   // Error message or success message
 	Data      interface{}       `json:"data,omitempty"`      // Free data (can be map, array, string)
