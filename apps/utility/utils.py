@@ -65,7 +65,9 @@ EXT = (".txt", ".json")
 
 
 def resolve_wordlist():
+    """Used by show wordlist"""
     word = os.path.join(ROOT, "assets", "wordlist")
+
     if not os.path.isdir(word):
         return []
 
@@ -73,8 +75,15 @@ def resolve_wordlist():
 
     for root, dirs, files in os.walk(word):
         for f in files:
-            if f.endswith(EXT):
-                word_var.append(os.path.join(dirs, f).lstrip("/"))
+            if f.lower().endswith(EXT):
+                rel_path = os.path.relpath(
+                    os.path.join(root, f),
+                    word
+                )
+
+                word_var.append(
+                    os.path.join("wordlist", rel_path)
+                )
 
     return word_var
 
