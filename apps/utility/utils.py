@@ -68,9 +68,9 @@ def resolve_wordlist():
     word = os.path.join(ROOT, "assets", "wordlist")
     if not os.path.isdir(word):
         return []
-        
+
     word_var = []
-    
+
     for root, dirs, files in os.walk(word):
         for f in files:
             if f.endswith(EXT):
