@@ -177,7 +177,7 @@ class SocketResponse:
     def success(self) -> bool:
         """Mengembalikan True jika response berhasil"""
         return self._status.upper() == "SUCCESS"
-        
+
     @property
     def status(self) -> str:
         """Mempermudah pengecekan status respons."""
@@ -272,10 +272,11 @@ class Socket(SocketState):
     Mewarisi SocketState untuk mempertahankan kompatibilitas atribut (Backward Compatibility).
     Hanya berfokus pada eksekusi instruksi jaringan ke Engine Go.
     """
+
     def __init__(self, *args, **kwargs):
         # 1. Setup semua variabel dan state dari SocketState
         super().__init__(*args, **kwargs)
-        
+
         # 2. Langsung tembak instruksi 'open' ke Go Engine
         self.initial_response = self.open()
 
@@ -288,9 +289,9 @@ class Socket(SocketState):
             infotls=False,
             close_session=False,
         )
-        
+
         resp = CRS.send(packet)
-        
+
         return SocketResponse(resp)
 
     def send(
@@ -328,7 +329,9 @@ class Socket(SocketState):
 
         return SocketResponse(resp)
 
-    def uptls(self, cert: str, key: str, ca: str = None, verify: bool = True) -> SocketResponse:
+    def uptls(
+        self, cert: str, key: str, ca: str = None, verify: bool = True
+    ) -> SocketResponse:
         if self.is_tls:
             smf.printd("The connection is already using TLS", level="WARN")
             return {"status": "WARN", "message": "Already TLS"}
