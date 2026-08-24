@@ -1,59 +1,58 @@
 # -- https://github.com/StormWorld0/storm-framework
 # -- License SMF
-# -- Author zxelzy
+# -- Author zxelzy (Refactored)
 import time
+from typing import Optional, Union, List, Tuple
 
-from typing import Optional, Union
+# Pastikan import Socket Anda benar sesuai struktur framework
 from ..network import Socket
 
 
 class TelnetCmd:
     """Konstanta untuk Telnet Commands (RFC 854 & Extensions)"""
-
-    EOF = b"\xec"  # 236 (End of File)
-    SUSP = b"\xed"  # 237 (Suspend Process)
-    ABORT = b"\xee"  # 238 (Abort Process)
-    EOR = b"\xef"  # 239 (End of Record - RFC 885)
-    SE = b"\xf0"  # 240 (Subnegotiation End)
-    NOP = b"\xf1"  # 241 (No Operation)
-    DM = b"\xf2"  # 242 (Data Mark - Sync)
-    BRK = b"\xf3"  # 243 (Break)
-    IP = b"\xf4"  # 244 (Interrupt Process)
-    AO = b"\xf5"  # 245 (Abort Output)
-    AYT = b"\xf6"  # 246 (Are You There)
-    EC = b"\xf7"  # 247 (Erase Character)
-    EL = b"\xf8"  # 248 (Erase Line)
-    GA = b"\xf9"  # 249 (Go Ahead)
-    SB = b"\xfa"  # 250 (Subnegotiation Begin)
-    WILL = b"\xfb"  # 251 (Negotiation: WILL)
-    WONT = b"\xfc"  # 252 (Negotiation: WONT)
-    DO = b"\xfd"  # 253 (Negotiation: DO)
-    DONT = b"\xfe"  # 254 (Negotiation: DONT)
-    IAC = b"\xff"  # 255 (Interpret As Command)
+    EOF = b"\xec"
+    SUSP = b"\xed"
+    ABORT = b"\xee"
+    EOR = b"\xef"
+    SE = b"\xf0"
+    NOP = b"\xf1"
+    DM = b"\xf2"
+    BRK = b"\xf3"
+    IP = b"\xf4"
+    AO = b"\xf5"
+    AYT = b"\xf6"
+    EC = b"\xf7"
+    EL = b"\xf8"
+    GA = b"\xf9"
+    SB = b"\xfa"
+    WILL = b"\xfb"
+    WONT = b"\xfc"
+    DO = b"\xfd"
+    DONT = b"\xfe"
+    IAC = b"\xff"
 
 
 class TelnetOpt:
     """Konstanta untuk Telnet Options (RFC Extensions)"""
-
-    BINARY = b"\x00"  # 0  (8-bit Binary Transmission)
-    ECHO = b"\x01"  # 1  (Echo Data)
-    RCP = b"\x02"  # 2  (Reconnection)
-    SGA = b"\x03"  # 3  (Suppress Go Ahead)
-    NAMS = b"\x04"  # 4  (Approx Message Size)
-    STATUS = b"\x05"  # 5  (Status Option)
-    TM = b"\x06"  # 6  (Timing Mark)
-    RCTE = b"\x07"  # 7  (Remote Controlled Trans and Echo)
-    NAOL = b"\x08"  # 8  (Output Line Width)
-    NAOP = b"\x09"  # 9  (Output Page Size)
-    EOR = b"\x19"  # 25 (End of Record Option)
-    TTYPE = b"\x18"  # 24 (Terminal Type)
-    NAWS = b"\x1f"  # 31 (Negotiate About Window Size)
-    TSPEED = b"\x20"  # 32 (Terminal Speed)
-    LFLOW = b"\x21"  # 33 (Remote Flow Control)
-    LINEMODE = b"\x22"  # 34 (Line mode)
-    XDISPLOC = b"\x23"  # 35 (X Display Location)
-    OLD_ENVIRON = b"\x24"  # 36 (Environment Option)
-    NEW_ENVIRON = b"\x27"  # 39 (New Environment Option)
+    BINARY = b"\x00"
+    ECHO = b"\x01"
+    RCP = b"\x02"
+    SGA = b"\x03"
+    NAMS = b"\x04"
+    STATUS = b"\x05"
+    TM = b"\x06"
+    RCTE = b"\x07"
+    NAOL = b"\x08"
+    NAOP = b"\x09"
+    EOR = b"\x19"
+    TTYPE = b"\x18"
+    NAWS = b"\x1f"
+    TSPEED = b"\x20"
+    LFLOW = b"\x21"
+    LINEMODE = b"\x22"
+    XDISPLOC = b"\x23"
+    OLD_ENVIRON = b"\x24"
+    NEW_ENVIRON = b"\x27"
 
 
 class TelnetClient:
@@ -81,7 +80,6 @@ class TelnetClient:
 
         while i < length:
             if data[i : i + 1] == TelnetCmd.IAC:
-                # Escaped IAC (\xff\xff)
                 if i + 1 < length and data[i + 1 : i + 2] == TelnetCmd.IAC:
                     clean_data.append(255)
                     i += 2
@@ -93,24 +91,20 @@ class TelnetClient:
 
                 cmd = data[i + 1 : i + 2]
 
-                # Command Negosiasi (DO, DONT, WILL, WONT) - 3 Bytes
                 if cmd in (TelnetCmd.DO, TelnetCmd.DONT, TelnetCmd.WILL, TelnetCmd.WONT):
                     if i + 2 >= length:
                         self._iac_fragment = data[i:]
                         break
-
+                    
                     opt = data[i + 2 : i + 3]
 
                     # Auto-Rejection / Hardened Fallback
-                    # Menolak semua Opsi agar server memberikan pure Plain Text
                     if cmd in (TelnetCmd.DO, TelnetCmd.DONT):
                         self.sock.send(TelnetCmd.IAC + TelnetCmd.WONT + opt)
                     elif cmd in (TelnetCmd.WILL, TelnetCmd.WONT):
                         self.sock.send(TelnetCmd.IAC + TelnetCmd.DONT + opt)
 
                     i += 3
-
-                # Subnegotiation Block (SB ... SE)
                 elif cmd == TelnetCmd.SB:
                     end_sb = data.find(TelnetCmd.IAC + TelnetCmd.SE, i)
                     if end_sb == -1:
@@ -118,26 +112,13 @@ class TelnetClient:
                         break
                     else:
                         i = end_sb + 2
-
-                # Command Eksekusi (2 Bytes)
                 elif cmd in (
-                    TelnetCmd.NOP,
-                    TelnetCmd.DM,
-                    TelnetCmd.BRK,
-                    TelnetCmd.IP,
-                    TelnetCmd.AO,
-                    TelnetCmd.AYT,
-                    TelnetCmd.EC,
-                    TelnetCmd.EL,
-                    TelnetCmd.GA,
-                    TelnetCmd.EOF,
-                    TelnetCmd.SUSP,
-                    TelnetCmd.ABORT,
+                    TelnetCmd.NOP, TelnetCmd.DM, TelnetCmd.BRK, TelnetCmd.IP,
+                    TelnetCmd.AO, TelnetCmd.AYT, TelnetCmd.EC, TelnetCmd.EL,
+                    TelnetCmd.GA, TelnetCmd.EOF, TelnetCmd.SUSP, TelnetCmd.ABORT,
                     TelnetCmd.EOR,
                 ):
                     i += 2
-
-                # Unknown Command (Safety Skip)
                 else:
                     i += 2
             else:
@@ -148,12 +129,16 @@ class TelnetClient:
 
     def read(
         self,
-        expected: Union[str, bytes],
+        expected: Union[str, bytes, List[Union[str, bytes]]] = b"",
         timeout: Optional[float] = None,
         raw: bool = False,
-    ) -> Union[str, bytes]:
-        """Melihat Response Telnet"""
-        if not isinstance(expected, list):
+    ) -> Tuple[Union[str, bytes], int]:
+        """Membaca Response Telnet (Tuple return: data, match_index)"""
+        
+        # Guard: Jika expected kosong, buat fallback list kosong agar tidak loop tanpa henti
+        if expected == "" or expected == b"":
+            expected_list = []
+        elif not isinstance(expected, (list, tuple)):
             expected_list = [expected]
         else:
             expected_list = expected
@@ -163,18 +148,24 @@ class TelnetClient:
             for item in expected_list
         ]
 
-        wait_time = timeout or self.timeout
+        # Fix bug `timeout or self.timeout` untuk mengakomodasi timeout=0
+        wait_time = timeout if timeout is not None else self.timeout
         start_time = time.time()
 
-        while (time.time() - start_time) < wait_time:
-            for idx, exp in enumerate(expected_bytes):
-                if exp in self._buffer:
-                    pos = self._buffer.find(exp) + len(exp)
-                    result = self._buffer[:pos]
-                    self._buffer = self._buffer[pos:]
+        while True:
+            # Jika punya expected condition, periksa buffer
+            if expected_bytes:
+                for idx, exp in enumerate(expected_bytes):
+                    if exp in self._buffer:
+                        pos = self._buffer.find(exp) + len(exp)
+                        result = self._buffer[:pos]
+                        self._buffer = self._buffer[pos:]
+                        
+                        return result if raw else result.decode("utf-8", errors="ignore"), idx
 
-                    response = result if raw else result.decode("utf-8", errors="ignore")
-                    return response, idx
+            # Cek waktu tunggu (Timeout)
+            if (time.time() - start_time) >= wait_time:
+                break
 
             resp = self.sock.recv(readsize=4096)
 
@@ -185,8 +176,10 @@ class TelnetClient:
                 clean_chunk = self._negotiate_iac(resp.raw_bytes)
                 self._buffer += clean_chunk
             else:
-                time.sleep(0.05)
+                # Cegah CPU Spiking jika soket non-blocking tapi belum ada data
+                time.sleep(0.01)
 
+        # Timeout / Selesai membaca: Kembalikan sisa buffer (jika ada)
         res = self._buffer
         self._buffer = b""
         response = res if raw else res.decode("utf-8", errors="ignore")
@@ -195,11 +188,11 @@ class TelnetClient:
     def send(
         self,
         command: Union[str, bytes],
-        expected: Union[str, bytes],
+        expected: Union[str, bytes, List[Union[str, bytes]]] = b"",
         timeout: Optional[float] = None,
         raw: bool = False,
-    ) -> Union[str, bytes]:
-        """Mengirim data Telnet"""
+    ) -> Tuple[Union[str, bytes], int]:
+        """Mengirim data Telnet dan langsung membaca Response"""
         if isinstance(command, str):
             cmd_payload = f"{command}\r\n".encode("utf-8")
         else:
@@ -216,3 +209,4 @@ class TelnetClient:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
+                
