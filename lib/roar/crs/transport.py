@@ -99,6 +99,7 @@ class CRS:
 
         try:
             json_payload = json.dumps(data) + "\n"
+            smf.printd("Input Json CRS", json_payload, level="DEBUG")
 
             # Thread-safe write ke stdin menggunakan lock subprocess
             with cls._lock:
@@ -116,6 +117,7 @@ class CRS:
             res_dict = cls._responses.pop(
                 msg_id, {"status": "ERROR", "message": "Response lost"}
             )
+            smf.printd("Response Dict CRS", res_dict, level="DEBUG")
             return res_dict
 
         except Exception as e:
