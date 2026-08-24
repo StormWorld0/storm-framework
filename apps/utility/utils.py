@@ -59,8 +59,10 @@ def resolve_path(options):
     # Return None if all resolution chains fail
     return None
 
+
 # Extensions wordlist
 EXT = (".txt", ".json")
+
 
 def resolve_wordlist():
     word = os.path.join(ROOT, "assets", "wordlist")
