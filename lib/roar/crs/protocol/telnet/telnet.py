@@ -10,6 +10,7 @@ from ..network import Socket
 
 class TelnetCmd:
     """Konstanta untuk Telnet Commands (RFC 854 & Extensions)"""
+
     EOF = b"\xec"
     SUSP = b"\xed"
     ABORT = b"\xee"
@@ -34,6 +35,7 @@ class TelnetCmd:
 
 class TelnetOpt:
     """Konstanta untuk Telnet Options (RFC Extensions)"""
+
     BINARY = b"\x00"
     ECHO = b"\x01"
     RCP = b"\x02"
@@ -95,7 +97,7 @@ class TelnetClient:
                     if i + 2 >= length:
                         self._iac_fragment = data[i:]
                         break
-                    
+
                     opt = data[i + 2 : i + 3]
 
                     # Auto-Rejection / Hardened Fallback
@@ -113,9 +115,18 @@ class TelnetClient:
                     else:
                         i = end_sb + 2
                 elif cmd in (
-                    TelnetCmd.NOP, TelnetCmd.DM, TelnetCmd.BRK, TelnetCmd.IP,
-                    TelnetCmd.AO, TelnetCmd.AYT, TelnetCmd.EC, TelnetCmd.EL,
-                    TelnetCmd.GA, TelnetCmd.EOF, TelnetCmd.SUSP, TelnetCmd.ABORT,
+                    TelnetCmd.NOP,
+                    TelnetCmd.DM,
+                    TelnetCmd.BRK,
+                    TelnetCmd.IP,
+                    TelnetCmd.AO,
+                    TelnetCmd.AYT,
+                    TelnetCmd.EC,
+                    TelnetCmd.EL,
+                    TelnetCmd.GA,
+                    TelnetCmd.EOF,
+                    TelnetCmd.SUSP,
+                    TelnetCmd.ABORT,
                     TelnetCmd.EOR,
                 ):
                     i += 2
@@ -134,7 +145,7 @@ class TelnetClient:
         raw: bool = False,
     ) -> Tuple[Union[str, bytes], int]:
         """Membaca Response Telnet (Tuple return: data, match_index)"""
-        
+
         # Guard: Jika expected kosong, buat fallback list kosong agar tidak loop tanpa henti
         if expected == "" or expected == b"":
             expected_list = []
@@ -160,8 +171,10 @@ class TelnetClient:
                         pos = self._buffer.find(exp) + len(exp)
                         result = self._buffer[:pos]
                         self._buffer = self._buffer[pos:]
-                        
-                        return result if raw else result.decode("utf-8", errors="ignore"), idx
+
+                        return (
+                            result if raw else result.decode("utf-8", errors="ignore")
+                        ), idx
 
             # Cek waktu tunggu (Timeout)
             if (time.time() - start_time) >= wait_time:
@@ -209,4 +222,3 @@ class TelnetClient:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
-                
