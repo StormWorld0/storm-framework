@@ -16,7 +16,7 @@ var bufferPool = sync.Pool{
 }
 
 // ExecuteWrite menangani dekode base64 dan pengiriman payload TCP/TLS.
-func ExecuteWrite(conn net.Conn, data string, timeout time.Duration) error {
+func ExecuteWrite(conn net.Conn, data string, t time.Duration) error {
 	if data == "" {
 		return nil
 	}
@@ -24,6 +24,7 @@ func ExecuteWrite(conn net.Conn, data string, timeout time.Duration) error {
 	if err != nil {
 		return fmt.Errorf("base64 decode failed: %w", err)
 	}
+	timeout := time.Duration(t * float64(time.Second))
 	conn.SetWriteDeadline(time.Now().Add(timeout))
 	defer conn.SetWriteDeadline(time.Time{})
 	
@@ -32,7 +33,7 @@ func ExecuteWrite(conn net.Conn, data string, timeout time.Duration) error {
 }
 
 // ExecuteRead menangani alokasi buffer efisien dan timeout untuk operasi baca.
-func ExecuteRead(conn net.Conn, readSize int, timeout time.Duration) ([]byte, int, *[]byte, error) {
+func ExecuteRead(conn net.Conn, readSize int, t time.Duration) ([]byte, int, *[]byte, error) {
 	if readSize <= 0 {
 		readSize = 4096
 	}
@@ -47,6 +48,7 @@ func ExecuteRead(conn net.Conn, readSize int, timeout time.Duration) ([]byte, in
 		buffer = make([]byte, readSize)
 	}
 
+	timeout := time.Duration(t * float64(time.Second))
 	conn.SetReadDeadline(time.Now().Add(timeout))
 	defer conn.SetReadDeadline(time.Time{})
 
