@@ -173,4 +173,4 @@ def execute(args, ctx):
             smf.printd("FAILED TO READ INFORMATION MODULE", e, level="ERROR")
             smf.printf(f"{CC.YELLOW}[!] Failed to read MODULE{CC.RESET}")
     else:
-        smf.printf(f"{CC.YELLOW}[!] WARN => {query} > not found.{CC.RESET}")
+        smf.printf(f"{CC.YELLOW}[!] WARN =>{CC.RESET} {query} {CC.YELLOW}> not found.{CC.RESET}")
