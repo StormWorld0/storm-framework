@@ -188,12 +188,11 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		meta["raw_bytes"] = base64.StdEncoding.EncodeToString(buffer[:n])
 		meta["hex_bytes"] = hex.EncodeToString(buffer[:n])
 
-		msg := "SUCCESS"
 		if err == io.EOF {
 			msg = "EOF - no more data"
 		}
 
-		return packet.ResponsePacket{Status: "SUCCESS", Message: msg, Data: meta}
+		return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
 
 	default:
 		return packet.ResponsePacket{Status: "ERROR", Message: "Unknown socket primitive: " + mode}
