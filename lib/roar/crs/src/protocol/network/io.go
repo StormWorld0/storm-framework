@@ -16,7 +16,7 @@ var bufferPool = sync.Pool{
 }
 
 // ExecuteWrite menangani dekode base64 dan pengiriman payload TCP/TLS.
-func ExecuteWrite(conn net.Conn, data string) error {
+func ExecuteWrite(conn net.Conn, data string, timeout time.Duration) error {
 	if data == "" {
 		return nil
 	}
@@ -24,6 +24,9 @@ func ExecuteWrite(conn net.Conn, data string) error {
 	if err != nil {
 		return fmt.Errorf("base64 decode failed: %w", err)
 	}
+	conn.SetWriteDeadline(time.Now().Add(timeout))
+	defer conn.SetWriteDeadline(time.Time{})
+	
 	_, err = conn.Write(dataDec)
 	return err
 }
@@ -44,7 +47,7 @@ func ExecuteRead(conn net.Conn, readSize int, timeout time.Duration) ([]byte, in
 		buffer = make([]byte, readSize)
 	}
 
-	conn.SetDeadline(time.Now().Add(timeout))
+	conn.SetReadDeadline(time.Now().Add(timeout))
 	defer conn.SetDeadline(time.Time{})
 
 	n, err := conn.Read(buffer)
