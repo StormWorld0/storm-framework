@@ -6,7 +6,7 @@ from apps.utility.colors import *
 from lib.roar.calling import call_bin
 
 metadata = {
-    "Name": "Searching for subdomains",
+    "Name": "OSINT for subdomains",
     "Description": """
 Perform a scan on the specified subdomain
 to search and find subdomains that allow for
@@ -150,5 +150,5 @@ def execute(options):
             sys.stdout.write("\r\033[K")
 
         smf.printf(
-            f"[✓] {CC.GREEN}Path Enumeration daemon successfully stopped and cleaned up.{CC.RESET}"
+            f"[✓] {CC.GREEN}SubDomain Enumeration daemon successfully stopped and cleaned up.{CC.RESET}"
         )
