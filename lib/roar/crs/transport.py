@@ -86,10 +86,6 @@ class CRS:
         finally:
             with cls._lock:
                 cls._process = None
-                try:
-                    pid.reap_zombie()
-                except Exception:
-                    pass
                 for event in cls._pending_requests.values():
                     event.set()
 
@@ -117,6 +113,7 @@ class CRS:
                 proc.stdin.write(json_payload)
                 proc.stdin.flush()
             except Exception as write_err:
+                pid.reap_zombie()
                 return {
                     "status": "ERROR",
                     "message": f"Failed to write to Go STDIN: {write_err}",
