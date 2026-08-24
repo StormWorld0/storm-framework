@@ -22,7 +22,7 @@ class SocketState:
         host: str = "",
         port: int = 0,
         protocol: str = "tcp",
-        timeout: float = 30.0,
+        timeout: float = None,
         readsize: int = 0,
         ratelimit: int = 0,
         sessid: str = "",
@@ -280,7 +280,7 @@ class Socket(SocketState):
         # 2. Langsung tembak instruksi 'open' ke Go Engine
         self.initial_response = self.open()
 
-    def open(self, timeout: float = None) -> SocketResponse:
+    def open(self, timeout: float = 10.0) -> SocketResponse:
         self._ensure_open("open")
         packet = IPCPayloadBuilder.build(
             state=self,
