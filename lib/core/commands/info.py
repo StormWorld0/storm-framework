@@ -25,7 +25,7 @@ def execute(args, ctx):
     vuln_path = "modules/"
     file_path = path(query)
     found_path = f"{vuln_path}{file_path}.py"
-    
+
     if os.path.isfile(found_path):
         # To display information about a specific module
         # Command => info <modules_name> / info <modules_path>
