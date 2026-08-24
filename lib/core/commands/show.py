@@ -99,7 +99,7 @@ def execute(args, ctx):
     # 4. show wordlist
     elif target_show == "wordlist":
         word_val = utils.resolve_wordlist()
-        
+
         smf.printf()
         smf.printf(f"{CC.CYAN}Wordlist Collection:{CC.RESET}")
         smf.printf()
