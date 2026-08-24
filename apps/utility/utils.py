@@ -59,28 +59,21 @@ def resolve_path(options):
     # Return None if all resolution chains fail
     return None
 
-
-# Extensions wordlist
-EXT = (".py", ".json")
-
-
 def resolve_wordlist():
     """Used by show wordlist"""
     word = os.path.join(ROOT, "assets", "wordlist")
+    EXT = (".txt", ".json")
 
     if not os.path.isdir(word):
         return []
 
-    word_var = []
+    return [
+        os.path.join("wordlist", os.path.relpath(os.path.join(root, file), word))
+        for root, dirs, files in os.walk(word)
+        for file in files
+        if file.endswith(EXT)
+    ]
 
-    for root, dirs, files in os.walk(word):
-        for file in files:
-            if file.endswith(EXT):
-                rel_path = os.path.relpath(os.path.join(root, file), word)
-
-                word_var.append(os.path.join("wordlist", rel_path))
-
-    return word_var
 
 
 # LOGIC USE
