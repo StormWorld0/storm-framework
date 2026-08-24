@@ -59,30 +59,31 @@ class CRS:
     def _background_reader(cls):
         """Thread mandiri yang membaca stdout Go secara konstan dan mendistribusikan respons."""
         proc = cls._process
-        while proc and proc.poll() is None:
-            try:
-                line = proc.stdout.readline()
-                if not line:
+        try:
+            while proc and proc.poll() is None:
+                try:
+                    line = proc.stdout.readline()
+                    if not line:
+                        break
+
+                    # Abaikan baris kosong atau log non-JSON jika ada
+                    line_str = line.strip()
+                    if not line_str.startswith("{"):
+                        continue
+
+                    res_dict = json.loads(line_str)
+                    msg_id = res_dict.get("msg_id")
+
+                    if msg_id:
+                        with cls._lock:
+                            if msg_id in cls._pending_requests:
+                                cls._responses[msg_id] = res_dict
+                                cls._pending_requests[msg_id].set()
+                except (BrokenPipeError, OSError, ValueError):
                     break
-
-                # Abaikan baris kosong atau log non-JSON jika ada
-                line_str = line.strip()
-                if not line_str.startswith("{"):
-                    continue
-
-                res_dict = json.loads(line_str)
-                msg_id = res_dict.get("msg_id")
-
-                if msg_id:
-                    with cls._lock:
-                        if msg_id in cls._pending_requests:
-                            cls._responses[msg_id] = res_dict
-                            cls._pending_requests[msg_id].set()
-                            
-            except Exception as e:
-                smf.printd("Error in CRS background reader", e, level="ERROR")
-                break
-                
+                except Exception as e:
+                    smf.printd("Error in CRS background reader", e, level="ERROR")
+                    break
         finally:
             with cls._lock:
                 cls._process = None
