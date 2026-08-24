@@ -68,12 +68,19 @@ def resolve_wordlist():
     if not os.path.isdir(word):
         return []
 
-    return [
-        os.path.join("wordlist", os.path.relpath(os.path.join(root, file), word))
-        for root, dirs, files in os.walk(word)
-        for file in files
-        if file.endswith(EXT)
-    ]
+    results = []
+    for root, dirs, files in os.walk(word):
+        for file in files:
+            if file.endswith(EXT):
+                # Remove extension from file name
+                file_without_ext, _ = os.path.splitext(file)
+                
+                # Relative path construction with file names without extensions
+                rel_path = os.path.relpath(os.path.join(root, file_without_ext), word)
+                results.append(os.path.join("wordlist", rel_path))
+                
+    return results
+
 
 
 # LOGIC USE
