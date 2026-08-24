@@ -104,7 +104,7 @@ def execute(args, ctx):
 
         smf.printf()
         smf.printf(f"{CC.MAGENTA}{'-' * 30}{CC.RESET}")
-        smf.printf(f"{CC.CYAN}{'Wordlist Collection':<15}{CC.RESET}")
+        smf.printf(f"{CC.CYAN}{'Wordlist Collection':>15}{CC.RESET}")
         smf.printf(f"{CC.MAGENTA}{'-' * 30}{CC.RESET}")
         smf.printf()
 
