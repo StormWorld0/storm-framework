@@ -155,7 +155,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "SUCCESS", Data: generateMetadata(0)}
 
 	case "send", "send_only":
-		if err := ExecuteWrite(conn, req.Data, timeout); err != nil {
+		if err := ExecuteWrite(conn, req.Data, req.Timeout); err != nil {
 			return packet.ResponsePacket{Status: "ERROR", Message: "Write failed: " + err.Error()}
 		}
 
@@ -166,7 +166,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "SUCCESS", Data: generateMetadata(0)}
 
 	case "recv", "recv_only":
-		buffer, n, bufPtr, err := ExecuteRead(conn, req.ReadSize, timeout)
+		buffer, n, bufPtr, err := ExecuteRead(conn, req.ReadSize, req.Timeout)
 		defer ReleaseBuffer(bufPtr)
 
 		if err != nil && err != io.EOF {
