@@ -2,6 +2,7 @@
 # -- SMF License
 import smf
 import apps.utility.utils as utils
+
 from apps.utility.colors import CC
 
 
@@ -95,21 +96,17 @@ def execute(args, ctx):
 
         smf.printf()
 
+    # 4. show wordlist
     elif target_show == "wordlist":
-        word = utils.resolve_wordlist()
+        word_val = utils.resolve_wordlist()
+        
+        smf.printf()
+        smf.printf(f"{CC.CYAN}Wordlist Collection:{CC.RESET}")
+        smf.printf()
 
-        if word:
-            smf.printf()
-            smf.printf(f"{CC.MAGENTA}{'-' * 30}{CC.RESET}")
-            smf.printf(f"{CC.CYAN}{'Wordlist Collection':>15}{CC.RESET}")
-            smf.printf(f"{CC.MAGENTA}{'-' * 30}{CC.RESET}")
-            smf.printf()
-
-            for w in word:
-                smf.printf(f"  - {CC.YELLOW}{w}{CC.RESET}")
-            smf.printf()
-        else:
-            smf.printf(f"{CC.YELLOW}[!] Wordlist not available.{CC.RESET}")
+        for word in word_val:
+            smf.printf(f"  - {CC.YELLOW}{word}{CC.RESET}")
+        smf.printf()
 
     # 5. show <category_name>
     else:
