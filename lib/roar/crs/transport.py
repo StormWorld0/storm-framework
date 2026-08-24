@@ -112,7 +112,10 @@ class CRS:
                 proc.stdin.write(json_payload)
                 proc.stdin.flush()
             except Exception as write_err:
-                return {"status": "ERROR", "message": f"Failed to write to Go STDIN: {write_err}"}
+                return {
+                    "status": "ERROR",
+                    "message": f"Failed to write to Go STDIN: {write_err}",
+                }
 
             # [PERBAIKAN 3]: Gunakan req_timeout yang DINAMIS!
             if not event.wait(timeout=req_timeout):
@@ -126,7 +129,7 @@ class CRS:
                 res_dict = cls._responses.pop(
                     msg_id, {"status": "ERROR", "message": "Response lost"}
                 )
-            
+
             smf.printd("Response Dict CRS", res_dict, level="DEBUG")
             return res_dict
 
@@ -136,4 +139,3 @@ class CRS:
             with cls._lock:
                 cls._pending_requests.pop(msg_id, None)
                 cls._responses.pop(msg_id, None)
-                
