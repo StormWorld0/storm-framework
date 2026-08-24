@@ -31,11 +31,11 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	if req.SessionID != "" && req.CloseSess {
 		if val, ok := utils.ActiveSessions.LoadAndDelete(req.SessionID); ok {
 			val.(net.Conn).Close()
-			return packet.ResponsePacket{MsgID: req.MsgID, Status: "SUCCESS", Message: "Session closed"}
+			return packet.ResponsePacket{Status: "SUCCESS", Message: "Session closed"}
 		}
 		// Jika tujuannya hanya menutup sesi (primitif 'close')
 		if req.Mode == "close" {
-			return packet.ResponsePacket{MsgID: req.MsgID, Status: "SUCCESS", Message: "No active session found to close"}
+			return packet.ResponsePacket{Status: "SUCCESS", Message: "No active session found to close"}
 		}
 	}
 
@@ -130,7 +130,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			utils.ActiveSessions.Store(req.SessionID, conn)
 			keepSession = true
 		}
-		return packet.ResponsePacket{MsgID: req.MsgID, Status: "SUCCESS", Data: generateMetadata(0)}
+		return packet.ResponsePacket{Status: "SUCCESS", Data: generateMetadata(0)}
 
 	case "upgrade_tls":
 		// Mode khusus untuk kerentanan STARTTLS atau Protocol Smuggling
@@ -156,14 +156,14 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 
 	case "send", "send_only":
 		if err := ExecuteWrite(conn, req.Data, timeout); err != nil {
-			return packet.ResponsePacket{MsgID: req.MsgID, Status: "ERROR", Message: "Write failed: " + err.Error()}
+			return packet.ResponsePacket{Status: "ERROR", Message: "Write failed: " + err.Error()}
 		}
 
 		if req.SessionID != "" && req.KeepAlive {
 			utils.ActiveSessions.Store(req.SessionID, conn)
 			keepSession = true
 		}
-		return packet.ResponsePacket{MsgID: req.MsgID, Status: "SUCCESS", Data: generateMetadata(0)}
+		return packet.ResponsePacket{Status: "SUCCESS", Data: generateMetadata(0)}
 
 	case "recv", "recv_only":
 		buffer, n, bufPtr, err := ExecuteRead(conn, req.ReadSize, timeout)
@@ -189,13 +189,13 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		meta["hex_bytes"] = hex.EncodeToString(buffer[:n])
 
 		if err == io.EOF {
-			return packet.ResponsePacket{MsgID: req.MsgID, Status: "INFO", Message: "EOF Read: " + err.Error()}
+			return packet.ResponsePacket{Status: "INFO", Message: "EOF Read: " + err.Error()}
 		}
 
-		return packet.ResponsePacket{MsgID: req.MsgID, Status: "SUCCESS", Data: meta}
+		return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
 
 	default:
-		return packet.ResponsePacket{MsgID: req.MsgID, Status: "ERROR", Message: "Unknown socket primitive: " + mode}
+		return packet.ResponsePacket{Status: "ERROR", Message: "Unknown socket primitive: " + mode}
 	}
 }
 
