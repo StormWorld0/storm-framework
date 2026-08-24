@@ -205,7 +205,7 @@ class TelnetClient:
         else:
             cmd_payload = command + b"\r\n"
 
-        self.sock.send(cmd_payload)
+        self.sock.send(cmd_payload, timeout=timeout)
         return self.read(expected, timeout, raw)
 
     def close(self):
