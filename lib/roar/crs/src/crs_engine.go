@@ -132,6 +132,9 @@ func main() {
 				res = handler(r)
 			}
 
+			// PENTING: Salin MsgID dari Request ke Response
+			res.MsgID = r.MsgID
+
 			// Safe send: Cegah deadlock jika writer/main sudah shutdown
 			select {
 			case responseChan <- res:
