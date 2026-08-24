@@ -92,6 +92,10 @@ func main() {
 			} else {
 				res = handler(req) // Eksekusi memblokir scanner loop
 			}
+
+			// PENTING: Salin MsgID dari Request ke Response
+			res.MsgID = req.MsgID
+			
 			select {
 			case responseChan <- res:
 			case <-ctx.Done():
