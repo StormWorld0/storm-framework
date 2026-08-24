@@ -20,9 +20,9 @@ class CRS:
     _process = None
     _lock = threading.Lock()
     _pending_requests = {}  # Format: {msg_id: threading.Event}
-    _responses = {}         # Format: {msg_id: dict_response}
+    _responses = {}  # Format: {msg_id: dict_response}
     _reader_thread = None
-    
+
     @classmethod
     def _get_process(cls):
         if cls._process is not None:
@@ -47,9 +47,11 @@ class CRS:
 
         # Nyalakan Background Reader untuk mendengarkan stdout Go secara terus-menerus
         if cls._reader_thread is None or not cls._reader_thread.is_alive():
-            cls._reader_thread = threading.Thread(target=cls._background_reader, daemon=True)
+            cls._reader_thread = threading.Thread(
+                target=cls._background_reader, daemon=True
+            )
             cls._reader_thread.start()
-            
+
         return cls._process
 
     @classmethod
@@ -61,7 +63,7 @@ class CRS:
                 line = proc.stdout.readline()
                 if not line:
                     break
-                
+
                 res_dict = json.loads(line.strip())
                 msg_id = res_dict.get("msg_id")
 
@@ -79,7 +81,6 @@ class CRS:
             # Bangunkan semua yang sedang menunggu agar tidak infinite blocking
             for event in cls._pending_requests.values():
                 event.set()
-                
 
     @classmethod
     def send(cls, data: dict) -> dict:
@@ -98,18 +99,23 @@ class CRS:
 
         try:
             json_payload = json.dumps(data) + "\n"
-            
+
             # Thread-safe write ke stdin menggunakan lock subprocess
             with cls._lock:
                 proc.stdin.write(json_payload)
                 proc.stdin.flush()
 
             # 3. Blokir HANYA thread ini sampai background_reader membangunkan event-nya
-            if not event.wait(timeout=30.0): # Timeout pengaman
-                return {"status": "ERROR", "message": "IPC Timeout waiting for engine response"}
+            if not event.wait(timeout=30.0):  # Timeout pengaman
+                return {
+                    "status": "ERROR",
+                    "message": "IPC Timeout waiting for engine response",
+                }
 
             # Ambil respons yang sudah dicocokkan oleh background reader
-            res_dict = cls._responses.pop(msg_id, {"status": "ERROR", "message": "Response lost"})
+            res_dict = cls._responses.pop(
+                msg_id, {"status": "ERROR", "message": "Response lost"}
+            )
             return res_dict
 
         except Exception as e:
