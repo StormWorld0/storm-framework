@@ -59,6 +59,7 @@ def resolve_path(options):
     # Return None if all resolution chains fail
     return None
 
+
 def resolve_wordlist():
     """Used by show wordlist"""
     word = os.path.join(ROOT, "assets", "wordlist")
@@ -73,7 +74,6 @@ def resolve_wordlist():
         for file in files
         if file.endswith(EXT)
     ]
-
 
 
 # LOGIC USE
