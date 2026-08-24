@@ -58,19 +58,9 @@ def execute(options, net):
     # Prompt yang umum
     promt_login = ["login:", "Login:"]
     promt_pass = ["password:", "pass:", "Password:", "Pass:"]
-    promt_shell = [
-        "/ $",
-        "$",
-        "#",
-        ">",
-        "%",
-        "welcome",
-        "last login",
-        "password changed",
-        "press enter",
-    ]
+    promt_shell = ["/ $", "$", "#", ">"]
 
-    smf.printf(f"{CC.CYAN}[*] Starting Telnet Bruteforce => {ip}:23{CC.RESET}\n")
+    smf.printf(f"{CC.CYAN}[*] Starting Telnet Bruteforce =>{CC.RESET} {ip}:23\n")
 
     # Baca semua password sekali (jika file terlalu besar, pertimbangkan alternatif)
     # Namun untuk keperluan brute force, biasanya wordlist tidak terlalu besar.
@@ -85,8 +75,6 @@ def execute(options, net):
     for username in read_wordlist(username_file):
         if not username:
             continue
-
-        smf.printf(f"{CC.CYAN}[*] Trying username: {username}{CC.RESET}")
 
         # Coba semua password untuk username ini
         for password in passwords:
@@ -105,6 +93,9 @@ def execute(options, net):
 
                 # Username diterima, kirim password
                 _, r = con.send(password, expected=promt_shell)
+                if r < 0:
+                    smf.printf(f"{CC.YELLOW}[*] U:{username} P:{password} {SYS_FAILED}{CC.RESET}")
+                    
                 if r >= 0:
                     # Berhasil login!
                     smf.printf(
