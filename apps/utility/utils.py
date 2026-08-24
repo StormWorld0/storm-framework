@@ -76,14 +76,9 @@ def resolve_wordlist():
     for root, dirs, files in os.walk(word):
         for f in files:
             if f.lower().endswith(EXT):
-                rel_path = os.path.relpath(
-                    os.path.join(root, f),
-                    word
-                )
+                rel_path = os.path.relpath(os.path.join(root, f), word)
 
-                word_var.append(
-                    os.path.join("wordlist", rel_path)
-                )
+                word_var.append(os.path.join("wordlist", rel_path))
 
     return word_var
 
