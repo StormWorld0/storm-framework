@@ -5,7 +5,8 @@ import importlib.util
 import textwrap
 import smf
 
-from apps.utility.colors import *
+from apps.utility.colors import CC
+from apps.utility.load_db import resolve_module_path as path
 
 
 # For those who like CVE collections, this logic is definitely needed
@@ -16,21 +17,18 @@ from apps.utility.colors import *
 def execute(args, ctx):
     query = args[0] if args else ""
     if not query:
-        smf.printf(f"{CC.YELLOW}[!] Enter file name to info!{CC.RESET}")
+        smf.printf(f"{CC.YELLOW}[!] Enter file name or file path to info!{CC.RESET}")
         return
 
     # This is a special logic to know where the CVE is located.
     # Make sure CVE is always in the vulnerability folder
     vuln_path = "modules/"
-    found_path = ""
-    for root, dirs, files in os.walk(vuln_path):
-        if f"{query}.py" in files:
-            found_path = os.path.join(root, f"{query}.py")
-            break
-
-    if found_path:
+    file_path = path(query)
+    found_path = f"{vuln_path}{file_path}.py"
+    
+    if os.path.isfile(found_path):
         # To display information about a specific module
-        # Command => info <modules_name>
+        # Command => info <modules_name> / info <modules_path>
         try:
             spec = importlib.util.spec_from_file_location("temp_mod", found_path)
             mod = importlib.util.module_from_spec(spec)
