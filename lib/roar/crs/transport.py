@@ -77,16 +77,20 @@ class CRS:
                         if msg_id in cls._pending_requests:
                             cls._responses[msg_id] = res_dict
                             cls._pending_requests[msg_id].set()
+                            
             except Exception as e:
                 smf.printd("Error in CRS background reader", e, level="ERROR")
                 break
-
-        # Cleanup jika engine mati
-        with cls._lock:
-            cls._process = None
-            pid.reap_zombie()
-            for event in cls._pending_requests.values():
-                event.set()
+                
+        finally:
+            with cls._lock:
+                cls._process = None
+                try:
+                    pid.reap_zombie()
+                except Exception:
+                    pass
+                for event in cls._pending_requests.values():
+                    event.set()
 
     @classmethod
     def send(cls, data: dict) -> dict:
