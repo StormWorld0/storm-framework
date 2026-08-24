@@ -64,21 +64,27 @@ class CRS:
                 if not line:
                     break
 
-                res_dict = json.loads(line.strip())
+                # Abaikan baris kosong atau log non-JSON jika ada
+                line_str = line.strip()
+                if not line_str.startswith("{"):
+                    continue
+
+                res_dict = json.loads(line_str)
                 msg_id = res_dict.get("msg_id")
 
-                if msg_id and msg_id in cls._pending_requests:
-                    cls._responses[msg_id] = res_dict
-                    # Bangunkan thread Python yang sedang menunggu msg_id ini
-                    cls._pending_requests[msg_id].set()
-            except Exception:
+                if msg_id:
+                    with cls._lock:
+                        if msg_id in cls._pending_requests:
+                            cls._responses[msg_id] = res_dict
+                            cls._pending_requests[msg_id].set()
+            except Exception as e:
+                smf.printd("Error in CRS background reader", e, level="ERROR")
                 break
 
         # Cleanup jika engine mati
         with cls._lock:
             cls._process = None
             pid.reap_zombie()
-            # Bangunkan semua yang sedang menunggu agar tidak infinite blocking
             for event in cls._pending_requests.values():
                 event.set()
 
@@ -88,11 +94,11 @@ class CRS:
         if not proc:
             return {"status": "ERROR", "message": "Engine binary not running"}
 
-        # 1. Generate Correlation ID unik untuk pesan ini
         msg_id = uuid.uuid4().hex
         data["msg_id"] = msg_id
 
-        # 2. Siapkan Event sinkronisasi khusus untuk request ini
+        req_timeout = float(data.get("timeout", 5.0)) + 1.0
+
         event = threading.Event()
         with cls._lock:
             cls._pending_requests[msg_id] = event
@@ -101,22 +107,26 @@ class CRS:
             json_payload = json.dumps(data) + "\n"
             smf.printd("Input Json CRS", json_payload, level="DEBUG")
 
-            # Thread-safe write ke stdin menggunakan lock subprocess
-            with cls._lock:
+            # [PERBAIKAN 2]: Write dengan try-except tanpa mengunci lock terlalu lama
+            try:
                 proc.stdin.write(json_payload)
                 proc.stdin.flush()
+            except Exception as write_err:
+                return {"status": "ERROR", "message": f"Failed to write to Go STDIN: {write_err}"}
 
-            # 3. Blokir HANYA thread ini sampai background_reader membangunkan event-nya
-            if not event.wait(timeout=30.0):  # Timeout pengaman
+            # [PERBAIKAN 3]: Gunakan req_timeout yang DINAMIS!
+            if not event.wait(timeout=req_timeout):
                 return {
                     "status": "ERROR",
-                    "message": "IPC Timeout waiting for engine response",
+                    "message": f"IPC Timeout waiting for engine response (exceeded {req_timeout:.1f}s)",
                 }
 
-            # Ambil respons yang sudah dicocokkan oleh background reader
-            res_dict = cls._responses.pop(
-                msg_id, {"status": "ERROR", "message": "Response lost"}
-            )
+            # Ambil respons
+            with cls._lock:
+                res_dict = cls._responses.pop(
+                    msg_id, {"status": "ERROR", "message": "Response lost"}
+                )
+            
             smf.printd("Response Dict CRS", res_dict, level="DEBUG")
             return res_dict
 
@@ -126,3 +136,4 @@ class CRS:
             with cls._lock:
                 cls._pending_requests.pop(msg_id, None)
                 cls._responses.pop(msg_id, None)
+                
