@@ -2,7 +2,7 @@
 # -- SMF License
 import smf
 import apps.utility.utils as utils
-from apps.utility.colors import *
+from apps.utility.colors import CC
 
 
 # The show command is used to display data in modules.
@@ -11,6 +11,7 @@ from apps.utility.colors import *
 # 2. Command => show auxiliary > will display all contents in the auxiliary.
 # 3. Command => show options > will display global variables.
 # 4. Command => show plugin > will display all existing plugins.
+# 5. Command => show wordlist > Will display the available wordlist
 def execute(args, ctx):
     target_show = args[0].lower() if args else ""
 
@@ -70,8 +71,10 @@ def execute(args, ctx):
 
         # Header Tabel
         smf.printf()
+        smf.printf(f"{CC.MAGENTA}{'-' * 36}{CC.RESET}")
         smf.printf(f"{CC.CYAN}{'PLUGIN NAME':<25} {'STATUS':<10}{CC.RESET}")
         smf.printf(f"{CC.MAGENTA}{'-' * 36}{CC.RESET}")
+        smf.printf()
 
         for item in status_list:
             name = item["name"]
@@ -92,7 +95,24 @@ def execute(args, ctx):
 
         smf.printf()
 
-    # 4. show <category_name>
+    elif target_show == "wordlist" or target_show == "word":
+        word = utils.resolve_wordlist()
+        
+        if not word:
+            smf.printf(f"{CC.YELLOW}[!] Wordlist not available.{CC.RESET}")
+            return
+
+        smf.printf()
+        smf.printf(f"{CC.MAGENTA}{'-' * 30}{CC.RESET}")
+        smf.printf(f"{CC.CYAN}{'Wordlist Collection':<15}{CC.RESET}")
+        smf.printf(f"{CC.MAGENTA}{'-' * 30}{CC.RESET}")
+        smf.printf()
+
+        for w in word:
+            smf.printf(f"  - {CC.YELLOW}{w}{CC.RESET}")
+        smf.printf()
+
+    # 5. show <category_name>
     else:
         module_files = utils.get_modules_in_category(target_show)
 
