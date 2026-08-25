@@ -9,9 +9,10 @@ export default defineConfig({
   },
 
   themeConfig: {
+    logo: { src: '/static/img/storm.svg', height: 24 },
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Wiki Docs', link: '/storm-framework.wiki/INSTALLATION-LINUX' }
+      { text: 'Documentation', link: '/storm-framework.wiki/INSTALLATION-LINUX' }
     ],
 
     sidebar: [
@@ -54,6 +55,11 @@ export default defineConfig({
     socialLinks: [
       { icon: 'github', link: 'https://github.com/StormWorld0/storm-framework' },
       { icon: 'docker', link: 'https://hub.docker.com/r/stormworld0/storm-framework' }
-    ]
-  }
+    ],
+
+    footer: {
+      message: 'Released under the GPL License.',
+      copyright: 'Copyright © StormWorld0, zxelzy.',
+    },
+  },
 })
