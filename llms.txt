@@ -8,7 +8,7 @@
 ## Documentation & Feature
 - [Connection Runtime Service](docs/storm-framework.wiki/CRS-ENGINE.md): Network engine explanation.
 - [Build Module](docs/storm-framework.wiki/MODULE-GUIDE.md): Explanation of Module creation.
-- [Logger Dock](docs/storm-framework.wiki/LOGGER.md): Fast Logger machine explanation.
+- [Logger Docs](docs/storm-framework.wiki/LOGGER.md): Fast Logger machine explanation.
 
 ## Installation Documentation
 - [Installation Docker](docs/storm-framework.wiki/INSTALLATION-DOCKER.md): Docker installer explanation.
@@ -17,8 +17,7 @@
 - [Installation Termux](docs/storm-framework.wiki/INSTALLATION-TERMUX.md): Termux/Android installer explanation.
 
 ## Documentation ROOT
-- [Tree](TREE.md): Rules and Brief explanation of the directory.
-- [Flow & Arch](FLOW.md): Explanation of the basics of Storm-Framework.
+- [Flow & Arch](docs/storm-framework.wiki/FlowAndArch.md): Explanation of the basics of Storm-Framework.
 
 ## HOME
 - [license](LICENSE): GPL-3.0
@@ -38,6 +37,7 @@
 
 ## Related Websites & Related Repositories
 - [DockerHub](https://hub.docker.com/r/stormworld0/storm-framework): DockerHub repository, docker images.
+- [Documentation](https://storm-framework.pages.dev): Documentation provided.
 
 
 # Identity
