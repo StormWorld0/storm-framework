@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/StormWorld0/storm-framework/blob/main/assets/images/flow_storm.png">
+  <img src="https://raw.githubusercontent.com/StormWorld0/storm-framework/main/assets/images/flow_storm.png">
 </p>
 
 <h1 align="center">Flow & Arch</h1>
