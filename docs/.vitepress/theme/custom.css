@@ -27,3 +27,29 @@
 .VPButton.brand:hover {
   background-color: var(--vp-c-brand-2) !important;
 }
+
+/* Custom Social Links Color & HD Styling */
+.VPSocialLink {
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+/* Hover Effect: Membesar & Menajamkan Render SVG */
+.VPSocialLink:hover {
+  transform: scale(1.15);
+  filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.4)); /* Glow effect ungu sesuai tema */
+}
+
+/* Dynamic Brand Colors */
+/* 1. Docker Icon Color */
+.VPSocialLink .vpi-social-docker {
+  color: #2496ed !important; /* Official Docker Blue */
+}
+
+/* 2. GitHub Icon Color */
+.VPSocialLink .vpi-social-github {
+  color: #ffffff !important; /* Standout White */
+}
+
+.VPSocialLink:hover .vpi-social-github {
+  color: #a78bfa !important; /* Purple Glow on Hover */
+}
