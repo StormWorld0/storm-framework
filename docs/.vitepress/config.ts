@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress'
+import { withMermaid } from 'vitepress-plugin-mermaid'
 
 export default defineConfig({
   title: "Storm Framework",
@@ -6,6 +7,9 @@ export default defineConfig({
   cleanUrls: true,
   sitemap: {
     hostname: 'https://storm-framework.pages.dev'
+  },
+  mermaid: {
+    theme: 'dark',
   },
 
   themeConfig: {
