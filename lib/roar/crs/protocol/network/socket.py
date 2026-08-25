@@ -315,7 +315,7 @@ class Socket(SocketState):
 
         return SocketResponse(resp)
 
-    def recv(self, readsize: int = None, timeout: float = None) -> SocketResponse:
+    def recv(self, readsize: int = None, timeout: float = 0.3) -> SocketResponse:
         self._ensure_open("receive")
         packet = IPCPayloadBuilder.build(
             state=self,
