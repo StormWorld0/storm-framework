@@ -37,7 +37,7 @@ Currently CRS implements a subset of network protocols focused on the system's c
 sequenceDiagram
     autonumber
     participant M as Module
-    participant W as Wrapper
+    participant W as API
     participant I as IPC Layer
     participant C as CRS Engine
 
@@ -80,7 +80,7 @@ def execute(options, net):
     s = net.Socket(host, port, timeout)
 ```
 **Parameter**
-- **host:** This can be IP/http, for example http://ip:port.
+- **host:** This can be IP/HTTP/Domain, for example http://ip:port.
 - **port:** This is a typical port.
 - **timeout:** To limit the open connection time.
 
@@ -106,10 +106,11 @@ s.send(data, timeout)
 
 **3. Viewing the buffer**
 ```python
-raw = s.recv(readsize)
+raw = s.recv(readsize, timeout)
 ```
 **Parameter**
 - **readsize:** To determine how many bytes of buffer to take.
+- **timeout:** To limit the open connection time. | Default 300ms.
 
 **Response**
 - **status:** SUCCESS/WARNING/ERROR/TIMEOUT.
@@ -173,12 +174,12 @@ Automatically inherits TLS connections to send/recv and send/recv usage remains 
 
 ---
 
-### ☎️ Requests Parameter
+### ☎️ DNS
 
 **Query DNS**
 ```python
 def execute(options, net):
-    r = net.requests(domain, type, protocol, timeout, ratelimit, con)
+    r = net.dns(domain, type, protocol, timeout, ratelimit, con)
 ```
 **Description:** Requests are stateless, and you get a response immediately after each run.
 
@@ -210,12 +211,12 @@ def execute(options, net):
 def execute(options, net):
     r = net.http_requests(method, url, header, body, redirect, rawhttp, infotls, verify, retry, ratelimit, timeout, con)
 ```
-**Description:** HTTP Requests are stateless, they get a response immediately.
+**Description:** HTTP Requests are stateless, you can send them and get a response straight away.
 
 **Parameter**
 - **method:** GET/POST/DELETE/PUT/dll. | Default GET.
 - **url:** https://example.com | str.
-- **header:** Example: {"User-Agent": "Storm-Framework/3.11 (X11; Linux x86_64)"} | Dict.
+- **header:** Example: {"User-Agent": "Storm-Framework/3.0 (X11; Linux x86_64)"} | Dict.
 - **body:** Can be empty, can also be filled. | Default empty | str.
 - **redirect:** To do a page redirect. | Default True. | Boolean.
 - **rawhttp:** Can supply FULL raw HTTP string in the (body). Example: HTTP/1.1\r\nHost: target\r\nX-Injected:  space Strange\r\n\r\n | Default False. | Boolean.
@@ -253,6 +254,53 @@ def execute(options, net):
 - **dns_name:** Returns a list of hostnames in the Subject Alternative Name (SAN) extension.
 - **expires:** Returns the certificate Expiration Time in RFC3339 format.
 - **cert_chain:** Certificate chain successfully verified against a trusted root CA.
+
+### 🔌 Telnet
+
+**1. Open koneksi**
+```python
+def execute(options, net):
+    r = net.Telnet(host, port, timeout)
+```
+**Description:** Telnet is stateful, you will get inherited functions.
+
+**Parameter**
+- **host:** This can be IP / Domain.
+- **port:** This is a typical port.
+- **timeout:** To limit the open connection time. | Default 10.0s.
+
+**Inheritance**  
+You will get the legacy `send` and `read` functions.
+
+**2. Kirim Data**
+```python
+res, var = r.send(command, expected, timeout, raw)
+```
+
+**Parameter**
+- **command:** This can be filled with a wordlist file of username or password or a free command or bytes.
+- **expected:** This can contain the desired response expectation variables.
+- **timeout:** To limit the open connection time. | Default 0.3s.
+- **raw:** This is a boolean if True: The first response is Bytes. If False: The first response is a UTF-8 decoded string. | Default False.
+
+**Response**
+- **res:** This will contain the raw bytes response.
+- **var:** Can contain a variable number of expectation parameters. For example, there are two expectation variables, so the response variable is calculated as 0 and 1. If it is below 0 such as -1 or -2 etc. it is considered False or not found.
+
+**3. Read Response**
+```python
+res, var = r.read(expected, timeout, raw)
+```
+
+**Parameter**
+- **expected:** This can contain the desired response expectation variables.
+- **timeout:** To limit the open connection time. | Default 0.3s.
+- **raw:** This is a boolean if True: The first response is Bytes. If False: The first response is a UTF-8 decoded string. | Default False.
+
+
+**Response**
+- **res:** This will contain the raw bytes response.
+- **var:** Can contain a variable number of expectation parameters. For example, there are two expectation variables, so the response variable is calculated as 0 and 1. If it is below 0 such as -1 or -2 etc. it is considered False or not found.
 
 ---
 
@@ -316,6 +364,18 @@ smf.printf(r.rcode, r.records, etc.)
 r = net.http_requests(...)
 smf.printf(r.status, r.message)
 smf.printf(r.status_code, r.tls.cipher, etc.)
+```
+
+**4. Telnet**
+
+- **Status:** `Stateful`
+- **Inheritance**
+```python
+# Viewing the response
+raw, var = r.read(...)
+
+# Sending data
+raw, var = r.send(...)
 ```
 
 
