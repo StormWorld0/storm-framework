@@ -7,7 +7,7 @@ hero:
   text: "Security & Penetration Testing Framework Documentation"
   tagline: All-in one pentest tool
   image:
-    src: /static/img/storm.svg
+    src: /storm.svg
   actions:
     - theme: brand
       text: Github
