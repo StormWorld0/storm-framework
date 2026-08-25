@@ -5,4 +5,5 @@ exclude =
     build,
     dist,
     example,
-    vendor
+    vendor,
+    docs
