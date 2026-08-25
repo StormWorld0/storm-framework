@@ -8,11 +8,15 @@ export default withMermaid(
     cleanUrls: true,
     head: [
       [
-        'meta', 
-        { 
-          name: 'google-site-verification', 
-          content: '0Uc5NSrfG7ZqdcODtsRJIiba2QYbrMxTq7X_4Ab2T-8' 
-        }
+        'meta', { name: 'google-site-verification', content: '0Uc5NSrfG7ZqdcODtsRJIiba2QYbrMxTq7X_4Ab2T-8' }
+      ],
+      // Favicon Tab Browser
+      [
+        'link', { rel: 'icon', href: '/img/favicon.ico' }
+      ],
+      // Apple Touch Icon bookmark di iOS/Android
+      [
+        'link', { rel: 'apple-touch-icon', href: '/img/logo.png' }
       ]
     ],
     sitemap: {
@@ -23,7 +27,7 @@ export default withMermaid(
     },
 
     themeConfig: {
-      logo: { src: '/storm.svg', height: 24 },
+      logo: { src: '/img/storm.svg', height: 24 },
       nav: [
         { text: 'Home', link: '/' },
         { text: 'Documentation', link: '/README' }
