@@ -7,7 +7,7 @@ hero:
   text: "Offensive Security Documentation"
   tagline: All-in one pentest tool
   image:
-    src: /storm.svg
+    src: /img/storm.svg
   actions:
     - theme: brand
       text: Github
