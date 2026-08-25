@@ -3,7 +3,10 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: "Storm Framework",
   description: "Official Documentation for Storm Framework",
-  cleanUrls: true, // Menghilangkan ekstensi .html dari URL
+  cleanUrls: true,
+  sitemap: {
+    hostname: 'https://storm-framework.pages.dev'
+  },
 
   themeConfig: {
     nav: [
@@ -49,7 +52,8 @@ export default defineConfig({
     ],
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/StormWorld0/Storm-Framework' }
+      { icon: 'github', link: 'https://github.com/StormWorld0/storm-framework' },
+      { icon: 'docker', link: 'https://hub.docker.com/r/stormworld0/storm-framework' }
     ]
   }
 })
