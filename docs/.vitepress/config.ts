@@ -9,7 +9,7 @@ export default defineConfig({
   },
 
   themeConfig: {
-    logo: { src: '/static/img/storm.svg', height: 24 },
+    logo: { src: '/storm.svg', height: 24 },
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Documentation', link: '/storm-framework.wiki/INSTALLATION-LINUX' }
@@ -26,10 +26,10 @@ export default defineConfig({
         text: 'Installation Guides',
         collapsed: false,
         items: [
-          { text: 'Linux Installation', link: '/storm-framework.wiki/INSTALLATION-LINUX' },
+          { text: 'Linux Standard Setup', link: '/storm-framework.wiki/INSTALLATION-LINUX' },
           { text: 'Docker Setup', link: '/storm-framework.wiki/INSTALLATION-DOCKER' },
           { text: 'Termux Setup', link: '/storm-framework.wiki/INSTALLATION-TERMUX' },
-          { text: 'VirtualEnv (VENV)', link: '/storm-framework.wiki/INSTALLATION-VENV' },
+          { text: 'Venv Setup', link: '/storm-framework.wiki/INSTALLATION-VENV' },
         ]
       },
       {
@@ -56,6 +56,10 @@ export default defineConfig({
       { icon: 'github', link: 'https://github.com/StormWorld0/storm-framework' },
       { icon: 'docker', link: 'https://hub.docker.com/r/stormworld0/storm-framework' }
     ],
+
+    search: {
+      provider: 'local',
+    },
 
     footer: {
       message: 'Released under the GPL License.',
