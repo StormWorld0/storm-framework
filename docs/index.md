@@ -10,8 +10,11 @@ hero:
     src: /storm.svg
   actions:
     - theme: brand
-      text: Documentation
-      link: /README
+      text: Github
+      link: https://github.com/StormWorld0/storm-framework
+    - theme: brand
+      text: Dockerhub
+      link: https://hub.docker.com/r/stormworld0/storm-framework
 
 features:
   - icon: ⚙️
