@@ -23,6 +23,7 @@ def show_about():
     smf.printf(f"{CC.YELLOW}      Owner                     : エルジー")
     smf.printf(f"{CC.YELLOW}      Purpose                   : All-In-One Pentest Tool")
     smf.printf(f"{CC.YELLOW}      Version                   : {VERSION}")
+    smf.printf(f"{CC.YELLOW}      Documentation             : https://storm-framework.pages.dev")
     smf.printf(
         f"{CC.YELLOW}      GitHub                    : github.com/StormWorld0/storm-framework"
     )
