@@ -75,11 +75,11 @@ If a module receives invalid input (for example URL inside IP variable) and expe
 To maintain cleanliness *interface*, Storm doesn't flood the screen with details *stack trace* if it happens *error*. All operation logs are stored internally within SQLite.
 
 Users can export the logs at any time using the command:
-* `export log error`
-* `export log info`
-* `export log warn`
-* `export log critical`
-* `export log debug`
+* `log export error`
+* `log export info`
+* `log export warn`
+* `log export critical`
+* `log export debug`
 
 Log files will be generated automatically with standard format `.txt` and saved in the directory:
 `$HOME/storm_logs/...`
