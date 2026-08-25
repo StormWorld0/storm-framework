@@ -54,6 +54,13 @@ export default withMermaid(
             { text: 'Plugin Overview', link: '/storm-framework.wiki/PLUGIN' },
             { text: 'Plugin Development', link: '/storm-framework.wiki/PLUGIN-DEV' },
           ]
+        },
+        {
+          text: 'Architecture',
+          collapsed: false,
+          items: [
+            { text: 'Flow And Arch', link: '/storm-framework.wiki/FlowAndArch.md' },
+          ]
         }
       ],
 
