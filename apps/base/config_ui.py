@@ -3,7 +3,7 @@ import os
 import smf
 
 import apps.utility.utils as utils
-from apps.utility.colors import *
+from apps.utility.colors import CC
 from rootmap import ROOT
 
 
@@ -44,6 +44,7 @@ def show_help():
   show modules                  : Displaying module categories
   show <categories>             : Displays the complete contents
   show plugin                   : Displays existing plugins & plugin status
+  show wordlist                 : Displays a list of available wordlists
   info <module_name>            : Complete Modules information
   search <module_name>          : To search for modules, you can also use
                                   filters such as (act:...) / (defact:...) /
@@ -94,9 +95,9 @@ def stormUI():
         line_text = " | ".join(row_items)
 
         # 4. Decorative print
-        smf.printf(f"{C.HEADER}+-- --=[ {C.INPUT}{line_text} {C.HEADER}]=--{C.RESET}")
+        smf.printf(f"{CC.MAGENTA}+-- --=[ {CC.YELLOW}{line_text} {CC.MAGENTA}]=--{CC.RESET}")
 
     smf.printf()
-    smf.printf("The Storm Framework is a StormWorld0 Open Source Project")
-    smf.printf(f"Run {C.SUCCESS}about{C.RESET} to view dev information.")
+    smf.printf(f"{CC.WHITE}The Storm Framework is a StormWorld0 Open Source Project{CC.RESET}")
+    smf.printf(f"Run {CC.GREEN}about{CC.RESET} to view dev information.")
     smf.printf()
