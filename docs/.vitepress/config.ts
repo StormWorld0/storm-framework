@@ -12,7 +12,7 @@ export default defineConfig({
     logo: { src: '/storm.svg', height: 24 },
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Documentation', link: '/storm-framework.wiki/INSTALLATION-LINUX' }
+      { text: 'Documentation', link: '/README' }
     ],
 
     sidebar: [
@@ -33,7 +33,7 @@ export default defineConfig({
         ]
       },
       {
-        text: 'Core Engine & Architecture',
+        text: 'Core Engine & API',
         collapsed: false,
         items: [
           { text: 'CRS Engine', link: '/storm-framework.wiki/CRS-ENGINE' },
