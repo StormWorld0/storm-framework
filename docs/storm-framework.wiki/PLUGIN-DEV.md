@@ -46,19 +46,23 @@ res2 = broadcast("xor", "hello", key=42)
 sequenceDiagram
     autonumber
     participant C as Core
-    participant A as API
     participant M as Manager
+    participant A as API
     participant P as Plugin
 
     Note over C, P: Inbound Flow
-    C->>A: Send Event
-    A->>M: Continue Event
-    M->>M: Call Register
-    M->>P: Plugin Execution
+    C->>M: Send Event
+    M->>M: Event Validation
+    M->>A: Continue Event
+    A->>A: Call Register
+    A->>P: Send Event Signal
 
-    Note over C, P: Outbound Flow
-    P-->>M: Return Data
+    Note over P, A: Registration
+    P-->>A: Load Plugin
+    A-->>A: Plugin Registration
+
+    Note over A, C: Outbound Flow
+    A-->>M: Active Plugin & Return Data
     M-->>M: Data Validation
-    M-->>A: Forward Data
-    A-->>C: Receive Data
+    M-->>C: Receiving Data
 ```
