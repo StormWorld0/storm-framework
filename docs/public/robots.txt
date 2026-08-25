@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://storm-framework.pages.dev/sitemap.xml
+
