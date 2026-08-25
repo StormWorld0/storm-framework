@@ -6,9 +6,15 @@ export default withMermaid(
     title: "Storm Framework",
     description: "Official Documentation for Storm Framework",
     cleanUrls: true,
-    head: {
-      ['meta', { name: 'google-site-verification=vlUvyI8dmnhudIOixjC7aFeGNTdOH6up1M15D8JCMck' }]
-    },
+    head: [
+      [
+        'meta', 
+        { 
+          name: 'google-site-verification', 
+          content: 'vlUvyI8dmnhudIOixjC7aFeGNTdOH6up1M15D8JCMck' 
+        }
+      ]
+    ],
     sitemap: {
       hostname: 'https://storm-framework.pages.dev'
     },
