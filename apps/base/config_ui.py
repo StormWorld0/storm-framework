@@ -95,9 +95,13 @@ def stormUI():
         line_text = " | ".join(row_items)
 
         # 4. Decorative print
-        smf.printf(f"{CC.MAGENTA}+-- --=[ {CC.YELLOW}{line_text} {CC.MAGENTA}]=--{CC.RESET}")
+        smf.printf(
+            f"{CC.MAGENTA}+-- --=[ {CC.YELLOW}{line_text} {CC.MAGENTA}]=--{CC.RESET}"
+        )
 
     smf.printf()
-    smf.printf(f"{CC.WHITE}The Storm Framework is a StormWorld0 Open Source Project{CC.RESET}")
+    smf.printf(
+        f"{CC.WHITE}The Storm Framework is a StormWorld0 Open Source Project{CC.RESET}"
+    )
     smf.printf(f"Run {CC.GREEN}about{CC.RESET} to view dev information.")
     smf.printf()
