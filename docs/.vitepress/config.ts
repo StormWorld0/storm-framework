@@ -11,7 +11,7 @@ export default withMermaid(
         'meta', 
         { 
           name: 'google-site-verification', 
-          content: 'vlUvyI8dmnhudIOixjC7aFeGNTdOH6up1M15D8JCMck' 
+          content: '0Uc5NSrfG7ZqdcODtsRJIiba2QYbrMxTq7X_4Ab2T-8' 
         }
       ]
     ],
