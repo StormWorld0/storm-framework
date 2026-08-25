@@ -26,7 +26,7 @@ def resolve_path(options):
     normalized_options = options.replace("\\", "/")
     if normalized_options.startswith("wordlist/"):
         # Extract relative target and normalize separators to native OS format
-        rel_target = normalized_options[len("wordlist/"):].replace("/", os.sep)
+        rel_target = normalized_options[len("wordlist/") :].replace("/", os.sep)
         candidate_base = os.path.join(ROOT, "assets", "wordlist", rel_target)
 
         # 1. Exact match (jika user memasukkan ekstensi secara eksplisit)
