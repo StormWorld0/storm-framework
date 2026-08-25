@@ -50,7 +50,26 @@ smf.printd("example", a, b, c, level="DEBUG")
 Because for log `smf.printd` By default, logs are always saved in SQLite, so we need to export the log with the following command:
 
 ```bash
-smf> export log <value>
+smf> log export <value>
 ```
 
 content `<value>` with the appropriate log level, it will export the log according to the log level to a txt file and save it in $HOME.
+
+## Log Dump
+
+You can also dump the logs directly to the terminal, but this is limited to the 100 most recent logs. However, if you need a quick way to debug, this is a good and recommended solution. It’s also easier to read because the text is color-coded and visually pleasant.
+
+```bash
+smf> log dump
+```
+
+## Telemetry
+
+**Storm-Framework** has a plugin for gradually sending `ERROR` and `CRITICAL` logs. If you don’t want to open an Issue, you can enable this plugin. It will automatically query the database to find the relevant logs and send them to our server.
+
+This was intentionally designed to speed up in-depth investigations across different devices and usage environments, because we believe that something being stable on our side doesn’t necessarily mean it will be stable for users.
+
+```bash
+smf> load sendlog_service
+```
+
