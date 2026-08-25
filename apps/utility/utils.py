@@ -22,18 +22,19 @@ def resolve_path(options):
     if os.path.exists(normalized_path) and os.path.isfile(normalized_path):
         return os.path.abspath(normalized_path)
 
+    # Handled Prefix "wordlist/"
     normalized_options = options.replace("\\", "/")
     if normalized_options.startswith("wordlist/"):
-        # Ambil sisa path setelah "wordlist/" (contoh: "passmini" atau "sub/passmini")
-        rel_target = normalized_options[len("wordlist/") :]
+        # Extract relative target and normalize separators to native OS format
+        rel_target = normalized_options[len("wordlist/"):].replace("/", os.sep)
         candidate_base = os.path.join(ROOT, "assets", "wordlist", rel_target)
 
-        # 1. Cek match persis (jika user sudah memasukkan ekstensi secara eksplisit)
+        # 1. Exact match (jika user memasukkan ekstensi secara eksplisit)
         if os.path.exists(candidate_base) and os.path.isfile(candidate_base):
             return os.path.abspath(candidate_base)
 
-        # 2. Cek kandidat ekstensi (.txt, .json, dll.)
-        EXTENSIONS = ".txt"
+        # 2. Match dengan ekstensi (.txt, .json, dll.)
+        EXTENSIONS = (".txt",)  # Pastikan tuple valid (memakai koma)
         for ext in EXTENSIONS:
             candidate_with_ext = candidate_base + ext
             if os.path.exists(candidate_with_ext) and os.path.isfile(candidate_with_ext):
