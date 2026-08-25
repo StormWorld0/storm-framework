@@ -1,0 +1,29 @@
+/* docs/.vitepress/theme/custom.css */
+
+:root {
+  /* Brand Accent: Electric Violet / Deep Purple */
+  --vp-c-brand-1: #8b5cf6; /* Primary Violet */
+  --vp-c-brand-2: #a78bfa; /* Hover / Lighter Purple */
+  --vp-c-brand-3: #7c3aed; /* Darker Purple Accent */
+
+  /* Background Palette: Cool Slate & Dark Gray */
+  --vp-c-bg: #0f172a;          /* Deep Slate Background */
+  --vp-c-bg-alt: #1e293b;      /* Secondary Card / Code Block */
+  --vp-c-bg-elv: #1e293b;      /* Elevated UI components */
+  --vp-c-bg-soft: #334155;     /* Soft Borders & Dividers */
+
+  /* Text & Typography Muting */
+  --vp-c-text-1: #f8fafc;      /* Primary White Text */
+  --vp-c-text-2: #94a3b8;      /* Secondary Muted Gray Text */
+}
+
+/* Custom styling untuk button Hero di index.md */
+.VPButton.brand {
+  background-color: var(--vp-c-brand-1) !important;
+  border-color: var(--vp-c-brand-3) !important;
+  color: #ffffff !important;
+}
+
+.VPButton.brand:hover {
+  background-color: var(--vp-c-brand-2) !important;
+}
