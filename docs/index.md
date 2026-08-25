@@ -5,14 +5,16 @@ layout: home
 hero:
   name: "Storm Framework Docs"
   text: "Security & Penetration Testing Framework Documentation"
-  tagline: My great project tagline
+  tagline: All-in one pentest tool
+  image:
+    src: /static/img/storm.svg
   actions:
     - theme: brand
-      text: Markdown Examples
-      link: /markdown-examples
+      text: Github
+      link: https://github.com/StormWorld0/storm-framework
     - theme: alt
-      text: API Examples
-      link: /api-examples
+      text: Dockerhub
+      link: https://hub.docker.com/r/stormworld0/storm-framework
 
 features:
   - title: Feature A
