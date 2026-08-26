@@ -59,7 +59,7 @@ If you have ever used metasploit or you are a metasploit user, you will be 100% 
 
 ## ⚙️ FLOW
 
-See the explanation about **storm framework flow** in docs or in [FLOW](https://storm-framework.pages.dev/FlowAndArch)
+See the explanation about **storm framework flow** in docs or in [FLOW](https://storm-framework.pages.dev/storm-framework.wiki/FlowAndArch)
 
 We explain the essence so that it is easier to understand and not ambiguous, perhaps we do not explain some of the other logic because we are not yet sure about its maturity. But don't worry, we will continue to update it little by little in the future.
 
@@ -73,9 +73,9 @@ We have prepared the documentation through a web-based platform that we previous
 
 We recommend the standard installation provided: 
 
-- [Installation Venv](https://storm-framework.pages.dev/setupvenv)
-- [Installation Docker](https://storm-framework.pages.dev/setupdocker)
-- [Installation Termux](https://storm-framework.pages.dev/setuptermux)
+- [Installation Venv](https://storm-framework.pages.dev/storm-framework.wiki/setupvenv)
+- [Installation Docker](https://storm-framework.pages.dev/storm-framework.wiki/setupdocker)
+- [Installation Termux](https://storm-framework.pages.dev/storm-framework.wiki/setuptermux)
 
 
 ## USING STORM
