@@ -31,7 +31,7 @@ def start_build():
     os.environ["EXT"] = osext()
 
     # Ignore folder list
-    ignore_dirs = {".git", "__pycache__", "node_modules", "cache", "vendor"}
+    ignore_dirs = {".git", "__pycache__", "node_modules", "cache", "vendor", "docs"}
 
     print("[*] Run binary compilation.")
 
