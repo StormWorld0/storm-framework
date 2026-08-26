@@ -35,7 +35,7 @@ if [ ! -f .env ]; then
     # This is very crucial because if there is only 1 space it will not be usable.
     write_to_file "STORM_PRIVKEY=${PRIV_KEY}" ".env" false
     write_to_file "STORM_PUBKEY=${PUB_KEY}" ".env" true
-    write_to_file "STORM_API=https://api.stormlog.workers.dev" ".env" true
+    write_to_file "STORM_API=https://api.cant.workers.dev" ".env" true
 fi
 
 if [ ! -f data/smf_ca.key ] || [ ! -f data/smf_ca.crt ]; then
