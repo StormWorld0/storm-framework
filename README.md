@@ -73,9 +73,9 @@ We have prepared the documentation through a web-based platform that we previous
 
 We recommend the standard installation provided: 
 
-- [Installation Venv](https://storm-framework.pages.dev/storm-framework.wiki/setupvenv)
-- [Installation Docker](https://storm-framework.pages.dev/storm-framework.wiki/setupdocker)
-- [Installation Termux](https://storm-framework.pages.dev/storm-framework.wiki/setuptermux)
+- [Installation Venv](https://storm-framework.pages.dev/storm-framework.wiki/INSTALLATION-VENV)
+- [Installation Docker](https://storm-framework.pages.dev/storm-framework.wiki/INSTALLATION-DOCKER)
+- [Installation Termux](https://storm-framework.pages.dev/storm-framework.wiki/INSTALLATION-TERMUX)
 
 
 ## USING STORM
