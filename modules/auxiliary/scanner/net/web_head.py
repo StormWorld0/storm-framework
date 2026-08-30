@@ -111,7 +111,7 @@ def execute(options, net):
 
             set_cookie = r.get_headers("Set-Cookie")
             if set_cookie:
-                cookie_lower = set_cookie.lower()
+                cookie_lower = str(set_cookie).lower()
 
                 if "httponly" not in cookie_lower:
                     smf.printf(f"[!]{C.ERROR} Cookie missing 'HttpOnly' flag.{C.RESET}")
