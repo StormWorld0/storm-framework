@@ -205,14 +205,14 @@ def execute(options, net):
 
 **DNS Discovery**
 ```python
-def execute(options, net)
+def execute(options, net):
     r = DNSD(domain, wordlist, timeout, ratelimit, con, tls)
 ```
 **Description:** DNSD is stateless and is used for subdomain enumeration.
 
 **Parameter**
 - **domain:** example.com | str.
-- **wordlist:** file wordlist subdomain berekstensi .txt.
+- **wordlist:** Subdomain wordlist file with .txt extension.
 - **timeout:** To limit the open connection time. | Default 2.0s
 - **ratelimit:** Blocking requests if the token runs out. | Default 150/1s | int.
 - **con:** Number of Goroutines for Concurrency, allows to run parallel connections. | int.
