@@ -83,7 +83,7 @@ class DNSResolver:
     def query(
         domain: str,
         type: str = "A",
-        protocol: str = "tcp",
+        proto: str = "tcp",
         timeout: float = 2.0,
         ratelimit: int = 150,
         con: int = 0,
@@ -99,7 +99,7 @@ class DNSResolver:
             "goroutine": con,
             "domain": domain,
             "type": type,
-            "protocol": protocol,
+            "protocol": proto,
             "timeout": timeout,
             "ratelimit": ratelimit,
         }
