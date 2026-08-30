@@ -49,12 +49,15 @@ class HTTPResponse:
 
     @property
     def status(self) -> str:
-        """Pengecekan level Transport IPC (Apakah Go berhasil mengirim/menerima HTTP paket)."""
+        """
+        Pengecekan level Transport IPC 
+        (Apakah Go berhasil mengirim/menerima HTTP paket).
+        """
         return self._status
 
     @property
     def status_code(self) -> int:
-        """HTTP Status Code (misal: 200, 404, 500)."""
+        """HTTP Status Code (contoh: 200, 404, 500)."""
         return int(self._data.get("status_code", 0))
 
     @property
@@ -78,11 +81,11 @@ class HTTPResponse:
         return self.text.encode("utf-8")
 
     @property
-    def header(self) -> Dict[str, str]:
-        """Dictionary header asli dari respons."""
+    def headers(self) -> Dict[str, str]:
+        """Dictionary headers asli dari respons."""
         return self._headers
 
-    def get_header(self, name: str, default: Optional[str] = None) -> Optional[str]:
+    def get_headers(self, name: str, default: Optional[str] = None) -> Optional[str]:
         """
         Case-insensitive lookup untuk HTTP Headers.
         Contoh: res.get_header('content-type') akan menemukan 'Content-Type'.
