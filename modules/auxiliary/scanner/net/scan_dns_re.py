@@ -7,7 +7,9 @@ metadata = {
     "Name": "Scanning DNS Records",
     "Description": "Scan the DNS Record to find out the DNS data in it used by a website.",
     "Author": ["zxelzy"],
-    "Action": [["Scanner", {"Description": "Scan DNS Records"}]],
+    "Action": [
+        ["Scanner", {"Description": "Scan DNS Records"}]
+    ],
     "DefaultAction": "Scanner",
     "License": "SMF License",
     "Date": "2025-09-22",
@@ -141,7 +143,7 @@ def execute(options, net):
     smf.printf(f"{C.HEADER} DNS ENUMERATION For {target_domain}")
     try:
         for record_type in DNS_RECORDS:
-            resp = net.dns(target_domain, type=record_type, timeout=2.0, con=50)
+            resp = net.DNSL(target_domain, type=record_type, timeout=2.0, con=50)
 
             status = resp.status
             answers = resp.records
