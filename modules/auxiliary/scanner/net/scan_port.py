@@ -42,7 +42,7 @@ def get_service_banner(target_ip, port, net):
         res = s.recv(1024)
 
         # Jika Go berhasil melakukan Dial (Socket Terbuka)
-        if res.status == "SUCCESS":
+        if res.ok:
             status_color = f"{C.SUCCESS} OPEN " + STATUS_OPEN
             banner_info = "No version information."
 
