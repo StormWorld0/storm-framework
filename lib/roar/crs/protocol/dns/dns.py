@@ -85,7 +85,7 @@ class DNSResolver:
         type: str = "A",
         protocol: str = "tcp",
         timeout: float = 2.0,
-        ratelimit: int = 0,
+        ratelimit: int = 150,
         con: int = 0,
         **kwargs,
     ) -> DNSResponse:
@@ -95,6 +95,7 @@ class DNSResolver:
         """
         packet = {
             "primitive": "DNS_SEND",
+            "mode": "Lookup",
             "goroutine": con,
             "domain": domain,
             "type": type,
