@@ -221,7 +221,7 @@ class SocketResponse:
         return self._data.get("read_bytes", 0)
 
     @property
-    def ip(self) -> str:
+    def remote_ip(self) -> str:
         """Mengecek IP Server"""
         return self._data.get("ip", "unknown")
 
@@ -275,10 +275,7 @@ class Socket(SocketState):
     """
 
     def __init__(self, *args, **kwargs):
-        # 1. Setup semua variabel dan state dari SocketState
         super().__init__(*args, **kwargs)
-
-        # 2. Langsung tembak instruksi 'open' ke Go Engine
         self.initial_response = self.open()
 
     def open(self, timeout: float = None) -> SocketResponse:
