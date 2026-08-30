@@ -87,7 +87,7 @@ def execute(options, net):
 **Inheritance**  
 Just inherit the child classes of Socket like recv, send, uptls.
 
-**2. Send data**
+**2. Send Data**
 ```python
 s.send(data, timeout)
 ```
@@ -99,6 +99,7 @@ s.send(data, timeout)
 - **status:** SUCCESS/WARNING/ERROR/TIMEOUT.
 - **message:** Messages adjust to status.
 
+- **ok:** Return boolean from SUCCESS status. Allows the syntax: if r.ok:
 - **isreused:** Returns a Boolean. True=Using the same connection. False=Create a new connection.
 - **rtt_ms:** Returns the Round Trip Time in milliseconds.
 - **checked_type:** Returns the connection status to see if the tls/tcp connection is working. | Debug.
@@ -116,11 +117,11 @@ raw = s.recv(readsize, timeout)
 - **status:** SUCCESS/WARNING/ERROR/TIMEOUT.
 - **message:** Messages adjust to status.
 
+- **ok:** Return boolean from SUCCESS status. Allows the syntax: if r.ok:
 - **raw_bytes:** Returning Raw Bytes.
 - **str_bytes:** Returns Raw Bytes as UTF-8.
 - **hex_bytes:** Returns Hex Bytes.
 - **read_butes:** Returns the number of Bytes.
-- **protocol:** Restore TCP/TLS.
 - **remote_ip:** Returns the target IP:PORT.
 - **local_ip:** Returns local IP:PORT.
 - **isreused:** Returns a Boolean. True=Using the same connection. False=Create a new connection.
@@ -146,12 +147,12 @@ Automatically inherits TLS connections to send/recv and send/recv usage remains 
 - **status:** SUCCESS/WARNING/ERROR/TIMEOUT.
 - **message:** Messages adjust to status.
 
+- **ok:** Return boolean from SUCCESS status. Allows the syntax: if r.ok:
 - **raw_bytes:** Returning Raw Bytes.
 - **str_bytes:** Returns Raw Bytes as UTF-8.
 - **hex_bytes:** Returns Hex Bytes.
 - **read_butes:** Returns the number of Bytes.
-- **protocol:** Restore TCP/TLS.
-- **remote_ip:** Returns the target IP:PORT.
+- **remote_ip:** Returns the server IP:PORT.
 - **local_ip:** Returns local IP:PORT.
 - **isreused:** Returns a Boolean. True=Using the same connection. False=Create a new connection.
 - **rtt_ms:** Returns the Round Trip Time in milliseconds.
@@ -176,17 +177,17 @@ Automatically inherits TLS connections to send/recv and send/recv usage remains 
 
 ### ☎️ DNS
 
-**Query DNS**
+**DNS Lookup**
 ```python
 def execute(options, net):
-    r = net.dns(domain, type, protocol, timeout, ratelimit, con)
+    r = net.DNSL(domain, type, proto, timeout, ratelimit, con)
 ```
-**Description:** Requests are stateless, and you get a response immediately after each run.
+**Description:** DNSL are stateless, and you get a response immediately after each run.
 
 **Parameter**
 - **domain:** example.com | str.
 - **type:** DNS query type. Example: A, AAAA, TXT, etc. | Default A | str.
-- **protocol:** Can TCP/UDP | Default TCP.
+- **proto:** Can TCP/UDP | Default TCP.
 - **timeout:** To limit the open connection time. | Default 5s
 - **ratelimit:** Blocking requests if the token runs out. | Default 150/1s | int.
 - **con:** Number of Goroutines for Concurrency, allows to run parallel connections. | int.
@@ -195,21 +196,61 @@ def execute(options, net):
 - **status:** ERROR/SUCCESS/TIMEOUT/WARNING.
 - **message:** Messages adjust to status.
 
+- **ok:** Returns a boolean of the SUCCESS status and RCODE is NOERROR (0). Allows the syntax: if r.ok:
 - **rcode:** DNS Response Code (example: 0 = NOERROR, 3 = NXDOMAIN).
 - **rcode_str:** String representation of RCODE.
 - **records:** List of resolution results / answers from DNS server.
 - **truncated:** Indicator if the UDP payload is too large and is truncated (will trigger a retry via TCP).
 - **authoritative:** Indicator whether the response comes from the Authoritative Name Server directly.
-- **valid_domain:** DNS level validation: IPC operation was successful AND RCODE is NOERROR (0).
+
+**DNS Discovery**
+```python
+def execute(options, net)
+    r = DNSD(domain, wordlist, timeout, ratelimit, con, tls)
+```
+**Description:** DNSD is stateless and is used for subdomain enumeration.
+
+**Parameter**
+- **domain:** example.com | str.
+- **wordlist:** file wordlist subdomain berekstensi .txt.
+- **timeout:** To limit the open connection time. | Default 2.0s
+- **ratelimit:** Blocking requests if the token runs out. | Default 150/1s | int.
+- **con:** Number of Goroutines for Concurrency, allows to run parallel connections. | int.
+- **tls:** To display TLS information in the Response. | Default False | Boolean.
+
+**Response**
+- **status:** ERROR/SUCCESS/TIMEOUT/WARNING.
+- **message:** Messages adjust to status.
+
+- **ok:** Returns a boolean of the SUCCESS status. Allows the syntax: if r.ok:
+- **status_code:** HTTP Status Code (Example: 200, 404, 500).
+- **proto:** HTTP Protocol (Example: HTTP/1.1, HTTP/2.0).
+- **headers:** The original header dictionary from the response.
+- **get_headers:** Case-insensitive lookup for HTTP Headers. Example: res.get_headers('content-type') will find 'Content-Type'.
+- **engine:** The connection provider engine from CRS (Example: DNSDiscovery).
+- **tls:** Responses that inherit TLS information.
+
+**TLS Information**
+- **subject:** Returns the (CN) of the server certificate.
+- **issuer:** Returns the (CN) of the (CA) that issued the certificate. Examples: R13, ISRG Root X1, etc.
+- **dns_name:** Returns a list of hostnames in the Subject Alternative Name (SAN) extension.
+- **expires:** Returns the certificate Expiration Time in RFC3339 format.
+- **version:** Returns TLS Version 1.0/1.1/1.2/1.3.
+- **cipher:** Returning Cipher Suite.
+- **protocol:** Returns TLS protocols like h1/h2/h3.
+- **hostname:** Returns Host like (example.com).
+- **handshake:** Returns a Boolean. True=Handshake succeeded. False=Handshake failed.
+- **session_resume:** Returns a Boolean. True=If the TLS session was resumed. False=If the handshake was complete.
+- **cert_chain:** Certificate chain successfully verified against a trusted root CA.
 
 ---
 
-### 🖇️ Http Requests
+### 🖇️ HTTP Requests
 
 **Implementation**
 ```python
 def execute(options, net):
-    r = net.http_requests(method, url, header, body, redirect, rawhttp, infotls, verify, retry, ratelimit, timeout, con)
+    r = net.HTTPR(method, url, header, body, redirect, rawhttp, tls, verify, retry, ratelimit, timeout, con)
 ```
 **Description:** HTTP Requests are stateless, you can send them and get a response straight away.
 
@@ -220,7 +261,7 @@ def execute(options, net):
 - **body:** Can be empty, can also be filled. | Default empty | str.
 - **redirect:** To do a page redirect. | Default True. | Boolean.
 - **rawhttp:** Can supply FULL raw HTTP string in the (body). Example: HTTP/1.1\r\nHost: target\r\nX-Injected:  space Strange\r\n\r\n | Default False. | Boolean.
-- **infotls:** To display TLS information in the Response. | Default False | Boolean.
+- **tls:** To display TLS information in the Response. | Default False | Boolean.
 - **verify:** True=Verifying client certificate. False=Skip verification. | Default True. | Boolean.
 - **retry:** Performs Retryable http / Retry connection if failed. | Default 2. | int.
 - **ratelimit:** Blocking requests if the token runs out. | Default 150/1s. | int.
@@ -234,15 +275,15 @@ def execute(options, net):
 - **status_code:** HTTP Status Code (Example: 200, 404, 500).
 - **ok:** HTTP validation shorthand: Transport success and Status Code 2xx / 3xx.
 - **text:** Returns the response body in UTF-8 string form.
-- **content:** Returns the response body in raw bytes.
-- **header:** The original header dictionary from the response.
-- **get_header:** Case-insensitive lookup for HTTP Headers. Example: res.get_header('content-type') will find 'Content-Type'.
-- **protocol:** HTTP Protocol (Example: HTTP/1.1, HTTP/2.0).
+- **raw_bytes:** Returns the response body in raw bytes.
+- **headers:** The original header dictionary from the response.
+- **get_headers:** Case-insensitive lookup for HTTP Headers. Example: res.get_headers('content-type') will find 'Content-Type'.
+- **proto:** HTTP Protocol (Example: HTTP/1.1, HTTP/2.0).
 - **engine:** The connection provider engine from CRS (Example: retryablehttp).
 - **tls:** Responses that inherit TLS information.
-- **json:** [Lazy Evaluation] Parses the string body into a JSON dict/list. Returns None if the body is not a valid JSON format.
+- **json:** Parses the string body into a JSON dict/list. Returns None if the body is not a valid JSON format.
 
-**Informasi TLS**
+**TLS Information**
 - **version:** Returns TLS Version 1.0/1.1/1.2/1.3.
 - **cipher:** Returning Cipher Suite.
 - **protocol:** Returns TLS protocols like h1/h2/h3.
@@ -272,11 +313,10 @@ def execute(options, net):
 **Inheritance**  
 You will get the legacy `send` and `read` functions.
 
-**2. Kirim Data**
+**2. Send Data**
 ```python
 res, var = r.send(command, expected, timeout, raw)
 ```
-
 **Parameter**
 - **command:** This can be filled with a wordlist file of username or password or a free command or bytes.
 - **expected:** This can contain the desired response expectation variables.
@@ -326,6 +366,9 @@ s.uptls(cert, key, ca, verify)
 # Automatically be on a TLS encrypted connection
 s.send()
 s.recv()
+
+# Boolean SUCCESS
+if s.ok:
 ```
 
 - **Response**
@@ -346,36 +389,65 @@ smf.printf(r.status, r.message)
 smf.printf(r.tls.version, r.tls.cipher, etc.)
 ```
 
-**2. Requests**
+**2. DNS Lookup**
 
 - **Status:** `Stateless`
 - **Response**
 ```python
-r = net.requests(...)
+r = net.DNSL(...)
 smf.printf(r.status, r.message)
 smf.printf(r.rcode, r.records, etc.)
+
+# Boolean SUCCESS
+if r.ok:
 ```
 
-**3. HTTP Requests**
+**3. DNS Discovery**
 
 - **Status:** `Stateless`
 - **Response**
 ```python
-r = net.http_requests(...)
+r = net.DNSD(...)
 smf.printf(r.status, r.message)
-smf.printf(r.status_code, r.tls.cipher, etc.)
+smf.printf(r.status_code, r.proto, etc.)
+
+# Boolean SUCCESS
+if r.ok:
 ```
 
-**4. Telnet**
+**4. HTTP Requests**
+
+- **Status:** `Stateless`
+- **Response**
+```python
+r = net.HTTPR(...)
+smf.printf(r.status, r.message)
+smf.printf(r.status_code, r.tls.cipher, etc.)
+
+# Boolean SUCCESS
+if r.ok:
+```
+
+**5. Telnet**
 
 - **Status:** `Stateful`
 - **Inheritance**
 ```python
+# Open Connection
+r = net.Telnet(...)
+
 # Viewing the response
 raw, var = r.read(...)
+smf.printf(raw) # Return raw bytes response.
+smf.printf(var) # Return Amount expected.
 
 # Sending data
 raw, var = r.send(...)
+smf.printf(raw) # Return raw bytes response.
+smf.printf(var) # Return Amount expected.
+
+if var < 0: # -1 = Beyond expected.
+if var >= 0: # 0+ = As expected.
 ```
 
 
