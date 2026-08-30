@@ -114,6 +114,7 @@ class DNSDiscovery:
     Namespace OOP untuk operasi DNS.
     Menggunakan @staticmethod karena request bersifat stateless (tidak perlu menyimpan state internal).
     """
+
     @staticmethod
     def _wordlist_generator(wordlist_path: str) -> Iterator[str]:
         """
@@ -144,7 +145,7 @@ class DNSDiscovery:
             smf.printf(
                 f"[!] {CC.YELLOW}Unrecognized parameters dropped =>{CC.RESET}", kwargs
             )
-        
+
         if not wordlist:
             smf.printf(f"[!] {CC.YELLOW}Wordlist required{CC.RESET}")
             return None
@@ -163,6 +164,7 @@ class DNSDiscovery:
                 }
                 raw_res = CRS.send(packet)
                 yield DNSResponse(raw_res)
+
 
 # Alias untuk entry point
 discovery = DNSDiscovery.subdom
