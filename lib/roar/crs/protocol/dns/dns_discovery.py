@@ -48,19 +48,19 @@ class DNSResponse:
         self._headers: Dict[str, str] = self._data.get("headers") or {}
 
     @property
-    def status(self) -> bool:
+    def status(self) -> str:
         """Pengecekan level IPC (Apakah request berhasil dikirim & diproses)."""
         return self._status
 
     @property
-    def status_code() -> int:
+    def status_code(self) -> int:
         """Mengambil status code response"""
         return self._data.get("status_code")
 
     @property
     def ok(self) -> bool:
-        """Shorthand validasi HTTP: Transport sukses dan Status Code 2xx / 3xx."""
-        return self.status and (200 <= self.status_code < 400)
+        """Shorthand validasi HTTP"""
+        return self.status == "SUCCESS"
 
     @property
     def message(self) -> str:
@@ -74,13 +74,13 @@ class DNSResponse:
 
     @property
     def headers(self) -> str:
-        """Representasi string dari RCODE."""
+        """Mengambil headers saat koneksi"""
         return self._headers
 
     def get_headers(self, name: str, default: Optional[str] = None) -> Optional[str]:
         """
         Case-insensitive lookup untuk HTTP Headers.
-        Contoh: res.get_header('content-type') akan menemukan 'Content-Type'.
+        Contoh: res.get_headers('content-type') akan menemukan 'Content-Type'.
         """
         target = name.lower()
         for key, value in self._headers.items():
@@ -96,12 +96,17 @@ class DNSResponse:
             return TLSMetadata(tls_data)
         return None
 
+    @property
+    def engine(self) -> str:
+        """Melihat mesin mana yang menjalankan"""
+        return self._data("engine")
+
     def __bool__(self):
-        """Memungkinkan sintaks shorthand: if response: ..."""
-        return self.is_valid_domain
+        """Memungkinkan sintaks shorthand: if resp: ..."""
+        return self.ok
 
     def __repr__(self):
-        return f"<DNSResponse Status={self.status} RCode={self.rcode_str} Records={len(self.records)}>"
+        return f"<DNSResponse Status={self.status} Code={self.status_code} Engine={self.engine}>"
 
 
 class DNSDiscovery:
@@ -109,7 +114,6 @@ class DNSDiscovery:
     Namespace OOP untuk operasi DNS.
     Menggunakan @staticmethod karena request bersifat stateless (tidak perlu menyimpan state internal).
     """
-
     @staticmethod
     def _wordlist_generator(wordlist_path: str) -> Iterator[str]:
         """
@@ -131,34 +135,34 @@ class DNSDiscovery:
         con: int = 0,
         tls: bool = False,
         **kwargs,
-    ) -> DNSResponse:
+    ) -> Iterator[DNSResponse]:
         """
         Membangun paket DNS dan mengirimkannya ke CRS Engine.
         Mengembalikan objek DNSResponse yang sudah di-wrap.
         """
-        if wordlist:
-            for subdomain in DNSDiscovery._wordlist_generator(wordlist):
-                for proto in ("http://", "https://"):
-                    target_url = f"{proto}{subdomain}.{domain}"
-                    packet = {
-                        "primitive": "DNS_SEND",
-                        "mode": "Discovery",
-                        "url": target_url,
-                        "info_tls": tls,
-                        "timeout": timeout,
-                        "ratelimit": ratelimit,
-                        "goroutine": con,
-                    }
-                    raw_res = CRS.send(packet)
-            return DNSResponse(raw_res)
-        else:
-            smf.printf(f"[!] {CC.YELLOW}Wordlist required{CC.RESET}")
-
         if kwargs:
             smf.printf(
                 f"[!] {CC.YELLOW}Unrecognized parameters dropped =>{CC.RESET}", kwargs
             )
+        
+        if not wordlist:
+            smf.printf(f"[!] {CC.YELLOW}Wordlist required{CC.RESET}")
+            return None
 
+        for subdomain in DNSDiscovery._wordlist_generator(wordlist):
+            for proto in ("http://", "https://"):
+                target_url = f"{proto}{subdomain}.{domain}"
+                packet = {
+                    "primitive": "DNS_SEND",
+                    "mode": "Discovery",
+                    "url": target_url,
+                    "info_tls": tls,
+                    "timeout": timeout,
+                    "ratelimit": ratelimit,
+                    "goroutine": con,
+                }
+                raw_res = CRS.send(packet)
+                yield DNSResponse(raw_res)
 
 # Alias untuk entry point
-requests = DNSDiscovery.subdom
+discovery = DNSDiscovery.subdom
