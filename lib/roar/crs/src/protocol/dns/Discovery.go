@@ -43,7 +43,7 @@ func init() {
 func Discovery(req packet.RequestPacket) packet.ResponsePacket {
 	utils.Take() // rate-limiter
 
-	targetURL := req.Domain
+	targetURL := req.URL
 	if targetURL == "" {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Domain/URL not found in RequestPacket"}
 	}
