@@ -9,10 +9,10 @@ import (
 
 // Entry point DNS yang menentukan eksekusi
 func DNS(req packet.RequestPacket) packet.ResponsePacket {
-	switch req.Bool {
-	case true:
+	switch req.Mode {
+	case Lookup:
 		return Lookup(req)
-	case false:
+	case Discovery:
 		return Discovery(req)
 	default:
 		// Fallback guard
