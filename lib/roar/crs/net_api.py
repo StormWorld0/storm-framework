@@ -1,6 +1,6 @@
 from .protocol import (
-    http_requests,
-    requests as dns,
+    http_requests as HTTP,
+    requests as DNS,
     Socket,
     TelnetClient as Telnet,
 )
@@ -8,8 +8,8 @@ from .protocol import (
 # Define wrapper protocol
 # For registration on high level API calls
 __all__ = [
-    "http_requests",
-    "dns",
+    "HTTP",
+    "DNS",
     "Socket",
     "Telnet",
 ]
