@@ -92,8 +92,15 @@ class HTTPResponse:
         """
         target = name.lower()
         for key, value in self._headers.items():
-            if key.lower() == target:
-                return value
+            if key.lower() != target:
+                continue
+
+            if value is None:
+                return default
+ 
+            if isinstance(value, list):
+                return ", ".join(str(item) for item in value)
+            return str(value)
         return default
 
     @property
