@@ -44,7 +44,7 @@ def execute(options, net):
             smf.printf(f"{CC.CYAN} \n--- HEADERS SECURITY ANALYSIS ---{CC.RESET}\n")
 
             # Cek server
-            server = r.get_header("Server")
+            server = r.get_headers("Server")
             if server:
                 if re.search(r"\d+\.\d+", server):
                     smf.printf(f"[!]{C.ERROR} Server Version Exposed:{C.RESET}", server)
@@ -57,15 +57,15 @@ def execute(options, net):
                 smf.printf(f"[✓]{C.SUCCESS} Server header not found or hidden.{C.RESET}")
 
             # Check X-Powered-By to find out the backend server
-            xpb = r.get_header("X-Powered-By")
+            xpb = r.get_headers("X-Powered-By")
             if xpb:
                 smf.printf(f"[!]{C.ERROR} Backend Technology Exposed:{C.RESET}", xpb)
             else:
                 smf.printf(f"[✓]{C.SUCCESS} X-Powered-By header not present.{C.RESET}")
 
             # Check X-Frame-Options Security Header (Clickjacking Prevention)
-            xfo = r.get_header("X-Frame-Options")
-            if "X-Frame-Options" not in r.header:
+            xfo = r.get_headers("X-Frame-Options")
+            if "X-Frame-Options" not in r.headers:
                 smf.printf(
                     f"[!]{C.ERROR} X-Frame-Options header is MISSING. Potential for Clickjacking.{C.RESET}"
                 )
@@ -73,8 +73,8 @@ def execute(options, net):
                 smf.printf(f"[✓]{C.SUCCESS} X-Frame-Options:{C.RESET}", xfo)
 
             # Strict-Transport-Security (Downgrade Prevention)
-            hsts = r.get_header("Strict-Transport-Security")
-            if "Strict-Transport-Security" not in r.header and url.startswith("https://"):
+            hsts = r.get_headers("Strict-Transport-Security")
+            if "Strict-Transport-Security" not in r.headers and url.startswith("https://"):
                 smf.printf(
                     f"[!]{C.ERROR} The Strict-Transport-Security header is MISSING. HTTP Downgrade Risks.{C.RESET}"
                 )
@@ -82,8 +82,8 @@ def execute(options, net):
                 smf.printf(f"[✓]{C.SUCCESS} Strict-Transport-Security:{C.RESET}", hsts)
 
             # 1. Check Content-Security-Policy (XSS Prevention)
-            csp = r.get_header("Content-Security-Policy")
-            if "Content-Security-Policy" not in r.header:
+            csp = r.get_headers("Content-Security-Policy")
+            if "Content-Security-Policy" not in r.headers:
                 smf.printf(
                     f"[!]{C.ERROR} CSP Header MISSING. Risk of Cross-Site Scripting (XSS).{C.RESET}"
                 )
@@ -91,7 +91,7 @@ def execute(options, net):
                 smf.printf(f"[✓]{C.SUCCESS} Content-Security-Policy:{C.RESET}", csp)
 
             # 2. Cek X-Content-Type-Options (Pencegahan MIME Sniffing)
-            if r.get_header("X-Content-Type-Options") != "nosniff":
+            if r.get_headers("X-Content-Type-Options") != "nosniff":
                 smf.printf(
                     f"[!]{C.ERROR} X-Content-Type-Options is MISSING or misconfigured. Risk of MIME Sniffing.{C.RESET}"
                 )
@@ -99,15 +99,15 @@ def execute(options, net):
                 smf.printf(f"[✓]{C.SUCCESS} X-Content-Type-Options:{C.RESET} nosnif")
 
             # 3. Cek Referrer-Policy (Pencegahan Kebocoran Data URL)
-            rp = r.get_header("Referrer-Policy")
-            if "Referrer-Policy" not in r.header:
+            rp = r.get_headers("Referrer-Policy")
+            if "Referrer-Policy" not in r.headers:
                 smf.printf(
                     f"[!]{C.ERROR} Referrer-Policy header MISSING. Potential data leakage via Referrer header.{C.RESET}"
                 )
             else:
                 smf.printf(f"[✓]{C.SUCCESS} Referrer-Policy:{C.RESET}", rp)
 
-            set_cookie = r.get_header("Set-Cookie")
+            set_cookie = r.get_headers("Set-Cookie")
             if set_cookie:
                 cookie_lower = set_cookie.lower()
 
