@@ -89,8 +89,8 @@ class DNSResponse:
         return default
 
     @property
-    def tls(self) -> Optional[HTTPTLSMetadata]:
-        """Objek HTTPTLSMetadata jika info_tls diaktifkan dan tersedia."""
+    def tls(self) -> Optional[TLSMetadata]:
+        """Objek TLSMetadata jika info_tls diaktifkan dan tersedia."""
         tls_data = self._data.get("info_tls")
         if tls_data and isinstance(tls_data, dict):
             return TLSMetadata(tls_data)
