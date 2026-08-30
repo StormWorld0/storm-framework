@@ -50,7 +50,7 @@ class HTTPResponse:
     @property
     def status(self) -> str:
         """
-        Pengecekan level Transport IPC 
+        Pengecekan level Transport IPC
         (Apakah Go berhasil mengirim/menerima HTTP paket).
         """
         return self._status
