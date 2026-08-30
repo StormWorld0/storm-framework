@@ -2,7 +2,7 @@ import ipaddress
 import sys
 import smf
 
-from apps.utility.colors import C
+from apps.utility.colors import CC
 
 metadata = {
     "Name": "Scanning DNS Records",
@@ -139,7 +139,7 @@ def execute(options, net):
     except ValueError:
         pass
 
-    smf.printf(f"{C.HEADER} DNS ENUMERATION For {target_domain}")
+    smf.printf(f"{CC.MAGENTA} DNS ENUMERATION For {target_domain}")
     try:
         for record_type in DNS_RECORDS:
             resp = net.DNSL(target_domain, type=record_type, timeout=2.0, con=50)
