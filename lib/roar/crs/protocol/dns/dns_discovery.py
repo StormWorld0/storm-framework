@@ -69,8 +69,8 @@ class DNSResponse:
 
     @property
     def proto(self) -> int:
-        """Ambil protokol yang di gunakan dari response"""
-        return self._data.get("protocol", "UNKNOWN")
+        """Protocol HTTP versi Go (contoh: HTTP/1.1, HTTP/2.0)."""
+        return self._data.get("protocol", "")
 
     @property
     def headers(self) -> str:
