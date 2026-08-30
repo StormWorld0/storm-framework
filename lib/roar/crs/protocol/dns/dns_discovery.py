@@ -2,11 +2,10 @@
 # -- License SMF
 # -- Author zxelzy
 import smf
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 from apps.utility.colors import CC
 from ...transport import CRS
-
 
 
 class TLSMetadata:
@@ -32,7 +31,7 @@ class TLSMetadata:
     def __repr__(self):
         return f"<HTTPTLSMetadata Version={self.tls_version} Cipher={self.cipher_suite} Host={self.hostname}>"
 
-        
+
 class DNSResponse:
     """
     Data Transfer Object (DTO) untuk membungkus raw dictionary dari respons DNS Go.
@@ -110,16 +109,17 @@ class DNSDiscovery:
     Namespace OOP untuk operasi DNS.
     Menggunakan @staticmethod karena request bersifat stateless (tidak perlu menyimpan state internal).
     """
+
     @staticmethod
     def _wordlist_generator(wordlist_path: str) -> Iterator[str]:
         """
         Generator internal untuk membaca file wordlist baris demi baris secara streaming.
         Memastikan pemakaian RAM tetap mendekati 0 MB.
         """
-        with open(wordlist_path, 'r', encoding='utf-8', errors='ignore') as f:
+        with open(wordlist_path, "r", encoding="utf-8", errors="ignore") as f:
             for line in f:
                 word = line.strip()
-                if word and not word.startswith('#'):
+                if word and not word.startswith("#"):
                     yield word
 
     @staticmethod
@@ -158,6 +158,7 @@ class DNSDiscovery:
             smf.printf(
                 f"[!] {CC.YELLOW}Unrecognized parameters dropped =>{CC.RESET}", kwargs
             )
+
 
 # Alias untuk entry point
 requests = DNSDiscovery.subdom
