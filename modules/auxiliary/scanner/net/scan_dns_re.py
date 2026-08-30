@@ -1,6 +1,7 @@
 import ipaddress
 import sys
 import smf
+
 from apps.utility.colors import C
 
 metadata = {
@@ -143,30 +144,31 @@ def execute(options, net):
         for record_type in DNS_RECORDS:
             resp = net.DNSL(target_domain, type=record_type, timeout=2.0, con=50)
 
+            valid = resp.ok
             status = resp.status
             answers = resp.records
 
-            if status.upper() == "SUCCESS":
+            if valid:
                 if not answers:
                     continue
 
-                smf.printf(f"{C.MENU} \n[{record_type} Records]:")
+                smf.printf(f"{CC.CYAN} \n[{record_type} Records]:")
 
                 for item in answers:
                     icon = SYM_SECURITY if record_type == "TXT" else SYM_INFO
-                    color = C.SUCCESS if record_type == "TXT" else C.MENU
+                    color = CC.GREEN if record_type == "TXT" else CC.CYAN
 
                     smf.printf(f"{color}  {icon} {format_record(record_type, item)}")
                 smf.printf()
 
             elif status.upper() == "TIMEOUT":
-                smf.printf(f"{C.YELLOW}[!] Timeout: {record_type} => {resp.message}")
+                smf.printf(f"{CC.YELLOW}[!] Timeout: {record_type} => {resp.message}")
 
             elif status.upper() == "ERROR":
-                smf.printf(f"{C.ERROR}[!] ERROR: {record_type} => {resp.message}")
+                smf.printf(f"{CC.RED}[!] ERROR: {record_type} => {resp.message}")
 
     except KeyboardInterrupt:
         return
     except Exception as e:
-        smf.printf(f"{C.ERROR}[!] Global ERROR =>", e, file=sys.stderr, flush=True)
+        smf.printf(f"{CC.RED}[!] Global ERROR =>", e, file=sys.stderr, flush=True)
         smf.printd("Global error dns lookup", e, level="ERROR")
