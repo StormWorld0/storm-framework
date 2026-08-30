@@ -2,7 +2,7 @@
 # -- License SMF
 # -- Author zxelzy
 import smf
-from typing import Dict, Any
+from typing import Dict, Any, Optional, Iterator
 
 from apps.utility.colors import CC
 from ...transport import CRS
@@ -29,7 +29,7 @@ class TLSMetadata:
         self.cert_chain: list = data.get("cert_chain", [])
 
     def __repr__(self):
-        return f"<HTTPTLSMetadata Version={self.tls_version} Cipher={self.cipher_suite} Host={self.hostname}>"
+        return f"<TLSMetadata Version={self.tls_version} Cipher={self.cipher_suite} Host={self.hostname}>"
 
 
 class DNSResponse:
@@ -125,7 +125,7 @@ class DNSDiscovery:
     @staticmethod
     def subdom(
         domain: str,
-        wordlist: file = None,
+        wordlist: Optional[str] = None,
         timeout: float = 2.0,
         ratelimit: int = 150,
         con: int = 0,
