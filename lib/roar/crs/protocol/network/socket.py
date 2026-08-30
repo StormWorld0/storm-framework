@@ -219,7 +219,7 @@ class SocketResponse:
         return self._data.get("read_bytes", 0)
 
     @property
-    def protocol(self) -> str:
+    def proto(self) -> str:
         return self._data.get("protocol", "unknown")
 
     @property
