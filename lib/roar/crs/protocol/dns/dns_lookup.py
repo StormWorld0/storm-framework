@@ -95,7 +95,7 @@ class DNSResolver:
         """
         packet = {
             "primitive": "DNS_SEND",
-            "mode": "Lookup",
+            "mode": "DNSLookup",
             "goroutine": con,
             "domain": domain,
             "type": type,
