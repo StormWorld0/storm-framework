@@ -1,5 +1,5 @@
 from .protocol import (
-    http_requests as HTTP,
+    http_requests as HTTPR,
     requests as DNSL,
     discovery as DNSD,
     Socket,
@@ -9,7 +9,7 @@ from .protocol import (
 # Define wrapper protocol
 # For registration on high level API calls
 __all__ = [
-    "HTTP",
+    "HTTPR",
     "DNSL",
     "DNSD",
     "Socket",
