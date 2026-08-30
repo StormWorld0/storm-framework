@@ -212,22 +212,22 @@ class SocketResponse:
 
     @property
     def hex_bytes(self) -> str:
+        """Mengembalikan bytes berupa HEX"""
         return self._data.get("hex_bytes", "")
 
     @property
     def read_bytes(self) -> int:
+        """Mengembalikan bytes berupa angka"""
         return self._data.get("read_bytes", 0)
 
     @property
-    def proto(self) -> str:
-        return self._data.get("protocol", "unknown")
-
-    @property
     def ip(self) -> str:
+        """Mengecek IP Server"""
         return self._data.get("ip", "unknown")
 
     @property
     def local_ip(self) -> str:
+        """Mengecek IP keluar sebelum ke internet global"""
         return self._data.get("local_ip", "unknown")
 
     @property
@@ -237,6 +237,7 @@ class SocketResponse:
 
     @property
     def isreused(self) -> bool:
+        """Melihat apakah koneksi yang di gunakan sama dengan sebelumnya"""
         return self._data.get("is_reused", False)
 
     @property
