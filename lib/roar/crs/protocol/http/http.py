@@ -78,7 +78,7 @@ class HTTPResponse:
         return self._data.get("body", "")
 
     @property
-    def content(self) -> bytes:
+    def raw_bytes(self) -> bytes:
         """Mengembalikan body response dalam bentuk raw bytes."""
         return self.text.encode("utf-8")
 
@@ -157,7 +157,7 @@ class HTTPClient:
         body: str = "",
         redirect: bool = True,
         rawhttp: bool = False,
-        infotls: bool = False,
+        tls: bool = False,
         verify: bool = True,
         retry: int = 2,
         ratelimit: int = 150,
@@ -177,7 +177,7 @@ class HTTPClient:
             "body": body,
             "redirect": redirect,
             "rawmode": rawhttp,
-            "info_tls": infotls,
+            "info_tls": tls,
             "verify": verify,
             "retry": retry,
             "ratelimit": ratelimit,
