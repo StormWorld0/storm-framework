@@ -1,6 +1,7 @@
 from .protocol import (
     http_requests as HTTP,
-    requests as DNS,
+    requests as DNSL,
+    discovery as DNSD,
     Socket,
     TelnetClient as Telnet,
 )
@@ -9,7 +10,8 @@ from .protocol import (
 # For registration on high level API calls
 __all__ = [
     "HTTP",
-    "DNS",
+    "DNSL",
+    "DNSD",
     "Socket",
     "Telnet",
 ]
