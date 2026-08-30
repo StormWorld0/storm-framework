@@ -58,7 +58,7 @@ class DNSResponse:
         return self._data.get("authoritative", False)
 
     @property
-    def valid_domain(self) -> bool:
+    def ok(self) -> bool:
         """
         Validasi level DNS: Operasi IPC sukses DAN RCODE adalah NOERROR (0).
         Sangat berguna untuk logika validasi di layer aplikasi.
@@ -67,7 +67,7 @@ class DNSResponse:
 
     def __bool__(self):
         """Memungkinkan sintaks shorthand: if response: ..."""
-        return self.valid_domain
+        return self.ok
 
     def __repr__(self):
         return f"<DNSResponse Status={self.status} RCode={self.rcode_str} Records={len(self.records)}>"
