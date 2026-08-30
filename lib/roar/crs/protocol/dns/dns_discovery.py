@@ -89,8 +89,12 @@ class DNSResponse:
             if key.lower() == target:
                 if val is None:
                     return default
-                res = ", ".join(str(i) for i in val) if isinstance(val, (list, tuple)) else str(val)
-                return re.sub(r'[\r\n]+', ' ', res).strip() or default
+                res = (
+                    ", ".join(str(i) for i in val)
+                    if isinstance(val, (list, tuple))
+                    else str(val)
+                )
+                return re.sub(r"[\r\n]+", " ", res).strip() or default
         return default
 
     @property
