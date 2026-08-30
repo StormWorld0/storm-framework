@@ -63,7 +63,7 @@ class DNSResponse:
         Validasi level DNS: Operasi IPC sukses DAN RCODE adalah NOERROR (0).
         Sangat berguna untuk logika validasi di layer aplikasi.
         """
-        return self.status and self.rcode == 0
+        return self.status == "SUCCESS" and self.rcode == 0
 
     def __bool__(self):
         """Memungkinkan sintaks shorthand: if response: ..."""
