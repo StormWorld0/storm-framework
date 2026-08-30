@@ -97,7 +97,7 @@ class HTTPResponse:
 
             if value is None:
                 return default
- 
+
             if isinstance(value, list):
                 return ", ".join(str(item) for item in value)
             return str(value)
