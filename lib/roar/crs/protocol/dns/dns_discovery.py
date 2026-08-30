@@ -55,12 +55,12 @@ class DNSResponse:
     @property
     def status_code(self) -> int:
         """Mengambil status code response"""
-        return self._data.get("status_code")
+        return self._data.get("status_code", -1)
 
     @property
     def ok(self) -> bool:
         """Shorthand validasi HTTP"""
-        return self.status == "SUCCESS"
+        return self.status.upper() == "SUCCESS"
 
     @property
     def message(self) -> str:
@@ -70,7 +70,7 @@ class DNSResponse:
     @property
     def proto(self) -> int:
         """Ambil protokol yang di gunakan dari response"""
-        return self._data.get("protocol")
+        return self._data.get("protocol", "UNKNOWN")
 
     @property
     def headers(self) -> str:
@@ -99,7 +99,7 @@ class DNSResponse:
     @property
     def engine(self) -> str:
         """Melihat mesin mana yang menjalankan"""
-        return self._data("engine")
+        return self._data("engine", "")
 
     def __bool__(self):
         """Memungkinkan sintaks shorthand: if resp: ..."""
