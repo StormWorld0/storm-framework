@@ -88,7 +88,7 @@ class HTTPResponse:
     def get_headers(self, name: str, default: Optional[str] = None) -> Optional[str]:
         """
         Case-insensitive lookup untuk HTTP Headers.
-        Contoh: res.get_header('content-type') akan menemukan 'Content-Type'.
+        Contoh: res.get_headers('content-type') akan menemukan 'Content-Type'.
         """
         target = name.lower()
         for key, value in self._headers.items():
