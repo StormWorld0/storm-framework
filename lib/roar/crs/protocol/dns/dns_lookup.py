@@ -23,7 +23,7 @@ class DNSResponse:
         self._data: Dict[str, Any] = raw_response.get("data", {})
 
     @property
-    def status(self) -> bool:
+    def status(self) -> str:
         """Pengecekan level IPC (Apakah request berhasil dikirim & diproses)."""
         return self._status
 
