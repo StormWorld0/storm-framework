@@ -155,7 +155,7 @@ class DNSDiscovery:
                 target_url = f"{proto}{subdomain}.{domain}"
                 packet = {
                     "primitive": "DNS_SEND",
-                    "mode": "Discovery",
+                    "mode": "DNSDiscovery",
                     "url": target_url,
                     "info_tls": tls,
                     "timeout": timeout,
