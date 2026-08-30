@@ -174,7 +174,7 @@ class SocketResponse:
         self._data: Dict[str, Any] = raw_response.get("data", {})
 
     @property
-    def success(self) -> bool:
+    def ok(self) -> bool:
         """Mengembalikan True jika response berhasil"""
         return self._status.upper() == "SUCCESS"
 
@@ -261,7 +261,7 @@ class SocketResponse:
 
     def __bool__(self):
         """Memungkinkan sintaks: if response: ..."""
-        return self.status
+        return self.ok
 
     def __repr__(self):
         return f"<SocketResponse Status={self.status} Read={self.read_bytes}b RTT={self.rtt_ms}ms>"
