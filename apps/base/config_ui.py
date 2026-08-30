@@ -106,5 +106,5 @@ def stormUI():
     smf.printf(
         f"{CC.WHITE}The Storm Framework is a StormWorld0 Open Source Project{CC.RESET}"
     )
-    smf.printf(f"Run {CC.GREEN}about{CC.RESET} to view dev information.")
+    smf.printf(f"{CC.WHITE}Run {CC.GREEN}about{CC.WHITE} to view dev information.{CC.RESET}")
     smf.printf()
