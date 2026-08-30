@@ -2,6 +2,8 @@
 # -- License SMF
 # -- Author zxelzy
 import smf
+import re
+
 from typing import Dict, Any, Optional, Iterator
 
 from apps.utility.colors import CC
@@ -83,16 +85,12 @@ class DNSResponse:
         Contoh: res.get_headers('content-type') akan menemukan 'Content-Type'.
         """
         target = name.lower()
-        for key, value in self._headers.items():
-            if key.lower() != target:
-                continue
-
-            if value is None:
-                return default
-
-            if isinstance(value, list):
-                return ", ".join(str(item) for item in value)
-            return str(value)
+        for key, val in self._headers.items():
+            if key.lower() == target:
+                if val is None:
+                    return default
+                res = ", ".join(str(i) for i in val) if isinstance(val, (list, tuple)) else str(val)
+                return re.sub(r'[\r\n]+', ' ', res).strip() or default
         return default
 
     @property
