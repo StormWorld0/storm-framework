@@ -60,7 +60,7 @@ class HTTPResponse:
     @property
     def ok(self) -> bool:
         """Shorthand validasi HTTP: Transport sukses dan Status Code 2xx / 3xx."""
-        return self.status == "SUCCESS" and (200 <= self.status_code < 400)
+        return self.status.upper() == "SUCCESS" and (200 <= self.status_code < 400)
 
     @property
     def message(self) -> str:
