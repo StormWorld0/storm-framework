@@ -2,9 +2,10 @@ package packet
 
 // RequestPacket is a mirror of the dictionary that Python sends
 type RequestPacket struct {
-	MsgID     string            `json:"msg_id"`              // Concurrency specific ID
+	MsgID     string            `json:"msg_id"`              // ID Requests are random and automatically generated.
 	Primitive string            `json:"primitive"`           // Special flag to mark the protocol used
 	Go        int               `json:"goroutine"`           // Allocate the number of Goroutines
+	UA        string            `json:"user-agent"`          // User-Agent Random or Input
 	
 	// HTTP
 	Method    string            `json:"method,omitempty"`    // GET, POST, PUT, DELETE, ...
@@ -33,10 +34,11 @@ type RequestPacket struct {
 	Encoding  string            `json:"encoding,omitempty"`  // Hex
 	ReadSize  int               `json:"readsize"`            // Limit Read Buffer
 	SessionID string            `json:"session_id,omitempty"`// Session ID to use the same connection
-	KeepAlive bool              `json:"keep-alive"`          // true = do not close the socket after Read
-	CloseSess bool              `json:"close-session"`       // true = force close the session in memory
-	Mode      string            `json:"mode"`                // duplex = default, send_only = send without read buffer, recv_only = read only buffer.
+	KeepAlive bool              `json:"keep-alive"`          // Keep-Alive to determine whether a stream connection is active or not.
+	CloseSess bool              `json:"close-session"`       // Boolean to close active session.
+	Mode      string            `json:"mode"`                // To determine which mode you want to use.
 	Data      string            `json:"data,omitempty"`      // This data is encoded to b64 and string before entering json
+	Bool      bool              `json:"bool"`                // Determines True or False. If empty, False.
 	
 	// Custom TLS family
 	TLSKey    string            `json:"tls-key,omitempty"`   // TLSKey = Can path can raw pem
@@ -46,7 +48,7 @@ type RequestPacket struct {
 
 // ResponsePacket
 type ResponsePacket struct {
-	MsgID     string            `json:"msg_id"`              // Concurrency response unique ID
+	MsgID     string            `json:"msg_id"`              // Response ID uses the same ID as Requests.
 	Status    string            `json:"status"`              // ERROR / SUCCESS / TIMEOUT / ...
 	Message   string            `json:"message,omitempty"`   // Error message or success message
 	Data      interface{}       `json:"data,omitempty"`      // Free data (can be map, array, string)
