@@ -48,7 +48,7 @@ class HTTPResponse:
         self._headers: Dict[str, str] = self._data.get("headers") or {}
 
     @property
-    def status(self) -> bool:
+    def status(self) -> str:
         """Pengecekan level Transport IPC (Apakah Go berhasil mengirim/menerima HTTP paket)."""
         return self._status
 
@@ -60,7 +60,7 @@ class HTTPResponse:
     @property
     def ok(self) -> bool:
         """Shorthand validasi HTTP: Transport sukses dan Status Code 2xx / 3xx."""
-        return self.status and (200 <= self.status_code < 400)
+        return self.status == "SUCCESS" and (200 <= self.status_code < 400)
 
     @property
     def message(self) -> str:
