@@ -4,6 +4,7 @@
 package dns
 
 import (
+	"context"
 	"crypto/tls"
 	"net/http"
 	"time"
@@ -13,6 +14,7 @@ import (
 )
 
 var httpClient *http.Client
+const skipVerify = true // Sesuaikan variabel ini jika belum terdefinisi
 
 func init() {
 	// Reusable transport object to avoid socket exhaustion (TIME_WAIT limit)
@@ -28,8 +30,8 @@ func init() {
 
 	httpClient = &http.Client{
 		Transport: customTransport,
-		// Default timeout fallback, overridden by packet below if provided
-		Timeout: 3 * time.Second,
+		// Timeout global default jika context tidak menentukan
+		Timeout: 5 * time.Second,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			if len(via) >= 2 {
 				return http.ErrUseLastResponse
@@ -39,7 +41,7 @@ func init() {
 	}
 }
 
-// HTTP menangani request HTTP terstandarisasi
+// Discovery menangani request HTTP terstandarisasi
 func Discovery(req packet.RequestPacket) packet.ResponsePacket {
 	utils.Take() // rate-limiter
 
@@ -48,19 +50,23 @@ func Discovery(req packet.RequestPacket) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Domain/URL not found in RequestPacket"}
 	}
 
-	// Dynamic Timeout
+	// Dynamic Timeout yang Thread-Safe menggunakan Context (Bukan mengedit httpClient global)
+	timeout := 3 * time.Second
 	if req.Timeout > 0 {
-		httpClient.Timeout = time.Duration(req.Timeout * float64(time.Second))
+		timeout = time.Duration(req.Timeout * float64(time.Second))
 	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
 
-	httpReq, err := http.NewRequest("HEAD", targetURL, nil)
+	// Gunakan NewRequestWithContext agar timeout terisolasi khusus per-worker
+	httpReq, err := http.NewRequestWithContext(ctx, "HEAD", targetURL, nil)
 	if err != nil {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Failed to create HTTP request: " + err.Error()}
 	}
 	
 	// Default UA
 	httpReq.Header.Set("User-Agent", "storm-framework/3.0 (CRS Engine)")
-    if req.UA {
+	if req.UA != "" { // Diperbaiki dari if req.UA
 		httpReq.Header.Set("User-Agent", req.UA)
 	}
 	
@@ -81,37 +87,37 @@ func Discovery(req packet.RequestPacket) packet.ResponsePacket {
 
 	var tlsData map[string]interface{}
 
-    if req.InfoTLS && resp.TLS != nil {
-	    // Dapatkan detail handshake SSL/TLS
-    	state := resp.TLS
-    	if len(state.PeerCertificates) > 0 {
-		    cert := state.PeerCertificates[0] // Leaf Certificate
-		    tlsData = map[string]interface{}{
-			    "subject":          cert.Subject.CommonName,
-			    "issuer":           cert.Issuer.CommonName,
-			    "dns_names":        cert.DNSNames,
-			    "expires_at":       cert.NotAfter.Format(time.RFC3339),
-			    "tls_version":      tlsVersionString(state.Version),
-			    "cipher_suite":     tls.CipherSuiteName(state.CipherSuite),
-				"protocol":         state.NegotiatedProtocol,
-				"hostname":         state.ServerName,
-				"handshake":        state.HandshakeComplete,
-				"session_resume":   state.DidResume,
-				"cert_chain":       state.VerifiedChains,
+	if req.InfoTLS && resp.TLS != nil {
+		// Dapatkan detail handshake SSL/TLS
+		state := resp.TLS
+		if len(state.PeerCertificates) > 0 {
+			cert := state.PeerCertificates[0] // Leaf Certificate
+			tlsData = map[string]interface{}{
+				"subject":        cert.Subject.CommonName,
+				"issuer":         cert.Issuer.CommonName,
+				"dns_names":      cert.DNSNames,
+				"expires_at":     cert.NotAfter.Format(time.RFC3339),
+				"tls_version":    tlsVersionString(state.Version),
+				"cipher_suite":   tls.CipherSuiteName(state.CipherSuite),
+				"protocol":       state.NegotiatedProtocol,
+				"hostname":       state.ServerName,
+				"handshake":      state.HandshakeComplete,
+				"session_resume": state.DidResume,
+				"cert_chain":     state.VerifiedChains,
 			}
-	    }
-    }
+		}
+	}
 
 	// Evaluasi HTTP codes
 	if resp.StatusCode < 400 || resp.StatusCode == 401 || resp.StatusCode == 403 {
 		return packet.ResponsePacket{
 			Status: "SUCCESS",
 			Data: map[string]interface{}{
-				"status_code":   resp.StatusCode,
-				"headers":       headers,
-				"protocol":      resp.Proto,
-			    "info_tls":      tlsData,
-				"engine":        "Discovery",
+				"status_code": resp.StatusCode,
+				"headers":     headers,
+				"protocol":    resp.Proto,
+				"info_tls":    tlsData,
+				"engine":      "Discovery",
 			},
 		}
 	}
@@ -121,4 +127,3 @@ func Discovery(req packet.RequestPacket) packet.ResponsePacket {
 		Message: "Endpoint not accessible or ignored status code",
 	}
 }
-
