@@ -84,11 +84,12 @@ func Lookup(req packet.RequestPacket) packet.ResponsePacket {
 	return packet.ResponsePacket{
 		Status: "SUCCESS",
 		Data: map[string]interface{}{
-			"rcode":     respMsg.Rcode,
-			"rcode_str": dns.RcodeToString[respMsg.Rcode],
-			"records":   answers,
-			"truncated": respMsg.Truncated,
-			"authoritative": respMsg.Authoritative,
+			"rcode":             respMsg.Rcode,
+			"rcode_str":         dns.RcodeToString[respMsg.Rcode],
+			"records":           answers,
+			"truncated":         respMsg.Truncated,
+			"authoritative":     respMsg.Authoritative,
+			"engine":            "Lookup",
 		},
 	}
 }
