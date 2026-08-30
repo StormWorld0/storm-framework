@@ -97,7 +97,7 @@ class HTTPResponse:
         return default
 
     @property
-    def protocol(self) -> str:
+    def proto(self) -> str:
         """Protocol HTTP versi Go (contoh: HTTP/1.1, HTTP/2.0)."""
         return self._data.get("protocol", "")
 
