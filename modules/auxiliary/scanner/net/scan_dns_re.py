@@ -7,9 +7,7 @@ metadata = {
     "Name": "Scanning DNS Records",
     "Description": "Scan the DNS Record to find out the DNS data in it used by a website.",
     "Author": ["zxelzy"],
-    "Action": [
-        ["Scanner", {"Description": "Scan DNS Records"}]
-    ],
+    "Action": [["Scanner", {"Description": "Scan DNS Records"}]],
     "DefaultAction": "Scanner",
     "License": "SMF License",
     "Date": "2025-09-22",
