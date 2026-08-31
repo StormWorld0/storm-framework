@@ -200,11 +200,11 @@ class TelnetClient:
                         break
                     continue
 
-            clean_chunk = self._negotiate_iac(resp.raw_bytes)
-            self._buffer += clean_chunk
+                clean_chunk = self._negotiate_iac(resp.raw_bytes)
+                self._buffer += clean_chunk
 
-            if not expected_bytes:
-                break
+                if not expected_bytes:
+                    break
 
         # Timeout / Selesai membaca: Kembalikan sisa buffer (jika ada)
         sts = 
