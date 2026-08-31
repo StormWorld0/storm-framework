@@ -2,7 +2,6 @@ import smf
 import sys
 
 from apps.utility.colors import C
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 STATUS_OPEN = "✅"
 STATUS_CLOSED = "❌"
@@ -178,7 +177,7 @@ def execute(options, net):
         for port in ports_to_check:
             status_line, banner = get_service_banner(target_ip, port, net)
             service_name = port_names.get(port, "Unknown Service")
-            
+
             port_info_string = f"  Port {port} ({service_name})"
             padding_string = port_info_string.ljust(MAX_TOTAL_WIDTH)
             output_line = f"{C.MENU}{padding_string}: {status_line}"
