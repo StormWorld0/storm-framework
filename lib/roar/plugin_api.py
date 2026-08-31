@@ -10,38 +10,39 @@ from .plugin import introspection
 
 
 class StormAPI:
-    """
-    Single interface for REPL.
-    The user/CLI may only interact with this class.
-    """
+    """Plugin API Mechanism"""
 
     @staticmethod
     def boot() -> None:
+        """Registering Plugin to database"""
         return manager.boot()
 
     @staticmethod
     def load(plugin_name: str) -> bool:
+        """Registering Plugins and Execution"""
         return manager.load(plugin_name)
 
     @staticmethod
     def unload(plugin_name: str) -> bool:
+        """Removing Plugins from Register"""
         return manager.unload(plugin_name)
 
     @staticmethod
     def broadcast(event_name: str, *args: Any, **kwargs: Any) -> Dict[str, Any]:
+        """Calling a Plugin without knowing the Plugin name"""
         return manager.broadcast(event_name, *args, **kwargs)
 
     @staticmethod
     def monitor() -> List[dict]:
         """
-        Perintah REPL: `show plugin`
-        Menyambungkan manager ke monitoring.
+        REPL command: `show plugin`
+        Connecting managers to monitoring.
         """
-        # API mengambil 'State/Data' dari Manager...
+        # API mengambil 'State/Data' dari Manager
         pluginpath = manager.PLUGIN_DIR
         data = manager.REGISTRY
 
-        # ...lalu menyuntikkan data tersebut ke fungsi Monitoring.
+        # Menyuntikkan data tersebut ke fungsi Monitoring.
         # Monitoring akan memprosesnya dan mengembalikan laporan.
         laporan = monitoring.get_status_map(pluginpath, data)
 
@@ -50,20 +51,20 @@ class StormAPI:
     @staticmethod
     def inspect(plugin_name: str) -> List[dict]:
         """
-        Perintah REPL: `info <nama_plugin>`
-        Menyambungkan manager ke introspection.
+        REPL command: `info <plugin_name>`
+        Connecting managers to introspection.
         """
         # API meminta spesifik 1 plugin dari Manager
         target_plugin = manager.get_plugin(plugin_name)
 
-        # Melemparkan instance plugin tersebut ke fungsi Introspection (Pisau Bedah)
+        # Membedah metadata Plugin
         manifest = introspection.get_plugin_manifest(target_plugin)
 
         return manifest
 
     @staticmethod
     def execute(plugin_name: str, payload: Any = None) -> Any:
-        """Eksekusi tunggal plugin."""
+        """Single execution of the plugin."""
         plugin = manager.get_plugin(plugin_name)
         if not plugin or isinstance(plugin, manager.NullPlugin):
             smf.printd(f"Plugin '{plugin_name}' could not be executed.", level="ERROR")
@@ -77,5 +78,5 @@ class StormAPI:
         return
 
 
-# Expose instance untuk di-import oleh file CLI/Terminal Anda
+# Expose instance
 plugin = StormAPI()
