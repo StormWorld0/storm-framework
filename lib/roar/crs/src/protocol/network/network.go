@@ -27,6 +27,25 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		timeout = time.Duration(req.Timeout * float64(time.Second))
 	}
 
+	// Normalisasi Primitif
+	mode := strings.ToLower(req.Mode)
+	if mode == "" {
+		mode = "open" // Fallback primitive
+	}
+
+	if mode == "close" {
+		if req.SessionID != "" && req.CloseSess {
+			// Atomic LoadAndDelete menjamin keamanan antar Goroutine
+			if val, ok := utils.ActiveSessions.LoadAndDelete(req.SessionID); ok {
+				targetConn := val.(net.Conn)
+				targetConn.Close() // Membunuh socket yang BENAR, mencegah memory/socket leak
+				return packet.ResponsePacket{Status: "SUCCESS", Message: "Session closed"}
+			}
+			return packet.ResponsePacket{Status: "SUCCESS", Message: "No active session found to close"}
+		}
+		return packet.ResponsePacket{Status: "WARNING", Message: "Incomplete data to close the connection"}
+	}
+
 	// Ambil Sesi Aktif (Jika Ada)
 	var conn net.Conn
 	var isReused bool
@@ -37,11 +56,19 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		}
 	}
 
-	// Normalisasi Primitif
-	mode := strings.ToLower(req.Mode)
-	if mode == "" {
-		mode = "open" // Fallback primitive
-	}
+	keepSession := false
+	defer func() {
+		// Socket HANYA ditutup jika:
+		// 1. keepSession bernilai false (terjadi error/bukan keep-alive)
+		// 2. socket tidak nil
+		if !keepSession && conn != nil {
+			conn.Close()
+			// Jika terjadi error di tengah jalan, pastikan Session dihapus dari map
+			if req.SessionID != "" {
+				utils.ActiveSessions.Delete(req.SessionID)
+			}
+		}
+	}()
 
 	// Auto-Dial: Pastikan Koneksi Tersedia
 	// (Mengizinkan arsitektur 'single-shot' di mana user bisa panggil recv/send tanpa open)
@@ -78,14 +105,6 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		}
 	}
 
-	// Manajemen Memori & Socket Leak Prevention
-	keepSession := false
-	defer func() {
-		if !keepSession && conn != nil {
-			conn.Close()
-		}
-	}()
-
 	// Helper Closure untuk Assembly Metadata (Mencegah duplikasi kode)
 	generateMetadata := func(readBytes int) map[string]interface{} {
 		meta := map[string]interface{}{
@@ -120,6 +139,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	case "upgrade_tls":
 		// Mode khusus untuk kerentanan STARTTLS atau Protocol Smuggling
 		if isTLSConn(conn) {
+			keepSession = true
 			return packet.ResponsePacket{Status: "ERROR", Message: "Connection is already TLS"}
 		}
 		
@@ -131,10 +151,10 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		if err != nil {
 			return packet.ResponsePacket{Status: "ERROR", Message: "TLS Upgrade failed: " + err.Error()}
 		}
-		conn = tlsConn // Replace pointer dengan socket TLS baru
 		
+		conn = tlsConn 
 		if req.SessionID != "" && req.KeepAlive {
-			utils.ActiveSessions.Store(req.SessionID, conn)
+			utils.ActiveSessions.Store(req.SessionID, conn) // Timpa pointer lama dengan TLS socket yang baru
 			keepSession = true
 		}
 		return packet.ResponsePacket{Status: "SUCCESS", Data: generateMetadata(0)}
@@ -178,20 +198,6 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		}
 
 		return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
-
-	case "close":
-		if req.SessionID != "" && req.CloseSess {
-		    if val, ok := utils.ActiveSessions.LoadAndDelete(req.SessionID); ok {
-				keepSession = false
-				
-			    return packet.ResponsePacket{Status: "SUCCESS", Message: "Session closed"}
-		    }
-		        
-			return packet.ResponsePacket{Status: "SUCCESS", Message: "No active session found to close"}
-		}
-
-		return packet.ResponsePacket{Status: "WARNING", Message: "Incomplete data to close the connection"}
-		
 	default:
 		return packet.ResponsePacket{Status: "ERROR", Message: "Unknown socket primitive: " + mode}
 	}
