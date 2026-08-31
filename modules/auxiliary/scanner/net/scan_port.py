@@ -30,18 +30,16 @@ def get_service_banner(ip, port, net):
         # Jika port HTTP, kita langsung titip payload 'HEAD /' di field Bod
         payload_body = ""
         if port in [80, 443, 8080]:
-            payload_body = (
-                f"HEAD / HTTP/1.1\r\nHost: {ip}\r\nConnection: close\r\n\r\n"
-            )
+            payload_body = f"HEAD / HTTP/1.1\r\nHost: {ip}\r\nConnection: close\r\n\r\n"
         s = net.Socket(
-                host=ip,
-                port=port,
-                timeout=2.0,
-            )
-            
+            host=ip,
+            port=port,
+            timeout=2.0,
+        )
+
         if not s.ok:
             return f"{C.ERROR} CLOSED " + STATUS_CLOSED, None
-            
+
         r = s.send(data=payload_body, timeout=0.5)
         if r.ok:
             res = s.recv(1024)
@@ -185,7 +183,7 @@ def execute(options, net):
 
             for r in as_completed(future):
                 status_line, banner = r.result()
-                    
+
                 service_name = port_names.get(port, "Unknown Service")
                 port_info_string = f"  Port {port} ({service_name})"
                 padding_string = port_info_string.ljust(MAX_TOTAL_WIDTH)
