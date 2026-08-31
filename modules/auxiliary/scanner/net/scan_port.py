@@ -184,23 +184,23 @@ def execute(options, net):
             for r in as_completed(future):
                 status_line, banner = r.result()
 
-                service_name = port_names.get(port, "Unknown Service")
-                port_info_string = f"  Port {port} ({service_name})"
-                padding_string = port_info_string.ljust(MAX_TOTAL_WIDTH)
-                output_line = f"{C.MENU}{padding_string}: {status_line}"
-                if "OPEN" in status_line:
-                    if (
-                        banner
-                        and "No information" not in banner
-                        and "Error while retrieving banner" not in banner
-                    ):
-                        clean_banner = banner.replace("\n", " ").strip()
-                        output_line += f" {C.MENU} | {C.SUCCESS}{clean_banner}"
-                    else:
-                        output_line += f" {C.MENU} | INFO: {banner}"
+            service_name = port_names.get(port, "Unknown Service")
+            port_info_string = f"  Port {port} ({service_name})"
+            padding_string = port_info_string.ljust(MAX_TOTAL_WIDTH)
+            output_line = f"{C.MENU}{padding_string}: {status_line}"
+            if "OPEN" in status_line:
+                if (
+                    banner
+                    and "No information" not in banner
+                    and "Error while retrieving banner" not in banner
+                ):
+                    clean_banner = banner.replace("\n", " ").strip()
+                    output_line += f" {C.MENU} | {C.SUCCESS}{clean_banner}"
+                else:
+                    output_line += f" {C.MENU} | INFO: {banner}"
 
-                output_line += f"{C.RESET}"
-                smf.printf(output_line)
+            output_line += f"{C.RESET}"
+            smf.printf(output_line)
 
         smf.printf(f"{C.HEADER} --- SCAN COMPLETE ---")
     except KeyboardInterrupt:
