@@ -10,10 +10,12 @@ import threading
 
 from typing import Set
 
+
 class PIDManager:
     """Centralized PID Manager & Zombie Reaper (Thread-Safe & Concurrent)"""
+
     _tracked_pids: Set[int] = set()
-    _lock = threading.Lock() # 🟢 THE MAIN KEY TO PREVENTING RACE CONDITION
+    _lock = threading.Lock()  # 🟢 THE MAIN KEY TO PREVENTING RACE CONDITION
 
     @classmethod
     def register(cls, pid: int) -> None:
@@ -46,9 +48,9 @@ class PIDManager:
         with cls._lock:
             if not cls._tracked_pids:
                 return
-            
+
             pids_to_kill = list(cls._tracked_pids)
-            
+
         # 1. BROADCAST SIGTERM KE SEMUA PROSES SEKALIGUS (Tidak pakai nunggu)
         for pid in pids_to_kill:
             try:
@@ -69,13 +71,15 @@ class PIDManager:
                         alive_pids.remove(pid)
                 except ChildProcessError:
                     alive_pids.remove(pid)
-            
-            time.sleep(0.1) # Prevent CPU spin-lock
+
+            time.sleep(0.1)  # Prevent CPU spin-lock
 
         # 3. SAPU BERSIH SISANYA (SIGKILL)
         for pid in alive_pids:
             try:
-                smf.printd(f"PID {pid} ignored SIGTERM. Fallback to SIGKILL.", level="WARN")
+                smf.printd(
+                    f"PID {pid} ignored SIGTERM. Fallback to SIGKILL.", level="WARN"
+                )
                 os.kill(pid, signal.SIGKILL)
                 os.waitpid(pid, 0)
             except OSError:
