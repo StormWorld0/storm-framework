@@ -27,19 +27,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		timeout = time.Duration(req.Timeout * float64(time.Second))
 	}
 
-	// 1. Eksekusi Perintah Close Session secara eksplisit
-	if req.SessionID != "" && req.CloseSess {
-		if val, ok := utils.ActiveSessions.LoadAndDelete(req.SessionID); ok {
-			val.(net.Conn).Close()
-			return packet.ResponsePacket{Status: "SUCCESS", Message: "Session closed"}
-		}
-		// Jika tujuannya hanya menutup sesi (primitif 'close')
-		if req.Mode == "close" {
-			return packet.ResponsePacket{Status: "SUCCESS", Message: "No active session found to close"}
-		}
-	}
-
-	// 2. Ambil Sesi Aktif (Jika Ada)
+	// Ambil Sesi Aktif (Jika Ada)
 	var conn net.Conn
 	var isReused bool
 	if req.SessionID != "" {
@@ -55,7 +43,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		mode = "open" // Fallback primitive
 	}
 
-	// 3. Auto-Dial: Pastikan Koneksi Tersedia
+	// Auto-Dial: Pastikan Koneksi Tersedia
 	// (Mengizinkan arsitektur 'single-shot' di mana user bisa panggil recv/send tanpa open)
 	if conn == nil {
 		addr, err := BuildTarget(req)
@@ -94,9 +82,6 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	keepSession := false
 	defer func() {
 		if !keepSession && conn != nil {
-			if req.SessionID != "" {
-				utils.ActiveSessions.Delete(req.SessionID)
-			}
 			conn.Close()
 		}
 	}()
@@ -122,7 +107,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		return meta
 	}
 
-	// 4. Primitive State Machine (Routing Eksekusi)
+	// Primitive State Machine (Routing Eksekusi)
 	switch mode {
 	case "open":
 		// Koneksi sudah terbuka di fase Auto-Dial. 
@@ -194,6 +179,19 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 
 		return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
 
+	case "close":
+		if req.SessionID != "" && req.CloseSess {
+		    if val, ok := utils.ActiveSessions.LoadAndDelete(req.SessionID); ok {
+				keepSession = false
+				
+			    return packet.ResponsePacket{Status: "SUCCESS", Message: "Session closed"}
+		    }
+		        
+			return packet.ResponsePacket{Status: "SUCCESS", Message: "No active session found to close"}
+		}
+
+		return packet.ResponsePacket{Status: "WARNING", Message: "Incomplete data to close the connection"}
+		
 	default:
 		return packet.ResponsePacket{Status: "ERROR", Message: "Unknown socket primitive: " + mode}
 	}
