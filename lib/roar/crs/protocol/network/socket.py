@@ -294,7 +294,6 @@ class Socket(SocketState):
         """Detailed message of the open connection process."""
         return self.initial_response.message
 
-    
     def open(self, timeout: float = None) -> SocketResponse:
         """Open connection"""
         self._ensure_open("open")
