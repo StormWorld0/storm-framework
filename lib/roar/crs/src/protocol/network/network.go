@@ -23,7 +23,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	startTime := time.Now()
 
 	if req.SessionID != "" {
-		mu := utils.getSessionLock(req.SessionID)
+		mu := utils.GetSessionLock(req.SessionID)
 		mu.Lock()       // Goroutine lain dengan SessionID sama akan antre (pause) di sini
 		defer mu.Unlock() // Otomatis dibuka saat fungsi Network selesai/return
 	}
