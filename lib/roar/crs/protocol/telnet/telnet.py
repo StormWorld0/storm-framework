@@ -2,14 +2,13 @@
 # -- License SMF
 # -- Author zxelzy (Refactored)
 import time
-from typing import Optional, Union, List, Tuple
 
-# Pastikan import Socket Anda benar sesuai struktur framework
+from typing import Optional, Union, List, Tuple
 from ..network import Socket
 
 
 class TelnetCmd:
-    """Konstanta untuk Telnet Commands (RFC 854 & Extensions)"""
+    """Constants for Telnet Commands (RFC 854 & Extensions)"""
 
     EOF = b"\xec"
     SUSP = b"\xed"
@@ -34,7 +33,7 @@ class TelnetCmd:
 
 
 class TelnetOpt:
-    """Konstanta untuk Telnet Options (RFC Extensions)"""
+    """Constants for Telnet Options (RFC Extensions)"""
 
     BINARY = b"\x00"
     ECHO = b"\x01"
@@ -63,7 +62,7 @@ class TelnetClient:
     Terintegrasi dengan TelnetCmd & TelnetOpt untuk kontrol granular dan Type-Safety.
     """
 
-    def __init__(self, host: str, port: int = 23, timeout: float = 10.0, **kwargs):
+    def __init__(self, host: str, port: int = 23, timeout: float = 3.0, **kwargs):
         """Open koneksi Telnet di atas TCP Socket"""
         self.sock = Socket(host=host, port=port, timeout=timeout, **kwargs)
         self.timeout = timeout
@@ -178,9 +177,10 @@ class TelnetClient:
                 break
 
             read_timeout = 0.3 if self._buffer else wait_time
-            resp = self.sock.recv(readsize=4096, timeout=read_timeout)
+            if self.ok:
+                resp = self.sock.recv(readsize=4096, timeout=read_timeout)
 
-            if resp.success != "SUCCESS" and not resp.raw_bytes:
+            if resp.ok and not resp.raw_bytes:
                 if self._buffer:
                     break
                 continue
@@ -201,7 +201,7 @@ class TelnetClient:
         self,
         command: Union[str, bytes],
         expected: Union[str, bytes, List[Union[str, bytes]]] = b"",
-        timeout: Optional[float] = None,
+        timeout: Optional[float] = 1.0,
         raw: bool = False,
     ) -> Tuple[Union[str, bytes], int]:
         """Mengirim data Telnet dan langsung membaca Response"""
@@ -213,8 +213,26 @@ class TelnetClient:
         self.sock.send(cmd_payload, timeout=timeout)
         return self.read(expected, timeout, raw)
 
+    @property
+    def ok(self) -> bool:
+        """Returns True on success"""
+        return self.sock.ok
+
+    @property
+    def status(self) -> str:
+        """Status string of the open process (SUCCESS/ERROR/TIMEOUT)."""
+        return self.sock.status
+
+    @property
+    def message(self) -> str:
+        """Detailed message of the open connection process."""
+        return self.sock.message
+
     def close(self):
         self.sock.close()
+
+    def __bool__(self):
+        return self.ok
 
     def __enter__(self):
         return self
