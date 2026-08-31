@@ -177,7 +177,7 @@ def execute(options, net):
     smf.printf(f"{C.HEADER} SCANNING: PORT & VERSION in {target_ip}")
     MAX_TOTAL_WIDTH = 30
     try:
-        ThreadPoolExecutor(max_workers=10) as pool:
+        with ThreadPoolExecutor(max_workers=10) as pool:
             future = [
                 pool.submit(get_service_banner, target_ip, port, net)
                 for port in ports_to_check
