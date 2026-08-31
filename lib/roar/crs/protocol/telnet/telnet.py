@@ -54,7 +54,7 @@ class TelnetOpt:
     XDISPLOC = b"\x23"
     OLD_ENVIRON = b"\x24"
     NEW_ENVIRON = b"\x27"
-    
+
 
 class TelnetClient:
     """
@@ -171,7 +171,7 @@ class TelnetClient:
             for item in expected_list
         ]
 
-        #`timeout or self.timeout` untuk mengakomodasi timeout=0
+        # `timeout or self.timeout` untuk mengakomodasi timeout=0
         wait_time = timeout if timeout is not None else self.timeout
         start_time = time.time()
 
