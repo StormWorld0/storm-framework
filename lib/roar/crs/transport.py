@@ -13,59 +13,68 @@ from ..calling import call_bin
 from apps.utility.colors import CC
 from lib.pid_manager import PIDManager as pid
 
-
 class CRS:
-    """IPC (Inter-Process Communication) via Subprocess."""
+    """IPC (Inter-Process Communication) via Subprocess (Thread-Safe & Deadlock-Free)."""
 
     _process = None
-    _lock = threading.Lock()
-    _pending_requests = {}  # Format: {msg_id: threading.Event}
-    _responses = {}  # Format: {msg_id: dict_response}
+    _init_lock = threading.Lock()   # Gembok khusus untuk inisialisasi / spawn
+    _write_lock = threading.Lock()  # Gembok khusus untuk mencegah tabrakan Write STDIN
+    _dict_lock = threading.Lock()   # Gembok khusus untuk _pending_requests & _responses
+    
+    _pending_requests = {}
+    _responses = {}
     _reader_thread = None
 
     @classmethod
     def _get_process(cls):
-        if cls._process is not None:
-            if cls._process.poll() is None:
-                return cls._process
-
-        binary_path = call_bin("crs_engine")
-        if not os.path.exists(binary_path):
-            smf.printf(f"[!]{CC.YELLOW} Binary not found =>{CC.RESET}", binary_path)
+        # 1st Check (Fast path tanpa antre)
+        if cls._process is not None and cls._process.poll() is None:
             return cls._process
 
-        cls._process = subprocess.Popen(
-            [binary_path],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            bufsize=1,
-        )
+        # Masuk area kritis inisialisasi
+        with cls._init_lock:
+            # 2nd Check (Double-checked locking pattern)
+            if cls._process is not None and cls._process.poll() is None:
+                return cls._process
 
-        pid.prepare(cls._process.pid)
+            binary_path = call_bin("crs_engine")
+            if not os.path.exists(binary_path):
+                smf.printf(f"[!]{CC.YELLOW} Binary not found =>{CC.RESET}", binary_path)
+                return None
 
-        # Nyalakan Background Reader untuk mendengarkan stdout Go secara terus-menerus
-        if cls._reader_thread is None or not cls._reader_thread.is_alive():
-            cls._reader_thread = threading.Thread(
-                target=cls._background_reader, daemon=True
+            # stderr dialihkan ke DEVNULL agar tidak Deadlock (OS Buffer Full)
+            cls._process = subprocess.Popen(
+                [binary_path],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL, 
+                text=True,
+                bufsize=1,
             )
-            cls._reader_thread.start()
 
-        return cls._process
+            pid.prepare(cls._process.pid)
+
+            # Nyalakan Background Reader
+            if cls._reader_thread is None or not cls._reader_thread.is_alive():
+                cls._reader_thread = threading.Thread(
+                    target=cls._background_reader, 
+                    args=(cls._process,), # Passing reference secara eksplisit
+                    daemon=True
+                )
+                cls._reader_thread.start()
+
+            return cls._process
 
     @classmethod
-    def _background_reader(cls):
-        """Thread mandiri yang membaca stdout Go secara konstan dan mendistribusikan respons."""
-        proc = cls._process
+    def _background_reader(cls, my_proc):
+        """A standalone thread that constantly reads Go stdout."""
         try:
-            while proc and proc.poll() is None:
+            while my_proc and my_proc.poll() is None:
                 try:
-                    line = proc.stdout.readline()
+                    line = my_proc.stdout.readline()
                     if not line:
                         break
 
-                    # Abaikan baris kosong atau log non-JSON jika ada
                     line_str = line.strip()
                     if not line_str.startswith("{"):
                         continue
@@ -74,18 +83,25 @@ class CRS:
                     msg_id = res_dict.get("msg_id")
 
                     if msg_id:
-                        with cls._lock:
+                        with cls._dict_lock:
                             if msg_id in cls._pending_requests:
                                 cls._responses[msg_id] = res_dict
                                 cls._pending_requests[msg_id].set()
+                
                 except (BrokenPipeError, OSError, ValueError):
                     break
                 except Exception as e:
                     smf.printd("Error in CRS background reader", e, level="ERROR")
                     break
         finally:
-            with cls._lock:
-                cls._process = None
+            # Hanya reset _process jika pointer masih sama dengan proses ini.
+            # Mencegah thread reader lama membunuh pointer proses baru.
+            with cls._init_lock:
+                if cls._process is my_proc:
+                    cls._process = None
+            
+            # Bebaskan semua thread yang sedang menunggu agar tidak infinite timeout
+            with cls._dict_lock:
                 for event in cls._pending_requests.values():
                     event.set()
 
@@ -97,47 +113,43 @@ class CRS:
 
         msg_id = uuid.uuid4().hex
         data["msg_id"] = msg_id
-
         req_timeout = float(data.get("timeout", 5.0)) + 1.0
-
         event = threading.Event()
-        with cls._lock:
+        
+        with cls._dict_lock:
             cls._pending_requests[msg_id] = event
 
         try:
             json_payload = json.dumps(data) + "\n"
             smf.printd("Input Json CRS", json_payload, level="DEBUG")
 
-            # [PERBAIKAN 2]: Write dengan try-except tanpa mengunci lock terlalu lama
+            # Atomic Write STDIN - Cegah tabrakan JSON dari banyak thread
             try:
-                proc.stdin.write(json_payload)
-                proc.stdin.flush()
+                with cls._write_lock:
+                    proc.stdin.write(json_payload)
+                    proc.stdin.flush()
             except Exception as write_err:
                 pid.reap_zombie()
-                return {
-                    "status": "ERROR",
-                    "message": f"Failed to write to Go STDIN: {write_err}",
-                }
+                return {"status": "ERROR", "message": f"Failed to write IPC: {write_err}"}
 
-            # [PERBAIKAN 3]: Gunakan req_timeout yang DINAMIS!
+            # Tunggu balasan dari Background Reader
             if not event.wait(timeout=req_timeout):
-                return {
-                    "status": "ERROR",
-                    "message": f"IPC Timeout waiting for engine response (exceeded {req_timeout:.1f}s)",
-                }
+                return {"status": "ERROR", "message": f"IPC Timeout ({req_timeout:.1f}s)"}
 
             # Ambil respons
-            with cls._lock:
+            with cls._dict_lock:
                 res_dict = cls._responses.pop(
-                    msg_id, {"status": "ERROR", "message": "Response lost"}
+                    msg_id, {"status": "ERROR", "message": "Response lost or engine died"}
                 )
 
             smf.printd("Response Dict CRS", res_dict, level="DEBUG")
             return res_dict
 
         except Exception as e:
+            smf.printd("Error send IPC CRS", e, level="ERROR")
             return {"status": "ERROR", "message": str(e)}
         finally:
-            with cls._lock:
+            # Pastikan memori dictionary dibersihkan
+            with cls._dict_lock:
                 cls._pending_requests.pop(msg_id, None)
                 cls._responses.pop(msg_id, None)
