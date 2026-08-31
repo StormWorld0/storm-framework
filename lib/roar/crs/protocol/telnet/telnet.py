@@ -171,7 +171,7 @@ class TelnetClient:
             for item in expected_list
         ]
 
-        # Fix bug `timeout or self.timeout` untuk mengakomodasi timeout=0
+        #`timeout or self.timeout` untuk mengakomodasi timeout=0
         wait_time = timeout if timeout is not None else self.timeout
         start_time = time.time()
 
@@ -207,7 +207,6 @@ class TelnetClient:
                     break
 
         # Timeout / Selesai membaca: Kembalikan sisa buffer (jika ada)
-        sts = 
         res = self._buffer
         self._buffer = b""
         response = res if raw else res.decode("utf-8", errors="ignore")
