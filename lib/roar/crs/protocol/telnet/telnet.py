@@ -54,7 +54,7 @@ class TelnetOpt:
     XDISPLOC = b"\x23"
     OLD_ENVIRON = b"\x24"
     NEW_ENVIRON = b"\x27"
-
+    
 
 class TelnetClient:
     """
@@ -68,6 +68,21 @@ class TelnetClient:
         self.timeout = timeout
         self._buffer = b""
         self._iac_fragment = b""
+
+    @property
+    def ok(self) -> bool:
+        """Returns True on success"""
+        return self.sock.ok
+
+    @property
+    def status(self) -> str:
+        """Status string of the open process (SUCCESS/ERROR/TIMEOUT)."""
+        return self.sock.status
+
+    @property
+    def message(self) -> str:
+        """Detailed message of the open connection process."""
+        return self.sock.message
 
     def _negotiate_iac(self, raw_data: bytes) -> bytes:
         data = self._iac_fragment + raw_data
@@ -177,13 +192,13 @@ class TelnetClient:
                 break
 
             read_timeout = 0.3 if self._buffer else wait_time
-            if self.ok:
+            if self.resend.ok:
                 resp = self.sock.recv(readsize=4096, timeout=read_timeout)
 
-            if resp.ok and not resp.raw_bytes:
-                if self._buffer:
-                    break
-                continue
+                if resp.ok and not resp.raw_bytes:
+                    if self._buffer:
+                        break
+                    continue
 
             clean_chunk = self._negotiate_iac(resp.raw_bytes)
             self._buffer += clean_chunk
@@ -192,6 +207,7 @@ class TelnetClient:
                 break
 
         # Timeout / Selesai membaca: Kembalikan sisa buffer (jika ada)
+        sts = 
         res = self._buffer
         self._buffer = b""
         response = res if raw else res.decode("utf-8", errors="ignore")
@@ -210,29 +226,11 @@ class TelnetClient:
         else:
             cmd_payload = command + b"\r\n"
 
-        self.sock.send(cmd_payload, timeout=timeout)
+        self.resend = self.sock.send(cmd_payload, timeout=timeout)
         return self.read(expected, timeout, raw)
-
-    @property
-    def ok(self) -> bool:
-        """Returns True on success"""
-        return self.sock.ok
-
-    @property
-    def status(self) -> str:
-        """Status string of the open process (SUCCESS/ERROR/TIMEOUT)."""
-        return self.sock.status
-
-    @property
-    def message(self) -> str:
-        """Detailed message of the open connection process."""
-        return self.sock.message
 
     def close(self):
         self.sock.close()
-
-    def __bool__(self):
-        return self.ok
 
     def __enter__(self):
         return self
