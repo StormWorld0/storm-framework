@@ -1,6 +1,8 @@
 import smf
 import sys
+
 from apps.utility.colors import C
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 STATUS_OPEN = "✅"
 STATUS_CLOSED = "❌"
@@ -20,7 +22,7 @@ to find vulnerabilities, do a quick scan of.
 }
 
 
-def get_service_banner(target_ip, port, net):
+def get_service_banner(ip, port, net):
     """
     Checking port status and parsing banner/version information via Go CRS Engine.
     """
@@ -29,19 +31,20 @@ def get_service_banner(target_ip, port, net):
         payload_body = ""
         if port in [80, 443, 8080]:
             payload_body = (
-                f"HEAD / HTTP/1.1\r\nHost: {target_ip}\r\nConnection: close\r\n\r\n"
+                f"HEAD / HTTP/1.1\r\nHost: {ip}\r\nConnection: close\r\n\r\n"
             )
-
-        # Kirim argument sebagai dict/kwargs sesuai spec wrapper Python Anda
         s = net.Socket(
-            host=target_ip,
-            port=port,
-            timeout=2.0,
-        )
-        if s.ok:
-            r = s.send(data=payload_body, timeout=0.5)
-            if r.ok:
-                res = s.recv(1024)
+                host=ip,
+                port=port,
+                timeout=2.0,
+            )
+            
+        if not s.ok:
+            return f"{C.ERROR} CLOSED " + STATUS_CLOSED, None
+            
+        r = s.send(data=payload_body, timeout=0.5)
+        if r.ok:
+            res = s.recv(1024)
 
         # Jika Go berhasil melakukan Dial (Socket Terbuka)
         if res.ok:
@@ -174,26 +177,32 @@ def execute(options, net):
     smf.printf(f"{C.HEADER} SCANNING: PORT & VERSION in {target_ip}")
     MAX_TOTAL_WIDTH = 30
     try:
-        for port in ports_to_check:
-            status_line, banner = get_service_banner(target_ip, port, net)
-            service_name = port_names.get(port, "Unknown Service")
+        ThreadPoolExecutor(max_workers=10) as pool:
+            future = [
+                pool.submit(get_service_banner, target_ip, port, net)
+                for port in ports_to_check
+            ]
 
-            port_info_string = f"  Port {port} ({service_name})"
-            padding_string = port_info_string.ljust(MAX_TOTAL_WIDTH)
-            output_line = f"{C.MENU}{padding_string}: {status_line}"
-            if "OPEN" in status_line:
-                if (
-                    banner
-                    and "No information" not in banner
-                    and "Error while retrieving banner" not in banner
-                ):
-                    clean_banner = banner.replace("\n", " ").strip()
-                    output_line += f" {C.MENU} | {C.SUCCESS}{clean_banner}"
-                else:
-                    output_line += f" {C.MENU} | INFO: {banner}"
+            for r in as_completed(future):
+                status_line, banner = r.result()
+                    
+                service_name = port_names.get(port, "Unknown Service")
+                port_info_string = f"  Port {port} ({service_name})"
+                padding_string = port_info_string.ljust(MAX_TOTAL_WIDTH)
+                output_line = f"{C.MENU}{padding_string}: {status_line}"
+                if "OPEN" in status_line:
+                    if (
+                        banner
+                        and "No information" not in banner
+                        and "Error while retrieving banner" not in banner
+                    ):
+                        clean_banner = banner.replace("\n", " ").strip()
+                        output_line += f" {C.MENU} | {C.SUCCESS}{clean_banner}"
+                    else:
+                        output_line += f" {C.MENU} | INFO: {banner}"
 
-            output_line += f"{C.RESET}"
-            smf.printf(output_line)
+                output_line += f"{C.RESET}"
+                smf.printf(output_line)
 
         smf.printf(f"{C.HEADER} --- SCAN COMPLETE ---")
     except KeyboardInterrupt:
