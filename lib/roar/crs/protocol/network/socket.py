@@ -260,7 +260,7 @@ class SocketResponse:
         return None
 
     def __bool__(self):
-        """Memungkinkan sintaks: if response: ..."""
+        """Allows syntax: if r.ok:"""
         return self.ok
 
     def __repr__(self):
@@ -278,7 +278,25 @@ class Socket(SocketState):
         super().__init__(*args, **kwargs)
         self.initial_response = self.open()
 
+    # --- VALIDATION GATE PROPERTIES ---
+    @property
+    def ok(self) -> bool:
+        """Boolean status of open connection success."""
+        return self.initial_response.ok
+
+    @property
+    def status(self) -> str:
+        """Status string of the open process (SUCCESS/ERROR/TIMEOUT)."""
+        return self.initial_response.status
+
+    @property
+    def message(self) -> str:
+        """Detailed message of the open connection process."""
+        return self.initial_response.message
+
+    
     def open(self, timeout: float = None) -> SocketResponse:
+        """Open connection"""
         self._ensure_open("open")
         packet = IPCPayloadBuilder.build(
             state=self,
