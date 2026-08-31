@@ -180,7 +180,7 @@ def execute(options, net):
                 pool.submit(get_service_banner, target_ip, port, net): port
                 for port in ports_to_check
             }
-                    
+
             for future in as_completed(futures):
                 port = futures[future]
                 status_line, banner = future.result()
