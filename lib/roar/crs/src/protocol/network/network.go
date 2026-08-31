@@ -22,6 +22,12 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	utils.Take()
 	startTime := time.Now()
 
+	if req.SessionID != "" {
+		mu := utils.getSessionLock(req.SessionID)
+		mu.Lock()       // Goroutine lain dengan SessionID sama akan antre (pause) di sini
+		defer mu.Unlock() // Otomatis dibuka saat fungsi Network selesai/return
+	}
+
 	timeout := 5 * time.Second
 	if req.Timeout > 0 {
 		timeout = time.Duration(req.Timeout * float64(time.Second))
