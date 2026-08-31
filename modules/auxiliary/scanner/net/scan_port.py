@@ -40,9 +40,8 @@ def get_service_banner(target_ip, port, net):
         )
         if s.ok:
             r = s.send(data=payload_body, timeout=0.5)
-
-        if r.ok:
-            res = s.recv(1024)
+            if r.ok:
+                res = s.recv(1024)
 
         # Jika Go berhasil melakukan Dial (Socket Terbuka)
         if res.ok:
