@@ -4,7 +4,6 @@ import requests
 import subprocess
 import sys
 
-from scripts.wrapper.gen_wrapper import generate
 
 def update():
     url = "https://raw.githubusercontent.com/StormWorld0/storm-framework/main/data/data.json"
@@ -29,11 +28,8 @@ def update():
     )
 
     if process.returncode == 0:
-        print(
-            f"\n[✓] System updated to version => {latest_version}"
-        )
+        print(f"\n[✓] System updated to version => {latest_version}")
 
-    
     # Trigger Compiler ONLY IF needed
     try:
         from scripts.cpl import compiler
@@ -56,6 +52,7 @@ def update():
     except Exception as e:
         print(f"Error executing signature => {e}")
         sys.exit(100)
+
 
 if __name__ == "__main__":
     update()
