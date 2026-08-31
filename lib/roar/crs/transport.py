@@ -13,14 +13,15 @@ from ..calling import call_bin
 from apps.utility.colors import CC
 from lib.pid_manager import PIDManager as pid
 
+
 class CRS:
     """IPC (Inter-Process Communication) via Subprocess (Thread-Safe & Deadlock-Free)."""
 
     _process = None
-    _init_lock = threading.Lock()   # Gembok khusus untuk inisialisasi / spawn
+    _init_lock = threading.Lock()  # Gembok khusus untuk inisialisasi / spawn
     _write_lock = threading.Lock()  # Gembok khusus untuk mencegah tabrakan Write STDIN
-    _dict_lock = threading.Lock()   # Gembok khusus untuk _pending_requests & _responses
-    
+    _dict_lock = threading.Lock()  # Gembok khusus untuk _pending_requests & _responses
+
     _pending_requests = {}
     _responses = {}
     _reader_thread = None
@@ -47,7 +48,7 @@ class CRS:
                 [binary_path],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.DEVNULL, 
+                stderr=subprocess.DEVNULL,
                 text=True,
                 bufsize=1,
             )
@@ -57,9 +58,9 @@ class CRS:
             # Nyalakan Background Reader
             if cls._reader_thread is None or not cls._reader_thread.is_alive():
                 cls._reader_thread = threading.Thread(
-                    target=cls._background_reader, 
-                    args=(cls._process,), # Passing reference secara eksplisit
-                    daemon=True
+                    target=cls._background_reader,
+                    args=(cls._process,),  # Passing reference secara eksplisit
+                    daemon=True,
                 )
                 cls._reader_thread.start()
 
@@ -87,7 +88,7 @@ class CRS:
                             if msg_id in cls._pending_requests:
                                 cls._responses[msg_id] = res_dict
                                 cls._pending_requests[msg_id].set()
-                
+
                 except (BrokenPipeError, OSError, ValueError):
                     break
                 except Exception as e:
@@ -99,7 +100,7 @@ class CRS:
             with cls._init_lock:
                 if cls._process is my_proc:
                     cls._process = None
-            
+
             # Bebaskan semua thread yang sedang menunggu agar tidak infinite timeout
             with cls._dict_lock:
                 for event in cls._pending_requests.values():
@@ -115,7 +116,7 @@ class CRS:
         data["msg_id"] = msg_id
         req_timeout = float(data.get("timeout", 5.0)) + 1.0
         event = threading.Event()
-        
+
         with cls._dict_lock:
             cls._pending_requests[msg_id] = event
 
