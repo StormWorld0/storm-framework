@@ -29,6 +29,7 @@ func main() {
 		<-sigChan
 		cancel() // Batalkan semua konteks worker jika OS mengirim signal TERM/INT
 		os.Stdin.Close()
+		utils.Stop() // Menghentikan ratelimiter
 	}()
 	
 	crs := bufio.NewScanner(os.Stdin)
@@ -37,6 +38,7 @@ func main() {
 	crs.Buffer(buf, maxCapacity)
 
 	var req packet.RequestPacket
+	
 	// Inisialisasi Global ratelimiter
 	utils.InitGlobalRateLimiter(ctx, req)
 
