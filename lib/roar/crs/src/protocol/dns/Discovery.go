@@ -5,6 +5,7 @@ package dns
 
 import (
 	"context"
+	"sync/atomic"
 	"crypto/tls"
 	"net/http"
 	"time"
@@ -15,7 +16,8 @@ import (
 )
 
 var httpClient *http.Client
-const skipVerify = true // Sesuaikan variabel ini jika belum terdefinisi
+var activeCount int32 = 0
+const skipVerify = true
 
 func init() {
 	// Reusable transport object to avoid socket exhaustion (TIME_WAIT limit)
@@ -95,6 +97,7 @@ func Discovery(req packet.RequestPacket) packet.ResponsePacket {
 			"status_code": resp.StatusCode,
 			"headers":     headers,
 			"protocol":    resp.Proto,
+			"active-url":  atomic.LoadInt32(&activeCount),
 			"url":         targetURL,
 			"engine":      "Discovery",
 		}
@@ -108,6 +111,7 @@ func Discovery(req packet.RequestPacket) packet.ResponsePacket {
 
 	// Evaluasi HTTP codes
 	if resp.StatusCode < 400 || resp.StatusCode == 401 || resp.StatusCode == 403 {
+		atomic.AddInt32(activeCount, 1)
 		return packet.ResponsePacket{
 			Status: "SUCCESS",
 			Data: generateMetadata(),
