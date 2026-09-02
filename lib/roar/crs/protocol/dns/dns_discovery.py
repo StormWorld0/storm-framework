@@ -155,6 +155,7 @@ class DNSDiscovery:
         frl: int = 10,
         con: int = 0,
         tls: bool = False,
+        ua: str = "",
         **kwargs,
     ) -> Iterator[DNSResponse]:
         """
@@ -182,6 +183,7 @@ class DNSDiscovery:
                     "ratelimit": rl,
                     "frate": frl,
                     "goroutine": con,
+                    "user-agent": ua,
                 }
                 raw_res = CRS.send(packet)
                 return DNSResponse(raw_res)
