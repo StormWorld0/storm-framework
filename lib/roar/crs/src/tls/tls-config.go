@@ -12,7 +12,7 @@ type tlsConnStateGetter interface {
 }
 
 // Validation TLS
-func isTLSConn(c net.Conn) bool {
+func IsTLSConn(c net.Conn) bool {
 	if c == nil {
 		return false
 	}
