@@ -37,7 +37,7 @@ func tlsVersionString(v uint16) string {
 }
 
 // Extract TLS Information yang menerima (tls.ConnectionState)
-func ExtractTLSInfoFromState(state tls.ConnectionState) map[string]interface{} {
+func ExtractTLSInfoFromState(state *tls.ConnectionState) map[string]interface{} {
 	tlsData := map[string]interface{}{
 		"tls_version":    tlsVersionString(state.Version),
 		"cipher_suite":   tls.CipherSuiteName(state.CipherSuite),
