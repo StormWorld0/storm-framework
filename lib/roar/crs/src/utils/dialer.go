@@ -23,6 +23,8 @@ func InitGlobalDialer() error {
 		options := fastdialer.DefaultOptions
 		options.DialerTimeout = 5 * time.Second
 		options.DialerKeepAlive = 10 * time.Second
+		options.MaxRetries = 2
+		options.DisableZtlsFallback = true
 		options.WithDialerHistory = true      // Melacak history IP untuk debugging
 		options.EnableFallback = true         // DNS fallback otomatis
 		
