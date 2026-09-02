@@ -95,6 +95,7 @@ func Discovery(req packet.RequestPacket) packet.ResponsePacket {
 			"status_code": resp.StatusCode,
 			"headers":     headers,
 			"protocol":    resp.Proto,
+			"url":         targetURL,
 			"engine":      "Discovery",
 		}
 	    if req.InfoTLS && resp.TLS != nil {
