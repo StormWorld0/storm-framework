@@ -154,7 +154,7 @@ class DNSDiscovery:
             smf.printf(
                 f"[!] {CC.YELLOW}Unrecognized parameters dropped =>{CC.RESET}", kwargs
             )
-            
+
         packet = {
             "primitive": "DNS_SEND",
             "mode": "DNSDiscovery",
