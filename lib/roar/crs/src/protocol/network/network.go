@@ -15,6 +15,7 @@ import (
 
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/utils"
+	ctls "github.com/StormWorld0/storm-framework/lib/roar/crs/src/tls"
 )
 
 // Network adalah entry point eksekusi koneksi menggunakan POSIX-like primitive operations.
@@ -127,7 +128,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			meta["local_ip"] = lAddr.String()
 		}
 		if req.InfoTLS {
-			meta["info_tls"] = ExtractTLSInfo(conn)
+			meta["info_tls"] = ctls.ExtractTLSInfo(conn)
 		}
 		return meta
 	}
