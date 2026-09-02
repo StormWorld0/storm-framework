@@ -52,7 +52,6 @@ def execute(options, net):
         resp = net.DNSD(domain, wordlist, con=threads, timeout=3.0)
         if resp.ok:
             code = code_color(resp)
-            act = resp.url_active
             serv = resp.get_headers("server")
             ct = resp.get_headers("Content-Type")
 
@@ -65,7 +64,7 @@ def execute(options, net):
                 )
 
         smf.printf(
-            f"\n[✓]{CC.YELLOW} Enumeration complete. Found {act} active subdomain.{CC.RESET}"
+            f"\n[✓]{CC.YELLOW} Enumeration complete. Found {resp.url_active} active subdomain.{CC.RESET}"
         )
     except KeyboardInterrupt:
         smf.printf("\n[✓] Sub Enumeration is stopped")
