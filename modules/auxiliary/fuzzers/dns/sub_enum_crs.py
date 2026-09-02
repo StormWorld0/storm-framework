@@ -33,20 +33,20 @@ def code_color(state):
         cd_color = f"{CC.GREEN}{code}{CC.RESET}"
     elif 201 <= code <= 399:
         cd_color = f"{CC.CYAN}{code}{CC.RESET}"
-    elif code => 400:
+    elif code >= 400:
         cd_color = f"{CC.YELLOW}{code}{CC.RESET}"
     else:
         return code
     return cd_color
 
 def execute(options, net):
-    target_domain = options.get("DOMAIN")
+    domain = options.get("DOMAIN")
     wordlist = options.get("WORD")
-    threads = str(options.get("THREAD"))
+    threads = options.get("THREAD")
 
     smf.printf(
         f"\n[*] {CC.YELLOW}Starting SUBDOMAIN ENUMERATION for =>{CC.RESET}",
-        target_domain,
+        domain,
     )
 
     try:
