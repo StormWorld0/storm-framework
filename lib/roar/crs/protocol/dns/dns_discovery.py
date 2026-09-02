@@ -141,7 +141,8 @@ class DNSDiscovery:
         domain: str,
         wordlist: Optional[str] = None,
         timeout: float = 2.0,
-        ratelimit: int = 150,
+        rl: int = 150,
+        frl: int = 10,
         con: int = 0,
         tls: bool = False,
         **kwargs,
@@ -168,7 +169,8 @@ class DNSDiscovery:
                     "url": target_url,
                     "info_tls": tls,
                     "timeout": timeout,
-                    "ratelimit": ratelimit,
+                    "ratelimit": rl,
+                    "frate": frl,
                     "goroutine": con,
                 }
                 raw_res = CRS.send(packet)
