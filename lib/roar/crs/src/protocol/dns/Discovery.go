@@ -90,14 +90,12 @@ func Discovery(req packet.RequestPacket) packet.ResponsePacket {
 		}
 	}
 
-	var tlsData map[string]interface{}
-
-	generateMetadata := func(readBytes int) map[string]interface{} {
+	generateMetadata := func() map[string]interface{} {
 	    meta := map[string]interface{}{
-				"status_code": resp.StatusCode,
-				"headers":     headers,
-				"protocol":    resp.Proto,
-				"engine":      "Discovery",
+			"status_code": resp.StatusCode,
+			"headers":     headers,
+			"protocol":    resp.Proto,
+			"engine":      "Discovery",
 		}
 	    if req.InfoTLS && resp.TLS != nil {
 		    // Dapatkan detail handshake SSL/TLS
