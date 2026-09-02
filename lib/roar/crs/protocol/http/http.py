@@ -17,11 +17,11 @@ class HTTPTLSMetadata:
     """
 
     def __init__(self, data: Dict[str, Any]):
-        self.subject: Optional[str] = data.get("subject")
-        self.issuer: Optional[str] = data.get("issuer")
+        self.subject: Optional[str] = data.get("subject", "")
+        self.issuer: Optional[str] = data.get("issuer", "")
         # Menangani variasi penamaan key antar primitive IPC (dns_names / dns_name)
-        self.dns_name: list = data.get("dns_names") or data.get("dns_name", [])
-        self.expires: Optional[str] = data.get("expires_at") or data.get("expires")
+        self.dns_name: list = data.get("dns_name", [])
+        self.expires: Optional[str] = data.get("expires", "")
 
         self.version: str = data.get("tls_version", "Unknown")
         self.cipher: str = data.get("cipher_suite", "Unknown")
