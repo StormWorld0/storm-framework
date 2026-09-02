@@ -11,6 +11,7 @@ type tlsConnStateGetter interface {
 	ConnectionState() tls.ConnectionState
 }
 
+// Validation TLS
 func isTLSConn(c net.Conn) bool {
 	if c == nil {
 		return false
@@ -19,6 +20,7 @@ func isTLSConn(c net.Conn) bool {
 	return ok
 }
 
+// Ekstract TLS Version
 func tlsVersionString(v uint16) string {
     switch v {
 	    case tls.VersionTLS10:
@@ -34,6 +36,7 @@ func tlsVersionString(v uint16) string {
 	}
 }
 
+// Extract TLS Information yang menerima (tls.ConnectionState)
 func ExtractTLSInfoFromState(state tls.ConnectionState) map[string]interface{} {
 	tlsData := map[string]interface{}{
 		"tls_version":    tlsVersionString(state.Version),
@@ -56,7 +59,7 @@ func ExtractTLSInfoFromState(state tls.ConnectionState) map[string]interface{} {
 	return tlsData
 }
 
-// ExtractTLSInfo menarik state kriptografi dari koneksi.
+// Extract TLS Information yang menerima (net.Conn)
 func ExtractTLSInfo(conn net.Conn) map[string]interface{} {
 	if stateGetter, ok := conn.(tlsConnStateGetter); ok {
 		state := stateGetter.ConnectionState()
