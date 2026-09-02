@@ -2,6 +2,7 @@ package tls
 
 import (
 	"net"
+	"time"
 	"strconv"
 	"crypto/tls"
 )
