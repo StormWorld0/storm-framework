@@ -67,8 +67,6 @@ func HTTP(req packet.RequestPacket) packet.ResponsePacket {
 
 		bodyBytes, _ := io.ReadAll(io.LimitReader(resp.Body, 2*1024*1024))
 
-		var tlsData map[string]interface{}
-
 		generateMetadata := func() map[string]interface{} {
 		    meta := map[string]interface{}{
 	    		"status_code": resp.StatusCode,
@@ -156,8 +154,6 @@ func HTTP(req packet.RequestPacket) packet.ResponsePacket {
 	}
 
 	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 2*1024*1024))
-	
-	var tlsData map[string]interface{}
 
 	generateMetadata := func() map[string]interface{} {
 		meta := map[string]interface{}{
@@ -169,8 +165,8 @@ func HTTP(req packet.RequestPacket) packet.ResponsePacket {
 		}
         if req.InfoTLS && resp.TLS != nil {
 	        // Dapatkan detail handshake SSL/TLS
-    	    conn := resp.TLS
-			meta["info_tls"] = ctls.ExtractTLSInfo(conn)
+    	    state := resp.TLS
+			meta["info_tls"] = ctls.ExtractTLSInfoFromState(state)
         }
 		return meta
 	}
