@@ -12,13 +12,13 @@ func init() {
 	client = cdncheck.New()
 }
 
-func WAFDetection(host string) (bool, error) {
+func WAFDetection(host string) (bool) {
 	// Validation input
 	if ip := net.ParseIP(host); ip != nil {
-		matched, _, err := client.CheckWAF(ip)
-		return matched, err
+		matched, _, _ := client.CheckWAF(ip)
+		return matched
 	}
 	// Fallback
-	matched, _, _, err := client.CheckDomainWithFallback(host)
-	return matched, err
+	matched, _, _, _ := client.CheckDomainWithFallback(host)
+	return matched
 }
