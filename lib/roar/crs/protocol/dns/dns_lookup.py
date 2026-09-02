@@ -85,7 +85,8 @@ class DNSResolver:
         type: str = "A",
         proto: str = "tcp",
         timeout: float = 2.0,
-        ratelimit: int = 150,
+        rl: int = 150,
+        frl: int = 10,
         con: int = 0,
         **kwargs,
     ) -> DNSResponse:
@@ -101,7 +102,8 @@ class DNSResolver:
             "type": type,
             "protocol": proto,
             "timeout": timeout,
-            "ratelimit": ratelimit,
+            "ratelimit": rl,
+            "frate": frl,
         }
 
         if kwargs:
