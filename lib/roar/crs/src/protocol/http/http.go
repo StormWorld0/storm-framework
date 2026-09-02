@@ -68,36 +68,21 @@ func HTTP(req packet.RequestPacket) packet.ResponsePacket {
 
 		var tlsData map[string]interface{}
 
-        if req.InfoTLS && resp.TLS != nil {
-	        // Dapatkan detail handshake SSL/TLS
-    	    state := resp.TLS
-    	    if len(state.PeerCertificates) > 0 {
-		        cert := state.PeerCertificates[0] // Leaf Certificate
-		        tlsData = map[string]interface{}{
-			        "subject":          cert.Subject.CommonName,
-			        "issuer":           cert.Issuer.CommonName,
-			        "dns_names":        cert.DNSNames,
-			        "expires_at":       cert.NotAfter.Format(time.RFC3339),
-			        "tls_version":      tlsVersionString(state.Version),
-			        "cipher_suite":     tls.CipherSuiteName(state.CipherSuite),
-			    	"protocol":         state.NegotiatedProtocol,
-			    	"hostname":         state.ServerName,
-				    "handshake":        state.HandshakeComplete,
-			    	"session_resume":   state.DidResume,
-				    "cert_chain":       state.VerifiedChains,
-		    	}
-	        }
-        }
-		return packet.ResponsePacket{
-			Status: "SUCCESS",
-			Data: map[string]interface{}{
-				"status_code": resp.StatusCode,
-				"body":        string(bodyBytes),
-				"headers":     headers,
-				"info_tls":    tlsData,
-				"engine":      "rawhttp",
-			},
+		generateMetadata := func() map[string]interface{} {
+		    meta: map[string]interface{}{
+	    		"status_code": resp.StatusCode,
+			    "body":        string(bodyBytes),
+		    	"headers":     headers,
+			    "engine":      "rawhttp",
+	    	}
+		    if req.InfoTLS && resp.TLS != nil {
+    	        conn := resp.TLS
+		    	meta["info_tls"] = ctls.ExtractTLSInfo(conn)
+            }
+			return meta
 		}
+		
+		return packet.ResponsePacket{Status: "SUCCESS", Data: generateMetadata()}
 	}
 
 	// ---------------------------------------------------------
@@ -173,36 +158,24 @@ func HTTP(req packet.RequestPacket) packet.ResponsePacket {
 	
 	var tlsData map[string]interface{}
 
-    if req.InfoTLS && resp.TLS != nil {
-	    // Dapatkan detail handshake SSL/TLS
-    	state := resp.TLS
-    	if len(state.PeerCertificates) > 0 {
-		    cert := state.PeerCertificates[0] // Leaf Certificate
-		    tlsData = map[string]interface{}{
-			    "subject":          cert.Subject.CommonName,
-			    "issuer":           cert.Issuer.CommonName,
-			    "dns_names":        cert.DNSNames,
-			    "expires_at":       cert.NotAfter.Format(time.RFC3339),
-			    "tls_version":      tlsVersionString(state.Version),
-			    "cipher_suite":     tls.CipherSuiteName(state.CipherSuite),
-				"protocol":         state.NegotiatedProtocol,
-				"hostname":         state.ServerName,
-				"handshake":        state.HandshakeComplete,
-				"session_resume":   state.DidResume,
-				"cert_chain":       state.VerifiedChains,
-			}
-	    }
-    }
-
-	return packet.ResponsePacket{
-		Status: "SUCCESS",
-		Data: map[string]interface{}{
+	generateMetadata := func() map[string]interface{} {
+		meta: map[string]interface{}{
 			"status_code": resp.StatusCode,
 			"body":        string(respBody),
 			"headers":     headers,
 			"protocol":    resp.Proto,
-			"info_tls":    tlsData,
 			"engine":      "retryablehttp",
-		},
+		}
+        if req.InfoTLS && resp.TLS != nil {
+	        // Dapatkan detail handshake SSL/TLS
+    	    conn := resp.TLS
+			meta["info_tls"] = ctls.ExtractTLSInfo(conn)
+        }
+		return meta
+	}
+
+	return packet.ResponsePacket{
+		Status: "SUCCESS",
+		Data: generateMetadata(),
 	}
 }
