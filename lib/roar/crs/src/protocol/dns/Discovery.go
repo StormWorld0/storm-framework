@@ -101,8 +101,8 @@ func Discovery(req packet.RequestPacket) packet.ResponsePacket {
 		}
 	    if req.InfoTLS && resp.TLS != nil {
 		    // Dapatkan detail handshake SSL/TLS
-		    conn := resp.TLS
-		    meta["info_tls"] = ctls.ExtractTLSInfo(conn)
+		    state := resp.TLS
+		    meta["info_tls"] = ctls.ExtractTLSInfoFromState(state)
 	    }
 		return meta
 	}
