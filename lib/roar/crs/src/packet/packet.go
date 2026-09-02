@@ -30,7 +30,7 @@ type RequestPacket struct {
 	Verify        bool              `json:"verify"`              // True / False
 	InfoTLS       bool              `json:"info_tls"`            // True / False
 	RateLimit     int               `json:"ratelimit"`           // 0 = Unlimited
-	Frl           int               `json:"fallback-ratelimit"`  // Fallback Ratelimit if encounter WAF/429
+	Frl           int               `json:"frate"`               // Fallback Ratelimit if encounter WAF/429
 	Retry         int               `json:"retry"`               // Retry connection
 	Encoding      string            `json:"encoding,omitempty"`  // Hex
 	ReadSize      int               `json:"readsize"`            // Limit Read Buffer
