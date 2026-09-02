@@ -11,6 +11,7 @@ import (
 
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/utils"
+	ctls "github.com/StormWorld0/storm-framework/lib/roar/crs/src/tls"
 )
 
 var httpClient *http.Client
@@ -91,38 +92,26 @@ func Discovery(req packet.RequestPacket) packet.ResponsePacket {
 
 	var tlsData map[string]interface{}
 
-	if req.InfoTLS && resp.TLS != nil {
-		// Dapatkan detail handshake SSL/TLS
-		state := resp.TLS
-		if len(state.PeerCertificates) > 0 {
-			cert := state.PeerCertificates[0] // Leaf Certificate
-			tlsData = map[string]interface{}{
-				"subject":        cert.Subject.CommonName,
-				"issuer":         cert.Issuer.CommonName,
-				"dns_names":      cert.DNSNames,
-				"expires_at":     cert.NotAfter.Format(time.RFC3339),
-				"tls_version":    tlsVersionString(state.Version),
-				"cipher_suite":   tls.CipherSuiteName(state.CipherSuite),
-				"protocol":       state.NegotiatedProtocol,
-				"hostname":       state.ServerName,
-				"handshake":      state.HandshakeComplete,
-				"session_resume": state.DidResume,
-				"cert_chain":     state.VerifiedChains,
-			}
+	generateMetadata := func(readBytes int) map[string]interface{} {
+	    meta := map[string]interface{}{
+				"status_code": resp.StatusCode,
+				"headers":     headers,
+				"protocol":    resp.Proto,
+				"engine":      "Discovery",
 		}
+	    if req.InfoTLS && resp.TLS != nil {
+		    // Dapatkan detail handshake SSL/TLS
+		    conn := resp.TLS
+		    meta["info_tls"] = ctls.ExtractTLSInfo(conn)
+	    }
+		return meta
 	}
 
 	// Evaluasi HTTP codes
 	if resp.StatusCode < 400 || resp.StatusCode == 401 || resp.StatusCode == 403 {
 		return packet.ResponsePacket{
 			Status: "SUCCESS",
-			Data: map[string]interface{}{
-				"status_code": resp.StatusCode,
-				"headers":     headers,
-				"protocol":    resp.Proto,
-				"info_tls":    tlsData,
-				"engine":      "Discovery",
-			},
+			Data: generateMetadata(),
 		}
 	}
 
