@@ -14,9 +14,13 @@ type RequestPacket struct {
 	Headers       map[string]string `json:"headers,omitempty"`   // Header can be customized if socket
 
 	// DNS
-    Domain        string             `json:"domain,omitempty"`    // example.com
-    Type          string             `json:"type,omitempty"`      // A, AAAA, MX, TXT, ...
-    Protocol      string             `json:"protocol,omitempty"`  // udp, tcp, tls, ssl
+    Domain        string            `json:"domain,omitempty"`   // example.com
+    Type          string            `json:"type,omitempty"`     // A, AAAA, MX, TXT, ...
+    Protocol      string            `json:"protocol,omitempty"` // udp, tcp, tls, ssl
+	Concurrency   int               `json:"concurrency"`        // Concurency
+
+	// File
+	Word          string            `json:"wordlist,omitempty"` // File wordlist
 
 	// Standard parameters
 	Host          string            `json:"host,omitempty"`      // URL / IP / Domain
