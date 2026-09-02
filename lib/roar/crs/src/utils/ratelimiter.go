@@ -87,7 +87,7 @@ func Take() {
 
 // Close dipanggil HANYA saat daemon menangkap (SIGTERM).
 // Untuk memastikan pembersihan akhir secara manual.
-func Close() {
+func Stop() {
 	if globalLimiter != nil {
 		globalLimiter.mu.Lock()
 		defer globalLimiter.mu.Unlock()
