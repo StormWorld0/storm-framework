@@ -1,6 +1,6 @@
 // https://github.com/StormWorld0/storm-framework
 // License SMF
-// Author zxelzy (Core Rate Limiter Engine)
+// Author zxelzy
 package utils
 
 import (
@@ -12,12 +12,12 @@ import (
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 )
 
-// EngineRateLimiter adalah arsitektur standar untuk kontrol RPS pada scanner.
-// Mendukung eksekusi konkuren yang aman dan penyesuaian limit dinamis (Adaptive Backoff).
+// EngineRateLimiter didesain untuk Long-Lived Daemon.
 type EngineRateLimiter struct {
-	mu      sync.RWMutex
-	limiter *ratelimit.Limiter
-	ctx     context.Context
+	mu         sync.RWMutex
+	limiter    *ratelimit.Limiter
+	ctx        context.Context 
+	cancelFunc context.CancelFunc 
 }
 
 var (
@@ -25,58 +25,74 @@ var (
 	limiterOnce   sync.Once
 )
 
-// InitGlobalRateLimiter menginisialisasi Rate Limiter.
-// WAJIB menerima context dari caller (misal: context engine utama) untuk 
-// mencegah memory/goroutine leak saat proses scan dibatalkan atau selesai.
+// InitGlobalRateLimiter menginisialisasi Rate Limiter untuk daemon.
+// rootCtx adalah context dari daemon yang terikat dengan sigterm.
 func InitGlobalRateLimiter(ctx context.Context, req packet.RequestPacket) {
 	limiterOnce.Do(func() {
 		globalLimiter = &EngineRateLimiter{
 			ctx: ctx,
 		}
-		// Inisialisasi state awal
 		globalLimiter.SetRate(req.RateLimit)
 	})
 }
 
-// SetRate memungkinkan penyesuaian limit secara on-the-fly (Runtime).
-// Fitur krusial bagi scanner untuk melakukan "Adaptive Rate Limiting" 
-// (misalnya: menurunkan limit secara otomatis jika mendeteksi HTTP 429 atau WAF block).
+// SetRate memungkinkan update rate secara on-the-fly untuk task baru
+// TANPA menyebabkan goroutine leak pada daemon yang terus hidup.
 func (e *EngineRateLimiter) SetRate(maxUnits int) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	// Re-inisialisasi limiter baru. Limiter lama akan di-garbage collect
-	// dan tickernya akan mati saat `e.ctx` utama dibatalkan.
+	// 1. Cleanup Limiter Lama:
+	// Jika sebelumnya sudah ada limiter yang berjalan, batalkan context-nya.
+	// Ini akan membunuh background goroutine (ticker) bawaan projectdiscovery/ratelimit.
+	if e.cancelFunc != nil {
+		e.cancelFunc()
+	}
+
+	// 2. Buat Lifecycle Baru:
+	// Turunkan context baru dari rootCtx IPC daemon.
+	// Jika daemon terkena sigterm, rootCtx mati, otomatis ctx ini juga mati.
+	ctx, cancel := context.WithCancel(e.ctx)
+	e.cancelFunc = cancel
+
 	if maxUnits <= 0 {
-		e.limiter = ratelimit.NewUnlimited(e.ctx)
+		e.limiter = ratelimit.NewUnlimited(ctx)
 		return
 	}
 
-	e.limiter = ratelimit.New(e.ctx, uint(maxUnits), time.Second)
+	e.limiter = ratelimit.New(ctx, uint(maxUnits), time.Second)
 }
 
-// UpdateGlobalRate mempermudah pemanggilan SetRate dari luar package
-// tanpa mengekspos struct internal.
+// UpdateGlobalRate mempermudah pembaruan dari modul lain (misal saat transisi task IPC)
 func UpdateGlobalRate(newLimit int) {
 	if globalLimiter != nil {
 		globalLimiter.SetRate(newLimit)
 	}
 }
 
-// Take menahan eksekusi (blocking) hingga token rate limit tersedia.
-// Harus dipanggil SEBELUM koneksi socket/HTTP dibuka.
+// Take menahan eksekusi hingga token tersedia.
 func Take() {
 	if globalLimiter == nil {
-		return // Fail-safe (Graceful return) jika limiter belum di-init
+		return
 	}
 
-	// Gunakan Read Lock agar eksekusi ribuan worker (goroutine) 
-	// tidak saling blocking (lock contention), kecuali saat SetRate() dipanggil.
 	globalLimiter.mu.RLock()
 	limiter := globalLimiter.limiter
 	globalLimiter.mu.RUnlock()
 
 	if limiter != nil {
 		limiter.Take()
+	}
+}
+
+// Close dipanggil HANYA saat daemon menangkap (SIGTERM).
+// Untuk memastikan pembersihan akhir secara manual.
+func Close() {
+	if globalLimiter != nil {
+		globalLimiter.mu.Lock()
+		defer globalLimiter.mu.Unlock()
+		if globalLimiter.cancelFunc != nil {
+			globalLimiter.cancelFunc()
+		}
 	}
 }
