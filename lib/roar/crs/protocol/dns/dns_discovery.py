@@ -184,7 +184,7 @@ class DNSDiscovery:
                     "goroutine": con,
                 }
                 raw_res = CRS.send(packet)
-                yield DNSResponse(raw_res)
+                return DNSResponse(raw_res)
 
 
 # Alias untuk entry point
