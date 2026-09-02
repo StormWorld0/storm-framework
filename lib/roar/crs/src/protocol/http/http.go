@@ -75,8 +75,8 @@ func HTTP(req packet.RequestPacket) packet.ResponsePacket {
 			    "engine":      "rawhttp",
 	    	}
 		    if req.InfoTLS && resp.TLS != nil {
-    	        conn := resp.TLS
-		    	meta["info_tls"] = ctls.ExtractTLSInfo(conn)
+    	        state := resp.TLS
+		    	meta["info_tls"] = ctls.ExtractTLSInfoFromState(state)
             }
 			return meta
 		}
