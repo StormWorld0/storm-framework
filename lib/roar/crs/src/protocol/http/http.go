@@ -69,7 +69,7 @@ func HTTP(req packet.RequestPacket) packet.ResponsePacket {
 		var tlsData map[string]interface{}
 
 		generateMetadata := func() map[string]interface{} {
-		    meta: map[string]interface{}{
+		    meta := map[string]interface{}{
 	    		"status_code": resp.StatusCode,
 			    "body":        string(bodyBytes),
 		    	"headers":     headers,
@@ -159,7 +159,7 @@ func HTTP(req packet.RequestPacket) packet.ResponsePacket {
 	var tlsData map[string]interface{}
 
 	generateMetadata := func() map[string]interface{} {
-		meta: map[string]interface{}{
+		meta := map[string]interface{}{
 			"status_code": resp.StatusCode,
 			"body":        string(respBody),
 			"headers":     headers,
