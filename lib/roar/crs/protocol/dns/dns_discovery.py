@@ -75,6 +75,11 @@ class DNSResponse:
         return self._data.get("protocol", "")
 
     @property
+    def url(self) -> str:
+        """Mengembalikan URL yang di targetkan"""
+        return self._data.get("url", "")
+
+    @property
     def headers(self) -> str:
         """Mengambil headers saat koneksi"""
         return self._headers
