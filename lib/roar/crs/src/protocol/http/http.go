@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"crypto/tls"
 	"io"
-	"strconv"
 	"net/http"
 	"net/url"
 	"strings"
@@ -18,21 +17,6 @@ import (
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/utils"
 )
-
-func tlsVersionString(v uint16) string {
-    switch v {
-	    case tls.VersionTLS10:
-		    return "TLS 1.0"
-	    case tls.VersionTLS11:
-		    return "TLS 1.1"
-	    case tls.VersionTLS12:
-		    return "TLS 1.2"
-	    case tls.VersionTLS13:
-		    return "TLS 1.3"
-	    default:
-		    return strconv.Itoa(int(v))
-	}
-}
 
 // HTTP mengeksekusi request. Secara dinamis beralih antara Standard Engine dan Raw Engine
 // tergantung pada flag req.RawMode yang ditentukan oleh module.
@@ -45,7 +29,7 @@ func HTTP(req packet.RequestPacket) packet.ResponsePacket {
 	}
 
 	// ---------------------------------------------------------
-	// ENGINE 1: RAW HTTP (Mode Tidak Waras / Malformed / Bypass)
+	// ENGINE 1: RAW HTTP (Malformed / Bypass)
 	// ---------------------------------------------------------
 	if req.RawMode {
 		options := rawhttp.DefaultOptions
@@ -63,10 +47,15 @@ func HTTP(req packet.RequestPacket) packet.ResponsePacket {
 		}
 		
 		// Module bisa menyuplai FULL raw HTTP string di req.Body
-		// Contoh: "GET / HTTP/1.1\r\nHost: target\r\nX-Injected:  spasi_aneh\r\n\r\n"
+		// Example: "GET / HTTP/1.1\r\nHost: target\r\nX-Injected:  odd_space\r\n\r\n"
 		resp, err := rawClient.DoRaw(req.Method, req.URL, uriPath, map[string][]string{}, io.NopCloser(strings.NewReader(req.Body)))
 		if err != nil {
 			return packet.ResponsePacket{Status: "ERROR", Message: "RawHTTP failed: " + err.Error()}
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode == 429 {
+			utils.UpdateGlobalRate(req.Frl)
 		}
 
 		// Konversi raw headers
@@ -75,7 +64,7 @@ func HTTP(req packet.RequestPacket) packet.ResponsePacket {
 			headers[k] = strings.Join(v, ", ") // Raw engine sering mempertahankan array string
 		}
 
-		bodyBytes, _ := io.ReadAll(resp.Body)
+		bodyBytes, _ := io.ReadAll(io.LimitReader(resp.Body, 2*1024*1024))
 
 		var tlsData map[string]interface{}
 
@@ -156,13 +145,20 @@ func HTTP(req packet.RequestPacket) packet.ResponsePacket {
 	}
 
 	// Set User-Agent Default
-	httpReq.Header.Set("User-Agent", "StormWorld/storm-framework 3.0 (Security Framework)")
+	httpReq.Header.Set("User-Agent", "storm-framework/3.0 (CRS Engine)")
+	if req.UA != "" {
+		httpReq.Header.Set("User-Agent", req.UA)
+	}
 
 	resp, err := retryClient.Do(httpReq)
 	if err != nil {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Execution failed: " + err.Error()}
 	}
 	defer resp.Body.Close()
+	
+	if resp.StatusCode == 429 {
+		utils.UpdateGlobalRate(req.Frl)
+	}
 
 	headers := make(map[string]interface{})
 	for k, v := range resp.Header {
