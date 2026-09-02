@@ -153,7 +153,7 @@ class TLSMetadata:
         self.issuer: Optional[str] = data.get("issuer")
         self.dns_name: list = data.get("dns_name", [])
         self.expires: Optional[str] = data.get("expires")
-        self.cert_chain_count: int = data.get("cert_chain_count", 0)
+        self.cert_chain: int = data.get("cert_chain", 0)
 
     def __repr__(self):
         return f"<TLSMetadata {self.version} Cipher={self.cipher_suite} Host={self.hostname}>"
@@ -190,7 +190,7 @@ class SocketResponse:
 
     @property
     def raw_bytes(self) -> bytes:
-        """Mengembalikan raw bytes apa adanya."""
+        """Mengembalikan raw bytes murni."""
         raw_val = self._data.get("raw_bytes")
 
         if isinstance(raw_val, bytes):
@@ -207,7 +207,7 @@ class SocketResponse:
 
     @property
     def str_bytes(self) -> str:
-        """Mengembalikan raw bytes sebagai UTF-8."""
+        """Mengembalikan raw bytes sebagai string."""
         return self.raw_bytes.decode("utf-8", errors="ignore")
 
     @property
@@ -223,7 +223,7 @@ class SocketResponse:
     @property
     def remote_ip(self) -> str:
         """Mengecek IP Server"""
-        return self._data.get("ip", "unknown")
+        return self._data.get("remote_ip", "unknown")
 
     @property
     def local_ip(self) -> str:
