@@ -76,6 +76,10 @@ func Discovery(req packet.RequestPacket) packet.ResponsePacket {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == 429 {
+		utils.UpdateGlobalRate(req.Frl)
+	}
+
 	headers := make(map[string]interface{})
 	for k, v := range resp.Header {
 		if len(v) == 1 {
