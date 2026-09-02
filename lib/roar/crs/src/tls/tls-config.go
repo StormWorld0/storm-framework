@@ -64,7 +64,7 @@ func ExtractTLSInfo(conn net.Conn) map[string]interface{} {
 	if stateGetter, ok := conn.(tlsConnStateGetter); ok {
 		state := stateGetter.ConnectionState()
 		if state.HandshakeComplete || state.Version != 0 {
-			return ExtractTLSInfoFromState(state)
+			return ExtractTLSInfoFromState(&state)
 		}
 	}
 	return nil
