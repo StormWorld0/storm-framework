@@ -171,7 +171,7 @@ Automatically inherits TLS connections to send/recv and send/recv usage remains 
 - **issuer:** Returns the (CN) of the (CA) that issued the certificate. Examples: R13, ISRG Root X1, etc.
 - **dns_name:** Returns a list of hostnames in the Subject Alternative Name (SAN) extension.
 - **expires:** Returns the certificate Expiration Time in RFC3339 format.
-- **cert_chain_count:** Returns the number of certificate chains that were successfully verified.
+- **cert_chain:** Returns the number of certificate chains that were successfully verified.
 
 ---
 
@@ -180,7 +180,7 @@ Automatically inherits TLS connections to send/recv and send/recv usage remains 
 **DNS Lookup**
 ```python
 def execute(options, net):
-    r = net.DNSL(domain, type, proto, timeout, ratelimit, con)
+    r = net.DNSL(domain, type, proto, timeout, rl, con)
 ```
 **Description:** DNSL are stateless, and you get a response immediately after each run.
 
@@ -189,7 +189,7 @@ def execute(options, net):
 - **type:** DNS query type. Example: A, AAAA, TXT, etc. | Default A | str.
 - **proto:** Can TCP/UDP | Default TCP.
 - **timeout:** To limit the open connection time. | Default 5s
-- **ratelimit:** Blocking requests if the token runs out. | Default 150/1s | int.
+- **rl:** Blocking requests if the token runs out. | Default 150/1s | int.
 - **con:** Number of Goroutines for Concurrency, allows to run parallel connections. | int.
 
 **Response**
@@ -206,7 +206,7 @@ def execute(options, net):
 **DNS Discovery**
 ```python
 def execute(options, net):
-    r = DNSD(domain, wordlist, timeout, ratelimit, con, tls)
+    r = DNSD(domain, wordlist, timeout, rl, con, tls)
 ```
 **Description:** DNSD is stateless and is used for subdomain enumeration.
 
@@ -214,7 +214,7 @@ def execute(options, net):
 - **domain:** example.com | str.
 - **wordlist:** Subdomain wordlist file with .txt extension.
 - **timeout:** To limit the open connection time. | Default 2.0s
-- **ratelimit:** Blocking requests if the token runs out. | Default 150/1s | int.
+- **rl:** Blocking requests if the token runs out. | Default 150/1s | int.
 - **con:** Number of Goroutines for Concurrency, allows to run parallel connections. | int.
 - **tls:** To display TLS information in the Response. | Default False | Boolean.
 
@@ -250,7 +250,7 @@ def execute(options, net):
 **Implementation**
 ```python
 def execute(options, net):
-    r = net.HTTPR(method, url, header, body, redirect, rawhttp, tls, verify, retry, ratelimit, timeout, con)
+    r = net.HTTPR(method, url, header, body, redirect, rawhttp, tls, verify, retry, rl, timeout, con)
 ```
 **Description:** HTTP Requests are stateless, you can send them and get a response straight away.
 
@@ -264,7 +264,7 @@ def execute(options, net):
 - **tls:** To display TLS information in the Response. | Default False | Boolean.
 - **verify:** True=Verifying client certificate. False=Skip verification. | Default True. | Boolean.
 - **retry:** Performs Retryable http / Retry connection if failed. | Default 2. | int.
-- **ratelimit:** Blocking requests if the token runs out. | Default 150/1s. | int.
+- **rl:** Blocking requests if the token runs out. | Default 150/1s. | int.
 - **timeout:** To limit the open connection time. | Default 5s.
 - **con:** Number of Goroutines for Concurrency, allows to run parallel connections. | int.
 
