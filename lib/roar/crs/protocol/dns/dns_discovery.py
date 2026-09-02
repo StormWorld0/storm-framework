@@ -135,25 +135,13 @@ class DNSDiscovery:
     """
 
     @staticmethod
-    def _wordlist_generator(wordlist_path: str) -> Iterator[str]:
-        """
-        Generator internal untuk membaca file wordlist baris demi baris secara streaming.
-        Memastikan pemakaian RAM tetap mendekati 0 MB.
-        """
-        with open(wordlist_path, "r", encoding="utf-8", errors="ignore") as f:
-            for line in f:
-                word = line.strip()
-                if word and not word.startswith("#"):
-                    yield word
-
-    @staticmethod
     def subdom(
         domain: str,
-        wordlist: Optional[str] = None,
+        wordlist: str = None,
         timeout: float = 2.0,
         rl: int = 150,
         frl: int = 10,
-        con: int = 0,
+        con: int = 1,
         tls: bool = False,
         ua: str = "",
         **kwargs,
@@ -166,27 +154,21 @@ class DNSDiscovery:
             smf.printf(
                 f"[!] {CC.YELLOW}Unrecognized parameters dropped =>{CC.RESET}", kwargs
             )
-
-        if not wordlist:
-            smf.printf(f"[!] {CC.YELLOW}Wordlist required{CC.RESET}")
-            return None
-
-        for subdomain in DNSDiscovery._wordlist_generator(wordlist):
-            for proto in ("http://", "https://"):
-                target_url = f"{proto}{subdomain}.{domain}"
-                packet = {
-                    "primitive": "DNS_SEND",
-                    "mode": "DNSDiscovery",
-                    "url": target_url,
-                    "info_tls": tls,
-                    "timeout": timeout,
-                    "ratelimit": rl,
-                    "frate": frl,
-                    "goroutine": con,
-                    "user-agent": ua,
-                }
-                raw_res = CRS.send(packet)
-                return DNSResponse(raw_res)
+            
+        packet = {
+            "primitive": "DNS_SEND",
+            "mode": "DNSDiscovery",
+            "domain": domain,
+            "wordlist": wordlist,
+            "info_tls": tls,
+            "timeout": timeout,
+            "rl": rl,
+            "frate": frl,
+            "concurrency": con,
+            "user-agent": ua,
+        }
+        raw_res = CRS.send(packet)
+        return DNSResponse(raw_res)
 
 
 # Alias untuk entry point
