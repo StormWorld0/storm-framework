@@ -38,7 +38,7 @@ func main() {
 
 	var req packet.RequestPacket
 	// Inisialisasi Global ratelimiter
-	utils.InitGlobalRateLimiter(req)
+	utils.InitGlobalRateLimiter(ctx, req)
 
 	// Channel sebagai Fan-In untuk mengumpulkan semua response secara thread-safe.
 	// Buffer dialokasikan (misal 1000) untuk mencegah backpressure pada worker.
