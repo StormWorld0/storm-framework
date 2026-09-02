@@ -111,7 +111,7 @@ func Discovery(req packet.RequestPacket) packet.ResponsePacket {
 
 	// Evaluasi HTTP codes
 	if resp.StatusCode < 400 || resp.StatusCode == 401 || resp.StatusCode == 403 {
-		atomic.AddInt32(activeCount, 1)
+		atomic.AddInt32(&activeCount, 1)
 		return packet.ResponsePacket{
 			Status: "SUCCESS",
 			Data: generateMetadata(),
