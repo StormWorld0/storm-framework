@@ -80,6 +80,11 @@ class DNSResponse:
         return self._data.get("url", "")
 
     @property
+    def url_active(self) -> int:
+        """Mengembalikan jumlah URL Active"""
+        return self._data.get("active-url", 0)
+
+    @property
     def headers(self) -> str:
         """Mengambil headers saat koneksi"""
         return self._headers
