@@ -132,7 +132,7 @@ func HTTP(req packet.RequestPacket) packet.ResponsePacket {
 		Proxy: http.ProxyFromEnvironment,
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: skipVerify,
-			MinVersion:         tls.VersionTLS12,
+			MinVersion:         tls.VersionTLS10,
 		},
 		MaxIdleConns:          100,
 		MaxIdleConnsPerHost:   10,
