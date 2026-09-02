@@ -118,7 +118,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			"is_reused":    isReused,
 			"rtt_ms":       time.Since(startTime).Milliseconds(),
 			"Cheked":       reflect.TypeOf(conn).String(),
-			"isAlreadyTLS": strconv.FormatBool(isTLSConn(conn)),
+			"isAlreadyTLS": strconv.FormatBool(ctls.isTLSConn(conn)),
 			"read_bytes":   readBytes,
 		}
 		if addr := conn.RemoteAddr(); addr != nil {
@@ -145,7 +145,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 
 	case "upgrade_tls":
 		// Mode khusus untuk kerentanan STARTTLS atau Protocol Smuggling
-		if isTLSConn(conn) {
+		if ctls.isTLSConn(conn) {
 			keepSession = true
 			return packet.ResponsePacket{Status: "ERROR", Message: "Connection is already TLS"}
 		}
