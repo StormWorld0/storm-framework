@@ -1,9 +1,6 @@
 import smf
-import sys
-import asyncio
 
 from apps.utility.colors import CC
-from lib.roar.calling import call_bin
 
 metadata = {
     "Name": "OSINT for subdomains",
@@ -27,6 +24,7 @@ REQUIRED_OPTIONS = {
     "THREAD": "default 1",
 }
 
+
 def code_color(state):
     code = state.status_code
     if code == 200:
@@ -38,6 +36,7 @@ def code_color(state):
     else:
         return code
     return cd_color
+
 
 def execute(options, net):
     domain = options.get("DOMAIN")
@@ -56,12 +55,18 @@ def execute(options, net):
             act = resp.url_active
             serv = resp.get_headers("server")
             ct = resp.get_headers("Content-Type")
-        
-            smf.printf(f"\n[*] {CC.YELLOW}INFO => STATUS | URL | SERVER | Content-Type\n{CC.RESET}")
-            for url in resp.url:
-                smf.printf(f"[*] {CC.GREEN}FOUND =>{CC.RESET} {code} | {CC.GREEN}{url:<40}{CC.RESET} | {CC.YELLOW}{serv:<20}{CC.RESET} | {CC.CYAN}{ct}{CC.RESET}")
 
-        smf.printf(f"\n[✓]{CC.YELLOW} Enumeration complete. Found {act} active subdomain.{CC.RESET}")
+            smf.printf(
+                f"\n[*] {CC.YELLOW}INFO => STATUS | URL | SERVER | Content-Type\n{CC.RESET}"
+            )
+            for url in resp.url:
+                smf.printf(
+                    f"[*] {CC.GREEN}FOUND =>{CC.RESET} {code} | {CC.GREEN}{url:<40}{CC.RESET} | {CC.YELLOW}{serv:<20}{CC.RESET} | {CC.CYAN}{ct}{CC.RESET}"
+                )
+
+        smf.printf(
+            f"\n[✓]{CC.YELLOW} Enumeration complete. Found {act} active subdomain.{CC.RESET}"
+        )
     except KeyboardInterrupt:
         smf.printf("\n[✓] Sub Enumeration is stopped")
     except Exception as e:
@@ -70,4 +75,4 @@ def execute(options, net):
     finally:
         smf.printf(
             f"[✓] {CC.GREEN}SubDomain Enumeration daemon successfully stopped and cleaned up.{CC.RESET}"
-)
+        )
