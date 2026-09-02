@@ -160,7 +160,8 @@ class HTTPClient:
         tls: bool = False,
         verify: bool = True,
         retry: int = 2,
-        ratelimit: int = 150,
+        rl: int = 150,
+        frl: int = 10,
         timeout: float = 5.0,
         con: int = 50,
         **kwargs,
@@ -180,7 +181,8 @@ class HTTPClient:
             "info_tls": tls,
             "verify": verify,
             "retry": retry,
-            "ratelimit": ratelimit,
+            "ratelimit": rl,
+            "frate": frl,
             "timeout": timeout,
         }
 
