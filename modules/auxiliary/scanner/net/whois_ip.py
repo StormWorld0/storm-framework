@@ -26,7 +26,7 @@ def execute(options, net):
         if r.ok:
             result = r.data
             smf.printf()
-            smf.printf(f"[✓] {CC.CYAN}{result}{CC.RESET}")
+            smf.printf(f"{CC.CYAN}{result}{CC.RESET}")
             smf.printf()
     except KeyboardInterrupt:
         return
