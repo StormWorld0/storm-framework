@@ -203,46 +203,6 @@ def execute(options, net):
 - **truncated:** Indicator if the UDP payload is too large and is truncated (will trigger a retry via TCP).
 - **authoritative:** Indicator whether the response comes from the Authoritative Name Server directly.
 
-**DNS Discovery**
-```python
-def execute(options, net):
-    r = DNSD(domain, wordlist, timeout, rl, con, tls)
-```
-**Description:** DNSD is stateless and is used for subdomain enumeration.
-
-**Parameter**
-- **domain:** example.com | str.
-- **wordlist:** Subdomain wordlist file with .txt extension.
-- **timeout:** To limit the open connection time. | Default 2.0s
-- **rl:** Blocking requests if the token runs out. | Default 150/1s | int.
-- **con:** Number of Goroutines for Concurrency, allows to run parallel connections. | int.
-- **tls:** To display TLS information in the Response. | Default False | Boolean.
-
-**Response**
-- **status:** ERROR/SUCCESS/TIMEOUT/WARNING.
-- **message:** Messages adjust to status.
-
-- **ok:** Returns a boolean of the SUCCESS status. Allows the syntax: if r.ok:
-- **status_code:** HTTP Status Code (Example: 200, 404, 500).
-- **proto:** HTTP Protocol (Example: HTTP/1.1, HTTP/2.0).
-- **headers:** The original header dictionary from the response.
-- **get_headers:** Case-insensitive lookup for HTTP Headers. Example: res.get_headers('content-type') will find 'Content-Type'.
-- **engine:** The connection provider engine from CRS (Example: DNSDiscovery).
-- **tls:** Responses that inherit TLS information.
-
-**TLS Information**
-- **subject:** Returns the (CN) of the server certificate.
-- **issuer:** Returns the (CN) of the (CA) that issued the certificate. Examples: R13, ISRG Root X1, etc.
-- **dns_name:** Returns a list of hostnames in the Subject Alternative Name (SAN) extension.
-- **expires:** Returns the certificate Expiration Time in RFC3339 format.
-- **version:** Returns TLS Version 1.0/1.1/1.2/1.3.
-- **cipher:** Returning Cipher Suite.
-- **protocol:** Returns TLS protocols like h1/h2/h3.
-- **hostname:** Returns Host like (example.com).
-- **handshake:** Returns a Boolean. True=Handshake succeeded. False=Handshake failed.
-- **session_resume:** Returns a Boolean. True=If the TLS session was resumed. False=If the handshake was complete.
-- **cert_chain:** Certificate chain successfully verified against a trusted root CA.
-
 ---
 
 ### 🖇️ HTTP Requests
@@ -402,20 +362,7 @@ smf.printf(r.rcode, r.records, etc.)
 if r.ok:
 ```
 
-**3. DNS Discovery**
-
-- **Status:** `Stateless`
-- **Response**
-```python
-r = net.DNSD(...)
-smf.printf(r.status, r.message)
-smf.printf(r.status_code, r.proto, etc.)
-
-# Boolean SUCCESS
-if r.ok:
-```
-
-**4. HTTP Requests**
+**3. HTTP Requests**
 
 - **Status:** `Stateless`
 - **Response**
@@ -428,7 +375,7 @@ smf.printf(r.status_code, r.tls.cipher, etc.)
 if r.ok:
 ```
 
-**5. Telnet**
+**4. Telnet**
 
 - **Status:** `Stateful`
 - **Inheritance**
