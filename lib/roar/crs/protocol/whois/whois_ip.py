@@ -64,7 +64,7 @@ class WHOISResponse:
         return self._data.get("engine", "")
 
     def _parse_vcard(self, vcard: list) -> Dict[str, str]:
-        """Ekstraksi jCard RFC 7095 dengan penanganan duplikasi dan tipe data aman."""
+        """Ekstraksi jCard tanpa prefix role, kembalikan key yang bersih."""
         res = {}
         if not isinstance(vcard, list) or len(vcard) < 2:
             return res
@@ -75,94 +75,80 @@ class WHOISResponse:
 
             prop, params = item[0], item[1]
             params_dict = params if isinstance(params, dict) else {}
-
-            # Ekstraksi val dengan aman (jCard multi-value)
             val = item[3] if len(item) == 4 else item[3:]
 
-            # OSINT Mapping: org (Organization) dan kind sangat penting
             prop_map = {
-                "fn": "name",
-                "email": "email",
-                "tel": "phone",
-                "org": "organization",
-                "kind": "kind",
-                "title": "title",
+                "fn": "Name", 
+                "email": "Email", 
+                "tel": "Phone",
+                "org": "Organization",
+                "kind": "Entity_Type",
+                "title": "Title"
             }
 
             if prop in prop_map:
                 mapped_prop = prop_map[prop]
-
-                # Normalisasi list menjadi comma-separated string jika val adalah array
                 if isinstance(val, list):
                     val_str = ", ".join(str(v).strip() for v in val if v)
                 else:
                     val_str = str(val).strip()
-                    # Normalisasi URI tel (contoh: tel:+1-650-253-0000)
                     if prop == "tel" and val_str.startswith("tel:"):
                         val_str = val_str[4:]
-
-                if mapped_prop in res:
-                    res[mapped_prop] = f"{res[mapped_prop]}, {val_str}"
-                else:
-                    res[mapped_prop] = val_str
+                res[mapped_prop] = val_str
 
             elif prop == "adr":
                 label = params_dict.get("label", "").replace("\n", ", ")
                 if not label:
-                    label = ", ".join(
-                        filter(None, val if isinstance(val, list) else [val])
-                    )
-                res["address"] = label
+                    label = ", ".join(filter(None, val if isinstance(val, list) else [val]))
+                res["Address"] = label
         return res
 
-    def _extract_rdap(self, obj: Any, prefix: str = "") -> Dict[str, Any]:
-        """Parser RDAP rekursif yang tahan terhadap collision."""
-        res = {}
+    def _extract_entities(self, obj: Any, extracted_roles: Dict[str, Dict]):
+        """Secara rekursif mencari object 'entity' dan mengelompokkannya berdasarkan roles."""
         if isinstance(obj, dict):
-            if "vcardArray" in obj:
-                vcard_data = self._parse_vcard(obj["vcardArray"])
-                roles = obj.get("roles", [])
-                role_prefix = "_".join(roles) if roles else "entity"
-                for k, v in vcard_data.items():
-                    if v:
-                        full_key = (
-                            f"{prefix}.{role_prefix}_{k}"
-                            if prefix
-                            else f"{role_prefix}_{k}"
-                        )
-                        res[full_key] = v
-
-            for k, v in obj.items():
-                if k == "vcardArray":
-                    continue
-
-                p = f"{prefix}.{k}" if prefix else k
-                res.update(self._extract_rdap(v, p))
+            if "vcardArray" in obj and "roles" in obj:
+                contact_info = self._parse_vcard(obj["vcardArray"])
+                contact_info["Handle"] = obj.get("handle", "N/A")
+                for role in obj["roles"]:
+                    role_name = role.capitalize()
+                    if role_name not in extracted_roles:
+                        extracted_roles[role_name] = []
+                    extracted_roles[role_name].append(contact_info)
+                    
+            for v in obj.values():
+                self._extract_entities(v, extracted_roles)
 
         elif isinstance(obj, list):
-            if not obj:
-                return res
-
-            # Jika list berisi tipe skalar, flatten langsung (contoh: roles -> "abuse, technical")
-            if all(isinstance(x, (str, int, bool)) for x in obj):
-                clean_str = ", ".join(str(x).strip() for x in obj if str(x).strip())
-                if clean_str:
-                    res[prefix] = clean_str
-            else:
-                for i, x in enumerate(obj):
-                    p = f"{prefix}[{i}]" if prefix else str(i)
-                    res.update(self._extract_rdap(x, p))
-
-        elif obj is not None and obj != "":
-            res[prefix] = obj
-        return res
+            for item in obj:
+                self._extract_entities(item, extracted_roles)
 
     @property
     def data(self) -> str:
-        """Mengembalikan data RDAP berupa Key & Value"""
-        extracted = self._extract_rdap(self._body)
-        for k, v in sorted(extracted.items()):
-            yield k, v
+        """Menghasilkan report summary yang bersih dan Human-Readable."""
+        output = []
+        output.append("=== NETWORK INFORMATION ===")
+        output.append(f"Network Name : {self._body.get('name', 'N/A')}")
+        output.append(f"IP Range     : {self._body.get('startAddress', 'N/A')} - {self._body.get('endAddress', 'N/A')}")
+        output.append(f"Type         : {self._body.get('type', 'N/A')}")
+        output.append(f"Status       : {', '.join(self._body.get('status', []))}")
+        
+        try:
+            cidr = self._body.get("cidr0_cidrs", [{}])[0]
+            output.append(f"CIDR         : {cidr.get('v4prefix')}/{cidr.get('length')}")
+        except IndexError:
+            pass
+
+        output.append("\n=== ENTITY CONTACTS ===")
+        extracted_roles = {}
+        self._extract_entities(self._body, extracted_roles)
+        for role, contacts in extracted_roles.items():
+            output.append(f"\n[{role.upper()} CONTACT]")
+            for idx, contact in enumerate(contacts):
+                if len(contacts) > 1:
+                    output.append(f"  --- Contact #{idx+1} ---")
+                for k, v in contact.items():
+                    output.append(f"  {k:<13}: {v}")
+        return "\n".join(output)
 
     @property
     def raw_data(self) -> str:
