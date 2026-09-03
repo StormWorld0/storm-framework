@@ -51,30 +51,7 @@ class WHOISResponse:
     def engine(self) -> str:
         """Engine penyedia koneksi dari Go Backend (contoh: retryablehttp)."""
         return self._data.get("engine", "")
-
-    @property
-    def headers(self) -> Dict[str, str]:
-        """Dictionary headers asli dari respons."""
-        return self._headers
-
-    def get_headers(self, name: str, default: Optional[str] = None) -> Optional[str]:
-        """
-        Case-insensitive lookup untuk HTTP Headers.
-        Contoh: res.get_headers('content-type') akan menemukan 'Content-Type'.
-        """
-        target = name.lower()
-        for key, val in self._headers.items():
-            if key.lower() == target:
-                if val is None:
-                    return default
-                res = (
-                    ", ".join(str(i) for i in val)
-                    if isinstance(val, (list, tuple))
-                    else str(val)
-                )
-                return re.sub(r"[\r\n]+", " ", res).strip() or default
-        return default
-
+    
     def _parse_vcard(self, vcard: list) -> Dict[str, str]:
         """Ekstraksi jCard RFC 7095 dengan penanganan duplikasi dan tipe data aman."""
         res = {}
@@ -85,15 +62,38 @@ class WHOISResponse:
             if not isinstance(item, list) or len(item) < 4:
                 continue
 
-            prop, params, type_, val = item[0], item[1], item[2], item[3]
+            prop, params = item[0], item[1]
             params_dict = params if isinstance(params, dict) else {}
+            
+            # Ekstraksi val dengan aman (jCard multi-value)
+            val = item[3] if len(item) == 4 else item[3:]
 
-            if prop in ("fn", "email", "tel"):
-                mapped_prop = {"fn": "name", "email": "email", "tel": "phone"}[prop]
-                if mapped_prop in res:
-                    res[mapped_prop] = f"{res[mapped_prop]}, {val}"
+            # OSINT Mapping: org (Organization) dan kind sangat penting
+            prop_map = {
+                "fn": "name", 
+                "email": "email", 
+                "tel": "phone",
+                "org": "organization",
+                "kind": "kind",
+                "title": "title"
+            }
+
+            if prop in prop_map:
+                mapped_prop = prop_map[prop]
+                
+                # Normalisasi list menjadi comma-separated string jika val adalah array
+                if isinstance(val, list):
+                    val_str = ", ".join(str(v).strip() for v in val if v)
                 else:
-                    res[mapped_prop] = val
+                    val_str = str(val).strip()
+                    # Normalisasi URI tel (contoh: tel:+1-650-253-0000)
+                    if prop == "tel" and val_str.startswith("tel:"):
+                        val_str = val_str[4:]
+
+                if mapped_prop in res:
+                    res[mapped_prop] = f"{res[mapped_prop]}, {val_str}"
+                else:
+                    res[mapped_prop] = val_str
 
             elif prop == "adr":
                 label = params_dict.get("label", "").replace("\n", ", ")
@@ -124,7 +124,7 @@ class WHOISResponse:
             for k, v in obj.items():
                 if k == "vcardArray":
                     continue
-
+                    
                 p = f"{prefix}.{k}" if prefix else k
                 res.update(self._extract_rdap(v, p))
 
@@ -132,6 +132,7 @@ class WHOISResponse:
             if not obj:
                 return res
 
+            # Jika list berisi tipe skalar, flatten langsung (contoh: roles -> "abuse, technical")
             if all(isinstance(x, (str, int, bool)) for x in obj):
                 clean_str = ", ".join(str(x).strip() for x in obj if str(x).strip())
                 if clean_str:
@@ -140,15 +141,16 @@ class WHOISResponse:
                 for i, x in enumerate(obj):
                     p = f"{prefix}[{i}]" if prefix else str(i)
                     res.update(self._extract_rdap(x, p))
-
+                    
         elif obj is not None and obj != "":
-            res[prefix] = obj
+            res[prefix] = obj  
         return res
 
     @property
     def data(self) -> str:
         """Mengembalikan data RDAP berupa Clean String"""
-        return "\n".join(f"{k} = {v}" for k, v in self._extract_rdap(self._body).items())
+        extracted = self._extract_rdap(self._body)
+        return "\n".join(f"{k} = {v}" for k, v in sorted(extracted.items()))
 
     @property
     def raw_data(self) -> str:
@@ -167,6 +169,30 @@ class WHOISResponse:
         except json.JSONDecodeError:
             smf.printd("Failed to parse response body as JSON", level="WARN")
             return None
+
+    @property
+    def headers(self) -> Dict[str, str]:
+        """Dictionary headers asli dari respons."""
+        return self._headers
+
+    def get_headers(self, name: str, default: Optional[str] = None) -> Optional[str]:
+        """
+        Case-insensitive lookup untuk HTTP Headers.
+        Contoh: res.get_headers('content-type') akan menemukan 'Content-Type'.
+        """
+        target = name.lower()
+        for key, val in self._headers.items():
+            if key.lower() == target:
+                if val is None:
+                    return default
+                res = (
+                    ", ".join(str(i) for i in val)
+                    if isinstance(val, (list, tuple))
+                    else str(val)
+                )
+                return re.sub(r"[\r\n]+", " ", res).strip() or default
+        return default
+        
 
     @property
     def ok(self) -> bool:
