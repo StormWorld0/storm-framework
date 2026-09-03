@@ -10,7 +10,7 @@ import (
 // Entry point DNS yang menentukan eksekusi
 func WHOIS(req packet.RequestPacket) packet.ResponsePacket {
 	switch req.Mode {
-	case "WhoisIP":
+	case "IPWhois":
 		return WhoisIP(req)
 	default:
 		// Fallback guard
