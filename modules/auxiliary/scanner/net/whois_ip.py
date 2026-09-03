@@ -26,7 +26,9 @@ def execute(options, net):
     try:
         r = net.IPWhois(target_ip, timeout=5.0, con=10)
         if r.ok:
-            smf.printf(f"{CC.GREEN}{r.data}{CC.RESET}")
+            k, v = r.data
+            smf.printf(f"[✓] {CC.GREEN}{k}{CC.RESET} = {CC.CYAN}{v}{CC.RESET}")
+            smf.printf()
     except KeyboardInterrupt:
         return
     except Exception as e:
