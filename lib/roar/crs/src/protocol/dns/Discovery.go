@@ -58,11 +58,11 @@ func worker(jobs <-chan Job, wg *sync.WaitGroup, foundCounter *int32, req packet
 			
 			ua := "storm-framework/3.0 (CRS Engine)"
 	        if req.UA != "" {
-		        ua = req.UA
+		        ua := req.UA
 	        }
-	        httpReq.Header.Set("User-Agent", ua)
+	        req.Header.Set("User-Agent", ua)
 			
-			resp, err := httpClient.Do(httpReq)
+			resp, err := httpClient.Do(req)
 			if err != nil {
 				return
 			}
@@ -83,13 +83,12 @@ func worker(jobs <-chan Job, wg *sync.WaitGroup, foundCounter *int32, req packet
 			        "status_code": resp.StatusCode,
 			        "headers":     headers,
 			        "protocol":    resp.Proto,
-			        "active-url":  atomic.LoadInt32(&activeCount),
-			        "url":         targetURL,
+			        "active-url":  atomic.LoadInt32(&foundCounter),
+			        "url":         j.URL,
 			        "engine":      "Discovery",
 		        }
 		        if req.InfoTLS && resp.TLS != nil {
-					state = resp.TLS
-			        meta["info_tls"] = ctls.ExtractTLSInfoFromState(state)
+			        meta["info_tls"] = ctls.ExtractTLSInfoFromState(resp.TLS)
 		        }
 		        return meta
 	        }
@@ -99,7 +98,7 @@ func worker(jobs <-chan Job, wg *sync.WaitGroup, foundCounter *int32, req packet
 				return packet.ResponsePacket{
 			        Status: "SUCCESS",
 			        Data:   generateMetadata(),
-		        }
+		        },
 			}
 		}(job)
 	}
@@ -120,12 +119,12 @@ func Discovery(req packet.RequestPacket) packet.ResponsePacket {
 	jobs := make(chan Job, req.Concurrency)
 	var wg sync.WaitGroup
 	
-	var activeCount int32 = 0 // Mencatat subdomain yang FOUND
+	var foundCounter int32 = 0 // Mencatat subdomain yang FOUND
 
 	// Spawning Worker Pool
 	for i := 0; i < req.Concurrency; i++ {
 		wg.Add(1)
-		go worker(jobs, &wg, &activeCount, req)
+		go worker(jobs, &wg, &foundCounter, req)
 	}
 
 	// Stream Reading untuk pemrosesan riil
