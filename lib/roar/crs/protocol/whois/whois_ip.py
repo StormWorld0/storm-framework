@@ -51,7 +51,7 @@ class WHOISResponse:
     def engine(self) -> str:
         """Engine penyedia koneksi dari Go Backend (contoh: retryablehttp)."""
         return self._data.get("engine", "")
-    
+
     def _parse_vcard(self, vcard: list) -> Dict[str, str]:
         """Ekstraksi jCard RFC 7095 dengan penanganan duplikasi dan tipe data aman."""
         res = {}
@@ -64,23 +64,23 @@ class WHOISResponse:
 
             prop, params = item[0], item[1]
             params_dict = params if isinstance(params, dict) else {}
-            
+
             # Ekstraksi val dengan aman (jCard multi-value)
             val = item[3] if len(item) == 4 else item[3:]
 
             # OSINT Mapping: org (Organization) dan kind sangat penting
             prop_map = {
-                "fn": "name", 
-                "email": "email", 
+                "fn": "name",
+                "email": "email",
                 "tel": "phone",
                 "org": "organization",
                 "kind": "kind",
-                "title": "title"
+                "title": "title",
             }
 
             if prop in prop_map:
                 mapped_prop = prop_map[prop]
-                
+
                 # Normalisasi list menjadi comma-separated string jika val adalah array
                 if isinstance(val, list):
                     val_str = ", ".join(str(v).strip() for v in val if v)
@@ -124,7 +124,7 @@ class WHOISResponse:
             for k, v in obj.items():
                 if k == "vcardArray":
                     continue
-                    
+
                 p = f"{prefix}.{k}" if prefix else k
                 res.update(self._extract_rdap(v, p))
 
@@ -141,9 +141,9 @@ class WHOISResponse:
                 for i, x in enumerate(obj):
                     p = f"{prefix}[{i}]" if prefix else str(i)
                     res.update(self._extract_rdap(x, p))
-                    
+
         elif obj is not None and obj != "":
-            res[prefix] = obj  
+            res[prefix] = obj
         return res
 
     @property
@@ -192,7 +192,6 @@ class WHOISResponse:
                 )
                 return re.sub(r"[\r\n]+", " ", res).strip() or default
         return default
-        
 
     @property
     def ok(self) -> bool:
