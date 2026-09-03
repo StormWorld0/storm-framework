@@ -20,7 +20,7 @@ type RequestPacket struct {
 
 	// Standard parameters
 	Host          string            `json:"host,omitempty"`      // URL / IP / Domain
-	Ip            int               `json:"ip,omitempty"`        // 127.0.0.1
+	Ip            string            `json:"ip,omitempty"`        // 127.0.0.1
 	Port          int               `json:"port,omitempty"`      // PORT 1 - 65535
 	
 	// General parameters
