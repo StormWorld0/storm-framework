@@ -1,1 +1,1 @@
-from .whois_ip import WhoisIP # noqa
+from .whois_ip import WhoisIP  # noqa
