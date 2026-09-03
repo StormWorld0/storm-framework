@@ -21,13 +21,12 @@ REQUIRED_OPTIONS = {"IP": "(ex: 1.1.1.1)"}
 
 def execute(options, net):
     target_ip = options.get("IP")
-
-    smf.printf(f"{CC.CYAN}[ IP WHOIS/RDAP LOOKUP ]{CC.RESET}\n")
     try:
-        r = net.IPWhois(target_ip, timeout=5.0, con=10)
+        r = net.IPWhois(target_ip, timeout=5.0, con=20)
         if r.ok:
-            k, v = r.data
-            smf.printf(f"[✓] {CC.GREEN}{k}{CC.RESET} = {CC.CYAN}{v}{CC.RESET}")
+            result = r.data
+            smf.printf()
+            smf.printf(f"[✓] {CC.CYAN}{result}{CC.RESET}")
             smf.printf()
     except KeyboardInterrupt:
         return
