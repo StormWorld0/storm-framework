@@ -218,4 +218,5 @@ class WhoisIP:
         raw_resp = CRS.send(packet)
         return WHOISResponse(raw_resp)
 
+
 ipwhois = WhoisIP.whois
