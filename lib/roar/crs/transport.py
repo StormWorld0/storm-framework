@@ -127,12 +127,11 @@ class CRS:
                     line_str = line.strip()
                     if line_str:
                         smf.printd("CRS Engine STDERR", line_str, level="ERROR")
-                    
+
             except (BrokenPipeError, OSError, ValueError):
                 pass
             except Exception as e:
                 smf.printd("Exception in CRS stderr reader", e, level="ERROR")
-            
 
     @classmethod
     def send(cls, data: dict) -> dict:
