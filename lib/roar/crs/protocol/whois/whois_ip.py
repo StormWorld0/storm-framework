@@ -24,8 +24,19 @@ class WHOISResponse:
 
         # Ekstraksi payload "Data" dari CRS Engine
         self._data: Dict[str, Any] = raw_response.get("data", {})
-        self._body: Dict[str, Any] = self._data.get("body", {})
+        self._raw_body: Dict[str, Any] = self._data.get("body", {})
         self._headers: Dict[str, str] = self._data.get("headers") or {}
+
+        if isinstance(self._raw_body, str):
+            try:
+                # Buka "amplop" kedua dari Go
+                self._body = json.loads(self._raw_body)
+            except json.JSONDecodeError:
+                self._body = {} 
+        elif isinstance(self._raw_body, dict):
+            self._body = self._raw_body
+        else:
+            self._body = {}
 
     @property
     def status(self) -> str:
