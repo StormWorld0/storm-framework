@@ -202,7 +202,7 @@ class WhoisIP:
 
         packet = {
             "primitive": "WHOIS_SEND",
-            "mode": "WhoisIP",
+            "mode": "IPWhois",
             "ip": ip,
             "timeout": timeout,
             "ratelimit": rl,
