@@ -115,23 +115,23 @@ class CRS:
                 for event in cls._pending_requests.values():
                     event.set()
 
-        @classmethod
-        def _stderr_reader(cls, my_proc):
-            """A standalone thread to asynchronously consume and log engine stderr."""
-            try:
-                while my_proc and my_proc.poll() is None:
-                    line = my_proc.stderr.readline()
-                    if not line:
-                        break
+    @classmethod
+    def _stderr_reader(cls, my_proc):
+        """A standalone thread to asynchronously consume and log engine stderr."""
+        try:
+            while my_proc and my_proc.poll() is None:
+                line = my_proc.stderr.readline()
+                if not line:
+                    break
 
-                    line_str = line.strip()
-                    if line_str:
-                        smf.printd("CRS Engine STDERR", line_str, level="ERROR")
+                line_str = line.strip()
+                if line_str:
+                    smf.printd("CRS Engine STDERR", line_str, level="ERROR")
 
-            except (BrokenPipeError, OSError, ValueError):
-                pass
-            except Exception as e:
-                smf.printd("Exception in CRS stderr reader", e, level="ERROR")
+        except (BrokenPipeError, OSError, ValueError):
+            pass
+        except Exception as e:
+            smf.printd("Exception in CRS stderr reader", e, level="ERROR")
 
     @classmethod
     def send(cls, data: dict) -> dict:
