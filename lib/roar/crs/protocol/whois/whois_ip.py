@@ -159,9 +159,10 @@ class WHOISResponse:
 
     @property
     def data(self) -> str:
-        """Mengembalikan data RDAP berupa Clean String"""
+        """Mengembalikan data RDAP berupa Key & Value"""
         extracted = self._extract_rdap(self._body)
-        return "\n".join(f"{k} = {v}" for k, v in sorted(extracted.items()))
+        for k, v in sorted(extracted.items()):
+            yield k, v
 
     @property
     def raw_data(self) -> str:
