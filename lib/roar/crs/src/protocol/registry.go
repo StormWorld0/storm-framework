@@ -14,6 +14,6 @@ type Handler func(packet.RequestPacket) packet.ResponsePacket
 var Handlers = map[string]Handler{
 	"HTTP_SEND":         h.HTTP,
 	"DNS_SEND":          d.DNS,
-	"WHOIS_SEND":        w.WHOIS,
+	"WHOIS_SEND":        w.WhoisIP,
 	"NETWORK_SEND":      n.Network,
 }
