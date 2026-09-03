@@ -17,10 +17,6 @@ type RequestPacket struct {
     Domain        string            `json:"domain,omitempty"`   // example.com
     Type          string            `json:"type,omitempty"`     // A, AAAA, MX, TXT, ...
     Protocol      string            `json:"protocol,omitempty"` // udp, tcp, tls, ssl
-	Concurrency   int               `json:"concurrency"`        // Concurency
-
-	// File
-	Word          string            `json:"wordlist,omitempty"` // File wordlist
 
 	// Standard parameters
 	Host          string            `json:"host,omitempty"`      // URL / IP / Domain
@@ -43,7 +39,6 @@ type RequestPacket struct {
 	CloseSess     bool              `json:"close-session"`       // Boolean to close active session.
 	Mode          string            `json:"mode"`                // To determine which mode you want to use.
 	Data          string            `json:"data,omitempty"`      // This data is encoded to b64 and string before entering json
-	Bool          bool              `json:"bool"`                // Determines True or False. If empty, False.
 	
 	// Custom TLS family
 	TLSKey        string            `json:"tls-key,omitempty"`   // TLSKey = Can path can raw pem
