@@ -78,12 +78,12 @@ class WHOISResponse:
             val = item[3] if len(item) == 4 else item[3:]
 
             prop_map = {
-                "fn": "Name", 
-                "email": "Email", 
+                "fn": "Name",
+                "email": "Email",
                 "tel": "Phone",
                 "org": "Organization",
                 "kind": "Entity_Type",
-                "title": "Title"
+                "title": "Title",
             }
 
             if prop in prop_map:
@@ -99,7 +99,9 @@ class WHOISResponse:
             elif prop == "adr":
                 label = params_dict.get("label", "").replace("\n", ", ")
                 if not label:
-                    label = ", ".join(filter(None, val if isinstance(val, list) else [val]))
+                    label = ", ".join(
+                        filter(None, val if isinstance(val, list) else [val])
+                    )
                 res["Address"] = label
         return res
 
@@ -114,7 +116,7 @@ class WHOISResponse:
                     if role_name not in extracted_roles:
                         extracted_roles[role_name] = []
                     extracted_roles[role_name].append(contact_info)
-                    
+
             for v in obj.values():
                 self._extract_entities(v, extracted_roles)
 
@@ -128,10 +130,12 @@ class WHOISResponse:
         output = []
         output.append("=== NETWORK INFORMATION ===")
         output.append(f"Network Name : {self._body.get('name', 'N/A')}")
-        output.append(f"IP Range     : {self._body.get('startAddress', 'N/A')} - {self._body.get('endAddress', 'N/A')}")
+        output.append(
+            f"IP Range     : {self._body.get('startAddress', 'N/A')} - {self._body.get('endAddress', 'N/A')}"
+        )
         output.append(f"Type         : {self._body.get('type', 'N/A')}")
         output.append(f"Status       : {', '.join(self._body.get('status', []))}")
-        
+
         try:
             cidr = self._body.get("cidr0_cidrs", [{}])[0]
             output.append(f"CIDR         : {cidr.get('v4prefix')}/{cidr.get('length')}")
