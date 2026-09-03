@@ -50,7 +50,7 @@ func WhoisIP(req packet.RequestPacket) packet.ResponsePacket {
 	if resp.StatusCode != http.StatusOK {
 		return packet.ResponsePacket{
 			Status: "ERROR", 
-			Message: "Receiving a non-200 status code: " + resp.StatusCode + resp.Status,
+			Message: fmt.Sprintf("Receiving a non-200 status code: %d %s", resp.StatusCode, resp.Status),
 		}
 	}
 
