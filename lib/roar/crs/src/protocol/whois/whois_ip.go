@@ -1,94 +1,78 @@
 package main
 
 import (
-	"bufio"
+	"context"
+	"net/http"
+	"time"
 	"fmt"
 	"io"
-	"net"
-	"strings"
-	"time"
+
+	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
+	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/utils"
 )
 
 const (
-	// IANA adalah sumber kebenaran (source of truth) awal untuk blok IP
-	ianaWhoisServer = "whois.iana.org:43"
-	tcpTimeout = 5 * time.Second
+	// rdap.org bertindak sebagai global router/bootstrap
+	rdapBootstrapURL = "https://rdap.org/ip/%s"
 )
 
-// queryWhois menangani TCP socket connection ke server WHOIS yang spesifik
-func queryWhois(server, query string) (string, error) {
-	// Menggunakan DialTimeout sebagai best practice security/engineering
-	conn, err := net.DialTimeout("tcp", server, tcpTimeout)
-	if err != nil {
-		return "", fmt.Errorf("Failed to connect to %s: %w", server, err)
+// WhoisIP mengeksekusi HTTP GET ke server RDAP
+func WhoisIP(req packet.RequestPacket) packet.ResponsePacket {
+    utils.Take() // Rate limiter
+	
+	timeout := time.Duration(req.Timeout * float64(time.Second))
+	if timeout == 0 {
+		timeout = 5 * time.Second
 	}
-	defer conn.Close()
+	
+	url := fmt.Sprintf(rdapBootstrapURL, req.Ip)
 
-	// Set Deadline untuk keseluruhan proses Read/Write
-	_ = conn.SetDeadline(time.Now().Add(tcpTimeout))
+	// Context dengan timeout mencegah resource exhaustion (goroutine leak)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
 
-	// RFC 3912: Query diakhiri dengan \r\n
-	_, err = conn.Write([]byte(query + "\r\n"))
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return "", fmt.Errorf("Failed to write query to %s: %w", server, err)
+		return packet.ResponsePacket{Status: "ERROR", Message: "Failed to create request: " + err.Error()}
 	}
+	
+	// Set header HTTP sesuai standar REST
+	req.Header.Set("Accept", "application/rdap+json")
 
-	// Baca seluruh respons hingga EOF
-	resp, err := io.ReadAll(conn)
+	// HTTP Client bawaan otomatis menangani HTTP 302 Redirects dari IANA/rdap.org ke RIR
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("Failed to read response from %s: %w", server, err)
+		return packet.ResponsePacket{Status: "ERROR", Message: "HTTP Requests failed: " + err.Error()}
 	}
+	defer resp.Body.Close()
 
-	return string(resp), nil
-}
-
-// GetIPWhoisRecord mengeksekusi logical flow IANA Bootstrap -> RIR Server
-func GetIPWhoisRecord(ip string) (string, error) {
-	// Tahap 1: Query ke IANA
-	ianaResp, err := queryWhois(ianaWhoisServer, ip)
-	if err != nil {
-		return "", err
-	}
-
-	// Tahap 2: Parsing respons IANA untuk mencari field 'refer:'
-	var referServer string
-	scanner := bufio.NewScanner(strings.NewReader(ianaResp))
-	for scanner.Scan() {
-		line := scanner.Text()
-		// Format umumnya adalah "refer:        whois.apnic.net"
-		if strings.HasPrefix(strings.ToLower(line), "refer:") {
-			parts := strings.Fields(line)
-			if len(parts) >= 2 {
-				// Tambahkan port 43 untuk query TCP berikutnya
-				referServer = parts[1] + ":43" 
-				break
-			}
+	if resp.StatusCode != http.StatusOK {
+		return packet.ResponsePacket{
+			Status: "ERROR", 
+			Message: "Receiving a non-200 status code: " + resp.StatusCode + resp.Status,
 		}
 	}
 
-	// Jika IANA tidak memberikan referral (misalnya IP private/invalid),
-	// kembalikan saja raw response dari IANA
-	if referServer == "" {
-		return ianaResp, nil
+	headers := make(map[string]interface{})
+	for k, v := range resp.Header {
+		if len(v) == 1 {
+			headers[k] = v[0]
+		} else {
+			headers[k] = v 
+		}
 	}
 
-	// Tahap 3: Query ke server RIR yang otoritatif
-	return queryWhois(referServer, ip)
-}
+	respBody, _ := io.ReadAll(resp.Body)
 
-func main() {
-	// Contoh IP (Google Public DNS)
-	targetIP := "8.8.8.8"
-	
-	fmt.Printf("[*] Memulai WHOIS Query untuk: %s\n", targetIP)
-	
-	record, err := GetIPWhoisRecord(targetIP)
-	if err != nil {
-		fmt.Printf("[!] Error: %v\n", err)
-		return
+	return packet.ResponsePacket{
+		Status: "SUCCESS",
+		Data: map[string]interface{} {
+			"status_code":     resp.StatusCode,
+			"headers":         headers,
+			"body":            string(respBody),
+			"protocol":        resp.Proto,
+			"engine":          "WhoisIP",
+		}
 	}
-	
-	fmt.Println("=== HASIL WHOIS ===")
-	fmt.Println(record)
 }
-
