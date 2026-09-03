@@ -32,7 +32,7 @@ class WHOISResponse:
                 # Buka "amplop" kedua dari Go
                 self._body = json.loads(self._raw_body)
             except json.JSONDecodeError:
-                self._body = {} 
+                self._body = {}
         elif isinstance(self._raw_body, dict):
             self._body = self._raw_body
         else:
