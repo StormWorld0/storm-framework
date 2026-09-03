@@ -12,8 +12,6 @@ func DNS(req packet.RequestPacket) packet.ResponsePacket {
 	switch req.Mode {
 	case "DNSLookup":
 		return Lookup(req)
-	case "DNSDiscovery":
-		return Discovery(req)
 	default:
 		// Fallback guard
 		return packet.ResponsePacket{
