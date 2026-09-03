@@ -126,7 +126,7 @@ class WHOISResponse:
                     continue
 
                 p = f"{prefix}.{k}" if prefix else k
-                res.update(self.extract_rdap(v, p))
+                res.update(self._extract_rdap(v, p))
 
         elif isinstance(obj, list):
             if not obj:
@@ -139,7 +139,7 @@ class WHOISResponse:
             else:
                 for i, x in enumerate(obj):
                     p = f"{prefix}[{i}]" if prefix else str(i)
-                    res.update(self.extract_rdap(x, p))
+                    res.update(self._extract_rdap(x, p))
 
         elif obj is not None and obj != "":
             res[prefix] = obj
