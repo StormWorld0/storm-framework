@@ -1,7 +1,7 @@
 import sys
 import smf
-from ipwhois import IPWhois
-from apps.utility.colors import C
+
+from apps.utility.colors import CC
 
 metadata = {
     "Name": "Searching for information",
@@ -17,39 +17,19 @@ allows to find ASN, Country, CIDR, etc. data.
     "License": "SMF License",
     "Date": "2026-01-06",
 }
-REQUIRED_OPTIONS = {"IP": "(ex: x.x.x.x)"}
+REQUIRED_OPTIONS = {"IP": "(ex: 1.1.1.1)"}
 
 
-def execute(options):
+def execute(options, net):
     target_ip = options.get("IP")
-    if not target_ip:
-        smf.printf(f"{C.ERROR} ERROR: IP variable content 'set ip x.x.x.x'!")
-        return
-    smf.printf(f"{C.HEADER}[ IP WHOIS/RDAP LOOKUP ]")
+       
+    smf.printf(f"{CC.CYAN}[ IP WHOIS/RDAP LOOKUP ]{CC.RESET}\n")
     try:
-        obj = IPWhois(target_ip)
-        results = obj.lookup_rdap()
-        emails = []
-        if "objects" in results:
-            for handle, info in results["objects"].items():
-                contact = info.get("contact", {})
-                if contact.get("email"):
-                    for email_entry in contact["email"]:
-                        emails.append(email_entry["value"])
-        unique_emails = ", ".join(list(set(emails))) if emails else "N/A"
-
-        # Show Information
-        smf.printf(f"{C.MENU} ASN:            {C.RESET}{results.get('asn')}")
-        smf.printf(f"{C.MENU} CIDR:           {C.RESET}{results.get('asn_cidr')}")
-        smf.printf(f"{C.MENU} Country:        {C.RESET}{results.get('asn_country_code')}")
-        smf.printf(f"{C.MENU} ASN Description:{C.RESET}{results.get('asn_description')}")
-        smf.printf(
-            f"{C.MENU} Network Name:   {C.RESET}{results.get('network', {}).get('name')}"
-        )
-        smf.printf(f"{C.MENU} Abuse Emails:   {C.RESET}{unique_emails}")
-
+        r = net.IPWhois(target_ip, con=10)
+        if r.ok:
+            smf.printf(f"{CC.GREEN}{r.data}{CC.RESET}")
     except KeyboardInterrupt:
         return
     except Exception as e:
-        smf.printf(f"{C.ERROR} ERROR: Failed to retrieve IP data.")
-        smf.printf(f"{C.ERROR} Detail =>", e, file=sys.stderr, flush=True)
+        smf.printf(f"{CC.RED} ERROR: Failed to retrieve IP data.")
+        smf.printd("Failed to retrieve IP data", e, level="ERROR")
