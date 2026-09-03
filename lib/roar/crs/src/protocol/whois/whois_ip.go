@@ -31,17 +31,17 @@ func WhoisIP(req packet.RequestPacket) packet.ResponsePacket {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	reqs, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Failed to create request: " + err.Error()}
 	}
 	
 	// Set header HTTP sesuai standar REST
-	req.Header.Set("Accept", "application/rdap+json")
+	reqs.Header.Set("Accept", "application/rdap+json")
 
 	// HTTP Client bawaan otomatis menangani HTTP 302 Redirects dari IANA/rdap.org ke RIR
 	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := client.Do(reqs)
 	if err != nil {
 		return packet.ResponsePacket{Status: "ERROR", Message: "HTTP Requests failed: " + err.Error()}
 	}
