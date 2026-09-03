@@ -24,7 +24,7 @@ def execute(options, net):
 
     smf.printf(f"{CC.CYAN}[ IP WHOIS/RDAP LOOKUP ]{CC.RESET}\n")
     try:
-        r = net.IPWhois(target_ip, timeout=10.0)
+        r = net.IPWhois(target_ip, timeout=5.0, con=10)
         if r.ok:
             smf.printf(f"{CC.GREEN}{r.data}{CC.RESET}")
     except KeyboardInterrupt:
