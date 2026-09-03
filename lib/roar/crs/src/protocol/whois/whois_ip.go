@@ -67,12 +67,12 @@ func WhoisIP(req packet.RequestPacket) packet.ResponsePacket {
 
 	return packet.ResponsePacket{
 		Status: "SUCCESS",
-		Data: map[string]interface{} {
+		Data: map[string]interface{}{
 			"status_code":     resp.StatusCode,
 			"headers":         headers,
 			"body":            string(respBody),
 			"protocol":        resp.Proto,
 			"engine":          "WhoisIP",
-		}
+		},
 	}
 }
