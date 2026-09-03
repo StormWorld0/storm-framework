@@ -1,4 +1,3 @@
-import sys
 import smf
 
 from apps.utility.colors import CC
@@ -22,7 +21,7 @@ REQUIRED_OPTIONS = {"IP": "(ex: 1.1.1.1)"}
 
 def execute(options, net):
     target_ip = options.get("IP")
-       
+
     smf.printf(f"{CC.CYAN}[ IP WHOIS/RDAP LOOKUP ]{CC.RESET}\n")
     try:
         r = net.IPWhois(target_ip, con=10)
