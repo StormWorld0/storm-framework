@@ -25,6 +25,7 @@ class CRS:
     _pending_requests = {}
     _responses = {}
     _reader_thread = None
+    _stderr_thread = None
 
     @classmethod
     def _get_process(cls):
@@ -48,7 +49,7 @@ class CRS:
                 [binary_path],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
                 text=True,
                 bufsize=1,
             )
@@ -63,6 +64,14 @@ class CRS:
                     daemon=True,
                 )
                 cls._reader_thread.start()
+
+            if cls._stderr_thread is None or not cls._stderr_thread.is_alive():
+                cls._stderr_thread = threading.Thread(
+                    target=cls._stderr_reader,
+                    args=(cls._process,),
+                    daemon=True,
+                )
+                cls._stderr_thread.start()
 
             return cls._process
 
@@ -105,6 +114,25 @@ class CRS:
             with cls._dict_lock:
                 for event in cls._pending_requests.values():
                     event.set()
+
+        @classmethod
+        def _stderr_reader(cls, my_proc):
+            """A standalone thread to asynchronously consume and log engine stderr."""
+            try:
+                while my_proc and my_proc.poll() is None:
+                    line = my_proc.stderr.readline()
+                    if not line:
+                        break
+
+                    line_str = line.strip()
+                    if line_str:
+                        smf.printd("CRS Engine STDERR", line_str, level="ERROR")
+                    
+            except (BrokenPipeError, OSError, ValueError):
+                pass
+            except Exception as e:
+                smf.printd("Exception in CRS stderr reader", e, level="ERROR")
+            
 
     @classmethod
     def send(cls, data: dict) -> dict:
