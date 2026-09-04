@@ -59,6 +59,11 @@ def execute(options, net):
                         f"{CC.GREEN}    {k:<12}{CC.RESET} = {CC.YELLOW}{v}{CC.RESET}"
                     )
                 smf.printf()
+        else:
+            smf.printf(f"[!] {CC.CYAN}Invalid WhoisIP:{CC.RESET}")
+            smf.printf(f"   {CC.YELLOW}   Status      => {r.status}")
+            smf.printf(f"   {CC.YELLOW}   Status Code => {r.status_code}")
+            smf.printf(f"   {CC.YELLOW}   Message     => {r.message}")
     except KeyboardInterrupt:
         return
     except Exception as e:
