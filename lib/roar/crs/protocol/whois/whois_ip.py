@@ -27,7 +27,7 @@ class WHOISResponse:
         self._data: Dict[str, Any] = raw_response.get("data", {})
         self._raw_body: Dict[str, Any] = self._data.get("body", {})
         self._headers: Dict[str, str] = self._data.get("headers") or {}
-        
+
         # State untuk RDAP Contacts
         self._categorized_contacts: Dict[str, List[Dict[str, str]]] = {}
         self._is_contact_parsed: bool = False
@@ -78,13 +78,13 @@ class WHOISResponse:
             if "vcardArray" in obj and "roles" in obj:
                 contact_info = self._parse_vcard(obj["vcardArray"])
                 contact_info["Handle"] = obj.get("handle", "N/A")
-                
+
                 for role in obj.get("roles", []):
                     role_name = role.capitalize()
                     if role_name not in self._categorized_contacts:
                         self._categorized_contacts[role_name] = []
                     self._categorized_contacts[role_name].append(contact_info)
-                    
+
             for v in obj.values():
                 self._extract_entities(v)
 
@@ -98,12 +98,12 @@ class WHOISResponse:
             return res
 
         prop_map = {
-            "fn": "Name", 
-            "email": "Email", 
+            "fn": "Name",
+            "email": "Email",
             "tel": "Phone",
             "org": "Organization",
             "kind": "Entity_Type",
-            "title": "Title"
+            "title": "Title",
         }
 
         for item in vcard[1]:
@@ -127,7 +127,9 @@ class WHOISResponse:
             elif prop == "adr":
                 label = params_dict.get("label", "").replace("\n", ", ")
                 if not label:
-                    label = ", ".join(filter(None, val if isinstance(val, list) else [val]))
+                    label = ", ".join(
+                        filter(None, val if isinstance(val, list) else [val])
+                    )
                 res["Address"] = label
         return res
 
@@ -153,7 +155,7 @@ class WHOISResponse:
     @property
     def engine(self) -> str:
         return self._data.get("engine", "")
-        
+
     @property
     def raw_data(self) -> Union[str, Dict]:
         return self._body
@@ -195,9 +197,7 @@ class WHOISResponse:
         return self.ok
 
     def __repr__(self):
-        return (
-            f"<WHOISResponse Status={self.status} Code={self.status_code} Engine={self.engine}>"
-        )
+        return f"<WHOISResponse Status={self.status} Code={self.status_code} Engine={self.engine}>"
 
 
 class WhoisIP:
