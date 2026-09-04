@@ -2,6 +2,7 @@ from .protocol import (
     http_requests as HTTPR,
     requests as DNSL,
     ipwhois as IPWhois,
+    domwhois as DWhois,
     Socket,
     TelnetClient as Telnet,
 )
@@ -12,6 +13,7 @@ __all__ = [
     "HTTPR",
     "DNSL",
     "IPWhois",
+    "DWhois",
     "Socket",
     "Telnet",
 ]
