@@ -25,7 +25,7 @@ def execute(options, net):
         r = net.IPWhois(target_ip, timeout=5.0, con=20)
         if r.ok:
             # TECHNICAL
-            smf.printf(f"[✓] {CC.CYAN}[TECHNICAL CONTACT]{CC.RESET}")
+            smf.printf(f"\n[✓] {CC.CYAN}[TECHNICAL CONTACT]{CC.RESET}")
             for contact in r.technical:
                 for k, v in contact.items():
                     smf.printf(
