@@ -91,22 +91,24 @@ func WhoisDom(req packet.RequestPacket) packet.ResponsePacket {
 func fetchRDAP(ctx context.Context, targetURL string) ([]byte, map[string]interface{}, int, string, error) {
 	reqs, err := http.NewRequestWithContext(ctx, http.MethodGet, targetURL, nil)
 	if err != nil {
-		return nil, nil, 0, fmt.Errorf("failed to create request: %v", err)
+		return nil, nil, 0, "", fmt.Errorf("failed to create request: %v", err)
 	}
+	
 	reqs.Header.Set("Accept", "application/rdap+json")
+	
 	resp, err := httpClient.Do(reqs)
 	if err != nil {
-		return nil, nil, 0, fmt.Errorf("HTTP Requests failed: %v", err)
+		return nil, nil, 0, "", fmt.Errorf("HTTP Requests failed: %v", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, nil, resp.StatusCode, fmt.Errorf("receiving a non-200 status code: %d %s", resp.StatusCode, resp.Status)
+		return nil, nil, resp.StatusCode, resp.Proto, fmt.Errorf("receiving a non-200 status code: %d %s", resp.StatusCode, resp.Status)
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, nil, resp.StatusCode, fmt.Errorf("failed to read response body: %v", err)
+		return nil, nil, resp.StatusCode, resp.Proto, fmt.Errorf("failed to read response body: %v", err)
 	}
 
 	headers := make(map[string]interface{})
