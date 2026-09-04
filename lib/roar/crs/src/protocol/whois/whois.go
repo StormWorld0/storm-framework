@@ -12,6 +12,8 @@ func WHOIS(req packet.RequestPacket) packet.ResponsePacket {
 	switch req.Mode {
 	case "IPWhois":
 		return WhoisIP(req)
+	case "DOMWhois":
+		return WhoisDom(req)
 	default:
 		// Fallback guard
 		return packet.ResponsePacket{
