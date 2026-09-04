@@ -19,7 +19,7 @@ an active domain, to get email data, servers, org, etc.
 }
 REQUIRED_OPTIONS = {"DOMAIN": "(e.g., example.com)"}
 
-def execute(options):
+def execute(options, net):
     domain = options.get("DOMAIN")
     try:
         r = net.DWhois(domain, timeout=5.0, con=20)
