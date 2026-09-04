@@ -24,7 +24,7 @@ def execute(options, net):
     try:
         r = net.DWhois(domain, timeout=5.0, con=20)
         if r.ok:
-            smf.print(r.raw_data)
+            smf.printf(r.raw_data)
     except KeyboardInterrupt:
         return
     except Exception as e:
