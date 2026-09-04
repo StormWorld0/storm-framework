@@ -51,7 +51,7 @@ func WhoisDom(req packet.RequestPacket) packet.ResponsePacket {
 	defer cancel()
 
 	// Eksekusi request pertama ke Bootstrap/Registry
-	respBody, headers, statusCode, err := fetchRDAP(ctx, url)
+	respBody, headers, statusCode, protocol, err := fetchRDAP(ctx, url)
 	if err != nil {
 		return packet.ResponsePacket{Status: "ERROR", Message: err.Error()}
 	}
