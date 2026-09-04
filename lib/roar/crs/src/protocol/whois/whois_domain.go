@@ -88,7 +88,7 @@ func WhoisDom(req packet.RequestPacket) packet.ResponsePacket {
 }
 
 // fetchRDAP memisahkan logika HTTP request agar bisa di-reuse untuk request related link
-func fetchRDAP(ctx context.Context, targetURL string) ([]byte, map[string]interface{}, int, error) {
+func fetchRDAP(ctx context.Context, targetURL string) ([]byte, map[string]interface{}, int, string, error) {
 	reqs, err := http.NewRequestWithContext(ctx, http.MethodGet, targetURL, nil)
 	if err != nil {
 		return nil, nil, 0, fmt.Errorf("failed to create request: %v", err)
