@@ -43,7 +43,7 @@ func IsDomain(s string) bool {
 func WhoisDom(req packet.RequestPacket) packet.ResponsePacket {
 	utils.Take() // Rate limiter
 
-	// Validasi Input (Sanitasi IP)
+	// Validasi Input (Sanitasi Domain)
 	if parsedDom := IsDomain(req.Domain); parsedDom == true {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Invalid Domain format"}
 	}
