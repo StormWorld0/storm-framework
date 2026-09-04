@@ -1,6 +1,5 @@
 import sys
 import smf
-import whoisdomain as whois
 from apps.utility.colors import C
 
 metadata = {
@@ -18,6 +17,7 @@ an active domain, to get email data, servers, org, etc.
     "Date": "2026-01-18",
 }
 REQUIRED_OPTIONS = {"DOMAIN": "(e.g., example.com)"}
+
 
 def execute(options, net):
     domain = options.get("DOMAIN")
