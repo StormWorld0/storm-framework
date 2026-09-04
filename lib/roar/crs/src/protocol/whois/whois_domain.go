@@ -13,23 +13,8 @@ import (
 )
 
 const (
-	rdapBootstrapURL = "https://rdap.org/domain/%s"
+	rdapDomBootstrapURL = "https://rdap.org/domain/%s"
 )
-
-// Gunakan singleton client untuk memanfaatkan TCP Connection Pooling
-var httpClient *http.Client
-
-func init() {
-	httpClient = &http.Client{
-		// Batasi redirect untuk mencegah loop dan SSRF ke local network
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			if len(via) >= 5 {
-				return fmt.Errorf("stopped after 5 redirects")
-			}
-			return nil
-		},
-	}
-}
 
 func IsDomain(s string) bool {
 	s = strings.TrimSuffix(strings.TrimSpace(s), ".")
@@ -53,7 +38,7 @@ func WhoisDom(req packet.RequestPacket) packet.ResponsePacket {
 		timeout = 5 * time.Second
 	}
 
-	url := fmt.Sprintf(rdapBootstrapURL, req.Domain)
+	url := fmt.Sprintf(rdapDomBootstrapURL, req.Domain)
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
