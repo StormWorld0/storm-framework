@@ -24,10 +24,33 @@ def execute(options, net):
     try:
         r = net.IPWhois(target_ip, timeout=5.0, con=20)
         if r.ok:
-            result = r.data
-            smf.printf()
-            smf.printf(f"{CC.CYAN}{result}{CC.RESET}")
-            smf.printf()
+            # TECHNICAL
+            smf.printf(f"{CC.CYAN}[TECHNICAL CONTACT]{CC.RESET}")
+            for contact in r.technical:
+                for k, v in contact.items():
+                    smf.printf(f"{CC.GREEN}{k:<12}{CC.RESET} = {CC.YELLOW}{v}{CC.RESET}")
+                smf.printf()
+
+            # ADMIN
+            smf.printf(f"{CC.CYAN}[ADMINISTRATIVE CONTACT]{CC.RESET}")
+            for contact in r.admin:
+                for k, v in contact.items():
+                    smf.printf(f"{CC.GREEN}{k:<12}{CC.RESET} = {CC.YELLOW}{v}{CC.RESET}")
+                smf.printf()
+
+            # ABUSE
+            smf.printf(f"{CC.CYAN}[ABUSE CONTACT]{CC.RESET}")
+            for contact in r.abuse:
+                for k, v in contact.items():
+                    smf.printf(f"{CC.GREEN}{k:<12}{CC.RESET} = {CC.YELLOW}{v}{CC.RESET}")
+                smf.printf()
+
+            # REGISTRANT
+            smf.printf(f"{CC.CYAN}[REGISTRANT CONTACT]{CC.RESET}")
+            for contact in r.registrant:
+                for k, v in contact.items():
+                    smf.printf(f"{CC.GREEN}{k:<12}{CC.RESET} = {CC.YELLOW}{v}{CC.RESET}")
+                smf.printf()
     except KeyboardInterrupt:
         return
     except Exception as e:
