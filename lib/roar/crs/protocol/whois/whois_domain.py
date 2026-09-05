@@ -73,7 +73,7 @@ class WHOISResponse:
         self._trigger_contact_parsing()
         return self._categorized_contacts.get("Registrant", [])
 
-        def _extract_entities(self, obj: Any):
+    def _extract_entities(self, obj: Any):
         if not isinstance(obj, dict):
             return
 
