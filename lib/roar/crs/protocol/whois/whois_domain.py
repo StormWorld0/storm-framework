@@ -116,22 +116,24 @@ class WHOISResponse:
 
             prop, params = item[0], item[1]
             params_dict = params if isinstance(params, dict) else {}
-            
+
             # Tangkap value, baik single maupun multi-value
             val = item[3] if len(item) == 4 else item[3:]
 
             if prop in prop_map:
                 mapped_prop = prop_map[prop]
-                
+
                 if isinstance(val, list):
                     # Filter elemen kosong pada multi-value standar
-                    val_str = ", ".join(str(v).strip() for v in val if v and str(v).strip())
+                    val_str = ", ".join(
+                        str(v).strip() for v in val if v and str(v).strip()
+                    )
                 else:
                     val_str = str(val).strip()
                     # Normalisasi skema URI khusus tel:
                     if prop == "tel" and val_str.startswith("tel:"):
                         val_str = val_str[4:]
-                
+
                 res[mapped_prop] = val_str
 
             elif prop == "adr":
@@ -139,10 +141,12 @@ class WHOISResponse:
                 if not label:
                     # Filter ketat untuk array jCard Address (mencegah koma beruntun)
                     raw_vals = val if isinstance(val, list) else [val]
-                    label = ", ".join(str(v).strip() for v in raw_vals if v and str(v).strip())
+                    label = ", ".join(
+                        str(v).strip() for v in raw_vals if v and str(v).strip()
+                    )
                 if label:
                     res["Address"] = label
-                    
+
         return res
 
     # ==========================================
