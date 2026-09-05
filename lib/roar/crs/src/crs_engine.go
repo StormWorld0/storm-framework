@@ -108,8 +108,15 @@ func main() {
 
 		// [MODE ASYNCHRONOUS DENGAN SEMAPHORE]: Untuk protokol yang mendukung concurrency
 		// Load atau inisialisasi semaphore dengan kapasitas req.Go
-		semIntf, _ := semaphores.LoadOrStore(req.Primitive, make(chan struct{}, req.Go))
-		sem := semIntf.(chan struct{})
+		var sem chan struct{}
+        if semIntf, ok := semaphores.Load(req.Primitive); ok {
+            sem = semIntf.(chan struct{})
+        } else {
+            // Alokasi memori HANYA terjadi jika primitive baru pertama kali dipanggil
+            newSem := make(chan struct{}, req.Go)
+            actual, _ := semaphores.LoadOrStore(req.Primitive, newSem)
+            sem = actual.(chan struct{})
+        }
 
 		// Acquire Token dengan Cancellation Aware
 		select {
