@@ -162,18 +162,21 @@ class CRS:
             except Exception as write_err:
                 pid.reap_zombie()
                 return {"status": "ERROR", "message": f"Failed to write IPC: {write_err}"}
-                
+
             wait_interval = 0.5  # Check pulse (0.5 seconds)
             elapsed = 0.0
 
             while elapsed < req_timeout:
                 if event.wait(timeout=wait_interval):
-                    break # Event set by Reader (Success or Initial Cleanup)
-    
+                    break  # Event set by Reader (Success or Initial Cleanup)
+
                 # If wait() is longer than 0.5s, check if the reader is still alive/acknowledged the process.
                 if cls._process is not proc or proc.poll() is not None:
-                    return {"status": "ERROR", "message": "Engine crashed while waiting for response"}
-        
+                    return {
+                        "status": "ERROR",
+                        "message": "Engine crashed while waiting for response",
+                    }
+
                 elapsed += wait_interval
             else:
                 # Loop completes without break => Timeout
