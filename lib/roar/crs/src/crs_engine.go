@@ -27,7 +27,7 @@ func main() {
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-sigChan
-		cancel() // Batalkan semua konteks worker jika OS mengirim signal TERM/INT
+		cancel() // Batalkan semua konteks worker jika OS mengirim SIGTERM
 		os.Stdin.Close()
 		utils.Stop() // Menghentikan ratelimiter
 	}()
@@ -176,7 +176,7 @@ func main() {
 	select {
 	case <-shutdownComplete:
 		os.Exit(0)
-	case <-time.After(1000 * time.Millisecond):
+	case <-time.After(500 * time.Millisecond):
 		fmt.Fprintf(os.Stderr, "CRS Engine: Force exit due to worker timeout\n")
 		os.Exit(1)
 	}
