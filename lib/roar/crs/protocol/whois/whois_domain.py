@@ -88,7 +88,7 @@ class WHOISResponse:
                     self._categorized_contacts[role_name] = []
                 self._categorized_contacts[role_name].append(contact_info)
 
-        # 2. Hanya telusuri ke bawah HANYA pada key "entities" (Targeted Traversal)
+        # Hanya telusuri ke bawah HANYA pada key "entities" (Targeted Traversal)
         if "entities" in obj and isinstance(obj["entities"], list):
             for sub_entity in obj["entities"]:
                 self._extract_entities(sub_entity)
@@ -98,6 +98,7 @@ class WHOISResponse:
         if not isinstance(vcard, list) or len(vcard) < 2:
             return res
 
+        # Mapping
         prop_map = {
             "fn": "Name",
             "email": "Email",
@@ -105,33 +106,43 @@ class WHOISResponse:
             "org": "Organization",
             "kind": "Entity_Type",
             "title": "Title",
+            "contact-uri": "Contact_URL",
         }
 
         for item in vcard[1]:
+            # Standar jCard: [prop_name, parameters, type, value1, value2...]
             if not isinstance(item, list) or len(item) < 4:
                 continue
 
             prop, params = item[0], item[1]
             params_dict = params if isinstance(params, dict) else {}
+            
+            # Tangkap value, baik single maupun multi-value
             val = item[3] if len(item) == 4 else item[3:]
 
             if prop in prop_map:
                 mapped_prop = prop_map[prop]
+                
                 if isinstance(val, list):
-                    val_str = ", ".join(str(v).strip() for v in val if v)
+                    # Filter elemen kosong pada multi-value standar
+                    val_str = ", ".join(str(v).strip() for v in val if v and str(v).strip())
                 else:
                     val_str = str(val).strip()
+                    # Normalisasi skema URI khusus tel:
                     if prop == "tel" and val_str.startswith("tel:"):
                         val_str = val_str[4:]
+                
                 res[mapped_prop] = val_str
 
             elif prop == "adr":
                 label = params_dict.get("label", "").replace("\n", ", ")
                 if not label:
-                    label = ", ".join(
-                        filter(None, val if isinstance(val, list) else [val])
-                    )
-                res["Address"] = label
+                    # Filter ketat untuk array jCard Address (mencegah koma beruntun)
+                    raw_vals = val if isinstance(val, list) else [val]
+                    label = ", ".join(str(v).strip() for v in raw_vals if v and str(v).strip())
+                if label:
+                    res["Address"] = label
+                    
         return res
 
     # ==========================================
