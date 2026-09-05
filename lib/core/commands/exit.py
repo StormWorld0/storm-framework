@@ -9,6 +9,6 @@ from lib.pid_manager import PIDManager as pid
 # This will minimize the possibility of a crash to prevent damage.
 def execute(args, ctx):
     # Kill all running process PIDs
-    pid.cleanup()
+    pid.cleanup(timeout=1.0)
     # Mutate state exit in-place
     ctx.exit = True
