@@ -85,12 +85,9 @@ class WHOISResponse:
                         self._categorized_contacts[role_name] = []
                     self._categorized_contacts[role_name].append(contact_info)
 
-            for v in obj.values():
-                self._extract_entities(v)
-
-        elif isinstance(obj, list):
-            for item in obj:
-                self._extract_entities(item)
+            if "entities" in obj and isinstance(obj["entities"], list):
+                for sub_entity in obj["entities"]:
+                    self._extract_entities(sub_entity)
 
     def _parse_vcard(self, vcard: list) -> Dict[str, str]:
         res = {}
@@ -102,7 +99,7 @@ class WHOISResponse:
             "email": "Email",
             "tel": "Phone",
             "org": "Organization",
-            "kind": "Entity_Type",
+            "kind": "Type",
             "title": "Title",
         }
 
@@ -127,10 +124,13 @@ class WHOISResponse:
             elif prop == "adr":
                 label = params_dict.get("label", "").replace("\n", ", ")
                 if not label:
+                    # Filter ketat untuk array jCard Address (mencegah koma beruntun)
+                    raw_vals = val if isinstance(val, list) else [val]
                     label = ", ".join(
-                        filter(None, val if isinstance(val, list) else [val])
+                        str(v).strip() for v in raw_vals if v and str(v).strip()
                     )
-                res["Address"] = label
+                if label:
+                    res["Address"] = label
         return res
 
     # ==========================================
