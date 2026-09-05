@@ -1,4 +1,3 @@
-import sys
 import smf
 
 from apps.utility.colors import CC
