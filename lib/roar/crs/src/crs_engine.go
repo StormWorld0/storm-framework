@@ -43,7 +43,7 @@ func main() {
 	utils.InitGlobalRateLimiter(ctx, req)
 
 	// Channel sebagai Fan-In untuk mengumpulkan semua response secara thread-safe.
-	// Buffer dialokasikan (misal 1000) untuk mencegah backpressure pada worker.
+	// Buffer dialokasikan (1000) untuk mencegah backpressure pada worker.
 	responseChan := make(chan packet.ResponsePacket, 1000)
 	
 	var wgWorkers sync.WaitGroup
