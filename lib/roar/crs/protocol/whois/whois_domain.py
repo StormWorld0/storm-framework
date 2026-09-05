@@ -73,24 +73,25 @@ class WHOISResponse:
         self._trigger_contact_parsing()
         return self._categorized_contacts.get("Registrant", [])
 
-    def _extract_entities(self, obj: Any):
-        if isinstance(obj, dict):
-            if "vcardArray" in obj and "roles" in obj:
-                contact_info = self._parse_vcard(obj["vcardArray"])
-                contact_info["Handle"] = obj.get("handle", "N/A")
+        def _extract_entities(self, obj: Any):
+        if not isinstance(obj, dict):
+            return
 
-                for role in obj.get("roles", []):
-                    role_name = role.capitalize()
-                    if role_name not in self._categorized_contacts:
-                        self._categorized_contacts[role_name] = []
-                    self._categorized_contacts[role_name].append(contact_info)
+        # 1. Ekstrak vCard jika node saat ini adalah entitas kontak
+        if "vcardArray" in obj and "roles" in obj:
+            contact_info = self._parse_vcard(obj["vcardArray"])
+            contact_info["Handle"] = obj.get("handle", "N/A")
 
-            for v in obj.values():
-                self._extract_entities(v)
+            for role in obj.get("roles", []):
+                role_name = role.capitalize()
+                if role_name not in self._categorized_contacts:
+                    self._categorized_contacts[role_name] = []
+                self._categorized_contacts[role_name].append(contact_info)
 
-        elif isinstance(obj, list):
-            for item in obj:
-                self._extract_entities(item)
+        # 2. Hanya telusuri ke bawah HANYA pada key "entities" (Targeted Traversal)
+        if "entities" in obj and isinstance(obj["entities"], list):
+            for sub_entity in obj["entities"]:
+                self._extract_entities(sub_entity)
 
     def _parse_vcard(self, vcard: list) -> Dict[str, str]:
         res = {}
