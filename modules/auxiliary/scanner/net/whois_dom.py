@@ -24,7 +24,7 @@ def execute(options, net):
     try:
         r = net.DWhois(domain, timeout=5.0, con=20)
         if r.ok:
-            if r._categorized_contacts.get("Technical"):
+            if r.technical and r._categorized_contacts.get("Technical"):
                 # TECHNICAL
                 smf.printf(f"\n[✓] {CC.CYAN}[TECHNICAL CONTACT]{CC.RESET}")
                 for contact in r.technical:
@@ -34,7 +34,7 @@ def execute(options, net):
                         )
                     smf.printf()
 
-            if r._categorized_contacts.get("Administrative"):
+            if r.admin and r._categorized_contacts.get("Administrative"):
                 # ADMIN
                 smf.printf(f"[✓] {CC.CYAN}[ADMINISTRATIVE CONTACT]{CC.RESET}")
                 for contact in r.admin:
@@ -44,7 +44,7 @@ def execute(options, net):
                         )
                     smf.printf()
 
-            if r._categorized_contacts.get("Abuse"):
+            if r.abuse and r._categorized_contacts.get("Abuse"):
                 # ABUSE
                 smf.printf(f"[✓] {CC.CYAN}[ABUSE CONTACT]{CC.RESET}")
                 for contact in r.abuse:
@@ -54,7 +54,7 @@ def execute(options, net):
                         )
                     smf.printf()
 
-            if r._categorized_contacts.get("Registrant"):
+            if r.registrant and r._categorized_contacts.get("Registrant"):
                 # REGISTRANT
                 smf.printf(f"[✓] {CC.CYAN}[REGISTRANT CONTACT]{CC.RESET}")
                 for contact in r.registrant:
