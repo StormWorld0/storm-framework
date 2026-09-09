@@ -13,6 +13,7 @@ from typing import Dict, Set, Optional, Any
 from .storage import PluginStateStore
 from .safe import SafePluginProxy, NullPlugin
 from .inspection import extract_plugin
+from .result import PluginResult
 
 # ==========================================
 # STATE MEMORY (Module-Level Singleton)
@@ -219,36 +220,31 @@ def get_plugin(plugin_name: str) -> Any:
     return plugin
 
 
-def broadcast(event_name: str, *args: Any, **kwargs: Any) -> Dict[str, Any]:
+def broadcast(event_name: str, *args: Any, **kwargs: Any) -> Dict[str, PluginResult]:
     """Sends events to all active and compatible Plugins"""
-    results: Dict[str, Any] = {}
+
+    results: Dict[str, PluginResult] = {}
 
     with _lock:
-        # Gunakan list(REGISTRY.items()) untuk menghindari RuntimeError
         current_registry = list(REGISTRY.items())
 
     for plugin_name, safe_proxy in current_registry:
         event_hook = getattr(safe_proxy, event_name, None)
         if event_hook and callable(event_hook):
             try:
-                # Eksekusi hook dan simpan hasilnya
+                # Execute the hook and save the result
                 res = event_hook(*args, **kwargs)
-                results[plugin_name] = {
-                    "executed": True,
-                    "status": "SUCCESS",
-                    "data": res,
-                }
+                if isinstance(res, PluginResult):
+                    results[plugin_name] = res
+                else:
+                    results[plugin_name] = PluginResult.ok(res)
             except Exception as e:
                 smf.printd(
                     f"Broadcast event [{event_name}] failed in plugin [{plugin_name}]",
                     e,
                     level="ERROR",
                 )
-                results[plugin_name] = {
-                    "executed": False,
-                    "status": "ERROR",
-                    "data": str(e),
-                }
+                results[plugin_name] = PluginResult.fail(e)
 
     return results
 
