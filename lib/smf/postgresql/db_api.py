@@ -62,6 +62,7 @@ def get_status():
         smf.printd("Database error", e, level="ERROR")
         return
 
+
 def list_workspaces():
     """Ekuivalen dengan `workspace`"""
     workspaces = db.session.query(Workspace).all()
