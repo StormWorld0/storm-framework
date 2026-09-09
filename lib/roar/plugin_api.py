@@ -7,9 +7,10 @@ from typing import Any, List, Dict, Callable, Optional
 from .plugin import manager
 from .plugin import monitoring
 from .plugin import introspection
+from .plugin.result import PluginResult
 
 
-class StormAPI:
+class PluginAPI:
     """Plugin API Mechanism"""
 
     @staticmethod
@@ -61,7 +62,7 @@ class StormAPI:
         return manifest
 
     @staticmethod
-    def get_plugin(plugin_name: str) -> Optional[Callable[[Any], Any]]:
+    def get_plugin(plugin_name: str) -> Optional[Callable[[Any], PluginResult]]:
         """Retrieve a callable handler for the specified plugin."""
 
         # Calling the plugin from the register, to find out if the plugin exists
@@ -74,23 +75,30 @@ class StormAPI:
             return None
 
         # Inspection to find entry points
-        action = getattr(plugin, "execute", None)
-        if not callable(action):
+        if not callable(action := getattr(plugin, "execute", None)):
             smf.printd(
                 f"Plugin '{plugin_name}' has no callable 'execute()' method", level="WARN"
             )
             return None
 
         # Return closure
-        def runner(data: Any = None) -> Any:
+        def runner(data: Any = None) -> PluginResult:
             try:
-                return action(data)
+                raw_res = action(data)
+                
+                if isinstance(raw_res, PluginResult):
+                    return raw_res
+                    
+                if raw_res is False:
+                    return PluginResult.fail("Plugin returned False")
+                    
+                return PluginResult.ok(raw_res)
             except Exception as e:
                 smf.printd(f"Error executing plugin: {plugin_name}", e, level="ERROR")
-                return None
+                return PluginResult.fail(e)
 
         return runner
 
 
 # Expose instance
-plugin = StormAPI()
+plugin = PluginAPI()
