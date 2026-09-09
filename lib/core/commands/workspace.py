@@ -2,7 +2,13 @@ import shlex
 import smf
 
 from apps.utility.colors import CC
-from lib.smf.postgresql import create_workspace, list_workspaces, Workspace, set_workspace, get_current_workspace
+from lib.smf.postgresql import (
+    create_workspace,
+    list_workspaces,
+    Workspace,
+    set_workspace,
+    get_current_workspace,
+)
 
 
 def execute(args, ctx):
