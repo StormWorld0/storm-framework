@@ -4,7 +4,7 @@ from sqlalchemy import text
 from pathlib import Path
 
 from .db_manager import DBManager
-from .db_models import Host, Service, Vuln, Workspace
+from .db_models import Credential, Host, Login, Loot, Note, Service, Vuln, Workspace
 
 # Inisialisasi DB Engine utama
 config_path = Path.home() / ".smf" / "database.yml"
@@ -21,12 +21,17 @@ def set_workspace(name: str):
     if db:
         db.current_workspace = name
 
-
 def get_current_workspace() -> str:
-    """Dipanggil oleh siapa saja yang butuh tau workspace aktif"""
+    """Dipanggil oleh siapa saja yang membutuhka nama workspace aktif"""
     if db and hasattr(db, "current_workspace"):
         return db.current_workspace
     return "default"
+
+def get_session() -> str:
+    """Mengembalikan session aktif"""
+    if db and hasattr(db, "session"):
+        return db.session
+    return None
 
 
 # ==========================================
@@ -161,54 +166,133 @@ def get_vulns(workspace_name: str = None):
 # FUNCTIONS FOR CORE / MODULES (Ingest Data)
 # ==========================================
 
+def _clean_payload(model_cls, payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Membuang argumen yang tidak cocok dengan kolom model agar tidak TypeError."""
+    valid_cols = {c.key for c in inspect(model_cls).mapper.column_attrs}
+    return {k: v for k, v in payload.items() if k in valid_cols and v is not None}
 
-def report_host(address: str, workspace_name: str = None, **kwargs):
-    """Dipanggil oleh core untuk mencatat host (Idempotent)"""
-    target_ws = workspace_name or getattr(db, "current_workspace", "default")
+
+def ingest_telemetry(data: Dict[str, Any], workspace: str = "default") -> bool:
+    """Universal Ingestion Function.
+
+    Memproses payload bertingkat dari DTO/Worker dan menyimpannya ke tabel
+    PostgreSQL secara atomic (Host, Service, Vuln, Note, Creds, Loot).
+    """
+    if not db or not (session := get_session()):
+        return False
+
     try:
-        host = db.report_host(address=address, workspace_name=target_ws, **kwargs)
-        if host:
-            return {"status": "success", "host_id": host.id}
-        return None
+        # 1. Pastikan Workspace Ada (Get or Create)
+        ws = session.query(Workspace).filter_by(name=workspace).first()
+        if not ws:
+            ws = Workspace(name=workspace_name)
+            session.add(ws)
+            session.flush()
+
+        host_inst = None
+        service_inst = None
+
+        # 2. Ingest Host (jika ada data target/host di payload)
+        host_data = data.get("host")
+        if host_data and isinstance(host_data, dict):
+            address = host_data.get("address")
+            if address:
+                host_inst = (
+                    session.query(Host)
+                    .filter_by(workspace_id=ws.id, address=address)
+                    .first()
+                )
+                clean_host = _clean_payload(Host, host_data)
+                if not host_inst:
+                    host_inst = Host(workspace_id=ws.id, **clean_host)
+                    session.add(host_inst)
+                else:
+                    # Update metadata host jika ada perubahan (misal os_name)
+                    for k, v in clean_host.items():
+                        setattr(host_inst, k, v)
+                session.flush()
+
+        # 3. Ingest Service (jika ada data port/service di payload)
+        srv_data = data.get("service")
+        if srv_data and isinstance(srv_data, dict) and host_inst:
+            port = srv_data.get("port")
+            proto = srv_data.get("proto", "tcp")
+            if port:
+                service_inst = (
+                    session.query(Service)
+                    .filter_by(host_id=host_inst.id, port=port, proto=proto)
+                    .first()
+                )
+                clean_srv = _clean_payload(Service, srv_data)
+                if not service_inst:
+                    service_inst = Service(host_id=host_inst.id, **clean_srv)
+                    session.add(service_inst)
+                else:
+                    for k, v in clean_srv.items():
+                        setattr(service_inst, k, v)
+                session.flush()
+
+        # 4. Ingest Vuln (Kerentanan)
+        vuln_data = data.get("vuln")
+        if vuln_data and isinstance(vuln_data, dict) and host_inst:
+            clean_vuln = _clean_payload(Vuln, vuln_data)
+            vuln_inst = Vuln(
+                host_id=host_inst.id,
+                service_id=service_inst.id if service_inst else None,
+                **clean_vuln,
+            )
+            session.add(vuln_inst)
+
+        # 5. Ingest Note (RDAP, HTTP Headers, Custom Banner JSON)
+        note_data = data.get("note")
+        if note_data and isinstance(note_data, dict):
+            clean_note = _clean_payload(Note, note_data)
+            # Encode data dict ke JSON string jika perlu
+            if isinstance(clean_note.get("data"), (dict, list)):
+                clean_note["data"] = json.dumps(clean_note["data"])
+
+            note_inst = Note(
+                workspace_id=ws.id,
+                host_id=host_inst.id if host_inst else None,
+                service_id=service_inst.id if service_inst else None,
+                **clean_note,
+            )
+            session.add(note_inst)
+
+        # 6. Ingest Credential & Login
+        cred_data = data.get("credential")
+        if cred_data and isinstance(cred_data, dict):
+            clean_cred = _clean_payload(Credential, cred_data)
+            cred_inst = Credential(workspace_id=ws.id, **clean_cred)
+            session.add(cred_inst)
+            session.flush()
+
+            # Jika login sukses pada service tertentu
+            if service_inst and payload.get("login_status"):
+                login_inst = Login(
+                    credential_id=cred_inst.id,
+                    service_id=service_inst.id,
+                    status=payload.get("login_status", "Successful"),
+                    access_level=payload.get("access_level", "User"),
+                )
+                session.add(login_inst)
+
+        # 7. Ingest Loot (File dump / artifacts)
+        loot_data = data.get("loot")
+        if loot_data and isinstance(loot_data, dict):
+            clean_loot = _clean_payload(Loot, loot_data)
+            loot_inst = Loot(
+                workspace_id=ws.id,
+                host_id=host_inst.id if host_inst else None,
+                service_id=service_inst.id if service_inst else None,
+                **clean_loot,
+            )
+            session.add(loot_inst)
+
+        # Commit Satu Kali untuk Seluruh Transaksi
+        session.commit()
+        return True
     except Exception as e:
-        smf.printd("Failed to report host", e, level="ERROR")
-        return None
-
-
-def report_service(
-    address: str, port: int, proto: str, workspace_name: str = None, **kwargs
-):
-    """Dipanggil oleh core untuk mencatat service (Idempotent)"""
-    target_ws = workspace_name or getattr(db, "current_workspace", "default")
-    try:
-        service = db.report_service(
-            address=address,
-            port=port,
-            proto=proto,
-            workspace_name=target_ws,
-            **kwargs,
-        )
-        if service:
-            return {"status": "success", "service_id": service.id}
-        return None
-    except Exception as e:
-        smf.printd("Failed to report service", e, level="ERROR")
-        return None
-
-
-def report_vuln(address: str, name: str, workspace_name: str = None, **kwargs):
-    """Dipanggil oleh core untuk mencatat vulnerability (Idempotent)"""
-    target_ws = workspace_name or getattr(db, "current_workspace", "default")
-    try:
-        vuln = db.report_vuln(
-            address=address,
-            name=name,
-            workspace_name=target_ws,
-            **kwargs,
-        )
-        if vuln:
-            return {"status": "success", "vuln_id": vuln.id}
-        return None
-    except Exception as e:
-        smf.printd("Failed to report vuln", e, level="ERROR")
-        return None
+        session.rollback()
+        smf.printd("Ingestion Pipeline Transaction Failed", e, level="ERROR")
+        return False
