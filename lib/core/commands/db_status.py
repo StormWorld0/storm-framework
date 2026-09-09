@@ -1,21 +1,23 @@
 import smf
+
 from apps.utility.colors import CC
+from lib.smf.postgresql import get_status
 
 
 def execute(args, ctx):
     db = ctx.db
-
-    if not db or not getattr(db, "session", None):
-        smf.printf("[-] No database connection active.")
+    if not db:
+        smf.printf(f"[!]{CC.YELLOW} No database connection active.{CC.RESET}")
         return
 
-    try:
-        # Test queries directly to the Postgres driver via ORM
-        db.session.execute("SELECT 1")
-        db_name = getattr(db, "db_name", "smf")
+    status_data = get_status()
+    if status_data and status_data.get("status") == "connected":
+        db_name = status_data.get("database", "smf")
+        backend = status_data.get("backend", "PostgreSQL")
         current_ws = getattr(db, "current_workspace", "default")
+
         smf.printf(
-            f"[*]{CC.YELLOW} Connected to {db_name}. Connection type:{CC.GREEN} PostgreSQL. {CC.YELLOW}Workspace:{CC.GREEN} {current_ws}{CC.RESET}"
+            f"[*]{CC.YELLOW} Connected to {db_name}. Connection type:{CC.GREEN} {backend}. {CC.YELLOW}Workspace:{CC.GREEN} {current_ws}{CC.RESET}"
         )
-    except Exception as e:
-        smf.printd("Database connection error", e, level="ERROR")
+    else:
+        smf.printf(f"[-]{CC.RED} Failed to connect to database.{CC.RESET}")
