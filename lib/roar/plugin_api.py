@@ -67,13 +67,18 @@ class StormAPI:
         # Calling the plugin from the register, to find out if the plugin exists
         plugin = manager.get_plugin(plugin_name)
         if not plugin or isinstance(plugin, manager.NullPlugin):
-            smf.printd(f"Plugin '{plugin_name}' could not be found or initialized.", level="ERROR")
+            smf.printd(
+                f"Plugin '{plugin_name}' could not be found or initialized.",
+                level="ERROR",
+            )
             return None
 
         # Inspection to find entry points
         action = getattr(plugin, "execute", None)
         if not callable(action):
-            smf.printd(f"Plugin '{plugin_name}' has no callable 'execute()' method", level="WARN")
+            smf.printd(
+                f"Plugin '{plugin_name}' has no callable 'execute()' method", level="WARN"
+            )
             return None
 
         # Return closure
@@ -83,8 +88,9 @@ class StormAPI:
             except Exception as e:
                 smf.printd(f"Error executing plugin: {plugin_name}", e, level="ERROR")
                 return None
-                
+
         return runner
+
 
 # Expose instance
 plugin = StormAPI()
