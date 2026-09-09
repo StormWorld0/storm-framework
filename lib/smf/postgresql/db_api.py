@@ -33,8 +33,7 @@ def list_workspaces():
     try:
         workspaces = db.session.query(Workspace).all()
         return [
-            {"id": w.id, "name": w.name, "host_count": len(w.hosts)}
-            for w in workspaces
+            {"id": w.id, "name": w.name, "host_count": len(w.hosts)} for w in workspaces
         ]
     except Exception as e:
         smf.printd("Failed to list workspaces", e, level="ERROR")
@@ -95,10 +94,7 @@ def get_services(workspace_name: str = None):
             return []
 
         services = (
-            db.session.query(Service)
-            .join(Host)
-            .filter(Host.workspace_id == ws.id)
-            .all()
+            db.session.query(Service).join(Host).filter(Host.workspace_id == ws.id).all()
         )
         return [
             {
