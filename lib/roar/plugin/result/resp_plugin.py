@@ -20,6 +20,5 @@ class PluginResult(Generic[T]):
     def fail(cls, msg: any) -> "PluginResult":
         return cls(success=False, error=str(msg))
 
-    @classmethod
     def __bool__(cls) -> bool:
-        return cls.ok
+        return self.success
