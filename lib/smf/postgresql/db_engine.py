@@ -20,7 +20,7 @@ class PostgresManager:
         """Verifying the availability of PostgreSQL binaries on the system ($PATH)."""
         if not all([self.pg_ctl, self.initdb, self.createuser, self.createdb]):
             smf.printd("PostgreSQL binaries not found.", level="WARN")
-            return
+            raise SystemExit(1)
 
     def _run_cmd(self, cmd, capture_output=False, check=True):
         """Command execution wrapper with exception handling."""
