@@ -4,7 +4,6 @@
 # Complete information about the License is in the root directory.
 # Author: zxelzy
 
-import typing
 import smf
 import os
 import shutil
@@ -15,9 +14,12 @@ from apps.utility.colors import CC
 from lib.core import handler as i
 from lib.roar.plugin_api import plugin
 from lib.roar.crs import net_api as api
-from dataclasses import dataclass, field
+from lib.smf.postgresql import DBManager
 
 from .ignore import IGNORED_SYSTEM_COMMANDS
+
+from typing import Any, Dict, Optional
+from dataclasses import dataclass, field
 from pathlib import Path
 
 
@@ -47,16 +49,18 @@ class Context:
     This context is what the Pipeline will carry everywhere.
     """
 
-    current_module: typing.Any = None
+    current_module: Any = None
     current_module_name: str = ""
     options: dict = field(default_factory=ops.default_options)
     exit: bool = False
-    plugin: typing.Any = plugin
+    plugin: Any = plugin
     net: NetContext = field(default_factory=NetContext)
+    db: Optional[DBManager] = None
 
     def __post_init__(self) -> None:
         smf.printd("CONTEXT PLUGIN", self.plugin, level="DEBUG")
         smf.printd("CONTEXT RUNTIME", self.net, level="DEBUG")
+        smf.printd("CONTEXT DATABASE", self.db, level="DEBUG")
 
     def _get_home(self) -> Path:
         """
