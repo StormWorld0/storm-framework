@@ -27,20 +27,28 @@ class DBManager:
 
     def _create_engine_from_config(self, config_path):
         """Parsing YAML dan mengonstruksi PostgreSQL connection string."""
-        with open(config_path, "r") as f:
-            config = yaml.safe_load(f)["production"]
+        if not Path(config_path).exists():
+            smf.printd(f"Config file not found", config_path, level="WARN")
+            return None
+            
+        try:
+            with open(config_path, "r") as f:
+                config = yaml.safe_load(f)["production"]
 
-        self.db_name = config.get("database", "msf")
+            self.db_name = config.get("database", "msf")
 
-        # Format: postgresql+psycopg2://user:password@host:port/dbname
-        dsn = (
-            f"postgresql+psycopg2://{config['username']}:{config['password']}"
-            f"@{config['host']}:{config['port']}/{self.db_name}"
-        )
+            # Format: postgresql+psycopg2://user:password@host:port/dbname
+            dsn = (
+                f"postgresql+psycopg2://{config['username']}:{config['password']}"
+                f"@{config['host']}:{config['port']}/{self.db_name}"
+            )
 
-        return create_engine(
-            dsn, pool_size=config.get("pool", 5), pool_timeout=config.get("timeout", 10)
-        )
+            return create_engine(
+                dsn, pool_size=config.get("pool", 5), pool_timeout=config.get("timeout", 10)
+            )
+        except Exception as e:
+            smf.printd("Failed to create engine from config", e, level="ERROR")
+            return None
 
     def _ensure_default_workspace(self):
         """Memastikan workspace 'default' selalu ada saat startup."""
