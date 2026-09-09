@@ -3,6 +3,7 @@ import smf
 
 from .db_manager import DBManager
 from .db_models import Host, Service, Vuln, Workspace
+
 # Inisialisasi DB Engine utama
 config_path = Path.home() / ".smf" / "database.yml"
 db = DBManager(config_path)
@@ -110,6 +111,7 @@ def get_services(workspace_name: str = None):
         smf.printd("Failed to get services", e, level="ERROR")
         return []
 
+
 def get_vulns(workspace_name: str = None):
     """Ekuivalen dengan `vulns`"""
     target_ws = workspace_name or getattr(db, "current_workspace", "default")
@@ -119,12 +121,7 @@ def get_vulns(workspace_name: str = None):
             smf.printd(f"Workspace '{target_ws}' not found", level="WARN")
             return []
 
-        vulns = (
-            db.session.query(Vuln)
-            .join(Host)
-            .filter(Host.workspace_id == ws.id)
-            .all()
-        )
+        vulns = db.session.query(Vuln).join(Host).filter(Host.workspace_id == ws.id).all()
         return [
             {
                 "host": v.host.address if v.host else "",
@@ -138,7 +135,6 @@ def get_vulns(workspace_name: str = None):
     except Exception as e:
         smf.printd("Failed to get vulns", e, level="ERROR")
         return []
-        
 
 
 # ==========================================
