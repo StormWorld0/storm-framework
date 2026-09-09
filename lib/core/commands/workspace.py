@@ -14,7 +14,7 @@ def execute(args, ctx):
         workspace del <name>    -> Hapus workspace
         workspace <name>        -> Pindah workspace aktif
     """
-    db = getattr(ctx, "db", None)
+    db = ctx.db
     if not db or not getattr(db, "session", None):
         smf.printf(f"[!]{CC.YELLOW} No database connection active.{CC.RESET}")
         return
