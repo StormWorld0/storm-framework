@@ -2,7 +2,7 @@
 # -- SMF License
 import smf
 
-from typing import Any, List, Dict
+from typing import Any, List, Dict, Callable, Optional
 
 from .plugin import manager
 from .plugin import monitoring
@@ -38,14 +38,14 @@ class StormAPI:
         REPL command: `show plugin`
         Connecting managers to monitoring.
         """
-        # API mengambil 'State/Data' dari Manager
+        # API retrieves 'State/Data' from Manager
         pluginpath = manager.PLUGIN_DIR
         data = manager.REGISTRY
 
-        # Menyuntikkan data tersebut ke fungsi Monitoring.
-        # Monitoring akan memprosesnya dan mengembalikan laporan.
+        # Inject the data into the Monitoring function.
+        # Monitoring will process it and return a report.
         laporan = monitoring.get_status_map(pluginpath, data)
-
+        # Returning data report
         return laporan
 
     @staticmethod
@@ -54,29 +54,37 @@ class StormAPI:
         REPL command: `info <plugin_name>`
         Connecting managers to introspection.
         """
-        # API meminta spesifik 1 plugin dari Manager
+        # API requests specific 1 plugin from Manager
         target_plugin = manager.get_plugin(plugin_name)
-
-        # Membedah metadata Plugin
+        # Dissecting Plugin metadata
         manifest = introspection.get_plugin_manifest(target_plugin)
-
         return manifest
 
     @staticmethod
-    def execute(plugin_name: str, payload: Any = None) -> Any:
-        """Single execution of the plugin."""
+    def get_plugin(plugin_name: str) -> Optional[Callable[[Any], Any]]:
+        """Retrieve a callable handler for the specified plugin."""
+
+        # Calling the plugin from the register, to find out if the plugin exists
         plugin = manager.get_plugin(plugin_name)
         if not plugin or isinstance(plugin, manager.NullPlugin):
-            smf.printd(f"Plugin '{plugin_name}' could not be executed.", level="ERROR")
-            return
+            smf.printd(f"Plugin '{plugin_name}' could not be found or initialized.", level="ERROR")
+            return None
 
+        # Inspection to find entry points
         action = getattr(plugin, "execute", None)
-        if callable(action):
-            return action(payload)
+        if not callable(action):
+            smf.printd(f"Plugin '{plugin_name}' has no callable 'execute()' method", level="WARN")
+            return None
 
-        smf.printd(f"Plugin {plugin_name}", "Has no function 'execute()'", level="ERROR")
-        return
-
+        # Return closure
+        def runner(data: Any = None) -> Any:
+            try:
+                return action(payload)
+            except Exception as e:
+                smf.printd(f"Error executing plugin: {plugin_name}", e, level="ERROR")
+                return None
+                
+        return runner
 
 # Expose instance
 plugin = StormAPI()
