@@ -83,7 +83,7 @@ class Plugin:
                 query = """
                     SELECT timestamp, level, label, payload, caller, location, traceback
                     FROM system_logs 
-                    WHERE level IN ('ERROR', 'CRITICAL') 
+                    WHERE level IN ('ERROR', 'CRITICAL', 'WARN') 
                       AND timestamp > ?
                       AND label NOT LIKE '%sendlog%'
                     ORDER BY timestamp ASC
