@@ -1,0 +1,158 @@
+from pathlib import Path
+import smf
+
+from .db_manager import DBManager
+from .db_models import Host, Service, Workspace
+
+# Inisialisasi DB Engine tunggal di internal module
+config_path = Path.home() / ".smf" / "database.yml"
+db = DBManager(config_path)
+
+
+# ==========================================
+# FUNCTIONS FOR REPL (View / Query Data)
+# ==========================================
+
+
+def get_status():
+    """Ekuivalen dengan `db_status`"""
+    try:
+        db.session.execute("SELECT 1")
+        return {
+            "status": "connected",
+            "database": db.db_name,
+            "backend": "PostgreSQL",
+        }
+    except Exception as e:
+        smf.printd("Database error", e, level="ERROR")
+        return None
+
+
+def list_workspaces():
+    """Ekuivalen dengan `workspace`"""
+    try:
+        workspaces = db.session.query(Workspace).all()
+        return [
+            {"id": w.id, "name": w.name, "host_count": len(w.hosts)} for w in workspaces
+        ]
+    except Exception as e:
+        smf.printd("Failed to list workspaces", e, level="ERROR")
+        return []
+
+
+def create_workspace(name: str):
+    """Ekuivalen dengan `workspace -a <name>`"""
+    try:
+        existing = db.session.query(Workspace).filter_by(name=name).first()
+        if existing:
+            smf.printd("Workspace already exists", level="INFO")
+            return None
+
+        ws = Workspace(name=name)
+        db.session.add(ws)
+        db.session.commit()
+        return {"message": f"Workspace '{name}' created"}
+    except Exception as e:
+        db.session.rollback()
+        smf.printd("Failed to create workspace", e, level="ERROR")
+        return None
+
+
+def get_hosts(workspace_name: str = "default"):
+    """Ekuivalen dengan `hosts`"""
+    try:
+        ws = db.session.query(Workspace).filter_by(name=workspace_name).first()
+        if not ws:
+            smf.printd("Workspace not found", level="WARN")
+            return []
+
+        hosts = db.session.query(Host).filter_by(workspace_id=ws.id).all()
+        return [
+            {
+                "address": h.address,
+                "mac": h.mac or "",
+                "os_name": h.os_name or "Unknown",
+                "os_flavor": h.os_flavor or "",
+                "purpose": h.purpose or "",
+                "info": h.info or "",
+            }
+            for h in hosts
+        ]
+    except Exception as e:
+        smf.printd("Failed to get hosts", e, level="ERROR")
+        return []
+
+
+def get_services(workspace_name: str = "default"):
+    """Ekuivalen dengan `services`"""
+    try:
+        ws = db.session.query(Workspace).filter_by(name=workspace_name).first()
+        if not ws:
+            smf.printd("Workspace not found", level="WARN")
+            return []
+
+        services = (
+            db.session.query(Service).join(Host).filter(Host.workspace_id == ws.id).all()
+        )
+        return [
+            {
+                "host": s.host.address if s.host else "",
+                "port": s.port,
+                "proto": s.proto,
+                "name": s.name or "",
+                "state": s.state or "",
+                "info": s.info or "",
+            }
+            for s in services
+        ]
+    except Exception as e:
+        smf.printd("Failed to get services", e, level="ERROR")
+        return []
+
+
+# ==========================================
+# FUNCTIONS FOR CORE / MODULES (Ingest Data)
+# ==========================================
+
+
+def report_host(address: str, workspace_name: str = "default", **kwargs):
+    """Dipanggil oleh core untuk mencatat host (Idempotent)"""
+    try:
+        host = db.report_host(address=address, workspace_name=workspace_name, **kwargs)
+        return {"status": "success", "host_id": host.id}
+    except Exception as e:
+        smf.printd("Failed to report host", e, level="ERROR")
+        return None
+
+
+def report_service(
+    address: str, port: int, proto: str, workspace_name: str = "default", **kwargs
+):
+    """Dipanggil oleh core untuk mencatat service (Idempotent)"""
+    try:
+        service = db.report_service(
+            address=address,
+            port=port,
+            proto=proto,
+            workspace_name=workspace_name,
+            **kwargs,
+        )
+        return {"status": "success", "service_id": service.id}
+    except Exception as e:
+        smf.printd("Failed to report service", e, level="ERROR")
+        return None
+
+
+def report_vuln(address: str, name: str, workspace_name: str = "default", **kwargs):
+    """Dipanggil oleh core untuk mencatat vulnerability (Idempotent)"""
+    try:
+        vuln = db.report_vuln(
+            address=address,
+            name=name,
+            workspace_name=workspace_name,
+            **kwargs,
+        )
+        return {"status": "success", "vuln_id": vuln.id}
+    except Exception as e:
+        smf.printd("Failed to report vuln", e, level="ERROR")
+        return None
