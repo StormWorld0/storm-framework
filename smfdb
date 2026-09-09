@@ -45,14 +45,11 @@ def main():
             index = sys.argv.index("--args")
 
             if index + 1 < len(sys.argv):
-                wrapper = sys.argv[index + 1]
-
-        generate(wrapper)
+                command = sys.argv[index + 1]
     except Exception as e:
         smf.printf("[*] Error =>", e)
         sys.exit(100)
       
-    args = parser.parse_args()
     pg_mgr = PostgresManager()
 
     if command == "init":
@@ -69,7 +66,7 @@ def main():
     elif command == "status":
         pg_mgr.status()
     else:
-        parser.print_help()
+        smf.printf("[*] Arguments not found.")
         sys.exit(1)
 
 if __name__ == "__main__":
