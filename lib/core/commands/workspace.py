@@ -2,7 +2,7 @@ import shlex
 import smf
 
 from apps.utility.colors import CC
-from lib.smf.postgresql import create_workspace, list_workspaces, Workspace
+from lib.smf.postgresql import create_workspace, list_workspaces, Workspace, set_workspace, get_current_workspace
 
 
 def execute(args, ctx):
@@ -21,9 +21,9 @@ def execute(args, ctx):
 
     raw_args = args if isinstance(args, str) else (args[0] if args else "")
     parsed_args = shlex.split(raw_args) if raw_args else []
-    current_ws_name = getattr(db, "current_workspace", "default")
+    current_ws_name = get_current_workspace()
 
-    # 1. Tanpa argumen -> List Workspace
+    # Tanpa argumen -> List Workspace
     if not parsed_args:
         try:
             workspaces = list_workspaces()
@@ -45,7 +45,7 @@ def execute(args, ctx):
             smf.printd("Failed to list workspaces", e, level="ERROR")
         return
 
-    # 2. Add Workspace (add <name>)
+    # Add Workspace (add <name>)
     if parsed_args[0] == "add" and len(parsed_args) > 1:
         target_name = parsed_args[1]
         res = create_workspace(target_name)
@@ -56,7 +56,7 @@ def execute(args, ctx):
                 f"[-]{CC.YELLOW} Workspace =>{CC.RESET} {target_name} {CC.YELLOW}already exists{CC.RESET}"
             )
 
-    # 3. Delete Workspace (del <name>)
+    # Delete Workspace (del <name>)
     elif parsed_args[0] == "del" and len(parsed_args) > 1:
         target_name = parsed_args[1]
         if target_name == "default":
@@ -84,12 +84,12 @@ def execute(args, ctx):
             db.session.rollback()
             smf.printd("Failed to delete workspace", e, level="ERROR")
 
-    # 4. Switch Workspace (<name>)
+    # Switch Workspace (<name>)
     else:
         target_name = parsed_args[0]
         ws = db.session.query(Workspace).filter_by(name=target_name).first()
         if ws:
-            db.current_workspace = target_name
+            set_workspace(target_name)
             smf.printf(f"[*]{CC.YELLOW} Switched to workspace =>{CC.RESET}", target_name)
         else:
             smf.printf(
