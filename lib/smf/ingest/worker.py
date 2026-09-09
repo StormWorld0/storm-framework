@@ -16,7 +16,7 @@ def _db_worker():
 
         try:
             payload, workspace = item
-            record_type = payload.get("type")
+            record_type = payload.get("types")
 
             # Worker cuma bertugas router ke db_api
             if record_type == "service":
@@ -63,6 +63,6 @@ def push_to_queue(data: dict):
     """Non-blocking function untuk melempar data ke queue memori."""
     ws = get_current_workspace()
     try:
-        ingest_queue.put_nowait((raw_res, workspace))
+        ingest_queue.put_nowait((data, ws))
     except Exception:
         pass  # Jika queue penuh, drop silently
