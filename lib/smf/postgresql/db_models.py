@@ -1,4 +1,72 @@
-# Tambahkan ke models.py yang sebelumnya
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Boolean
+from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.sql import func
+
+Base = declarative_base()
+
+class Workspace(Base):
+    """Isolasi data per project/pentest."""
+    __tablename__ = 'workspaces'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False, unique=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Relasi: 1 Workspace memiliki banyak Hosts
+    hosts = relationship("Host", back_populates="workspace", cascade="all, delete-orphan")
+
+class Host(Base):
+    """Menyimpan entitas target."""
+    __tablename__ = 'hosts'
+
+    id = Column(Integer, primary_key=True)
+    workspace_id = Column(Integer, ForeignKey('workspaces.id'), nullable=False)
+    address = Column(String(255), nullable=False) # IP Address (IPv4/IPv6)
+    mac = Column(String(255))
+    os_name = Column(String(255))
+    os_flavor = Column(String(255))
+    purpose = Column(String(255)) # client, server, device, dll
+    info = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    workspace = relationship("Workspace", back_populates="hosts")
+    services = relationship("Service", back_populates="host", cascade="all, delete-orphan")
+    vulns = relationship("Vuln", back_populates="host", cascade="all, delete-orphan")
+
+class Service(Base):
+    """Layanan yang berjalan di atas Host."""
+    __tablename__ = 'services'
+
+    id = Column(Integer, primary_key=True)
+    host_id = Column(Integer, ForeignKey('hosts.id'), nullable=False)
+    port = Column(Integer, nullable=False)
+    proto = Column(String(16), nullable=False) # tcp, udp
+    state = Column(String(255)) # open, closed, filtered
+    name = Column(String(255)) # http, ssh, smb
+    info = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    host = relationship("Host", back_populates="services")
+    vulns = relationship("Vuln", back_populates="service", cascade="all, delete-orphan")
+
+class Vuln(Base):
+    """Temuan kerentanan pada Host atau Service."""
+    __tablename__ = 'vulns'
+
+    id = Column(Integer, primary_key=True)
+    host_id = Column(Integer, ForeignKey('hosts.id'), nullable=False)
+    service_id = Column(Integer, ForeignKey('services.id'), nullable=True) # Opsional, vuln bisa di OS level
+    name = Column(String(255), nullable=False)
+    info = Column(Text)
+    exploited_at = Column(DateTime(timezone=True))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    host = relationship("Host", back_populates="vulns")
+    service = relationship("Service", back_populates="vulns")
 
 
 class Note(Base):
