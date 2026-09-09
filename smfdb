@@ -38,8 +38,7 @@ def do_delete(pg_mgr):
         
     smf.printf("Database successfully deleted.")
 
-def main():
-    wrapper = None
+def smfdb():
     try:
         if "--args" in sys.argv:
             index = sys.argv.index("--args")
@@ -70,4 +69,4 @@ def main():
         sys.exit(1)
 
 if __name__ == "__main__":
-    main()
+    smfdb()
