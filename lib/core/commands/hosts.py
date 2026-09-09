@@ -28,8 +28,12 @@ def execute(args, ctx):
 
     smf.printf(f"\nHosts ({current_ws})")
     smf.printf(f"==========")
-    smf.printf(f"{CC.GREEN}{'Address':<16} {'MAC':<18} {'OS Name':<15} {'Purpose':<12} {'Info':<20}{CC.RESET}")
-    smf.printf(f"{CC.MAGENTA}{'-------':<16} {'---':<18} {'-------':<15} {'-------':<12} {'----':<20}{CC.RESET}")
+    smf.printf(
+        f"{CC.GREEN}{'Address':<16} {'MAC':<18} {'OS Name':<15} {'Purpose':<12} {'Info':<20}{CC.RESET}"
+    )
+    smf.printf(
+        f"{CC.MAGENTA}{'-------':<16} {'---':<18} {'-------':<15} {'-------':<12} {'----':<20}{CC.RESET}"
+    )
 
     for h in hosts_list:
         smf.printf(
