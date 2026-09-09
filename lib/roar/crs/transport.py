@@ -33,7 +33,7 @@ class CRS:
         if cls._process is not None and cls._process.poll() is None:
             return cls._process
 
-        # Masuk area kritis inisialisasi
+        # Entering the critical initialization area
         with cls._init_lock:
             # 2nd Check (Double-checked locking pattern)
             if cls._process is not None and cls._process.poll() is None:
@@ -42,6 +42,7 @@ class CRS:
             binary_path = call_bin("crs_engine")
             if not os.path.exists(binary_path):
                 smf.printf(f"[!]{CC.YELLOW} Binary not found =>{CC.RESET}", binary_path)
+                smf.printd("Binary does not exist", binary_path, lever="WARN")
                 return None
 
             # Running IPC process
