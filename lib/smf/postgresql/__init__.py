@@ -11,10 +11,11 @@ from .db_models import (
     Loot,
 )  # noqa
 from .db_api import (
-    get_status,
     list_workspaces,
     create_workspace,
+    get_status,
     get_hosts,
     get_services,
+    get_vulns,
 )  # REPL COMMANDS
 from .db_api import report_host, report_service, report_vuln  # CORE
