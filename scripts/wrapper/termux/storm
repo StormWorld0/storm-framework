@@ -109,6 +109,19 @@ case "${1:-}" in
         fi
         ;;
 
+    -db)
+        if [ "$#" -ne 2 ]; then
+            echo "[*] Invalid arguments: $*" >&2
+            exit 1
+        fi
+        if [[ "${2:-}" =~ ^(init|delete|reinit|start|stop|status)$ ]]; then
+            exec ./smfdb --args "$2"
+        else
+            echo "[*] Invalid arguments: $* > Use: storm --help" >&2
+            exit 1
+        fi
+        ;;
+
     -h|--help)
         if [ "$#" -ne 1 ]; then
             echo "[*] Invalid arguments: $*" >&2
@@ -123,6 +136,12 @@ case "${1:-}" in
         echo "    [-w --api]       : Adding Google APIs for OSINT needs"
         echo "    [--update]       : Update to the latest version"
         echo "    [--clean]        : Cleaning Injection files (If there are)"
+        echo "    [-db init]       : Initializing the PostgreSQL database"
+        echo "    [-db reinit]     : Reinitializing the PostgreSQL database"
+        echo "    [-db delete]     : Deleting a PostgreSQL database"
+        echo "    [-db start]      : Starting the PostgreSQL service"
+        echo "    [-db stop]       : Stopping the PostgreSQL service"
+        echo "    [-db status]     : Checking the condition of the PostgreSQL service"
         echo
         ;;
 
