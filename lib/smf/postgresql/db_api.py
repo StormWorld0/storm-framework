@@ -11,6 +11,21 @@ config_path = Path.home() / ".smf" / "database.yml"
 db = DBManager(config_path) if config_path.exists() else None
 
 
+# ====================================
+# SET WORKSPACE AND GET WORKSPACE
+# ====================================
+
+def set_workspace(name: str):
+    """Dipanggil oleh command 'workspace <name>' di REPL"""
+    if db:
+        db.current_workspace = name
+
+def get_current_workspace() -> str:
+    """Dipanggil oleh siapa saja yang butuh tau workspace aktif"""
+    if db and hasattr(db, "current_workspace"):
+        return db.current_workspace
+    return "default"
+
 # ==========================================
 # FUNCTIONS FOR REPL (View / Query Data)
 # ==========================================
