@@ -50,9 +50,7 @@ def execute(args, ctx):
         target_name = parsed_args[1]
         res = create_workspace(target_name)
         if res:
-            smf.printf(
-                f"[+]{CC.GREEN} Added workspace =>{CC.RESET}", target_name
-            )
+            smf.printf(f"[+]{CC.GREEN} Added workspace =>{CC.RESET}", target_name)
         else:
             smf.printf(
                 f"[-]{CC.YELLOW} Workspace =>{CC.RESET} {target_name} {CC.YELLOW}already exists{CC.RESET}"
@@ -62,24 +60,16 @@ def execute(args, ctx):
     elif parsed_args[0] == "del" and len(parsed_args) > 1:
         target_name = parsed_args[1]
         if target_name == "default":
-            smf.printf(
-                f"[-]{CC.YELLOW} Cannot delete the default workspace.{CC.RESET}"
-            )
+            smf.printf(f"[-]{CC.YELLOW} Cannot delete the default workspace.{CC.RESET}")
             return
 
         # Hapus via ORM session dari db instance langsung
         try:
-            ws = (
-                db.session.query(Workspace)
-                .filter_by(name=target_name)
-                .first()
-            )
+            ws = db.session.query(Workspace).filter_by(name=target_name).first()
             if ws:
                 db.session.delete(ws)
                 db.session.commit()
-                smf.printf(
-                    f"[-]{CC.GREEN} Deleted workspace =>{CC.RESET}", target_name
-                )
+                smf.printf(f"[-]{CC.GREEN} Deleted workspace =>{CC.RESET}", target_name)
 
                 if current_ws_name == target_name:
                     db.current_workspace = "default"
@@ -100,9 +90,7 @@ def execute(args, ctx):
         ws = db.session.query(Workspace).filter_by(name=target_name).first()
         if ws:
             db.current_workspace = target_name
-            smf.printf(
-                f"[*]{CC.YELLOW} Switched to workspace =>{CC.RESET}", target_name
-            )
+            smf.printf(f"[*]{CC.YELLOW} Switched to workspace =>{CC.RESET}", target_name)
         else:
             smf.printf(
                 f"[-]{CC.YELLOW} Workspace => {CC.RESET}{target_name}{CC.YELLOW} > not found.{CC.RESET}"
