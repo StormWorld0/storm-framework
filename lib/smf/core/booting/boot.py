@@ -13,11 +13,11 @@ from apps.utility.spin import SpinBoot
 from lib.roar.plugin_api import plugin
 from lib.roar.cache import cache_modules as cache
 from lib.roar.callbin import manager
+from lib.smf.postgresql import DBManager
 
 
 def boot():
     smf.printd("Booting Storm Framework", level="INFO")
-
     try:
         with SpinBoot():
             # Check core startup security
@@ -35,6 +35,10 @@ def boot():
             # Cache Binary synchronization
             smf.printd("Binary synchronization is running", level="INFO")
             manager.sync_bin()
+
+            if (config_path := Path.home() / ".smf" / "database.yml").exists():
+                db = DBManager(config_path)
+                db.current_workspace = "default"
 
             if not os.path.exists(os.path.join(ROOT, ".docker")):
                 # Verify file integrity
