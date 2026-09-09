@@ -13,6 +13,7 @@ db = DBManager(config_path)
 # FUNCTIONS FOR REPL (View / Query Data)
 # ==========================================
 
+
 def get_status():
     """Ekuivalen dengan `db_status`"""
     try:
@@ -32,8 +33,7 @@ def list_workspaces():
     try:
         workspaces = db.session.query(Workspace).all()
         return [
-            {"id": w.id, "name": w.name, "host_count": len(w.hosts)}
-            for w in workspaces
+            {"id": w.id, "name": w.name, "host_count": len(w.hosts)} for w in workspaces
         ]
     except Exception as e:
         smf.printd("Failed to list workspaces", e, level="ERROR")
@@ -92,10 +92,7 @@ def get_services(workspace_name: str = "default"):
             return []
 
         services = (
-            db.session.query(Service)
-            .join(Host)
-            .filter(Host.workspace_id == ws.id)
-            .all()
+            db.session.query(Service).join(Host).filter(Host.workspace_id == ws.id).all()
         )
         return [
             {
@@ -117,12 +114,11 @@ def get_services(workspace_name: str = "default"):
 # FUNCTIONS FOR CORE / MODULES (Ingest Data)
 # ==========================================
 
+
 def report_host(address: str, workspace_name: str = "default", **kwargs):
     """Dipanggil oleh core untuk mencatat host (Idempotent)"""
     try:
-        host = db.report_host(
-            address=address, workspace_name=workspace_name, **kwargs
-        )
+        host = db.report_host(address=address, workspace_name=workspace_name, **kwargs)
         return {"status": "success", "host_id": host.id}
     except Exception as e:
         smf.printd("Failed to report host", e, level="ERROR")
@@ -147,9 +143,7 @@ def report_service(
         return None
 
 
-def report_vuln(
-    address: str, name: str, workspace_name: str = "default", **kwargs
-):
+def report_vuln(address: str, name: str, workspace_name: str = "default", **kwargs):
     """Dipanggil oleh core untuk mencatat vulnerability (Idempotent)"""
     try:
         vuln = db.report_vuln(
@@ -162,4 +156,3 @@ def report_vuln(
     except Exception as e:
         smf.printd("Failed to report vuln", e, level="ERROR")
         return None
-        
