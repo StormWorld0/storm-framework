@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 from .db_models import Base, Workspace, Host, Service, Vuln
 
 
-class MetasploitDBEngine:
+class DBManager:
     def __init__(self, config_path):
         """Membangun koneksi menggunakan parameter dari database.yml"""
         self.engine = self._create_engine_from_config(config_path)
