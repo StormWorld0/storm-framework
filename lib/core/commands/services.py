@@ -23,13 +23,19 @@ def execute(args, ctx):
     services_list = get_services(workspace_name=current_ws)
 
     if not services_list:
-        smf.printf(f"[*]{CC.YELLOW} No services found in workspace: {CC.RESET}", current_ws)
+        smf.printf(
+            f"[*]{CC.YELLOW} No services found in workspace: {CC.RESET}", current_ws
+        )
         return
 
     smf.printf(f"\nServices ({current_ws})")
     smf.printf(f"============")
-    smf.printf(f"{CC.GREEN}{'Host':<16} {'Port':<8} {'Proto':<8} {'Name':<15} {'State':<10} {'Info':<20}{CC.RESET}")
-    smf.printf(f"{CC.MAGENTA}{'----':<16} {'----':<8} {'-----':<8} {'----':<15} {'-----':<10} {'----':<20}{CC.RESET}")
+    smf.printf(
+        f"{CC.GREEN}{'Host':<16} {'Port':<8} {'Proto':<8} {'Name':<15} {'State':<10} {'Info':<20}{CC.RESET}"
+    )
+    smf.printf(
+        f"{CC.MAGENTA}{'----':<16} {'----':<8} {'-----':<8} {'----':<15} {'-----':<10} {'----':<20}{CC.RESET}"
+    )
 
     for s in services_list:
         smf.printf(
