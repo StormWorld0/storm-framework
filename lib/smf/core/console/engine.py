@@ -15,7 +15,7 @@ from lib.core import handler as i
 from lib.roar.plugin_api import plugin
 from lib.roar.crs import net_api as api
 from lib.smf.postgresql import DBManager
-
+from lib.smf.postgresql.db_api import db as global_db
 from .ignore import IGNORED_SYSTEM_COMMANDS
 
 from typing import Any, Optional
@@ -55,7 +55,7 @@ class Context:
     exit: bool = False
     plugin: Any = plugin
     net: NetContext = field(default_factory=NetContext)
-    db: Optional[DBManager] = None
+    db: Optional[DBManager] = global_db
 
     def __post_init__(self) -> None:
         smf.printd("CONTEXT PLUGIN", self.plugin, level="DEBUG")
