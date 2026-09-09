@@ -144,7 +144,7 @@ class PostgresManager:
   password: {password}
   host: {config.DB_HOST}
   port: {config.DB_PORT}
-  pool: 75
+  pool: {config.DB_POOL}
   timeout: 5
 """
         config.CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
