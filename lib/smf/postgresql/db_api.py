@@ -87,7 +87,7 @@ def create_workspace(name: str):
 
 def get_hosts(workspace_name: str = None):
     """Ekuivalen dengan `hosts`"""
-    target_ws = workspace_name or getattr(db, "current_workspace", "default")
+    target_ws = workspace_name or get_current_workspace()
     try:
         ws = db.session.query(Workspace).filter_by(name=target_ws).first()
         if not ws:
@@ -113,7 +113,7 @@ def get_hosts(workspace_name: str = None):
 
 def get_services(workspace_name: str = None):
     """Ekuivalen dengan `services`"""
-    target_ws = workspace_name or getattr(db, "current_workspace", "default")
+    target_ws = workspace_name or get_current_workspace()
     try:
         ws = db.session.query(Workspace).filter_by(name=target_ws).first()
         if not ws:
@@ -141,7 +141,7 @@ def get_services(workspace_name: str = None):
 
 def get_vulns(workspace_name: str = None):
     """Ekuivalen dengan `vulns`"""
-    target_ws = workspace_name or getattr(db, "current_workspace", "default")
+    target_ws = workspace_name or get_current_workspace()
     try:
         ws = db.session.query(Workspace).filter_by(name=target_ws).first()
         if not ws:
@@ -271,12 +271,12 @@ def ingest_telemetry(data: Dict[str, Any], workspace: str = "default") -> bool:
             session.flush()
 
             # Jika login sukses pada service tertentu
-            if service_inst and payload.get("login_status"):
+            if service_inst and data.get("login_status"):
                 login_inst = Login(
                     credential_id=cred_inst.id,
                     service_id=service_inst.id,
-                    status=payload.get("login_status", "Successful"),
-                    access_level=payload.get("access_level", "User"),
+                    status=data.get("login_status", "Successful"),
+                    access_level=data.get("access_level", "User"),
                 )
                 session.add(login_inst)
 
