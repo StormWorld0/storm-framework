@@ -7,4 +7,4 @@ from .config import (
     DB_HOST,
     DB_PORT,
     LOG_FORMAT,
-) # noqa
+)  # noqa
