@@ -1,12 +1,13 @@
 from dataclasses import dataclass
 from typing import Any, Optional, Generic, TypeVar
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 @dataclass
 class PluginResult(Generic[T]):
     """Standardized response container for all plugin executions."""
-    
+
     success: bool  # Must be True or False
     data: Optional[Any] = None  # Place of results if SUCCESSFUL
     error: Optional[str] = None  # Place to order if FAIL
