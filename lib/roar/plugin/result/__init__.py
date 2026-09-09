@@ -1,1 +1,1 @@
-from .resp_plugin import PluginResult # noqa
+from .resp_plugin import PluginResult  # noqa
