@@ -84,7 +84,7 @@ class StormAPI:
         # Return closure
         def runner(data: Any = None) -> Any:
             try:
-                return action(payload)
+                return action(data)
             except Exception as e:
                 smf.printd(f"Error executing plugin: {plugin_name}", e, level="ERROR")
                 return None
