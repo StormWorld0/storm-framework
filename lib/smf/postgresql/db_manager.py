@@ -55,7 +55,9 @@ class DBManager:
         """Idempotent Host creation."""
         try:
             # Ambil workspace, buat baru jika tidak ditemukan
-            workspace = self.session.query(Workspace).filter_by(name=workspace_name).first()
+            workspace = (
+                self.session.query(Workspace).filter_by(name=workspace_name).first()
+            )
             if not workspace:
                 workspace = Workspace(name=workspace_name)
                 self.session.add(workspace)
@@ -111,7 +113,9 @@ class DBManager:
             smf.printd(f"Error pada report_service ({address}:{port})", e, level="ERROR")
             return None
 
-    def report_vuln(self, address, name, workspace_name="default", port=None, proto=None, **kwargs):
+    def report_vuln(
+        self, address, name, workspace_name="default", port=None, proto=None, **kwargs
+    ):
         """Melaporkan vulnerability pada Host atau Service."""
         try:
             host = self.report_host(address, workspace_name=workspace_name)
@@ -120,7 +124,9 @@ class DBManager:
 
             service = None
             if port and proto:
-                service = self.report_service(address, port, proto, workspace_name=workspace_name)
+                service = self.report_service(
+                    address, port, proto, workspace_name=workspace_name
+                )
 
             query = self.session.query(Vuln).filter_by(host_id=host.id, name=name)
             if service:
@@ -147,4 +153,3 @@ class DBManager:
             self.session.rollback()
             smf.printd(f"Error on report_vuln ({name})", e, level="ERROR")
             return None
-            
