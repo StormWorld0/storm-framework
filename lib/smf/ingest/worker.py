@@ -2,7 +2,7 @@ import smf
 
 from queue import Queue
 from threading import Thread
-from ..postgresql import report_service, report_vuln, report_host
+from ..postgresql import report_service, report_vuln, report_host, get_current_workspace
 
 # Queue Thread-Safe di Memori
 ingest_queue = Queue()
@@ -59,8 +59,9 @@ worker_thread = Thread(target=_db_worker, daemon=True)
 worker_thread.start()
 
 
-def push_to_queue(raw_res: dict, workspace: str = "default"):
+def push_to_queue(data: dict):
     """Non-blocking function untuk melempar data ke queue memori."""
+    ws = get_current_workspace()
     try:
         ingest_queue.put_nowait((raw_res, workspace))
     except Exception:
