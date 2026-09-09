@@ -6,7 +6,7 @@ from .db_models import Host, Service, Vuln, Workspace
 
 # Inisialisasi DB Engine utama
 config_path = Path.home() / ".smf" / "database.yml"
-db = DBManager(config_path)
+db = DBManager(config_path) if config_path.exists() else None
 
 
 # ==========================================
