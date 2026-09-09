@@ -14,7 +14,7 @@ class DBManager:
 
         # State workspace aktif (Default: "default")
         self.current_workspace = "default"
-        
+
         # Membuat skema tabel (jika belum ada)
         Base.metadata.create_all(self.engine)
 
@@ -59,9 +59,7 @@ class DBManager:
         ws_name = workspace_name or self.current_workspace
         try:
             # Ambil workspace, buat baru jika tidak ditemukan
-            workspace = (
-                self.session.query(Workspace).filter_by(name=ws_name).first()
-            )
+            workspace = self.session.query(Workspace).filter_by(name=ws_name).first()
             if not workspace:
                 workspace = Workspace(name=ws_name)
                 self.session.add(workspace)
@@ -119,13 +117,7 @@ class DBManager:
             return None
 
     def report_vuln(
-        self, 
-        address, 
-        name, 
-        workspace_name=None, 
-        port=None, 
-        proto=None, 
-        **kwargs
+        self, address, name, workspace_name=None, port=None, proto=None, **kwargs
     ):
         """Melaporkan vulnerability pada Host atau Service."""
         ws_name = workspace_name or self.current_workspace
