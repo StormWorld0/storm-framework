@@ -85,13 +85,13 @@ class PluginAPI:
         def runner(data: Any = None) -> PluginResult:
             try:
                 raw_res = action(data)
-                
+
                 if isinstance(raw_res, PluginResult):
                     return raw_res
-                    
+
                 if raw_res is False:
                     return PluginResult.fail("Plugin returned False")
-                    
+
                 return PluginResult.ok(raw_res)
             except Exception as e:
                 smf.printd(f"Error executing plugin: {plugin_name}", e, level="ERROR")
