@@ -1,5 +1,7 @@
-from pathlib import Path
 import smf
+
+from sqlalchemy import text
+from pathlib import Path
 
 from .db_manager import DBManager
 from .db_models import Host, Service, Vuln, Workspace
@@ -17,7 +19,7 @@ db = DBManager(config_path) if config_path.exists() else None
 def get_status():
     """Ekuivalen dengan `db_status`"""
     try:
-        db.session.execute("SELECT 1")
+        db.session.execute(text("SELECT 1"))
         return {
             "status": "connected",
             "database": getattr(db, "db_name", "smf"),
