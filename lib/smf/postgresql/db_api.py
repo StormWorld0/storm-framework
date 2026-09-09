@@ -21,11 +21,13 @@ def set_workspace(name: str):
     if db:
         db.current_workspace = name
 
+
 def get_current_workspace() -> str:
     """Dipanggil oleh siapa saja yang membutuhka nama workspace aktif"""
     if db and hasattr(db, "current_workspace"):
         return db.current_workspace
     return "default"
+
 
 def get_session() -> str:
     """Mengembalikan session aktif"""
@@ -165,6 +167,7 @@ def get_vulns(workspace_name: str = None):
 # ==========================================
 # FUNCTIONS FOR CORE / MODULES (Ingest Data)
 # ==========================================
+
 
 def _clean_payload(model_cls, payload: Dict[str, Any]) -> Dict[str, Any]:
     """Membuang argumen yang tidak cocok dengan kolom model agar tidak TypeError."""
