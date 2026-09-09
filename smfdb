@@ -1,0 +1,77 @@
+#!/usr/bin/env python3
+
+# --- https://github.com/StormWorld0/storm-framework ---
+# SMF License
+# copyright (c) 2026
+# Complete information about the License is in the root directory.
+# Author: zxelzy
+
+import argparse
+import sys
+import shutil
+import smf
+
+from config import DB_DATA_DIR, CONFIG_FILE
+from lib.smf.postgresql import PostgresManager
+
+def do_init(pg_mgr):
+    """Flow untuk inisialisasi awal (Setara dengan `msfdb init`)."""
+    pg_mgr.init_database()
+    pg_mgr.start()
+    
+    import time
+    time.sleep(2) 
+    
+    password = pg_mgr.provision_roles_and_db()
+    pg_mgr.generate_config(password)
+    smf.printf("Database initialization complete.")
+
+def do_delete(pg_mgr):
+    """Flow untuk menghapus seluruh database."""
+    pg_mgr.stop()
+    if DB_DATA_DIR.exists():
+        smf.printf(f"Deleting the database data directory in", DB_DATA_DIR)
+        shutil.rmtree(DB_DATA_DIR)
+    
+    if CONFIG_FILE.exists():
+        smf.printf(f"Deleting configuration files in", CONFIG_FILE)
+        CONFIG_FILE.unlink()
+        
+    smf.printf("Database successfully deleted.")
+
+def main():
+    wrapper = None
+    try:
+        if "--args" in sys.argv:
+            index = sys.argv.index("--args")
+
+            if index + 1 < len(sys.argv):
+                wrapper = sys.argv[index + 1]
+
+        generate(wrapper)
+    except Exception as e:
+        smf.printf("[*] Error =>", e)
+        sys.exit(100)
+      
+    args = parser.parse_args()
+    pg_mgr = PostgresManager()
+
+    if command == "init":
+        do_init(pg_mgr)
+    elif command == "delete":
+        do_delete(pg_mgr)
+    elif command == "reinit":
+        do_delete(pg_mgr)
+        do_init(pg_mgr)
+    elif command == "start":
+        pg_mgr.start()
+    elif command == "stop":
+        pg_mgr.stop()
+    elif command == "status":
+        pg_mgr.status()
+    else:
+        parser.print_help()
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
