@@ -3,7 +3,7 @@ import smf
 import os
 
 from rootmap import ROOT
-from apps.utility.colors import *
+from apps.utility.colors import CC
 from lib.roar.calling import call_bin
 
 metadata = {
@@ -71,8 +71,8 @@ def execute(options):
         return
 
     # Storm Framework internal CA Root Path
-    ca_cert_path = os.path.join(ROOT, "data", "smf_ca.crt")
-    ca_key_path = os.path.join(ROOT, "data", "smf_ca.key")
+    ca_cert_path = os.path.join(ROOT, "config", "smf_ca.crt")
+    ca_key_path = os.path.join(ROOT, "config", "smf_ca.key")
 
     # Enter the required data
     cmd = [
