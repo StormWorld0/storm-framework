@@ -7,6 +7,7 @@ from ..postgresql import report_service, report_vuln, report_host
 # Queue Thread-Safe di Memori
 ingest_queue = Queue()
 
+
 def _db_worker():
     while True:
         item = ingest_queue.get()
@@ -56,6 +57,7 @@ def _db_worker():
 # Jalankan Worker Daemon Thread saat module di-import
 worker_thread = Thread(target=_db_worker, daemon=True)
 worker_thread.start()
+
 
 def push_to_queue(raw_res: dict, workspace: str = "default"):
     """Non-blocking function untuk melempar data ke queue memori."""
