@@ -6,7 +6,6 @@
 # Complete information about the License is in the root directory.
 # Author: zxelzy
 
-import argparse
 import sys
 import shutil
 import smf
