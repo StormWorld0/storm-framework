@@ -12,6 +12,9 @@ class DBManager:
         """Membangun koneksi menggunakan parameter dari database.yml"""
         self.engine = self._create_engine_from_config(config_path)
 
+        # State workspace aktif (Default: "default")
+        self.current_workspace = "default"
+        
         # Membuat skema tabel (jika belum ada)
         Base.metadata.create_all(self.engine)
 
@@ -51,15 +54,16 @@ class DBManager:
             self.session.rollback()
             smf.printd("Failed to create default workspace", e, level="ERROR")
 
-    def report_host(self, address, workspace_name="default", **kwargs):
+    def report_host(self, address, workspace_name=None, **kwargs):
         """Idempotent Host creation."""
+        ws_name = workspace_name or self.current_workspace
         try:
             # Ambil workspace, buat baru jika tidak ditemukan
             workspace = (
-                self.session.query(Workspace).filter_by(name=workspace_name).first()
+                self.session.query(Workspace).filter_by(name=ws_name).first()
             )
             if not workspace:
-                workspace = Workspace(name=workspace_name)
+                workspace = Workspace(name=ws_name)
                 self.session.add(workspace)
                 self.session.flush()
 
@@ -85,10 +89,11 @@ class DBManager:
             smf.printd(f"Error on report_host ({address})", e, level="ERROR")
             return None
 
-    def report_service(self, address, port, proto, workspace_name="default", **kwargs):
+    def report_service(self, address, port, proto, workspace_name=None, **kwargs):
         """Melaporkan service yang terbuka (Otomatis membuat Host jika belum ada)."""
+        ws_name = workspace_name or self.current_workspace
         try:
-            host = self.report_host(address, workspace_name=workspace_name)
+            host = self.report_host(address, workspace_name=ws_name)
             if not host:
                 return None
 
@@ -114,18 +119,25 @@ class DBManager:
             return None
 
     def report_vuln(
-        self, address, name, workspace_name="default", port=None, proto=None, **kwargs
+        self, 
+        address, 
+        name, 
+        workspace_name=None, 
+        port=None, 
+        proto=None, 
+        **kwargs
     ):
         """Melaporkan vulnerability pada Host atau Service."""
+        ws_name = workspace_name or self.current_workspace
         try:
-            host = self.report_host(address, workspace_name=workspace_name)
+            host = self.report_host(address, workspace_name=ws_name)
             if not host:
                 return None
 
             service = None
             if port and proto:
                 service = self.report_service(
-                    address, port, proto, workspace_name=workspace_name
+                    address, port, proto, workspace_name=ws_name
                 )
 
             query = self.session.query(Vuln).filter_by(host_id=host.id, name=name)
