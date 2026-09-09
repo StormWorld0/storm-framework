@@ -2,7 +2,7 @@ import shlex
 import smf
 
 from apps.utility.colors import CC
-from lib.smf.postgresql import get_vulns
+from lib.smf.postgresql import get_vulns, get_current_workspace
 
 
 def execute(args, ctx):
@@ -19,7 +19,7 @@ def execute(args, ctx):
     raw_args = args if isinstance(args, str) else (args[0] if args else "")
     parsed_args = shlex.split(raw_args) if raw_args else []
 
-    current_ws = getattr(db, "current_workspace", "default")
+    current_ws = get_current_workspace()
     vulns_list = get_vulns(workspace_name=current_ws)
 
     if not vulns_list:
