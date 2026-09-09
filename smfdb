@@ -14,7 +14,7 @@ from config import DB_DATA_DIR, CONFIG_FILE
 from lib.smf.postgresql import PostgresManager
 
 def do_init(pg_mgr):
-    """Flow untuk inisialisasi awal (Setara dengan `msfdb init`)."""
+    """Flow untuk inisialisasi awal."""
     pg_mgr.init_database()
     pg_mgr.start()
     
