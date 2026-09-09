@@ -30,7 +30,7 @@ class DBManager:
         if not Path(config_path).exists():
             smf.printd(f"Config file not found", config_path, level="WARN")
             return None
-            
+
         try:
             with open(config_path, "r") as f:
                 config = yaml.safe_load(f)["production"]
@@ -44,7 +44,9 @@ class DBManager:
             )
 
             return create_engine(
-                dsn, pool_size=config.get("pool", 5), pool_timeout=config.get("timeout", 10)
+                dsn,
+                pool_size=config.get("pool", 5),
+                pool_timeout=config.get("timeout", 10),
             )
         except Exception as e:
             smf.printd("Failed to create engine from config", e, level="ERROR")
