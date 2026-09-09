@@ -9,7 +9,7 @@ from .config_db import (
     DB_POOL,
     ADDRESS,
     PORT,
-) # noqa
+)  # noqa
 
 __all__ = [
     "SMF_BASE_DIR",
