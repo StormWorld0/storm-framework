@@ -74,7 +74,7 @@ def get_status():
     except Exception as e:
         smf.printd("Database heartbeat failed", e, level="ERROR")
         return {
-            "status": "disconnected",
+            "status": "error",
             "reason": str(e),
         }
 
