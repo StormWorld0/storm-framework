@@ -3,6 +3,7 @@ import json
 
 from typing import Dict, Any
 from sqlalchemy import text
+from sqlalchemy.inspection import inspect
 from pathlib import Path
 
 from .db_manager import DBManager
