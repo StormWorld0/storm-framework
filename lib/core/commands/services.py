@@ -24,7 +24,7 @@ def execute(args, ctx):
 
     if not services_list:
         smf.printf(
-            f"[*]{CC.YELLOW} No services found in workspace: {CC.RESET}", current_ws
+            f"[*]{CC.YELLOW} No services found in workspace =>{CC.RESET}", current_ws
         )
         return
 
