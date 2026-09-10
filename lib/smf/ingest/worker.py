@@ -13,7 +13,7 @@ def _db_worker():
         item = ingest_queue.get()
         if item is None:
             break
-
+        smf.printd("Inspeksi Worker Item", f"Tipe: {type(item)} | Isi: {item}", level="DEBUG")
         try:
             # Tarik workspace aktif di memori secara konstan
             active_ws = get_current_workspace()
