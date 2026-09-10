@@ -87,7 +87,7 @@ class DBManager:
 
     def _ensure_default_workspace(self):
         """Memastikan workspace 'default' selalu ada saat startup."""
-        session = self.session()
+        session = self.session
         if not session:
             return
 
