@@ -145,7 +145,7 @@ class HTTPResponse:
         tls: bool = False,
     ) -> Dict[str, Any]:
         """Mengubah response HTTP menjadi structured dictionary untuk db_api."""
-        
+
         res = parse_url(host)
         ips = domain_to_ip(res["domain"])
         primary_ip = ips[0] if isinstance(ips, list) and ips else ips
@@ -160,7 +160,7 @@ class HTTPResponse:
         if len(raw_body) > MAX_BODY_LEN:
             raw_body = raw_body[:MAX_BODY_LEN]
             is_truncated = True
-            
+
         # Tangani Custom Port (Ekstrak dari URL jika ada, jika tidak fallback ke default)
         extracted_port = res.get("port")
         if not extracted_port:
@@ -172,11 +172,13 @@ class HTTPResponse:
                 "hostnames": [res["domain"]] if res.get("domain") else [],
             },
             "service": {
-                "port": int(extracted_port), # Pastikan di-cast ke Integer
-                "proto": "tcp",              # Hardcode ke tcp untuk HTTP(S)
+                "port": int(extracted_port),  # Pastikan di-cast ke Integer
+                "proto": "tcp",  # Hardcode ke tcp untuk HTTP(S)
                 "name": "https" if res["scheme"] == "https" else "http",
                 "state": "open" if self.ok else "closed",
-                "info": f"Status: {self.status_code} | Server: {server_header} | Proto: {self.proto}"[:255],
+                "info": f"Status: {self.status_code} | Server: {server_header} | Proto: {self.proto}"[
+                    :255
+                ],
             },
             # Data untuk Tabel Note
             "note": {
@@ -187,7 +189,7 @@ class HTTPResponse:
                     "method": method,
                     "content_type": content_type,
                     "original_length": len(self.text),
-                    "is_truncated": is_truncated
+                    "is_truncated": is_truncated,
                 },
             },
         }
@@ -195,19 +197,23 @@ class HTTPResponse:
             payload["tls_info"] = {
                 "subject": self.tls.subject,
                 "issuer": self.tls.issuer,
-                "subject_alt_names": self.tls.dns_name,  
+                "subject_alt_names": self.tls.dns_name,
                 "not_after": self.tls.expires,
-                
-                "supported_protocols": [self.tls.version] if self.tls.version != "Unknown" else [],
-                "accepted_ciphers": [self.tls.cipher] if self.tls.cipher != "Unknown" else [],
-                
-                "raw_certificate": json.dumps({
-                    "cert_chain": self.tls.cert_chain,
-                    "sni_hostname": self.tls.hostname,
-                    "alpn_protocol": self.tls.protocol,
-                    "handshake_complete": self.tls.handshake,
-                    "session_resume": self.tls.session_resume
-                })
+                "supported_protocols": (
+                    [self.tls.version] if self.tls.version != "Unknown" else []
+                ),
+                "accepted_ciphers": (
+                    [self.tls.cipher] if self.tls.cipher != "Unknown" else []
+                ),
+                "raw_certificate": json.dumps(
+                    {
+                        "cert_chain": self.tls.cert_chain,
+                        "sni_hostname": self.tls.hostname,
+                        "alpn_protocol": self.tls.protocol,
+                        "handshake_complete": self.tls.handshake,
+                        "session_resume": self.tls.session_resume,
+                    }
+                ),
             }
 
         return payload
@@ -218,7 +224,6 @@ class HTTPResponse:
 
     def __repr__(self):
         return f"<HTTPTLSMetadata Version={self.version} Cipher={self.cipher} Host={self.hostname}>"
-
 
 
 class HTTPClient:
@@ -276,8 +281,9 @@ class HTTPClient:
             push_to_queue(db_payload)
         except Exception as e:
             smf.printd("Failed to push HTTP payload to queue", e, level="ERROR")
-        
+
         return res
+
 
 # Alias untuk Backward Compatibility
 http_requests = HTTPClient.send
