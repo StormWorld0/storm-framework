@@ -27,7 +27,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -U flake8 autoflake black
+        pip install -U flake8 autoflake black ruff
 
     - name: Auto Cleanup (Remove Unused Imports)
       run: |
@@ -59,6 +59,11 @@ jobs:
     - name: Lint with flake8
       run: |
         flake8 . --count --select=E9,F63,F7,F82,F401,W191,B018 --show-source --statistics
+
+    - name: Deep AST Code Inspection (Catch Signature & Argument Mismatch)
+      run: |
+        # Rule B (Bugbear) & PL (Pylint)
+        ruff check lib/ --select=B,PLE,PLW
         
     - name: Commit and Push Changes
       run: |
