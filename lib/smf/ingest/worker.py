@@ -13,14 +13,10 @@ def _db_worker():
         item = ingest_queue.get()
         if item is None:
             break
-        smf.printd(
-            "Inspeksi Worker Item", f"Tipe: {type(item)} | Isi: {item}", level="DEBUG"
-        )
         try:
-            # Tarik workspace aktif di memori secara konstan
-            active_ws = get_current_workspace()
-            # Eksekusi ingest universal ke multi-tabel (Host, Service, Vuln, Note, dll)
-            ingest_telemetry(item, active_ws)
+            data_dict, active_ws = item
+            # Eksekusi ingest universal ke multi-tabel
+            ingest_telemetry(data_dict, active_ws)
         except Exception as e:
             smf.printd("DB Worker Ingest error", e, level="ERROR")
         finally:
