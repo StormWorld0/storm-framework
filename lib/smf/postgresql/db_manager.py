@@ -6,7 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import OperationalError, DBAPIError
 
-from .db_models import Base, Workspace, Host, Service, Vuln
+from .db_models import Base, Workspace
 
 
 class DBManager:
