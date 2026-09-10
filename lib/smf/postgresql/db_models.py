@@ -62,10 +62,10 @@ class Service(Base):
     host = relationship("Host", back_populates="services")
     vulns = relationship("Vuln", back_populates="service", cascade="all, delete-orphan")
 
-    # TAMBAHAN: Relasi 1-to-1 (atau 1-to-many jika menyimpan histori sertifikat) ke tabel TLS
     tls_info = relationship(
         "TLSInfo", back_populates="service", cascade="all, delete-orphan"
     )
+    logins = relationship("Login", back_populates="service", cascade="all, delete-orphan")
 
 
 class TLSInfo(Base):
@@ -171,6 +171,8 @@ class Credential(Base):
     realm = Column(String(255))  # Domain / Workgroup
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+    logins = relationship("Login", back_populates="credential", cascade="all, delete-orphan")
+
 
 class Login(Base):
     """
@@ -186,6 +188,9 @@ class Login(Base):
     status = Column(String(255))  # 'Successful', 'Denied'
     access_level = Column(String(255))  # 'Admin', 'User'
     last_attempted_at = Column(DateTime(timezone=True))
+
+    credential = relationship("Credential", back_populates="logins")
+    service = relationship("Service", back_populates="logins")
 
 
 class Loot(Base):
