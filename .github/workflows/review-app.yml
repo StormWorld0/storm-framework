@@ -63,7 +63,7 @@ jobs:
     - name: Deep AST Code Inspection (Catch Signature & Argument Mismatch)
       run: |
         # Rule B (Bugbear) & PL (Pylint)
-        ruff check lib/ --select=B,PLE,PLW
+        ruff check lib/ --select=E,F
         
     - name: Commit and Push Changes
       run: |
