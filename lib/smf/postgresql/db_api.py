@@ -56,6 +56,14 @@ def get_session():
 
 def get_status():
     """Ekuivalen dengan `db_status`"""
+    # 1. Cek apakah objek db dan session valid/tersedia
+    if not db or not get_session():
+        return {
+            "status": "disconnected",
+            "reason": "PostgreSQL service offline or not bootstrapped",
+        }
+
+    # Jika session valid, lakukan ping
     try:
         db.session.execute(text("SELECT 1"))
         return {
@@ -64,8 +72,11 @@ def get_status():
             "backend": "PostgreSQL",
         }
     except Exception as e:
-        smf.printd("Database error", e, level="ERROR")
-        return None
+        smf.printd("Database heartbeat failed", e, level="ERROR")
+        return {
+            "status": "disconnected",
+            "reason": str(e),
+        }
 
 
 def list_workspaces():
