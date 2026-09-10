@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.sql import func
+from sqlalchemy.dialects.postgresql import JSONB, INET
 
 Base = declarative_base()
 
@@ -26,7 +27,7 @@ class Host(Base):
 
     id = Column(Integer, primary_key=True)
     workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=False)
-    address = Column(String(255), nullable=False)  # IP Address (IPv4/IPv6)
+    address = Column(INET, nullable=False)  # IP Address (IPv4/IPv6)
     mac = Column(String(255))
     os_name = Column(String(255))
     os_flavor = Column(String(255))
@@ -69,53 +70,51 @@ class Service(Base):
 class TLSInfo(Base):
     """
     Menyimpan profil kriptografi dan detail sertifikat X.509 dari sebuah Service.
-    Sangat berguna untuk query audit: expired certs, weak ciphers, atau insecure protocols.
+    Dioptimalkan dengan JSONB PostgreSQL untuk query spesifik pada array/dictionary.
     """
 
     __tablename__ = "tls_info"
 
     id = Column(Integer, primary_key=True)
     service_id = Column(Integer, ForeignKey("services.id"), nullable=False)
-
+    
     # --- X.509 Certificate Metadata ---
-    subject = Column(String(512))  # ex: CN=www.target.com, O=Target Corp
-    issuer = Column(String(512))  # ex: CN=Let's Encrypt Authority X3
-    subject_alt_names = Column(
-        Text
-    )  # SANs (Bisa menyimpan array JSON berupa String/List)
-
-    # --- Validity (Penting untuk deteksi Expired Certs) ---
+    subject = Column(String(512))            
+    issuer = Column(String(512))             
+    # JSONB untuk Array string (misal: ["*.target.com", "target.local"])
+    subject_alt_names = Column(JSONB, server_default='[]')  
+    
+    # --- Validity ---
     not_before = Column(DateTime(timezone=True))
     not_after = Column(DateTime(timezone=True))
-
+    
     # --- Identification & Fingerprinting ---
-    serial_number = Column(String(128))  # Hex string dari serial number
-    sha1_fingerprint = Column(
-        String(40), index=True
-    )  # Indexing untuk pencarian pivoting/threat intel
-    sha256_fingerprint = Column(String(64), index=True)
-
+    serial_number = Column(String(128))      
+    sha1_fingerprint = Column(String(40), index=True)   
+    sha256_fingerprint = Column(String(64), index=True) 
+    
     # --- Cryptographic Key Properties ---
-    pubkey_algorithm = Column(String(64))  # ex: RSA, ECDSA, Ed25519
-    pubkey_size = Column(Integer)  # ex: 2048, 4096, 256
-
-    # --- Protocol & Cipher Context ---
-    # Menggunakan Text di sini sebagai fallback yang aman (dapat diisi string JSON).
-    supported_protocols = Column(
-        Text
-    )  # ex: ["TLSv1.2", "TLSv1.3"] -> Deteksi SSLv2/SSLv3/TLS 1.0
-    accepted_ciphers = Column(Text)  # Daftar ciphersuite yang didukung
-    weak_ciphers = Column(Text)  # Daftar weak ciphers spesifik (RC4, DES, 3DES, Sweet32)
-
+    pubkey_algorithm = Column(String(64))    
+    pubkey_size = Column(Integer)            
+    
+    # --- Protocol & Cipher Context (JSONB Powers) ---
+    # Bisa menyimpan list: ["TLSv1.2", "TLSv1.3"]
+    supported_protocols = Column(JSONB, server_default='[]')       
+    
+    # Bisa menyimpan dictionary kompleks: 
+    # {"TLSv1.2": ["TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", ...]}
+    accepted_ciphers = Column(JSONB, server_default='{}')          
+    
+    # Bisa menyimpan list of dictionaries untuk detail vulnerability
+    # [{"cipher": "RC4-SHA", "reason": "Sweet32", "severity": "Medium"}]
+    weak_ciphers = Column(JSONB, server_default='[]')              
+    
     # --- Raw Data ---
-    raw_certificate = Column(
-        Text
-    )  # Simpan format PEM untuk ekstraksi offline/analisis manual
-
+    raw_certificate = Column(Text)           
+    
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    # Relasi kembali ke Service
     service = relationship("Service", back_populates="tls_info")
 
 
