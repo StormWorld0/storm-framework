@@ -44,8 +44,8 @@ def get_current_workspace() -> str:
 
 def get_session():
     """Mengembalikan session aktif"""
-    if db and hasattr(db, "session"):
-        return db.session
+    if db and hasattr(db, "get_session"):
+        return db.get_session
     return None
 
 
