@@ -30,14 +30,16 @@ class Host(Base):
 
     address = Column(INET, nullable=False)  # IP Address (IPv4/IPv6)
     hostname = Column(ARRAY(String), server_default="{}")  # URL/Domain
-    mac = Column(String(255)) # Mac Address
-    os_name = Column(String(255)) # OS Name
-    os_flavor = Column(String(255)) # OS specific
-    os_version = Column(String(255)) # OS Version
+    mac = Column(String(255))  # Mac Address
+    os_name = Column(String(255))  # OS Name
+    os_flavor = Column(String(255))  # OS specific
+    os_version = Column(String(255))  # OS Version
     purpose = Column(String(255))  # client, server, device, dll
-    info = Column(Text) # Additional information
-    created = Column(DateTime(timezone=True), server_default=func.now()) # Time of creation
-    updated = Column(DateTime(timezone=True), onupdate=func.now()) # Time updated
+    info = Column(Text)  # Additional information
+    created = Column(
+        DateTime(timezone=True), server_default=func.now()
+    )  # Time of creation
+    updated = Column(DateTime(timezone=True), onupdate=func.now())  # Time updated
 
     workspace = relationship("Workspace", back_populates="hosts")
     services = relationship(
@@ -54,11 +56,11 @@ class Service(Base):
     id = Column(Integer, primary_key=True)
     host_id = Column(Integer, ForeignKey("hosts.id"), nullable=False)
 
-    port = Column(Integer, nullable=False) # 80, 443
+    port = Column(Integer, nullable=False)  # 80, 443
     proto = Column(String(16), nullable=False)  # tcp, udp
     state = Column(String(255))  # open, closed, filtered
     name = Column(String(255))  # http, ssh, smb
-    info = Column(Text) # Additional information
+    info = Column(Text)  # Additional information
     created = Column(DateTime(timezone=True), server_default=func.now())
     updated = Column(DateTime(timezone=True), onupdate=func.now())
 
@@ -132,9 +134,9 @@ class Vuln(Base):
         Integer, ForeignKey("services.id"), nullable=True
     )  # Opsional, vuln bisa di OS level
 
-    name = Column(String(255), nullable=False) # Exploit name / target name
-    info = Column(Text) # Additional information
-    exploited = Column(DateTime(timezone=True)) # Time in exploitation
+    name = Column(String(255), nullable=False)  # Exploit name / target name
+    info = Column(Text)  # Additional information
+    exploited = Column(DateTime(timezone=True))  # Time in exploitation
     created = Column(DateTime(timezone=True), server_default=func.now())
     updated = Column(DateTime(timezone=True), onupdate=func.now())
 
@@ -154,7 +156,7 @@ class Note(Base):
     workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=False)
     host_id = Column(Integer, ForeignKey("hosts.id"), nullable=True)
     service_id = Column(Integer, ForeignKey("services.id"), nullable=True)
-    
+
     ntype = Column(String(255))  # note type (misal: 'smb.fingerprint', 'host.os.guess')
     data = Column(Text)  # Biasanya menyimpan JSON payload
     created = Column(DateTime(timezone=True), server_default=func.now())
