@@ -7,7 +7,17 @@ from sqlalchemy.inspection import inspect
 from pathlib import Path
 
 from .db_manager import DBManager
-from .db_models import Credential, Host, Login, Loot, Note, Service, TLSInfo, Vuln, Workspace
+from .db_models import (
+    Credential,
+    Host,
+    Login,
+    Loot,
+    Note,
+    Service,
+    TLSInfo,
+    Vuln,
+    Workspace,
+)
 
 # Inisialisasi DB Engine utama
 config_path = Path.home() / ".smf" / "database.yml"
@@ -245,17 +255,15 @@ def ingest_telemetry(data: Dict[str, Any], workspace: str = "default") -> bool:
         if tls_data and isinstance(tls_data, dict) and service_inst:
             # Karena relasinya 1-to-1, kita cek apakah TLS info untuk service ini sudah ada
             tls_inst = (
-                session.query(TLSInfo)
-                .filter_by(service_id=service_inst.id)
-                .first()
+                session.query(TLSInfo).filter_by(service_id=service_inst.id).first()
             )
-            
+
             clean_tls = _clean_payload(TLSInfo, tls_data)
-            
+
             # NOTE untuk PostgreSQL JSONB:
-            # psycopg2 / asyncpg bawaan SQLAlchemy secara otomatis mengkonversi 
+            # psycopg2 / asyncpg bawaan SQLAlchemy secara otomatis mengkonversi
             # Python dict/list menjadi tipe data JSONB di PostgreSQL.
-            
+
             if not tls_inst:
                 tls_inst = TLSInfo(service_id=service_inst.id, **clean_tls)
                 session.add(tls_inst)
