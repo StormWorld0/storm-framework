@@ -3,7 +3,7 @@ import smf
 
 from pathlib import Path
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.exc import OperationalError, DBAPIError
 
 from .db_models import Base, Workspace
@@ -22,14 +22,15 @@ class DBManager:
 
         # Siapkan Session Factory
         if self.engine:
-            self.SessionLocal = sessionmaker(bind=self.engine)
+            self.SessionLocal = scoped_session(sessionmaker(bind=self.engine))
         else:
             self.SessionLocal = None
 
-        # Jalankan bootstrap secara aman saat booting
+        # Jalankan bootstrap
         self.bootstrap_db()
 
-    def get_session(self):
+    @property
+    def session(self):
         """Helper untuk mengambil instance session tunggal."""
         if self.SessionLocal and self.is_connected:
             return self.SessionLocal()
@@ -86,7 +87,7 @@ class DBManager:
 
     def _ensure_default_workspace(self):
         """Memastikan workspace 'default' selalu ada saat startup."""
-        session = self.get_session()
+        session = self.session()
         if not session:
             return
 
