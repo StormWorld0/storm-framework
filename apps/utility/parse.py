@@ -8,7 +8,7 @@ def parse_url(url):
         res = "//" + val
     else:
         res = val
-      
+
     parsed = urlparse(res)
     return {
         "scheme": parsed.scheme,
@@ -18,17 +18,11 @@ def parse_url(url):
         "query": parsed.query,
     }
 
+
 def domain_to_ip(domain):
     try:
-        results = socket.getaddrinfo(
-            domain,
-            None,
-            proto=socket.IPPROTO_TCP
-        )
-        ips = sorted({
-            result[4][0]
-            for result in results
-        })
+        results = socket.getaddrinfo(domain, None, proto=socket.IPPROTO_TCP)
+        ips = sorted({result[4][0] for result in results})
         return ips
     except socket.gaierror:
         return []
