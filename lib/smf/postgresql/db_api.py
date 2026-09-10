@@ -56,7 +56,10 @@ def get_session():
 
 def get_status():
     """Ekuivalen dengan `db_status`"""
-    # 1. Cek apakah objek db dan session valid/tersedia
+    if db and not getattr(db, "is_connected", False):
+        db.bootstrap_db()
+        
+    # Cek apakah objek db dan session valid/tersedia
     if not db or not get_session():
         return {
             "status": "disconnected",
@@ -73,6 +76,7 @@ def get_status():
         }
     except Exception as e:
         smf.printd("Database heartbeat failed", e, level="ERROR")
+        db.is_connected = False
         return {
             "status": "error",
             "reason": str(e),
