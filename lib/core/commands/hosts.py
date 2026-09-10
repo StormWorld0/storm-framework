@@ -23,20 +23,20 @@ def execute(args, ctx):
     hosts_list = get_hosts(workspace_name=current_ws)
 
     if not hosts_list:
-        smf.printf(f"[*]{CC.YELLOW} No hosts found in workspace: {CC.RESET}", current_ws)
+        smf.printf(f"[*]{CC.YELLOW} No hosts found in workspace =>{CC.RESET}", current_ws)
         return
 
     smf.printf(f"\nHosts ({current_ws})")
-    smf.printf(f"==========")
+    smf.printf(f"==================")
     smf.printf(
-        f"{CC.GREEN}{'Address':<16} {'MAC':<18} {'OS Name':<15} {'Purpose':<12} {'Info':<20}{CC.RESET}"
+        f"{CC.GREEN}{'Address':<25} {'MAC':<25} {'OS Name':<18} {'Purpose':<12} {'Info'}{CC.RESET}"
     )
     smf.printf(
-        f"{CC.MAGENTA}{'-------':<16} {'---':<18} {'-------':<15} {'-------':<12} {'----':<20}{CC.RESET}"
+        f"{CC.MAGENTA}{'-------':<25} {'---':<25} {'-------':<18} {'-------':<12} {'----'}{CC.RESET}"
     )
 
     for h in hosts_list:
         smf.printf(
-            f"{CC.YELLOW}{h['address']:<16} {h['mac']:<18} {h['os_name']:<15} {h['purpose']:<12} {h['info']:<20}{CC.RESET}"
+            f"{CC.YELLOW}{h['address']:<25} {h['mac']:<25} {h['os_name']:<18} {h['purpose']:<12} {h['info']}{CC.RESET}"
         )
     smf.printf("")
