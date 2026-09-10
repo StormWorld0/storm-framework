@@ -24,7 +24,7 @@ def execute(args, ctx):
 
     if not vulns_list:
         smf.printf(
-            f"[*]{CC.YELLOW} No vulnerabilities found in workspace: {CC.RESET}",
+            f"[*]{CC.YELLOW} No vulnerabilities found in workspace =>{CC.RESET}",
             current_ws,
         )
         return
@@ -32,14 +32,14 @@ def execute(args, ctx):
     smf.printf(f"\nVulnerabilities ({current_ws})")
     smf.printf(f"===============")
     smf.printf(
-        f"{CC.GREEN}{'Host':<16} {'Port':<8} {'Proto':<8} {'Name':<25} {'Info':<25}{CC.RESET}"
+        f"{CC.GREEN}{'Host':<25} {'Port':<8} {'Proto':<8} {'Name':<25} {'Info'}{CC.RESET}"
     )
     smf.printf(
-        f"{CC.MAGENTA}{'----':<16} {'----':<8} {'-----':<8} {'----':<25} {'----':<25}{CC.RESET}"
+        f"{CC.MAGENTA}{'----':<25} {'----':<8} {'-----':<8} {'----':<25} {'----'}{CC.RESET}"
     )
 
     for v in vulns_list:
         smf.printf(
-            f"{CC.YELLOW}{v['host']:<16} {v['port']:<8} {v['proto']:<8} {v['name']:<25} {v['info']:<25}{CC.RESET}"
+            f"{CC.YELLOW}{v['host']:<25} {v['port']:<8} {v['proto']:<8} {v['name']:<25} {v['info']}{CC.RESET}"
         )
     smf.printf("")
