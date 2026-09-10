@@ -4,6 +4,7 @@ from .db_models import (
     Workspace,
     Host,
     Service,
+    TLSInfo,
     Vuln,
     Note,
     Credential,
