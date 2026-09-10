@@ -171,7 +171,9 @@ class Credential(Base):
     realm = Column(String(255))  # Domain / Workgroup
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    logins = relationship("Login", back_populates="credential", cascade="all, delete-orphan")
+    logins = relationship(
+        "Login", back_populates="credential", cascade="all, delete-orphan"
+    )
 
 
 class Login(Base):
