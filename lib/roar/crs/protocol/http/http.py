@@ -8,6 +8,8 @@ import re
 from typing import Dict, Any, Optional, Union
 
 from apps.utility.colors import CC
+from apps.utility.parse import parse_url, domain_to_ip
+from lib.smf.ingest import push_to_queue
 from ...transport import CRS
 
 
@@ -74,7 +76,7 @@ class HTTPResponse:
 
     @property
     def text(self) -> str:
-        """Mengembalikan body response dalam bentuk UTF-8 string."""
+        """Mengembalikan body response dalam bentuk string."""
         return self._data.get("body", "")
 
     @property
@@ -136,12 +138,87 @@ class HTTPResponse:
             smf.printd("Failed to parse response body as JSON", level="WARN")
             return None
 
+    def _to_db_payload(
+        self,
+        method: str,
+        host: str,
+        tls: bool = False,
+    ) -> Dict[str, Any]:
+        """Mengubah response HTTP menjadi structured dictionary untuk db_api."""
+        
+        res = parse_url(host)
+        ips = domain_to_ip(res["domain"])
+        primary_ip = ips[0] if isinstance(ips, list) and ips else ips
+
+        server_header = self.get_headers("server")
+        content_type = self.get_headers("content-type", "unknown")
+
+        MAX_BODY_LEN = 4096
+        raw_body = self.text
+        is_truncated = False
+
+        if len(raw_body) > MAX_BODY_LEN:
+            raw_body = raw_body[:MAX_BODY_LEN]
+            is_truncated = True
+            
+        # Tangani Custom Port (Ekstrak dari URL jika ada, jika tidak fallback ke default)
+        extracted_port = res.get("port")
+        if not extracted_port:
+            extracted_port = 443 if res["scheme"] == "https" else 80
+
+        payload = {
+            "host": {
+                "address": primary_ip,
+                "hostnames": [res["domain"]] if res.get("domain") else [],
+            },
+            "service": {
+                "port": int(extracted_port), # Pastikan di-cast ke Integer
+                "proto": "tcp",              # Hardcode ke tcp untuk HTTP(S)
+                "name": "https" if res["scheme"] == "https" else "http",
+                "state": "open" if self.ok else "closed",
+                "info": f"Status: {self.status_code} | Server: {server_header} | Proto: {self.proto}"[:255],
+            },
+            # Data untuk Tabel Note
+            "note": {
+                "ntype": "http.headers",
+                "data": {
+                    "headers": self.headers,
+                    "body_preview": raw_body,
+                    "method": method,
+                    "content_type": content_type,
+                    "original_length": len(self.text),
+                    "is_truncated": is_truncated
+                },
+            },
+        }
+        if tls and self.tls:
+            payload["tls_info"] = {
+                "subject": self.tls.subject,
+                "issuer": self.tls.issuer,
+                "subject_alt_names": self.tls.dns_name,  
+                "not_after": self.tls.expires,
+                
+                "supported_protocols": [self.tls.version] if self.tls.version != "Unknown" else [],
+                "accepted_ciphers": [self.tls.cipher] if self.tls.cipher != "Unknown" else [],
+                
+                "raw_certificate": json.dumps({
+                    "cert_chain": self.tls.cert_chain,
+                    "sni_hostname": self.tls.hostname,
+                    "alpn_protocol": self.tls.protocol,
+                    "handshake_complete": self.tls.handshake,
+                    "session_resume": self.tls.session_resume
+                })
+            }
+
+        return payload
+
     def __bool__(self):
-        """Shorthand: if response: ... (True jika request HTTP bernilai OK/Sukses)."""
+        """Shorthand: if r.ok: ... (True jika request HTTP bernilai OK/Sukses)."""
         return self.ok
 
     def __repr__(self):
-        return f"<HTTPResponse [{self.status_code}] Engine={self.engine} Size={len(self.text)}b>"
+        return f"<HTTPTLSMetadata Version={self.version} Cipher={self.cipher} Host={self.hostname}>"
+
 
 
 class HTTPClient:
@@ -192,9 +269,15 @@ class HTTPClient:
             )
 
         raw_res = CRS.send(packet)
+        res = HTTPResponse(raw_res)
 
-        return HTTPResponse(raw_res)
-
+        try:
+            db_payload = res._to_db_payload(method, url, tls)
+            push_to_queue(db_payload)
+        except Exception as e:
+            smf.printd("Failed to push HTTP payload to queue", e, level="ERROR")
+        
+        return res
 
 # Alias untuk Backward Compatibility
 http_requests = HTTPClient.send
