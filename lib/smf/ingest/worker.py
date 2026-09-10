@@ -18,7 +18,7 @@ def _db_worker():
             # Tarik workspace aktif di memori secara konstan
             active_ws = get_current_workspace()
             # Eksekusi ingest universal ke multi-tabel (Host, Service, Vuln, Note, dll)
-            ingest_telemetry(payload=item, workspace_name=active_ws)
+            ingest_telemetry(item, active_ws)
         except Exception as e:
             smf.printd("DB Worker Ingest error", e, level="ERROR")
         finally:
