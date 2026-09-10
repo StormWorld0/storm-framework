@@ -58,7 +58,7 @@ def get_status():
     """Ekuivalen dengan `db_status`"""
     if db and not getattr(db, "is_connected", False):
         db.bootstrap_db()
-        
+
     # Cek apakah objek db dan session valid/tersedia
     if not db or not get_session():
         return {
