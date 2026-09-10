@@ -2,6 +2,7 @@ from urllib.parse import urlparse
 import socket
 import ipaddress
 
+
 def parse_url(url):
     """Returns a Dict of URL fragments"""
     val = url.strip()
@@ -23,11 +24,7 @@ def parse_url(url):
 def domain_to_ip(domain):
     """Returning IPV4 and IPV6"""
     try:
-        results = socket.getaddrinfo(
-            domain,
-            None,
-            proto=socket.IPPROTO_TCP
-        )
+        results = socket.getaddrinfo(domain, None, proto=socket.IPPROTO_TCP)
 
         ipv4 = set()
         ipv6 = set()
