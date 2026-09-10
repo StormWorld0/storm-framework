@@ -7,7 +7,7 @@ from sqlalchemy.inspection import inspect
 from pathlib import Path
 
 from .db_manager import DBManager
-from .db_models import Credential, Host, Login, Loot, Note, Service, Vuln, Workspace
+from .db_models import Credential, Host, Login, Loot, Note, Service, TLSInfo, Vuln, Workspace
 
 # Inisialisasi DB Engine utama
 config_path = Path.home() / ".smf" / "database.yml"
@@ -237,6 +237,33 @@ def ingest_telemetry(data: Dict[str, Any], workspace: str = "default") -> bool:
                     for k, v in clean_srv.items():
                         setattr(service_inst, k, v)
                 session.flush()
+
+        # =========================================================================
+        # 3.5. Ingest TLS Info (Penting: Harus berjalan jika service_inst terbentuk)
+        # =========================================================================
+        tls_data = data.get("tls_info")
+        if tls_data and isinstance(tls_data, dict) and service_inst:
+            # Karena relasinya 1-to-1, kita cek apakah TLS info untuk service ini sudah ada
+            tls_inst = (
+                session.query(TLSInfo)
+                .filter_by(service_id=service_inst.id)
+                .first()
+            )
+            
+            clean_tls = _clean_payload(TLSInfo, tls_data)
+            
+            # NOTE untuk PostgreSQL JSONB:
+            # psycopg2 / asyncpg bawaan SQLAlchemy secara otomatis mengkonversi 
+            # Python dict/list menjadi tipe data JSONB di PostgreSQL.
+            
+            if not tls_inst:
+                tls_inst = TLSInfo(service_id=service_inst.id, **clean_tls)
+                session.add(tls_inst)
+            else:
+                # Update (Overwrite) state sertifikat terbaru dari hasil scan
+                for k, v in clean_tls.items():
+                    setattr(tls_inst, k, v)
+            session.flush()
 
         # 4. Ingest Vuln (Kerentanan)
         vuln_data = data.get("vuln")
