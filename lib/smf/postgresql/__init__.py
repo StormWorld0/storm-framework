@@ -18,8 +18,9 @@ from .db_api import (
     get_services,
     get_vulns,
 )  # REPL COMMANDS
-from .db_api import report_host, report_service, report_vuln  # CORE DATA
+from .db_api import ingest_telemetry  # CORE DATA
 from .db_api import (
     set_workspace,
     get_current_workspace,
+    get_session,
 )  # Call workspace & setup workspace
