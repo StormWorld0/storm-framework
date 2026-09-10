@@ -8,6 +8,7 @@ from lib.smf.postgresql import (
     Workspace,
     set_workspace,
     get_current_workspace,
+    get_session,
 )
 
 
@@ -21,7 +22,7 @@ def execute(args, ctx):
         workspace <name>        -> Pindah workspace aktif
     """
     db = ctx.db
-    if not db or not getattr(db, "session", None):
+    if not db or not get_session():
         smf.printf(f"[!]{CC.YELLOW} No database connection active.{CC.RESET}")
         return
 
