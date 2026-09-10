@@ -77,41 +77,41 @@ class TLSInfo(Base):
 
     id = Column(Integer, primary_key=True)
     service_id = Column(Integer, ForeignKey("services.id"), nullable=False)
-    
+
     # --- X.509 Certificate Metadata ---
-    subject = Column(String(512))            
-    issuer = Column(String(512))             
+    subject = Column(String(512))
+    issuer = Column(String(512))
     # JSONB untuk Array string (misal: ["*.target.com", "target.local"])
-    subject_alt_names = Column(JSONB, server_default='[]')  
-    
+    subject_alt_names = Column(JSONB, server_default="[]")
+
     # --- Validity ---
     not_before = Column(DateTime(timezone=True))
     not_after = Column(DateTime(timezone=True))
-    
+
     # --- Identification & Fingerprinting ---
-    serial_number = Column(String(128))      
-    sha1_fingerprint = Column(String(40), index=True)   
-    sha256_fingerprint = Column(String(64), index=True) 
-    
+    serial_number = Column(String(128))
+    sha1_fingerprint = Column(String(40), index=True)
+    sha256_fingerprint = Column(String(64), index=True)
+
     # --- Cryptographic Key Properties ---
-    pubkey_algorithm = Column(String(64))    
-    pubkey_size = Column(Integer)            
-    
+    pubkey_algorithm = Column(String(64))
+    pubkey_size = Column(Integer)
+
     # --- Protocol & Cipher Context (JSONB Powers) ---
     # Bisa menyimpan list: ["TLSv1.2", "TLSv1.3"]
-    supported_protocols = Column(JSONB, server_default='[]')       
-    
-    # Bisa menyimpan dictionary kompleks: 
+    supported_protocols = Column(JSONB, server_default="[]")
+
+    # Bisa menyimpan dictionary kompleks:
     # {"TLSv1.2": ["TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", ...]}
-    accepted_ciphers = Column(JSONB, server_default='{}')          
-    
+    accepted_ciphers = Column(JSONB, server_default="{}")
+
     # Bisa menyimpan list of dictionaries untuk detail vulnerability
     # [{"cipher": "RC4-SHA", "reason": "Sweet32", "severity": "Medium"}]
-    weak_ciphers = Column(JSONB, server_default='[]')              
-    
+    weak_ciphers = Column(JSONB, server_default="[]")
+
     # --- Raw Data ---
-    raw_certificate = Column(Text)           
-    
+    raw_certificate = Column(Text)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
