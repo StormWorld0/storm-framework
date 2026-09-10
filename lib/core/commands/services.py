@@ -31,14 +31,14 @@ def execute(args, ctx):
     smf.printf(f"\nServices ({current_ws})")
     smf.printf(f"============")
     smf.printf(
-        f"{CC.GREEN}{'Host':<16} {'Port':<8} {'Proto':<8} {'Name':<15} {'State':<10} {'Info':<20}{CC.RESET}"
+        f"{CC.GREEN}{'Host':<20} {'Port':<8} {'Proto':<8} {'Name':<15} {'State':<10} {'Info':<20}{CC.RESET}"
     )
     smf.printf(
-        f"{CC.MAGENTA}{'----':<16} {'----':<8} {'-----':<8} {'----':<15} {'-----':<10} {'----':<20}{CC.RESET}"
+        f"{CC.MAGENTA}{'----':<20} {'----':<8} {'-----':<8} {'----':<15} {'-----':<10} {'----':<20}{CC.RESET}"
     )
 
     for s in services_list:
         smf.printf(
-            f"{CC.YELLOW}{s['host']:<16} {s['port']:<8} {s['proto']:<8} {s['name']:<15} {s['state']:<10} {s['info']:<20}{CC.RESET}"
+            f"{CC.YELLOW}{s['host']:<20} {s['port']:<8} {s['proto']:<8} {s['name']:<15} {s['state']:<10} {s['info']:<20}{CC.RESET}"
         )
     smf.printf("")
