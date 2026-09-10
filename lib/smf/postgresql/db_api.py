@@ -42,7 +42,7 @@ def get_current_workspace() -> str:
     return "default"
 
 
-def get_session() -> str:
+def get_session():
     """Mengembalikan session aktif"""
     if db and hasattr(db, "session"):
         return db.session
@@ -337,3 +337,5 @@ def ingest_telemetry(data: Dict[str, Any], workspace: str = "default") -> bool:
         session.rollback()
         smf.printd("Ingestion Pipeline Transaction Failed", e, level="ERROR")
         return False
+    finally:
+        session.close()
