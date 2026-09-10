@@ -21,7 +21,8 @@ def execute(args, ctx):
             f"[*]{CC.YELLOW} Connected to ({db_name}). Connection type:{CC.GREEN} {backend}. {CC.YELLOW}Workspace:{CC.GREEN} {current_ws}{CC.RESET}"
         )
     elif sts == "disconnected":
-        smf.printf(f"[!]{CC.YELLOW}({sts}) Failed to connect. database offline.{CC.RESET}")
+        smf.printf(
+            f"[!]{CC.YELLOW}({sts}) Failed to connect. database offline.{CC.RESET}"
+        )
     else:
         smf.printf(f"[!]{CC.RED}({sts}) Failed to connect to database.{CC.RESET}")
-        
