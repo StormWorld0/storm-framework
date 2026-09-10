@@ -22,7 +22,7 @@ def execute(args, ctx):
         )
     elif sts == "disconnected":
         smf.printf(
-            f"[!]{CC.YELLOW}({sts}) Failed to connect. database offline.{CC.RESET}"
+            f"[!]{CC.YELLOW} ({sts}) Failed to connect. database offline.{CC.RESET}"
         )
     else:
-        smf.printf(f"[!]{CC.RED}({sts}) Failed to connect to database.{CC.RESET}")
+        smf.printf(f"[!]{CC.RED} ({sts}) Failed to connect to database.{CC.RESET}")
