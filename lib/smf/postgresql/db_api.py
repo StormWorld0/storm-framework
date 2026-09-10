@@ -198,159 +198,158 @@ def get_vulns(workspace_name: str = None):
 
 
 def _clean_payload(model_cls, payload: Dict[str, Any]) -> Dict[str, Any]:
-    """Membuang argumen yang tidak cocok dengan kolom model agar tidak TypeError."""
     valid_cols = {c.key for c in inspect(model_cls).mapper.column_attrs}
-    return {k: v for k, v in payload.items() if k in valid_cols and v is not None}
-
+    return {k: v for k, v in payload.items() if k in valid_cols}
 
 def ingest_telemetry(data: Dict[str, Any], workspace: str = "default") -> bool:
-    """Universal Ingestion Function.
-
-    Memproses payload bertingkat dari DTO/Worker dan menyimpannya ke tabel
-    PostgreSQL secara atomic (Host, Service, Vuln, Note, Creds, Loot).
-    """
     if not db or not (session := get_session()):
         return False
-
     try:
-        # 1. Pastikan Workspace Ada (Get or Create)
+        # 1. Workspace
         ws = session.query(Workspace).filter_by(name=workspace).first()
         if not ws:
             ws = Workspace(name=workspace)
             session.add(ws)
             session.flush()
 
-        host_inst = None
-        service_inst = None
+        host_inst = service_inst = None
 
-        # 2. Ingest Host (jika ada data target/host di payload)
+        # 2. Host
         host_data = data.get("host")
-        if host_data and isinstance(host_data, dict):
-            address = host_data.get("address")
-            if address:
-                host_inst = (
-                    session.query(Host)
-                    .filter_by(workspace_id=ws.id, address=address)
-                    .first()
-                )
-                clean_host = _clean_payload(Host, host_data)
-                if not host_inst:
-                    host_inst = Host(workspace_id=ws.id, **clean_host)
-                    session.add(host_inst)
-                else:
-                    # Update metadata host jika ada perubahan (misal os_name)
-                    for k, v in clean_host.items():
+        if host_data and isinstance(host_data, dict) and host_data.get("address"):
+            clean_host = _clean_payload(Host, host_data)
+            host_inst = session.query(Host).filter_by(workspace_id=ws.id, address=clean_host["address"]).first()
+            
+            if not host_inst:
+                host_inst = Host(workspace_id=ws.id, **clean_host)
+                session.add(host_inst)
+            else:
+                for k, v in clean_host.items():
+                    # Handle ARRAY append untuk hostnames
+                    if k == "hostnames" and isinstance(v, list):
+                        existing = set(host_inst.hostnames or [])
+                        existing.update(v)
+                        setattr(host_inst, k, list(existing))
+                    elif v is not None: 
                         setattr(host_inst, k, v)
-                session.flush()
+            session.flush()
 
-        # 3. Ingest Service (jika ada data port/service di payload)
+        # 3. Service
         srv_data = data.get("service")
-        if srv_data and isinstance(srv_data, dict) and host_inst:
-            port = srv_data.get("port")
-            proto = srv_data.get("proto", "tcp")
-            if port:
-                service_inst = (
-                    session.query(Service)
-                    .filter_by(host_id=host_inst.id, port=port, proto=proto)
-                    .first()
-                )
-                clean_srv = _clean_payload(Service, srv_data)
-                if not service_inst:
-                    service_inst = Service(host_id=host_inst.id, **clean_srv)
-                    session.add(service_inst)
-                else:
-                    for k, v in clean_srv.items():
-                        setattr(service_inst, k, v)
-                session.flush()
+        if srv_data and isinstance(srv_data, dict) and host_inst and srv_data.get("port"):
+            clean_srv = _clean_payload(Service, srv_data)
+            proto = clean_srv.get("proto", "tcp")
+            
+            service_inst = session.query(Service).filter_by(
+                host_id=host_inst.id, port=clean_srv["port"], proto=proto
+            ).first()
+            
+            if not service_inst:
+                service_inst = Service(host_id=host_inst.id, **clean_srv)
+                session.add(service_inst)
+            else:
+                for k, v in clean_srv.items():
+                    if v is not None: setattr(service_inst, k, v)
+            session.flush()
 
-        # =========================================================================
-        # 3.5. Ingest TLS Info (Penting: Harus berjalan jika service_inst terbentuk)
-        # =========================================================================
+        # 3.5 TLS Info
         tls_data = data.get("tls_info")
         if tls_data and isinstance(tls_data, dict) and service_inst:
-            # Karena relasinya 1-to-1, kita cek apakah TLS info untuk service ini sudah ada
-            tls_inst = (
-                session.query(TLSInfo).filter_by(service_id=service_inst.id).first()
-            )
-
             clean_tls = _clean_payload(TLSInfo, tls_data)
-
-            # NOTE untuk PostgreSQL JSONB:
-            # psycopg2 / asyncpg bawaan SQLAlchemy secara otomatis mengkonversi
-            # Python dict/list menjadi tipe data JSONB di PostgreSQL.
-
+            tls_inst = session.query(TLSInfo).filter_by(service_id=service_inst.id).first()
+            
             if not tls_inst:
                 tls_inst = TLSInfo(service_id=service_inst.id, **clean_tls)
                 session.add(tls_inst)
             else:
-                # Update (Overwrite) state sertifikat terbaru dari hasil scan
                 for k, v in clean_tls.items():
-                    setattr(tls_inst, k, v)
+                    if v is not None: setattr(tls_inst, k, v)
             session.flush()
 
-        # 4. Ingest Vuln (Kerentanan)
+        # 4. Vuln (WITH DEDUPLICATION)
         vuln_data = data.get("vuln")
-        if vuln_data and isinstance(vuln_data, dict) and host_inst:
+        if vuln_data and isinstance(vuln_data, dict) and host_inst and vuln_data.get("name"):
             clean_vuln = _clean_payload(Vuln, vuln_data)
-            vuln_inst = Vuln(
-                host_id=host_inst.id,
-                service_id=service_inst.id if service_inst else None,
-                **clean_vuln,
-            )
-            session.add(vuln_inst)
+            sid = service_inst.id if service_inst else None
+            
+            vuln_inst = session.query(Vuln).filter_by(
+                host_id=host_inst.id, service_id=sid, name=clean_vuln["name"]
+            ).first()
+            
+            if not vuln_inst:
+                vuln_inst = Vuln(host_id=host_inst.id, service_id=sid, **clean_vuln)
+                session.add(vuln_inst)
+            else:
+                # Update info & timestamp tanpa menduplikasi data
+                vuln_inst.info = clean_vuln.get("info", vuln_inst.info)
+                vuln_inst.exploited_at = clean_vuln.get("exploited_at", vuln_inst.exploited_at)
 
-        # 5. Ingest Note (RDAP, HTTP Headers, Custom Banner JSON)
+        # 5. Note
         note_data = data.get("note")
         if note_data and isinstance(note_data, dict):
             clean_note = _clean_payload(Note, note_data)
-            # Encode data dict ke JSON string jika perlu
             if isinstance(clean_note.get("data"), (dict, list)):
                 clean_note["data"] = json.dumps(clean_note["data"])
-
+            
             note_inst = Note(
                 workspace_id=ws.id,
                 host_id=host_inst.id if host_inst else None,
                 service_id=service_inst.id if service_inst else None,
-                **clean_note,
+                **clean_note
             )
             session.add(note_inst)
 
-        # 6. Ingest Credential & Login
+        # 6. Credential & Login (WITH DEDUPLICATION)
         cred_data = data.get("credential")
-        if cred_data and isinstance(cred_data, dict):
+        if cred_data and isinstance(cred_data, dict) and cred_data.get("public"):
             clean_cred = _clean_payload(Credential, cred_data)
-            cred_inst = Credential(workspace_id=ws.id, **clean_cred)
-            session.add(cred_inst)
-            session.flush()
+            # Hindari menyimpan kredensial ganda (Cek User, Pass/Hash, Realm yang sama)
+            cred_inst = session.query(Credential).filter_by(
+                workspace_id=ws.id,
+                public=clean_cred["public"],
+                private=clean_cred.get("private"),
+                realm=clean_cred.get("realm")
+            ).first()
 
-            # Jika login sukses pada service tertentu
+            if not cred_inst:
+                cred_inst = Credential(workspace_id=ws.id, **clean_cred)
+                session.add(cred_inst)
+                session.flush()
+
+            # Ingest Login mapping (Upsert jika sudah ada)
             if service_inst and data.get("login_status"):
-                login_inst = Login(
-                    credential_id=cred_inst.id,
-                    service_id=service_inst.id,
-                    status=data.get("login_status", "Successful"),
-                    access_level=data.get("access_level", "User"),
-                )
-                session.add(login_inst)
+                login_inst = session.query(Login).filter_by(
+                    credential_id=cred_inst.id, service_id=service_inst.id
+                ).first()
+                
+                if not login_inst:
+                    login_inst = Login(
+                        credential_id=cred_inst.id,
+                        service_id=service_inst.id,
+                        status=data.get("login_status", "Successful"),
+                        access_level=data.get("access_level", "User")
+                    )
+                    session.add(login_inst)
+                else:
+                    login_inst.status = data.get("login_status", login_inst.status)
+                    login_inst.access_level = data.get("access_level", login_inst.access_level)
 
-        # 7. Ingest Loot (File dump / artifacts)
+        # 7. Loot (Optional: Deduplikasi jika path/hash sama bisa ditambahkan jika perlu)
         loot_data = data.get("loot")
         if loot_data and isinstance(loot_data, dict):
             clean_loot = _clean_payload(Loot, loot_data)
-            loot_inst = Loot(
+            session.add(Loot(
                 workspace_id=ws.id,
                 host_id=host_inst.id if host_inst else None,
                 service_id=service_inst.id if service_inst else None,
-                **clean_loot,
-            )
-            session.add(loot_inst)
+                **clean_loot
+            ))
 
-        # Commit Satu Kali untuk Seluruh Transaksi
         session.commit()
         return True
     except Exception as e:
         session.rollback()
-        smf.printd("Ingestion Pipeline Transaction Failed", e, level="ERROR")
+        smf.printd(f"Ingestion Pipeline Failed", e, level="ERROR")
         return False
     finally:
         session.close()
