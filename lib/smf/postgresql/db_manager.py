@@ -76,9 +76,8 @@ class DBManager:
             self._ensure_default_workspace()
             return True
 
-        except (OperationalError, DBAPIError) as e:
+        except (OperationalError, DBAPIError):
             self.is_connected = False
-            smf.printd("PostgreSQL is offline or connection refused", e, level="WARN")
             return False
         except Exception as e:
             self.is_connected = False
