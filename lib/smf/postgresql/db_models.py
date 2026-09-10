@@ -28,7 +28,7 @@ class Host(Base):
     id = Column(Integer, primary_key=True)
     workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=False)
     address = Column(INET, nullable=False)  # IP Address (IPv4/IPv6)
-    hostnames = Column(ARRAY(String), server_default='{}') # URL/Domain
+    hostnames = Column(ARRAY(String), server_default="{}")  # URL/Domain
     mac = Column(String(255))
     os_name = Column(String(255))
     os_flavor = Column(String(255))
