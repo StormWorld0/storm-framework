@@ -60,6 +60,53 @@ class Service(Base):
     host = relationship("Host", back_populates="services")
     vulns = relationship("Vuln", back_populates="service", cascade="all, delete-orphan")
 
+    # TAMBAHAN: Relasi 1-to-1 (atau 1-to-many jika menyimpan histori sertifikat) ke tabel TLS
+    tls_info = relationship("TLSInfo", back_populates="service", cascade="all, delete-orphan")
+
+class TLSInfo(Base):
+    """
+    Menyimpan profil kriptografi dan detail sertifikat X.509 dari sebuah Service.
+    Sangat berguna untuk query audit: expired certs, weak ciphers, atau insecure protocols.
+    """
+
+    __tablename__ = "tls_info"
+
+    id = Column(Integer, primary_key=True)
+    service_id = Column(Integer, ForeignKey("services.id"), nullable=False)
+    
+    # --- X.509 Certificate Metadata ---
+    subject = Column(String(512))            # ex: CN=www.target.com, O=Target Corp
+    issuer = Column(String(512))             # ex: CN=Let's Encrypt Authority X3
+    subject_alt_names = Column(Text)         # SANs (Bisa menyimpan array JSON berupa String/List)
+    
+    # --- Validity (Penting untuk deteksi Expired Certs) ---
+    not_before = Column(DateTime(timezone=True))
+    not_after = Column(DateTime(timezone=True))
+    
+    # --- Identification & Fingerprinting ---
+    serial_number = Column(String(128))      # Hex string dari serial number
+    sha1_fingerprint = Column(String(40), index=True)   # Indexing untuk pencarian pivoting/threat intel
+    sha256_fingerprint = Column(String(64), index=True) 
+    
+    # --- Cryptographic Key Properties ---
+    pubkey_algorithm = Column(String(64))    # ex: RSA, ECDSA, Ed25519
+    pubkey_size = Column(Integer)            # ex: 2048, 4096, 256
+    
+    # --- Protocol & Cipher Context ---
+    # Menggunakan Text di sini sebagai fallback yang aman (dapat diisi string JSON).
+    supported_protocols = Column(Text)       # ex: ["TLSv1.2", "TLSv1.3"] -> Deteksi SSLv2/SSLv3/TLS 1.0
+    accepted_ciphers = Column(Text)          # Daftar ciphersuite yang didukung
+    weak_ciphers = Column(Text)              # Daftar weak ciphers spesifik (RC4, DES, 3DES, Sweet32)
+    
+    # --- Raw Data ---
+    raw_certificate = Column(Text)           # Simpan format PEM untuk ekstraksi offline/analisis manual
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Relasi kembali ke Service
+    service = relationship("Service", back_populates="tls_info")
+    
 
 class Vuln(Base):
     """Temuan kerentanan pada Host atau Service."""
