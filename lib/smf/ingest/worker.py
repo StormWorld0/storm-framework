@@ -2,7 +2,7 @@ import smf
 
 from queue import Queue
 from threading import Thread
-from ..postgresql import report_service, report_vuln, report_host, get_current_workspace
+from ..postgresql import ingest_telemetry, get_current_workspace
 
 # Queue Thread-Safe di Memori
 ingest_queue = Queue()
@@ -15,39 +15,10 @@ def _db_worker():
             break
 
         try:
-            payload, workspace = item
-            record_type = payload.get("types")
-
-            # Worker cuma bertugas router ke db_api
-            if record_type == "service":
-                report_service(
-                    address=payload["address"],
-                    port=payload["port"],
-                    proto=payload.get("proto", "tcp"),
-                    workspace_name=workspace,
-                    name=payload.get("name"),
-                    state=payload.get("state"),
-                    info=payload.get("info"),
-                )
-
-            elif record_type == "host":
-                report_host(
-                    address=payload["address"],
-                    workspace_name=workspace,
-                    os_name=payload.get("os_name"),
-                    info=payload.get("info"),
-                )
-
-            elif record_type == "vuln":
-                report_vuln(
-                    address=payload["address"],
-                    name=payload["name"],
-                    workspace_name=workspace,
-                    port=payload.get("port"),
-                    proto=payload.get("proto"),
-                    info=payload.get("info"),
-                )
-
+            # Tarik workspace aktif di memori secara konstan
+            active_ws = get_current_workspace()
+            # Eksekusi ingest universal ke multi-tabel (Host, Service, Vuln, Note, dll)
+            ingest_telemetry(payload=item, workspace_name=active_ws)
         except Exception as e:
             smf.printd("DB Worker Ingest error", e, level="ERROR")
         finally:
