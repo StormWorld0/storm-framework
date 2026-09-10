@@ -191,7 +191,7 @@ def ingest_telemetry(data: Dict[str, Any], workspace: str = "default") -> bool:
         # 1. Pastikan Workspace Ada (Get or Create)
         ws = session.query(Workspace).filter_by(name=workspace).first()
         if not ws:
-            ws = Workspace(name=workspace_name)
+            ws = Workspace(name=workspace)
             session.add(ws)
             session.flush()
 
