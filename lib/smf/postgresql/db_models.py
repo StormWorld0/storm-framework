@@ -27,7 +27,7 @@ class Host(Base):
 
     id = Column(Integer, primary_key=True)
     workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=False)
-    
+
     address = Column(INET, nullable=False)  # IP Address (IPv4/IPv6)
     hostnames = Column(ARRAY(String), server_default="{}")  # URL/Domain
     mac = Column(String(255))
@@ -52,7 +52,7 @@ class Service(Base):
 
     id = Column(Integer, primary_key=True)
     host_id = Column(Integer, ForeignKey("hosts.id"), nullable=False)
-    
+
     port = Column(Integer, nullable=False)
     proto = Column(String(16), nullable=False)  # tcp, udp
     state = Column(String(255))  # open, closed, filtered
@@ -130,7 +130,7 @@ class Vuln(Base):
     service_id = Column(
         Integer, ForeignKey("services.id"), nullable=True
     )  # Opsional, vuln bisa di OS level
-    
+
     name = Column(String(255), nullable=False)
     info = Column(Text)
     exploited_at = Column(DateTime(timezone=True))
@@ -152,7 +152,7 @@ class Note(Base):
     id = Column(Integer, primary_key=True)
     workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=False)
     host_id = Column(Integer, ForeignKey("hosts.id"), nullable=True)
-    
+
     service_id = Column(Integer, ForeignKey("services.id"), nullable=True)
     ntype = Column(String(255))  # note type (misal: 'smb.fingerprint', 'host.os.guess')
     data = Column(Text)  # Biasanya menyimpan JSON payload
@@ -168,7 +168,7 @@ class Credential(Base):
 
     id = Column(Integer, primary_key=True)
     workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=False)
-    
+
     public = Column(String(255))  # Username
     private = Column(Text)  # Password atau Hash
     private_type = Column(String(255))  # 'password', 'ntlm_hash', 'ssh_key'
@@ -191,7 +191,7 @@ class Login(Base):
     id = Column(Integer, primary_key=True)
     credential_id = Column(Integer, ForeignKey("credentials.id"), nullable=False)
     service_id = Column(Integer, ForeignKey("services.id"), nullable=False)
-    
+
     status = Column(String(255))  # 'Successful', 'Denied'
     access_level = Column(String(255))  # 'Admin', 'User'
     last_attempted_at = Column(DateTime(timezone=True))
@@ -211,7 +211,7 @@ class Loot(Base):
     workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=False)
     host_id = Column(Integer, ForeignKey("hosts.id"), nullable=True)
     service_id = Column(Integer, ForeignKey("services.id"), nullable=True)
-    
+
     ltype = Column(String(255))  # loot type (misal: 'windows.hashdump', 'cisco.config')
     path = Column(Text, nullable=False)  # Path fisik ke file di disk (~/.msf4/loot/)
     data = Column(Text)  # Info tambahan
