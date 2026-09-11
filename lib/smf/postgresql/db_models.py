@@ -13,8 +13,8 @@ class Workspace(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False, unique=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    created = Column(DateTime(timezone=True), server_default=func.now())
+    updated = Column(DateTime(timezone=True), onupdate=func.now())
 
     # Relasi: 1 Workspace memiliki banyak Hosts
     hosts = relationship("Host", back_populates="workspace", cascade="all, delete-orphan")
@@ -33,7 +33,6 @@ class Host(Base):
     mac = Column(String(255))  # Mac Address
     os_name = Column(String(255))  # OS Name
     os_flavor = Column(String(255))  # OS specific
-    os_version = Column(String(255))  # OS Version
     purpose = Column(String(255))  # client, server, device, dll
     info = Column(Text)  # Additional information
     created = Column(
