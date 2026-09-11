@@ -148,7 +148,11 @@ class HTTPResponse:
 
         res = parse_url(host)
         ips = domain_to_ip(res["domain"])
-        primary_ip = ips[0] if isinstance(ips, list) and ips else ips
+        
+        ipv4 = ips["ipv4"]
+        ipv6 = ips["ipv6"]
+        
+        primary_ip = ipv4[0] if ipv4 else ipv6[0] if ipv6 else None
 
         server_header = self.get_headers("server")
         content_type = self.get_headers("content-type", "unknown")
@@ -169,7 +173,7 @@ class HTTPResponse:
         payload = {
             "host": {
                 "address": primary_ip,
-                "hostnames": [res["domain"]] if res.get("domain") else [],
+                "hostname": [res["domain"]] if res.get("domain") else [],
             },
             "service": {
                 "port": int(extracted_port),  # Pastikan di-cast ke Integer
@@ -197,12 +201,12 @@ class HTTPResponse:
             payload["tls_info"] = {
                 "subject": self.tls.subject,
                 "issuer": self.tls.issuer,
-                "subject_alt_names": self.tls.dns_name,
+                "subject_alt_name": self.tls.dns_name,
                 "not_after": self.tls.expires,
-                "supported_protocols": (
+                "supported_protocol": (
                     [self.tls.version] if self.tls.version != "Unknown" else []
                 ),
-                "accepted_ciphers": (
+                "accepted_cipher": (
                     [self.tls.cipher] if self.tls.cipher != "Unknown" else []
                 ),
                 "raw_certificate": json.dumps(
