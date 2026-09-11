@@ -148,10 +148,10 @@ class HTTPResponse:
 
         res = parse_url(host)
         ips = domain_to_ip(res["domain"])
-        
+
         ipv4 = ips["ipv4"]
         ipv6 = ips["ipv6"]
-        
+
         primary_ip = ipv4[0] if ipv4 else ipv6[0] if ipv6 else None
 
         server_header = self.get_headers("server")
