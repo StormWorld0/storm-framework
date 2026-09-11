@@ -231,8 +231,8 @@ def ingest_telemetry(data: Dict[str, Any], workspace: str = "default") -> bool:
             else:
                 for k, v in clean_host.items():
                     # Handle ARRAY append untuk hostnames
-                    if k == "hostnames" and isinstance(v, list):
-                        existing = set(host_inst.hostnames or [])
+                    if k == "hostname" and isinstance(v, list):
+                        existing = set(host_inst.hostname or [])
                         existing.update(v)
                         setattr(host_inst, k, list(existing))
                     elif v is not None:
@@ -301,7 +301,7 @@ def ingest_telemetry(data: Dict[str, Any], workspace: str = "default") -> bool:
                 # Update info & timestamp tanpa menduplikasi data
                 vuln_inst.info = clean_vuln.get("info", vuln_inst.info)
                 vuln_inst.exploited_at = clean_vuln.get(
-                    "exploited_at", vuln_inst.exploited_at
+                    "exploited", vuln_inst.exploited
                 )
 
         # 5. Note
