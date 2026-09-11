@@ -21,7 +21,7 @@ class DataBuilder:
     def add_host(
         self,
         address: str,
-        hostnames: Optional[List[str]] = None,
+        hostname: Optional[List[str]] = None,
         mac: Optional[str] = None,
         os_name: Optional[str] = None,
         os_flavor: Optional[str] = None,
@@ -32,7 +32,7 @@ class DataBuilder:
         """Metadata target host berdasarkan model Host."""
         self.payload["host"] = {
             "address": address,
-            "hostnames": hostnames or [],
+            "hostname": hostname or [],
             "mac": mac,
             "os_name": os_name,
             "os_flavor": os_flavor,
@@ -71,12 +71,12 @@ class DataBuilder:
         self,
         name: str,
         info: Optional[str] = None,
-        exploited_at: Optional[datetime] = None,
+        exploited: Optional[datetime] = None,
         **kwargs,
     ):
         """Temuan kerentanan berdasarkan model Vuln."""
         self.payload["vulns"].append(
-            {"name": name, "info": info, "exploited_at": exploited_at, **kwargs}
+            {"name": name, "info": info, "exploited": exploited, **kwargs}
         )
         return self
 
@@ -134,13 +134,13 @@ class DataBuilder:
         """Mengembalikan MURNI dictionary untuk dimasukkan ke Queue."""
         output = {}
 
-        # 1. Masukkan host (jika diisi)
+        # Masukkan host (jika diisi)
         if self.payload["host"]:
             output["host"] = {
                 k: v for k, v in self.payload["host"].items() if v is not None
             }
 
-        # 2. Backward compatibility: Jika item list cuma 1, kirim sebagai dict tunggal
+        # Backward compatibility: Jika item list cuma 1, kirim sebagai dict tunggal
         # Agar ingest_telemetry kamu yang sekarang langsung bisa membaca tanpa ubah kode!
         for key in ["services", "vulns", "notes", "credentials", "loots"]:
             items = self.payload[key]
