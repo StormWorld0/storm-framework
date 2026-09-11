@@ -76,7 +76,6 @@ class DBManager:
             # Pastikan workspace default tersedia
             self._ensure_default_workspace()
             return True
-
         except (OperationalError, DBAPIError):
             self.is_connected = False
             return False
