@@ -300,9 +300,7 @@ def ingest_telemetry(data: Dict[str, Any], workspace: str = "default") -> bool:
             else:
                 # Update info & timestamp tanpa menduplikasi data
                 vuln_inst.info = clean_vuln.get("info", vuln_inst.info)
-                vuln_inst.exploited_at = clean_vuln.get(
-                    "exploited", vuln_inst.exploited
-                )
+                vuln_inst.exploited_at = clean_vuln.get("exploited", vuln_inst.exploited)
 
         # 5. Note
         note_data = data.get("note")
