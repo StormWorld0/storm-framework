@@ -4,6 +4,7 @@ import smf
 from apps.utility.colors import CC
 from lib.smf.postgresql import get_vulns, get_current_workspace
 
+
 # This command will display all vulnerability data stored in the database.
 # which is captured by the framework module or already exists will also be displayed
 # structured with these commands.
