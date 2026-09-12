@@ -63,6 +63,7 @@ class DBManager:
         """Parsing YAML dan mengonstruksi PostgreSQL connection string."""
         # MODE 1: EKSTERNAL (Override mode)
         if self.inp:
+            smf.printd("External database mode starting", level="INFO")
             required_keys = {"username", "password", "host", "port", "database"}
 
             # Memastikan semua key ada DAN valuenya tidak None/kosong
@@ -91,6 +92,7 @@ class DBManager:
                 return None
 
         # MODE 2: DEFAULT (YAML Config)
+        smf.printd("Database mode default starting", level="INFO")
         path = Path(config_path)
         if not path.is_file():
             smf.printd("Config file not found", config_path, level="WARN")
@@ -142,10 +144,6 @@ class DBManager:
             return True
         except (OperationalError, DBAPIError):
             self.is_connected = False
-            smf.printd(
-                "Database connectivity failed during handshake (Auth/Network issue)",
-                level="ERROR",
-            )
             return False
         except Exception as e:
             self.is_connected = False
