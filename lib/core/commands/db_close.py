@@ -3,6 +3,7 @@ import smf
 from apps.utility.colors import CC
 from lib.smf.postgresql import close_db
 
+
 # Closes the database connection to PostgreSQL that is currently active in the background
 # for security in database processes that are running in the background process
 # and also to avoid exception errors from external libraries and internal libraries
