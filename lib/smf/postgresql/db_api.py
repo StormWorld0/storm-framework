@@ -163,6 +163,7 @@ def get_hosts(workspace_name: str = None):
             for h in hosts
         ]
     except Exception as e:
+        db.session.rollback()
         smf.printd("Failed to get hosts", e, level="ERROR")
         return []
 
@@ -191,6 +192,7 @@ def get_services(workspace_name: str = None):
             for s in services
         ]
     except Exception as e:
+        db.session.rollback()
         smf.printd("Failed to get services", e, level="ERROR")
         return []
 
@@ -216,7 +218,55 @@ def get_vulns(workspace_name: str = None):
             for v in vulns
         ]
     except Exception as e:
+        db.session.rollback()
         smf.printd("Failed to get vulns", e, level="ERROR")
+        return []
+
+
+def get_creds(workspace_name: str = None):
+    """Mengambil seluruh credential yang terisolasi dalam satu workspace."""
+    target_ws = workspace_name or get_current_workspace()
+    try:
+        ws = db.session.query(Workspace).filter_by(name=target_ws).first()
+        if not ws:
+            smf.printd(f"Workspace '{target_ws}' not found", level="WARN")
+            return []
+
+        # ARCHITECTURE UPGRADE:
+        # 1. Filter langsung dari Credential.workspace_id (O(1) index lookup)
+        # 2. Outerjoin ke Host dan Login untuk eager load (menghemat N+1 query)
+        creds_query = (
+            db.session.query(Credential)
+            .outerjoin(Host)
+            .outerjoin(Login)
+            .filter(Credential.workspace_id == ws.id)
+            .all()
+        )
+
+        results = []
+        for v in creds_query:
+            # Mengatasi relasi One-to-Many pada Login.
+            # Mengambil data login terakhir/pertama jika credential ini pernah digunakan.
+            logn = v.logins[0] if v.logins else None
+            serv = logn.service if logn else None
+
+            results.append({
+                "host": v.host.address if v.host else "",
+                "hostname": v.host.hostname if v.host else "",
+                "port": serv.port if serv and hasattr(serv, "port") else "",
+                "public": v.public or "",
+                "private": v.private or "",
+                "private_type": v.private_type or "",
+                "realm": v.realm or "",
+                "created": v.created or None,
+                "status": logn.status if logn else "",
+                "access_level": logn.access_level if logn else "",
+            })
+            
+        return results
+    except Exception as e:
+        db.session.rollback() # Pastikan state bersih jika gagal
+        smf.printd("Failed to get credential", e, level="ERROR")
         return []
 
 
