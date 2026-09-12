@@ -18,6 +18,7 @@ from .db_api import (
     get_hosts,
     get_services,
     get_vulns,
+    get_creds,
     send_connect,
     close_db,
 )  # REPL COMMANDS
