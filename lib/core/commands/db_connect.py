@@ -33,7 +33,7 @@ def execute(args, ctx):
         "password": raw["pass"],
         "host": raw["host"],
         "port": raw["port"],
-        "db": raw["db"],
+        "database": raw["db"],
     }
     try:
         resp_dict = send_connect(connection_params)
