@@ -4,6 +4,7 @@ import smf
 from apps.utility.colors import CC
 from lib.smf.postgresql import get_hosts, get_current_workspace
 
+
 # Displays all lists of data that have been successfully saved or have been saved in the database
 # related to Hosts will be displayed by this command.
 def execute(args, ctx):
