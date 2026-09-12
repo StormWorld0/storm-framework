@@ -11,24 +11,29 @@ from .db_models import Base, Workspace
 
 
 class DBManager:
-    def __init__(self, config_path, config_ext):
+    def __init__(self, config_path):
         """Membangun koneksi menggunakan parameter dari database.yml"""
         self.config_path = config_path
         self.current_workspace = "default"
         self.is_connected = False
         self.db_name = "smf"
+        self.inp = ""
 
         # Buat engine konfigurasi
         self.engine = self._create_engine_from_config(config_path, config_ext)
 
         # Siapkan Session Factory
+        self._setup_session()
+
+        # Jalankan bootstrap
+        self.bootstrap_db()
+
+    def _setup_session(self):
+        """Mengekstrak logika pembuatan session agar bisa dipanggil berulang."""
         if self.engine:
             self.SessionLocal = scoped_session(sessionmaker(bind=self.engine))
         else:
             self.SessionLocal = None
-
-        # Jalankan bootstrap
-        self.bootstrap_db()
 
     @property
     def session(self):
@@ -37,15 +42,32 @@ class DBManager:
             return self.SessionLocal()
         return None
 
-    def _create_engine_from_config(self, config_path: str, config_ext: dict):
+    def _apply_dynamic(self, dynamic_inp: dict) -> bool:
+        """
+        Metode ini dipanggil SETELAH instance dibuat untuk menimpa
+        koneksi YAML ke koneksi Eksternal (Regex Parsed).
+        """
+        self.inp = dynamic_inp
+        
+        # Security: Dispose pool lama untuk mencegah memory/socket leak
+        if self.engine:
+            self.engine.dispose()
+            
+        # Rebuild engine. Masuk mode Eksternal.
+        self.engine = self._create_engine_from_config(self.config_path)
+        self._setup_session()
+        
+        return self.bootstrap_db()
+
+    def _create_engine_from_config(self, config_path):
         """Parsing YAML dan mengonstruksi PostgreSQL connection string."""
         # MODE 1: EKSTERNAL (Override mode)
-        if config_ext:
+        if self.inp:
             required_keys = {"username", "password", "host", "port", "database"}
 
             # Memastikan semua key ada DAN valuenya tidak None/kosong
-            if not required_keys.issubset(config_ext.keys()) or not all(
-                config_ext[k] for k in required_keys
+            if not required_keys.issubset(self.inp.keys()) or not all(
+                self.inp[k] for k in required_keys
             ):
                 smf.printd(
                     "Invalid or missing keys in external configuration dict", level="WARN"
@@ -55,16 +77,15 @@ class DBManager:
             try:
                 db_url = URL.create(
                     drivername="postgresql+psycopg2",
-                    username=config_ext["username"],
-                    password=config_ext["password"],
-                    host=config_ext["host"],
-                    port=config_ext["port"],
-                    database=config_ext["database"],
+                    username=self.inp["username"],
+                    password=self.inp["password"],
+                    host=self.inp["host"],
+                    port=self.inp["port"],
+                    database=self.inp["database"],
                 )
 
                 # Menggunakan konfigurasi pool default untuk koneksi eksternal
                 return create_engine(db_url, pool_size=200, pool_timeout=10)
-
             except Exception as e:
                 smf.printd("Failed to build external DB URL", e, level="ERROR")
                 return None
