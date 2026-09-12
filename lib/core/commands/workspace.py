@@ -54,7 +54,7 @@ def execute(args, ctx):
 
     # Add Workspace (add <name>)
     if parsed_args[0] == "add" and len(parsed_args) > 1:
-        target_name = " ".join(parsed_args[1:]) 
+        target_name = " ".join(parsed_args[1:])
         res = create_workspace(target_name)
         if res:
             smf.printf(f"[+]{CC.GREEN} Added workspace =>{CC.RESET}", target_name)
