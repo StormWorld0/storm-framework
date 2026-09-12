@@ -4,7 +4,10 @@ import re
 from apps.utility.colors import CC
 from lib.smf.postgresql import send_connect
 
-
+# Attempting to connect to an active PostgreSQL
+# to control the framework's internal data state storage and securely store it in a PostgreSQL database
+# with this mechanism, we can connect to different PostgreSQL and it is free by default
+# because the database connection is by default connected to the framework's default PostgreSQL.
 def execute(args, ctx):
     if not args:
         smf.printf(
@@ -15,11 +18,11 @@ def execute(args, ctx):
     data = args[0]
 
     pattern = re.compile(
-        r"^(?P<user>[^:]+):"  # Match user sampai karakter ':' pertama
-        r"(?P<pass>.*)@"  # Greedy match untuk password, diakhiri '@' terakhir
-        r"(?P<host>[^:@/]+):"  # Match host (IP/Domain) tanpa delimiter
-        r"(?P<port>\d+)/"  # Match port (hanya angka)
-        r"(?P<db>.+)$"  # Sisa string adalah database
+        r"^(?P<user>[^:]+):"  # Match user up to the first ':' character
+        r"(?P<pass>.*)@"  # Greedy match for passwords, ending with '@' at the end
+        r"(?P<host>[^:@/]+):"  # Match host (IP/Domain) without delimiter
+        r"(?P<port>\d+)/"  # Match port (numbers only)
+        r"(?P<db>.+)$"  # The rest of the string is the database
     )
 
     match = pattern.match(data)
