@@ -53,11 +53,12 @@ def get_session():
 # FUNCTIONS FOR REPL (View / Query Data)
 # ==========================================
 
+
 def send_connect(inp):
     """Ekuivalen dengan `db_connect`"""
     if not inp:
         return {"status": "warn"}
-        
+
     try:
         db.inp = inp
         db.bootstrap_db()
