@@ -59,7 +59,7 @@ def send_connect(inp):
     if not inp:
         return {"status": "warn"}
     try:
-        if (res := db._apply_dynamic(inp)):
+        if res := db._apply_dynamic(inp):
             return {"status": "success"}
         else:
             return {"status": "error"}
