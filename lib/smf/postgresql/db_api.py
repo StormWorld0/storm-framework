@@ -62,10 +62,24 @@ def send_connect(inp):
         if res := db._apply_dynamic(inp):
             return {"status": "success"}
         else:
-            return {"status": "error"}
+            return {"status": "warn"}
     except Exception as e:
         smf.printd("Failed to connect", e, level="ERROR")
         return {"status": "error"}
+
+
+def close_db() -> bool | None:
+    """Ekuivalen dengan `db_close`"""
+    if not db and not get_session():
+        return None
+    try:
+        db.session.remove()
+        db.engine.dispose()
+        db.is_connected = False
+        return True
+    except Exception as e:
+        smf.printd("Failed to close database connection", e, level="ERROR")
+        return False
 
 
 def get_status():
