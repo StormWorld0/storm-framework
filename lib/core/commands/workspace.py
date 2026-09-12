@@ -26,7 +26,7 @@ def execute(args, ctx):
         smf.printf(f"[!]{CC.YELLOW} No database connection active.{CC.RESET}")
         return
 
-    raw_args = args if isinstance(args, str) else (args[0] if args else "")
+    raw_args = args if isinstance(args, str) else (" ".join(args) if args else "")
     parsed_args = shlex.split(raw_args) if raw_args else []
     current_ws_name = get_current_workspace()
 
@@ -54,7 +54,7 @@ def execute(args, ctx):
 
     # Add Workspace (add <name>)
     if parsed_args[0] == "add" and len(parsed_args) > 1:
-        target_name = parsed_args[1]
+        target_name = " ".join(parsed_args[1:]) 
         res = create_workspace(target_name)
         if res:
             smf.printf(f"[+]{CC.GREEN} Added workspace =>{CC.RESET}", target_name)
@@ -65,7 +65,7 @@ def execute(args, ctx):
 
     # Delete Workspace (del <name>)
     elif parsed_args[0] == "del" and len(parsed_args) > 1:
-        target_name = parsed_args[1]
+        target_name = " ".join(parsed_args[1:])
         if target_name == "default":
             smf.printf(f"[-]{CC.YELLOW} Cannot delete the default workspace.{CC.RESET}")
             return
