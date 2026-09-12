@@ -18,6 +18,7 @@ from .db_api import (
     get_hosts,
     get_services,
     get_vulns,
+    send_connect,
 )  # REPL COMMANDS
 from .db_api import ingest_telemetry  # CORE DATA
 from .db_api import (
