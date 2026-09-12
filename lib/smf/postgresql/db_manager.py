@@ -77,7 +77,7 @@ class DBManager:
 
             try:
                 self.db_name = self.inp["database"]
-                
+
                 db_url = URL.create(
                     drivername="postgresql+psycopg2",
                     username=self.inp["username"],
