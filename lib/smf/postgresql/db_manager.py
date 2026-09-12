@@ -52,17 +52,21 @@ class DBManager:
 
             if inp:
                 required_keys = {"username", "password", "host", "port", "db"}
-                if not required_keys.issubset(inp.keys()) or not all(inp[k] for k in required_keys):
-                    smf.printd("Invalid or missing keys in input dictionary", level="WARN")
+                if not required_keys.issubset(inp.keys()) or not all(
+                    inp[k] for k in required_keys
+                ):
+                    smf.printd(
+                        "Invalid or missing keys in input dictionary", level="WARN"
+                    )
                     return None
-            
+
                 db_url = URL.create(
                     drivername="postgresql+psycopg2",
                     username=inp["username"],
                     password=inp["password"],
                     host=inp["host"],
                     port=inp["port"],
-                    database=inp["db"]
+                    database=inp["db"],
                 )
             else:
                 db_url = URL.create(
@@ -71,7 +75,7 @@ class DBManager:
                     password=config.get("password"),
                     host=config.get("host"),
                     port=config.get("port"),
-                    database=self.db_name
+                    database=self.db_name,
                 )
 
             return create_engine(
