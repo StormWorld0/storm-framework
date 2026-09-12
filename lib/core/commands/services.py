@@ -4,6 +4,7 @@ import smf
 from apps.utility.colors import CC
 from lib.smf.postgresql import get_services, get_current_workspace
 
+
 # This command will display data that is currently stored as a service.
 # in a PostgreSQL database table. Everything will look structured with this.
 def execute(args, ctx):
