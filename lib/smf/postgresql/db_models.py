@@ -44,6 +44,9 @@ class Host(Base):
     services = relationship(
         "Service", back_populates="host", cascade="all, delete-orphan"
     )
+    credentials = relationship(
+        "Credential", back_populates="host", cascade="all, delete-orphan"
+    )
     vulns = relationship("Vuln", back_populates="host", cascade="all, delete-orphan")
 
 
@@ -170,6 +173,7 @@ class Credential(Base):
 
     id = Column(Integer, primary_key=True)
     workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=False)
+    host_id = Column(Integer, ForeignKey("hosts.id"), nullable=True)
 
     public = Column(String(255))  # Username
     private = Column(Text)  # Password atau Hash
@@ -177,6 +181,7 @@ class Credential(Base):
     realm = Column(String(255))  # Domain / Workgroup
     created = Column(DateTime(timezone=True), server_default=func.now())
 
+    host = relationship("Host", back_populates="credentials")
     logins = relationship(
         "Login", back_populates="credential", cascade="all, delete-orphan"
     )
