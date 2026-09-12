@@ -20,7 +20,7 @@ class DBManager:
         self.inp = ""
 
         # Buat engine konfigurasi
-        self.engine = self._create_engine_from_config(config_path, config_ext)
+        self.engine = self._create_engine_from_config(config_path)
 
         # Siapkan Session Factory
         self._setup_session()
