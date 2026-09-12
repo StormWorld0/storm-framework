@@ -56,6 +56,8 @@ def show_help():
   db_status                     : View PostgreSQL database connection status
   db_connect                    : Connect to an external PostgreSQL database manually.
                                   Use the argument format: uname:pass@host:port/db
+  db_disconnect                 : Serves to cleanly disconnect the database connection
+  
   workspace                     : Displays currently available workspaces and hosts
   workspace add <ws_name>       : Adding a new workspace
   workspace del <ws_name>       : Deleting a specific workspace
