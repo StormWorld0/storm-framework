@@ -42,10 +42,14 @@ class DBManager:
         # MODE 1: EKSTERNAL (Override mode)
         if config_ext:
             required_keys = {"username", "password", "host", "port", "database"}
-            
+
             # Memastikan semua key ada DAN valuenya tidak None/kosong
-            if not required_keys.issubset(config_ext.keys()) or not all(config_ext[k] for k in required_keys):
-                smf.printd("Invalid or missing keys in external configuration dict", level="WARN")
+            if not required_keys.issubset(config_ext.keys()) or not all(
+                config_ext[k] for k in required_keys
+            ):
+                smf.printd(
+                    "Invalid or missing keys in external configuration dict", level="WARN"
+                )
                 return None
 
             try:
@@ -57,15 +61,14 @@ class DBManager:
                     port=config_ext["port"],
                     database=config_ext["database"],
                 )
-                
+
                 # Menggunakan konfigurasi pool default untuk koneksi eksternal
                 return create_engine(db_url, pool_size=200, pool_timeout=10)
-            
+
             except Exception as e:
                 smf.printd("Failed to build external DB URL", e, level="ERROR")
                 return None
 
-        
         # MODE 2: DEFAULT (YAML Config)
         path = Path(config_path)
         if not path.is_file():
@@ -75,12 +78,12 @@ class DBManager:
         try:
             with open(path, "r") as f:
                 yaml_data = yaml.safe_load(f)
-                
+
             # Validasi struktur YAML untuk mencegah KeyError
             if not yaml_data or "production" not in yaml_data:
                 smf.printd("YAML config missing 'production' node", level="WARN")
                 return None
-                
+
             config = yaml_data["production"]
             self.db_name = config.get("database", "smf")
 
@@ -118,7 +121,10 @@ class DBManager:
             return True
         except (OperationalError, DBAPIError):
             self.is_connected = False
-            smf.printd("Database connectivity failed during handshake (Auth/Network issue)", level="ERROR")
+            smf.printd(
+                "Database connectivity failed during handshake (Auth/Network issue)",
+                level="ERROR",
+            )
             return False
         except Exception as e:
             self.is_connected = False
