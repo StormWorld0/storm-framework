@@ -252,16 +252,16 @@ def get_creds(workspace_name: str = None):
 
             results.append(
                 {
-                    "host": v.host.address if v.host else "",
-                    "hostname": v.host.hostname if v.host else "",
+                    "addr": v.host.address if v.host else "",
+                    "host": v.host.hostname if v.host else "",
                     "port": serv.port if serv and hasattr(serv, "port") else "",
                     "public": v.public or "",
                     "private": v.private or "",
-                    "private_type": v.private_type or "",
+                    "type": v.private_type or "",
                     "realm": v.realm or "",
                     "created": v.created or None,
                     "status": logn.status if logn else "",
-                    "access_level": logn.access_level if logn else "",
+                    "level": logn.access_level if logn else "",
                 }
             )
 
