@@ -48,15 +48,15 @@ class DBManager:
         koneksi YAML ke koneksi Eksternal (Regex Parsed).
         """
         self.inp = dynamic_inp
-        
+
         # Security: Dispose pool lama untuk mencegah memory/socket leak
         if self.engine:
             self.engine.dispose()
-            
+
         # Rebuild engine. Masuk mode Eksternal.
         self.engine = self._create_engine_from_config(self.config_path)
         self._setup_session()
-        
+
         return self.bootstrap_db()
 
     def _create_engine_from_config(self, config_path):
