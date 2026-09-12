@@ -4,12 +4,13 @@ import smf
 from apps.utility.colors import CC
 from lib.smf.postgresql import get_vulns, get_current_workspace
 
-
+# This command will display all vulnerability data stored in the database.
+# which is captured by the framework module or already exists will also be displayed
+# structured with these commands.
 def execute(args, ctx):
-    """Handler untuk command 'vulns'.
-
+    """Handler for the 'vulns' command.
     Usage:
-        vulns              -> List semua vulnerability di workspace aktif
+        vulns -> List all vulnerabilities in the active workspace
     """
     db = ctx.db
     if not db:
