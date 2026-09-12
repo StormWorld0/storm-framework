@@ -64,6 +64,7 @@ DATABASE
 {CC.CYAN}
 WORKSPACE
 {CC.MAGENTA}---------
+{CC.YELLOW}
   workspace                     : Displays currently available workspaces and hosts
   workspace add <ws_name>       : Adding a new workspace
   workspace del <ws_name>       : Deleting a specific workspace
@@ -72,6 +73,7 @@ WORKSPACE
 {CC.CYAN}
 DATA
 {CC.MAGENTA}----
+{CC.YELLOW}
   services                      : Displays service data stored in the Postgres database
   vulns                         : Displays vulnerability data stored in the Postgres database
   hosts                         : Displays host data stored in the Postgres database
@@ -80,6 +82,7 @@ DATA
 {CC.CYAN}
 PLUGIN
 {CC.MAGENTA}------
+{CC.YELLOW}
   load <plugin_name>            : Loading plugins into memory
   unload <plugin_name>          : Remove plugins from memory
   show plugin                   : Displays existing plugins & plugin status
@@ -87,6 +90,7 @@ PLUGIN
 {CC.CYAN}
 UTILITY
 {CC.MAGENTA}-------
+{CC.YELLOW}
   show options                  : View the variables that have been set
   show modules                  : Displaying module categories
   show wordlist                 : Displays a list of available wordlists
