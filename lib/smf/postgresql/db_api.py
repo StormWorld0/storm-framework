@@ -58,11 +58,8 @@ def send_connect(inp):
     """Ekuivalen dengan `db_connect`"""
     if not inp:
         return {"status": "warn"}
-
     try:
-        db.inp = inp
-        resp = db.bootstrap_db()
-        if resp:
+        if (res := db._apply_dynamic(inp)):
             return {"status": "success"}
         else:
             return {"status": "error"}
