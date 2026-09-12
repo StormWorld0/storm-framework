@@ -85,7 +85,7 @@ def get_status():
         db.session.execute(text("SELECT 1"))
         return {
             "status": "connected",
-            "database": getattr(db, "db_name", "smf"),
+            "database": getattr(db, "db_name"),
             "backend": "PostgreSQL",
         }
     except Exception as e:
