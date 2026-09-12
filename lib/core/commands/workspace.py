@@ -11,15 +11,20 @@ from lib.smf.postgresql import (
     get_session,
 )
 
-
+# These workspace commands can do several different and related things.
+# for operational needs in managing state data/storing neatly structured data.
+# Usage:
+#     workspace               => Displays a list of all existing workspaces.
+#     workspace add <ws_name> => Add a new workspace name.
+#     workspace del <ws_name> => Deleting an existing workspace.
+#     workspace <ws_name>     => Move to another workspace / use another workspace.
 def execute(args, ctx):
-    """Handler untuk command 'workspace'.
-
+    """Handler for the 'workspace' command.
     Usage:
-        workspace               -> List semua workspace
-        workspace add <name>    -> Tambah workspace
-        workspace del <name>    -> Hapus workspace
-        workspace <name>        -> Pindah workspace aktif
+        workspace               -> List all workspaces
+        workspace add <name>    -> Add workspace
+        workspace del <name>    -> Delete workspace
+        workspace <name>        -> Move active workspace
     """
     db = ctx.db
     if not db or not get_session():
@@ -30,7 +35,7 @@ def execute(args, ctx):
     parsed_args = shlex.split(raw_args) if raw_args else []
     current_ws_name = get_current_workspace()
 
-    # Tanpa argumen -> List Workspace
+    # No arguments -> List Workspace
     if not parsed_args:
         try:
             workspaces = list_workspaces()
@@ -70,7 +75,7 @@ def execute(args, ctx):
             smf.printf(f"[-]{CC.YELLOW} Cannot delete the default workspace.{CC.RESET}")
             return
 
-        # Hapus via ORM session dari db instance langsung
+        # Delete via ORM session from db instance directly
         try:
             ws = db.session.query(Workspace).filter_by(name=target_name).first()
             if ws:
