@@ -53,6 +53,19 @@ def get_session():
 # FUNCTIONS FOR REPL (View / Query Data)
 # ==========================================
 
+def send_connect(inp):
+    """Ekuivalen dengan `db_connect`"""
+    if not inp:
+        return {"status": "warn"}
+        
+    try:
+        db.inp = inp
+        db.bootstrap_db()
+        return {"status": "success"}
+    except Exception as e:
+        smf.printd("Failed to connect", e, level="ERROR")
+        return {"status": "error"}
+
 
 def get_status():
     """Ekuivalen dengan `db_status`"""
