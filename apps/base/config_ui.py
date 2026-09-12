@@ -53,6 +53,19 @@ def show_help():
                                   filters such as (act:...) / (defact:...) /
                                   (severity:...) / (cve:...) / (author:...)
 
+  db_status                     : View PostgreSQL database connection status
+  db_connect                    : Connect to an external PostgreSQL database manually.
+                                  Use the argument format: uname:pass@host:port/db
+  workspace                     : Displays currently available workspaces and hosts
+  workspace add <ws_name>       : Adding a new workspace
+  workspace del <ws_name>       : Deleting a specific workspace
+  workspace <ws_name>           : Move to another workspace (if any)
+  
+  services                      : Displays service data stored in the Postgres database
+  vulns                         : Displays vulnerability data stored in the Postgres database
+  hosts                         : Displays host data stored in the Postgres database
+  creds                         : Displays credentials stored in the Postgres database
+
   help                          : Displaying the manual
   about                         : Information Development
   back                          : Back from current position
