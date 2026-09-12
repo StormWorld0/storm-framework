@@ -61,8 +61,11 @@ def send_connect(inp):
 
     try:
         db.inp = inp
-        db.bootstrap_db()
-        return {"status": "success"}
+        resp = db.bootstrap_db()
+        if resp:
+            return {"status": "success"}
+        else:
+            return {"status": "error"}
     except Exception as e:
         smf.printd("Failed to connect", e, level="ERROR")
         return {"status": "error"}
