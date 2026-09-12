@@ -8,8 +8,8 @@ def execute(args, ctx):
         resp = close_db()
 
         if resp is None:
-            smf.printf("[!]{CC.YELLOW} There are no active database connections!{CC.RESET}")
+            smf.printf(f"[!]{CC.YELLOW} There are no active database connections!{CC.RESET}")
         elif resp is False:
-            smf.printf("[!]{CC.RED} Failed to close database connection!{CC.RESET}")
+            smf.printf(f"[!]{CC.RED} Failed to close database connection!{CC.RESET}")
         else:
-            smf.printf("[✓]{CC.GREEN} Successfully closed the database connection{CC.RESET}")
+            smf.printf(f"[✓]{CC.GREEN} Successfully closed the database connection{CC.RESET}")
