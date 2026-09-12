@@ -4,6 +4,7 @@ import re
 from apps.utility.colors import CC
 from lib.smf.postgresql import send_connect
 
+
 # Attempting to connect to an active PostgreSQL
 # to control the framework's internal data state storage and securely store it in a PostgreSQL database
 # with this mechanism, we can connect to different PostgreSQL and it is free by default
