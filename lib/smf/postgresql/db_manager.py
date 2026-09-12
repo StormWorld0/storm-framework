@@ -3,6 +3,7 @@ import smf
 
 from pathlib import Path
 from sqlalchemy import create_engine
+from sqlalchemy.engine import URL
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.exc import OperationalError, DBAPIError
 
@@ -79,7 +80,7 @@ class DBManager:
                 )
 
             return create_engine(
-                dsn,
+                db_url,
                 pool_size=config.get("pool", 5),
                 pool_timeout=config.get("timeout", 10),
             )
