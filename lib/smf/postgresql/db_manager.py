@@ -16,9 +16,10 @@ class DBManager:
         self.current_workspace = "default"
         self.is_connected = False
         self.db_name = "smf"
+        self.inp = ""
 
         # Buat engine konfigurasi
-        self.engine = self._create_engine_from_config(config_path)
+        self.engine = self._create_engine_from_config(config_path, self.inp)
 
         # Siapkan Session Factory
         if self.engine:
@@ -36,22 +37,42 @@ class DBManager:
             return self.SessionLocal()
         return None
 
-    def _create_engine_from_config(self, config_path):
+    def _create_engine_from_config(self, config_path, inp):
         """Parsing YAML dan mengonstruksi PostgreSQL connection string."""
-        if not Path(config_path).exists():
+        path = Path(config_path)
+        if not path.is_file():
             smf.printd("Config file not found", config_path, level="WARN")
             return None
 
         try:
-            with open(config_path, "r") as f:
+            with open(path, "r") as f:
                 config = yaml.safe_load(f)["production"]
 
             self.db_name = config.get("database", "smf")
 
-            dsn = (
-                f"postgresql+psycopg2://{config['username']}:{config['password']}"
-                f"@{config['host']}:{config['port']}/{self.db_name}"
-            )
+            if inp:
+                required_keys = {"username", "password", "host", "port", "db"}
+                if not required_keys.issubset(inp.keys()) or not all(inp[k] for k in required_keys):
+                    smf.printd("Invalid or missing keys in input dictionary", level="WARN")
+                    return None
+            
+                db_url = URL.create(
+                    drivername="postgresql+psycopg2",
+                    username=inp["username"],
+                    password=inp["password"],
+                    host=inp["host"],
+                    port=inp["port"],
+                    database=inp["db"]
+                )
+            else:
+                db_url = URL.create(
+                    drivername="postgresql+psycopg2",
+                    username=config.get("username"),
+                    password=config.get("password"),
+                    host=config.get("host"),
+                    port=config.get("port"),
+                    database=self.db_name
+                )
 
             return create_engine(
                 dsn,
@@ -59,7 +80,7 @@ class DBManager:
                 pool_timeout=config.get("timeout", 10),
             )
         except Exception as e:
-            smf.printd("Failed to create engine from config", e, level="ERROR")
+            smf.printd("Failed to create engine", e, level="ERROR")
             return None
 
     def bootstrap_db(self) -> bool:
