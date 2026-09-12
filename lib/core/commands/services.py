@@ -1,4 +1,3 @@
-import shlex
 import smf
 
 from apps.utility.colors import CC
