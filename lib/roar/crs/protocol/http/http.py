@@ -9,7 +9,7 @@ from typing import Dict, Any, Optional, Union
 
 from apps.utility.colors import CC
 from apps.utility.parse import parse_url, domain_to_ip
-from lib.smf.ingest import push_to_queue
+from lib.smf.ingest import push_to_queue, DataBuilder
 from ...transport import CRS
 
 
@@ -121,8 +121,7 @@ class HTTPResponse:
     def tls(self) -> Optional[HTTPTLSMetadata]:
         """Objek HTTPTLSMetadata jika info_tls diaktifkan dan tersedia."""
         tls_data = self._data.get("info_tls")
-        if tls_data and isinstance(tls_data, dict):
-            return HTTPTLSMetadata(tls_data)
+        if tls_data and isinstance(tls_data00000(tls_data)
         return None
 
     def json(self) -> Union[Dict[str, Any], list, None]:
@@ -170,57 +169,53 @@ class HTTPResponse:
         if not extracted_port:
             extracted_port = 443 if res["scheme"] == "https" else 80
 
-        payload = {
-            "host": {
-                "address": primary_ip,
-                "hostname": [res["domain"]] if res.get("domain") else [],
-            },
-            "service": {
-                "port": int(extracted_port),  # Pastikan di-cast ke Integer
-                "proto": "tcp",  # Hardcode ke tcp untuk HTTP(S)
-                "name": "https" if res["scheme"] == "https" else "http",
-                "state": "open" if self.ok else "closed",
-                "info": f"Status: {self.status_code} | Server: {server_header} | Proto: {self.proto}"[
-                    :255
-                ],
-            },
-            # Data untuk Tabel Note
-            "note": {
-                "ntype": "http.headers",
-                "data": {
-                    "headers": self.headers,
-                    "body_preview": raw_body,
-                    "method": method,
-                    "content_type": content_type,
-                    "original_length": len(self.text),
-                    "is_truncated": is_truncated,
-                },
-            },
+        info = f"Status: {self.status_code} | Server: {server_header} | Proto: {self.proto}"[:255]
+        note_data = {
+            "headers": self.headers,
+            "body_preview": raw_body,
+            "method": method,
+            "content_type": content_type,
+            "original_length": len(self.text),
+            "is_truncated": is_truncated,
         }
+        data = None
         if tls and self.tls:
-            payload["tls_info"] = {
+            data = {
                 "subject": self.tls.subject,
                 "issuer": self.tls.issuer,
-                "subject_alt_name": self.tls.dns_name,
+                "alt_name": self.tls.dns_name,
                 "not_after": self.tls.expires,
-                "supported_protocol": (
-                    [self.tls.version] if self.tls.version != "Unknown" else []
-                ),
-                "accepted_cipher": (
-                    [self.tls.cipher] if self.tls.cipher != "Unknown" else []
-                ),
-                "raw_certificate": json.dumps(
-                    {
-                        "cert_chain": self.tls.cert_chain,
-                        "sni_hostname": self.tls.hostname,
-                        "alpn_protocol": self.tls.protocol,
-                        "handshake_complete": self.tls.handshake,
-                        "session_resume": self.tls.session_resume,
-                    }
-                ),
+                "protocol": [self.tls.version] if self.tls.version != "Unknown" else [],
+                "ciphers": {"ciphers": [self.tls.cipher]} if self.tls.cipher != "Unknown" else {},
+                "certificate": json.dumps({
+                    "cert_chain": self.tls.cert_chain,
+                    "hostname": self.tls.hostname,
+                    "protocol": self.tls.protocol,
+                    "handshake": self.tls.handshake,
+                    "session_resume": self.tls.session_resume,
+                }),
             }
-
-        return payload
+        
+        data = (
+            DataBuilder()
+            .add_host(
+                address=primary_ip,
+                hostname=[res["domain"]] if res.get("domain") else [],
+            )
+            .add_service(
+                port=int(extracted_port),
+                proto="tcp",
+                name="https" if res["scheme"] == "https" else "http",
+                state="open" if self.ok else "closed",
+                info=info,
+            )
+            .add_note(
+                ntype="http.headers", 
+                data=note_data
+            )
+            .build()
+        )
+        return data
 
     def __bool__(self):
         """Shorthand: if r.ok: ... (True jika request HTTP bernilai OK/Sukses)."""
