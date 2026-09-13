@@ -224,6 +224,7 @@ class WHOISResponse:
             )
             .build()
         )
+        return payload
 
     def __bool__(self):
         return self.ok
