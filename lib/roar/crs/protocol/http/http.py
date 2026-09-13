@@ -121,7 +121,8 @@ class HTTPResponse:
     def tls(self) -> Optional[HTTPTLSMetadata]:
         """Objek HTTPTLSMetadata jika info_tls diaktifkan dan tersedia."""
         tls_data = self._data.get("info_tls")
-        if tls_data and isinstance(tls_data00000(tls_data)
+        if tls_data and isinstance(tls_data, dict):
+            return HTTPTLSMetadata(tls_data)
         return None
 
     def json(self) -> Union[Dict[str, Any], list, None]:
