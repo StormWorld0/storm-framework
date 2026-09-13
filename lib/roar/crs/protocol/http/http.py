@@ -170,7 +170,11 @@ class HTTPResponse:
         if not extracted_port:
             extracted_port = 443 if res["scheme"] == "https" else 80
 
-        info = f"Status: {self.status_code} | Server: {server_header} | Proto: {self.proto}"[:255]
+        info = (
+            f"Status: {self.status_code} | Server: {server_header} | Proto: {self.proto}"[
+                :255
+            ]
+        )
         note_data = {
             "headers": self.headers,
             "body_preview": raw_body,
@@ -187,16 +191,20 @@ class HTTPResponse:
                 "alt_name": self.tls.dns_name,
                 "not_after": self.tls.expires,
                 "protocol": [self.tls.version] if self.tls.version != "Unknown" else [],
-                "ciphers": {"ciphers": [self.tls.cipher]} if self.tls.cipher != "Unknown" else {},
-                "certificate": json.dumps({
-                    "cert_chain": self.tls.cert_chain,
-                    "hostname": self.tls.hostname,
-                    "protocol": self.tls.protocol,
-                    "handshake": self.tls.handshake,
-                    "session_resume": self.tls.session_resume,
-                }),
+                "ciphers": (
+                    {"ciphers": [self.tls.cipher]} if self.tls.cipher != "Unknown" else {}
+                ),
+                "certificate": json.dumps(
+                    {
+                        "cert_chain": self.tls.cert_chain,
+                        "hostname": self.tls.hostname,
+                        "protocol": self.tls.protocol,
+                        "handshake": self.tls.handshake,
+                        "session_resume": self.tls.session_resume,
+                    }
+                ),
             }
-        
+
         data = (
             DataBuilder()
             .add_host(
@@ -210,10 +218,7 @@ class HTTPResponse:
                 state="open" if self.ok else "closed",
                 info=info,
             )
-            .add_note(
-                ntype="http.headers", 
-                data=note_data
-            )
+            .add_note(ntype="http.headers", data=note_data)
             .build()
         )
         return data
