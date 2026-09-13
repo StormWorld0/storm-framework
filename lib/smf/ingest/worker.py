@@ -5,7 +5,7 @@ from threading import Thread
 from ..postgresql import ingest_telemetry, get_current_workspace
 
 # Queue Thread-Safe di Memori
-ingest_queue = Queue()
+ingest_queue = Queue(maxsize=10000)
 
 
 def _db_worker():
