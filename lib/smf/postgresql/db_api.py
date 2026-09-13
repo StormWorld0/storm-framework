@@ -3,7 +3,7 @@ import json
 
 from typing import Dict, Any
 from sqlalchemy import inspect
-from sqlalchemy.types import Integer, String, Text, DateTime, Boolean, Float
+from sqlalchemy.types import Integer, String, Text, Boolean
 from sqlalchemy.dialects.postgresql import JSONB, INET, ARRAY
 from pathlib import Path
 
@@ -285,35 +285,35 @@ def _clean_payload(model_cls, payload: Dict[str, Any]) -> Dict[str, Any]:
     """
     mapper = inspect(model_cls).mapper
     clean_data = {}
-    
+
     for col_attr in mapper.column_attrs:
         key = col_attr.key
-        
+
         # Skip jika key tidak ada di payload, biar mekanisme default database bekerja
         if key not in payload:
             continue
-            
+
         val = payload[key]
-        
+
         # Handle Null/None
         if val is None:
             clean_data[key] = None
             continue
-            
+
         # Dapatkan tipe data asli dari kolom SQLAlchemy
         col_type = col_attr.columns[0].type
-        
+
         try:
             if isinstance(col_type, Integer):
                 clean_data[key] = int(val)
-                
+
             elif isinstance(col_type, (String, Text, INET)):
                 # Jika user passing Dict/List tapi kolomnya Text/String, otomatis Serialize!
                 if isinstance(val, (dict, list)):
                     clean_data[key] = json.dumps(val)
                 else:
                     clean_data[key] = str(val)
-                    
+
             elif isinstance(col_type, JSONB):
                 # PostgreSQL JSONB butuh tipe dict/list native Python.
                 # Jika user terlanjur passing string JSON, ini akan parse kembali.
@@ -324,14 +324,14 @@ def _clean_payload(model_cls, payload: Dict[str, Any]) -> Dict[str, Any]:
                         clean_data[key] = val
                 else:
                     clean_data[key] = val
-                    
+
             elif isinstance(col_type, ARRAY):
                 # Pastikan data selalu dalam bentuk list
                 if not isinstance(val, list):
                     clean_data[key] = [val]
                 else:
                     clean_data[key] = val
-                    
+
             elif isinstance(col_type, Boolean):
                 # Handle string boolean ("true", "false", "1", "0")
                 if isinstance(val, str):
@@ -341,7 +341,7 @@ def _clean_payload(model_cls, payload: Dict[str, Any]) -> Dict[str, Any]:
             else:
                 # Fallback untuk tipe lain (DateTime dsb)
                 clean_data[key] = val
-                
+
         except (ValueError, TypeError):
             pass
 
@@ -351,7 +351,7 @@ def _clean_payload(model_cls, payload: Dict[str, Any]) -> Dict[str, Any]:
 def ingest_telemetry(data: Dict[str, Any], workspace: str = "default") -> bool:
     if not (session := get_session()):
         return False
-        
+
     try:
         # 1. Workspace
         ws = session.query(Workspace).filter_by(name=workspace).first()
@@ -411,7 +411,9 @@ def ingest_telemetry(data: Dict[str, Any], workspace: str = "default") -> bool:
         tls_data = data.get("tls_info")
         if tls_data and isinstance(tls_data, dict) and service_inst:
             clean_tls = _clean_payload(TLSInfo, tls_data)
-            tls_inst = session.query(TLSInfo).filter_by(service_id=service_inst.id).first()
+            tls_inst = (
+                session.query(TLSInfo).filter_by(service_id=service_inst.id).first()
+            )
 
             if not tls_inst:
                 tls_inst = TLSInfo(service_id=service_inst.id, **clean_tls)
@@ -424,7 +426,12 @@ def ingest_telemetry(data: Dict[str, Any], workspace: str = "default") -> bool:
 
         # 4. Vuln (WITH DEDUPLICATION)
         vuln_data = data.get("vuln")
-        if vuln_data and isinstance(vuln_data, dict) and host_inst and vuln_data.get("name"):
+        if (
+            vuln_data
+            and isinstance(vuln_data, dict)
+            and host_inst
+            and vuln_data.get("name")
+        ):
             clean_vuln = _clean_payload(Vuln, vuln_data)
             sid = service_inst.id if service_inst else None
 
@@ -494,7 +501,9 @@ def ingest_telemetry(data: Dict[str, Any], workspace: str = "default") -> bool:
                     session.add(login_inst)
                 else:
                     login_inst.status = data.get("login_status", login_inst.status)
-                    login_inst.access_level = data.get("access_level", login_inst.access_level)
+                    login_inst.access_level = data.get(
+                        "access_level", login_inst.access_level
+                    )
 
         # 7. Loot
         loot_data = data.get("loot")
@@ -513,7 +522,7 @@ def ingest_telemetry(data: Dict[str, Any], workspace: str = "default") -> bool:
         return True
     except Exception as e:
         session.rollback()
-        smf.printd(f"Ingestion Pipeline Failed", e, level="ERROR") 
+        smf.printd(f"Ingestion Pipeline Failed", e, level="ERROR")
         return False
     finally:
         session.close()
