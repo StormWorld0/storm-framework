@@ -2,7 +2,7 @@ import smf
 import json
 
 from typing import Dict, Any
-from sqlalchemy import inspect
+from sqlalchemy import inspect, text
 from sqlalchemy.types import Integer, String, Text, Boolean
 from sqlalchemy.dialects.postgresql import JSONB, INET, ARRAY
 from pathlib import Path
