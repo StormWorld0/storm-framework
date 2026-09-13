@@ -7,6 +7,7 @@ import smf
 import json
 
 from typing import Dict, Any, Optional, Union, List
+from lib.smf.ingest import push_to_queue, DataBuilder
 
 from apps.utility.colors import CC
 from ...transport import CRS
@@ -193,6 +194,22 @@ class WHOISResponse:
     def ok(self) -> bool:
         return self.status.upper() == "SUCCESS"
 
+    def _to_db_payload(self, addr: str) -> Dict[str, Any]:
+        """Menyimpan ke database PostgreSQL"""
+        payload = (
+            DataBuilder()
+            .add_host(address=addr, info=self.engine)
+            .add_service(proto=self.proto, state=self.status_code, name="WHOIS")
+            .add_note(ntype="http.headers.whoisip", data=self.headers)
+            .add_loot(
+                ltype="whois.bodydump.json",
+                data=self.data_json(),
+                content_type=self.get_headers("content-type", "unknown"),
+            )
+            .build()
+        )
+        return payload
+
     def __bool__(self):
         return self.ok
 
@@ -230,7 +247,15 @@ class WhoisIP:
             )
 
         raw_resp = CRS.send(packet)
-        return WHOISResponse(raw_resp)
+        res = WHOISResponse(raw_resp)
+
+        try:
+            db_payload = res._to_db_payload(ip)
+            push_to_queue(db_payload)
+        except Exception as e:
+            smf.printd("Failed to push WHOISIP payload to queue", e, level="ERROR")
+
+        return res
 
 
 ipwhois = WhoisIP.whois
