@@ -169,8 +169,12 @@ class HTTPResponse:
         if not extracted_port:
             extracted_port = 443 if res["scheme"] == "https" else 80
 
-        info = f"Status: {self.status_code} | Server: {server_header} | Proto: {self.proto}"[:255]
-        
+        info = (
+            f"Status: {self.status_code} | Server: {server_header} | Proto: {self.proto}"[
+                :255
+            ]
+        )
+
         note_data = {
             "headers": self.headers,
             "body_preview": raw_body,
@@ -179,7 +183,7 @@ class HTTPResponse:
             "original_length": len(self.text),
             "is_truncated": is_truncated,
         }
-        
+
         tls_dict = None
         if tls and self.tls:
             tls_dict = {
@@ -187,17 +191,27 @@ class HTTPResponse:
                 "issuer": self.tls.issuer,
                 "alt_name": self.tls.dns_name,
                 "not_after": self.tls.expires,
-                "protocol": [self.tls.version] if getattr(self.tls, "version", "Unknown") != "Unknown" else [],
-                "cipher": {"ciphers": [self.tls.cipher]} if getattr(self.tls, "cipher", "Unknown") != "Unknown" else {},
-                "certificate": json.dumps({
-                    "cert_chain": getattr(self.tls, "cert_chain", None),
-                    "hostname": getattr(self.tls, "hostname", None),
-                    "protocol": getattr(self.tls, "protocol", None),
-                    "handshake": getattr(self.tls, "handshake", None),
-                    "session_resume": getattr(self.tls, "session_resume", None),
-                }),
+                "protocol": (
+                    [self.tls.version]
+                    if getattr(self.tls, "version", "Unknown") != "Unknown"
+                    else []
+                ),
+                "cipher": (
+                    {"ciphers": [self.tls.cipher]}
+                    if getattr(self.tls, "cipher", "Unknown") != "Unknown"
+                    else {}
+                ),
+                "certificate": json.dumps(
+                    {
+                        "cert_chain": getattr(self.tls, "cert_chain", None),
+                        "hostname": getattr(self.tls, "hostname", None),
+                        "protocol": getattr(self.tls, "protocol", None),
+                        "handshake": getattr(self.tls, "handshake", None),
+                        "session_resume": getattr(self.tls, "session_resume", None),
+                    }
+                ),
             }
-        
+
         payload = (
             DataBuilder()
             .add_host(
@@ -212,10 +226,7 @@ class HTTPResponse:
                 info=info,
                 tls_info=tls_dict,
             )
-            .add_note(
-                ntype="http.headers", 
-                data=note_data
-            )
+            .add_note(ntype="http.headers", data=note_data)
             .build()
         )
         return payload
