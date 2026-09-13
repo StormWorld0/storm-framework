@@ -165,16 +165,12 @@ class HTTPResponse:
             raw_body = raw_body[:MAX_BODY_LEN]
             is_truncated = True
 
-        # Tangani Custom Port (Ekstrak dari URL jika ada, jika tidak fallback ke default)
         extracted_port = res.get("port")
         if not extracted_port:
             extracted_port = 443 if res["scheme"] == "https" else 80
 
-        info = (
-            f"Status: {self.status_code} | Server: {server_header} | Proto: {self.proto}"[
-                :255
-            ]
-        )
+        info = f"Status: {self.status_code} | Server: {server_header} | Proto: {self.proto}"[:255]
+        
         note_data = {
             "headers": self.headers,
             "body_preview": raw_body,
@@ -183,29 +179,26 @@ class HTTPResponse:
             "original_length": len(self.text),
             "is_truncated": is_truncated,
         }
-        data = None
+        
+        tls_dict = None
         if tls and self.tls:
-            data = {
+            tls_dict = {
                 "subject": self.tls.subject,
                 "issuer": self.tls.issuer,
                 "alt_name": self.tls.dns_name,
                 "not_after": self.tls.expires,
-                "protocol": [self.tls.version] if self.tls.version != "Unknown" else [],
-                "ciphers": (
-                    {"ciphers": [self.tls.cipher]} if self.tls.cipher != "Unknown" else {}
-                ),
-                "certificate": json.dumps(
-                    {
-                        "cert_chain": self.tls.cert_chain,
-                        "hostname": self.tls.hostname,
-                        "protocol": self.tls.protocol,
-                        "handshake": self.tls.handshake,
-                        "session_resume": self.tls.session_resume,
-                    }
-                ),
+                "protocol": [self.tls.version] if getattr(self.tls, "version", "Unknown") != "Unknown" else [],
+                "cipher": {"ciphers": [self.tls.cipher]} if getattr(self.tls, "cipher", "Unknown") != "Unknown" else {},
+                "certificate": json.dumps({
+                    "cert_chain": getattr(self.tls, "cert_chain", None),
+                    "hostname": getattr(self.tls, "hostname", None),
+                    "protocol": getattr(self.tls, "protocol", None),
+                    "handshake": getattr(self.tls, "handshake", None),
+                    "session_resume": getattr(self.tls, "session_resume", None),
+                }),
             }
-
-        data = (
+        
+        payload = (
             DataBuilder()
             .add_host(
                 address=primary_ip,
@@ -217,11 +210,15 @@ class HTTPResponse:
                 name="https" if res["scheme"] == "https" else "http",
                 state="open" if self.ok else "closed",
                 info=info,
+                tls_info=tls_dict,
             )
-            .add_note(ntype="http.headers", data=note_data)
+            .add_note(
+                ntype="http.headers", 
+                data=note_data
+            )
             .build()
         )
-        return data
+        return payload
 
     def __bool__(self):
         """Shorthand: if r.ok: ... (True jika request HTTP bernilai OK/Sukses)."""
