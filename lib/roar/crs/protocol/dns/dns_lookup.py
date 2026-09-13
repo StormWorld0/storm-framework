@@ -71,11 +71,7 @@ class DNSResponse:
         payload = (
             DataBuilder()
             .add_host(domain)
-            .add_service(
-                proto=proto, 
-                name="DNS.Lookup",
-                state=self.rcode
-            )
+            .add_service(proto=proto, name="DNS.Lookup", state=self.rcode)
             .add_note(data=self.records)
             .build()
         )
@@ -136,7 +132,7 @@ class DNSResolver:
             push_to_queue(db_payload)
         except Exception as e:
             smf.printd("Failed to push DNSL payload to queue", e, level="ERROR")
-        
+
         return res
 
 
