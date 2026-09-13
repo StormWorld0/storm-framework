@@ -214,23 +214,13 @@ class WHOISResponse:
         """Menyimpan ke database PostgreSQL"""
         payload = (
             DataBuilder()
-            .add_host(
-                hostname=domain,
-                info=self.engine
-            )
-            .add_service(
-                proto=self.proto,
-                state=self.status_code,
-                name="WHOIS"
-            )
-            .add_note(
-                ntype="http.headers.whoisd",
-                data=self.headers
-            )
+            .add_host(hostname=domain, info=self.engine)
+            .add_service(proto=self.proto, state=self.status_code, name="WHOIS")
+            .add_note(ntype="http.headers.whoisd", data=self.headers)
             .add_loot(
                 ltype="whois.bodydump.json",
                 data=self.data_json(),
-                content_type=self.get_headers("content-type", "unknown")
+                content_type=self.get_headers("content-type", "unknown"),
             )
             .build()
         )
@@ -279,7 +269,7 @@ class WhoisDomain:
             push_to_queue(db_payload)
         except Exception as e:
             smf.printd("Failed to push WHOISD payload to queue", e, level="ERROR")
-        
+
         return res
 
 
