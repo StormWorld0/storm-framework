@@ -1,6 +1,7 @@
 from typing import Dict, Any, List, Optional, Union
 from datetime import datetime
 
+
 class DataBuilder:
     """
     DTO Builder tersinkronisasi penuh dengan skema db_models & ingest_telemetry.
@@ -64,10 +65,10 @@ class DataBuilder:
         **kwargs,
     ):
         self.payload["vuln"] = {
-            "name": name, 
-            "info": info, 
-            "exploited": exploited, 
-            **kwargs
+            "name": name,
+            "info": info,
+            "exploited": exploited,
+            **kwargs,
         }
         return self
 
@@ -129,5 +130,5 @@ class DataBuilder:
                 # Untuk key root level seperti login_status & access_level
                 if data is not None:
                     output[section] = data
-                    
+
         return output
