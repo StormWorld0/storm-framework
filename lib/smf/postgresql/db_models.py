@@ -89,7 +89,7 @@ class TLSInfo(Base):
     subject = Column(String(512))
     issuer = Column(String(512))
     # JSONB untuk Array string (misal: ["*.target.com", "target.local"])
-    subject_alt_name = Column(JSONB, server_default="[]")
+    alt_name = Column(JSONB, server_default="[]")
 
     # --- Validity ---
     not_before = Column(DateTime(timezone=True))
@@ -97,8 +97,8 @@ class TLSInfo(Base):
 
     # --- Identification & Fingerprinting ---
     serial_number = Column(String(128))
-    sha1_fingerprint = Column(String(40), index=True)
-    sha256_fingerprint = Column(String(64), index=True)
+    sha1 = Column(String(40), index=True)
+    sha256 = Column(String(64), index=True)
 
     # --- Cryptographic Key Properties ---
     pubkey_algorithm = Column(String(64))
@@ -106,18 +106,18 @@ class TLSInfo(Base):
 
     # --- Protocol & Cipher Context (JSONB Powers) ---
     # Bisa menyimpan list: ["TLSv1.2", "TLSv1.3"]
-    supported_protocol = Column(JSONB, server_default="[]")
+    protocol = Column(JSONB, server_default="[]")
 
     # Bisa menyimpan dictionary kompleks:
     # {"TLSv1.2": ["TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", ...]}
-    accepted_cipher = Column(JSONB, server_default="{}")
+    cipher = Column(JSONB, server_default="{}")
 
     # Bisa menyimpan list of dictionaries untuk detail vulnerability
     # [{"cipher": "RC4-SHA", "reason": "Sweet32", "severity": "Medium"}]
     weak_cipher = Column(JSONB, server_default="[]")
 
     # --- Raw Data ---
-    raw_certificate = Column(Text)
+    certificate = Column(Text)
 
     created = Column(DateTime(timezone=True), server_default=func.now())
     updated = Column(DateTime(timezone=True), onupdate=func.now())
