@@ -2,9 +2,10 @@
 # -- License SMF
 # -- Author zxelzy
 import smf
-from typing import Dict, Any, List
 
+from typing import Dict, Any, List
 from apps.utility.colors import CC
+from lib.smf.ingest import push_to_queue, DataBuilder
 from ...transport import CRS
 
 
@@ -65,6 +66,21 @@ class DNSResponse:
         """
         return self.status.upper() == "SUCCESS" and self.rcode == 0
 
+    def _to_db_payload(self, domain: str, proto: str) -> Dict[str, Any]:
+        """Menyimpan ke database PostgreSQL"""
+        payload = (
+            DataBuilder()
+            .add_host(domain)
+            .add_service(
+                proto=proto, 
+                name="DNS.Lookup",
+                state=self.rcode
+            )
+            .add_note(data=self.records)
+            .build()
+        )
+        return payload
+
     def __bool__(self):
         """Memungkinkan sintaks shorthand: if response: ..."""
         return self.ok
@@ -113,7 +129,15 @@ class DNSResolver:
 
         # Kirim via IPC dan langsung bungkus hasilnya
         raw_res = CRS.send(packet)
-        return DNSResponse(raw_res)
+        res = DNSResponse(raw_res)
+
+        try:
+            db_payload = res._to_db_payload(domain, proto)
+            push_to_queue(db_payload)
+        except Exception as e:
+            smf.printd("Failed to push DNSL payload to queue", e, level="ERROR")
+        
+        return res
 
 
 # Alias untuk entry point
