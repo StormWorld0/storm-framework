@@ -72,7 +72,7 @@ class DNSResponse:
             DataBuilder()
             .add_host(hostname=domain)
             .add_service(proto=proto, name="DNS.Lookup", state=self.rcode)
-            .add_note(data=self.records)
+            .add_note(ntype="dns.record.dump", data=self.records)
             .build()
         )
         return payload
