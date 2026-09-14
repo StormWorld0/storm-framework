@@ -14,7 +14,7 @@ class DataBuilder:
 
     def add_host(
         self,
-        address: str,
+        address: str = None,
         hostname: Optional[List[str]] = None,
         mac: Optional[str] = None,
         os_name: Optional[str] = None,
@@ -37,7 +37,7 @@ class DataBuilder:
 
     def add_service(
         self,
-        port: int,
+        port: str = None,
         proto: str = "tcp",
         state: Optional[str] = None,
         name: Optional[str] = None,
@@ -59,7 +59,7 @@ class DataBuilder:
 
     def add_vuln(
         self,
-        name: str,
+        name: str = None,
         info: Optional[str] = None,
         exploited: Optional[datetime] = None,
         **kwargs,
@@ -72,13 +72,13 @@ class DataBuilder:
         }
         return self
 
-    def add_note(self, ntype: str, data: Union[Dict, List, str], **kwargs):
+    def add_note(self, ntype: str = None, data: Union[Dict, List, str], **kwargs):
         self.payload["note"] = {"ntype": ntype, "data": data, **kwargs}
         return self
 
     def add_credential(
         self,
-        public: str,
+        public: str = None,
         private: Optional[str] = None,
         private_type: Optional[str] = None,
         realm: Optional[str] = None,
@@ -102,7 +102,7 @@ class DataBuilder:
 
     def add_loot(
         self,
-        path: str,
+        path: str = None,
         ltype: Optional[str] = None,
         data: Optional[str] = None,
         content_type: Optional[str] = None,
