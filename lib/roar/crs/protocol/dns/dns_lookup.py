@@ -70,7 +70,7 @@ class DNSResponse:
         """Menyimpan ke database PostgreSQL"""
         payload = (
             DataBuilder()
-            .add_host(domain)
+            .add_host(hostname=domain)
             .add_service(proto=proto, name="DNS.Lookup", state=self.rcode)
             .add_note(data=self.records)
             .build()
