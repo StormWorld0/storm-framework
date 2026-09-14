@@ -132,6 +132,20 @@ class Context:
         handled = i.execute(cmd, args, self)
 
         if not handled:
+            # Universal DB Plugins (db_nmap, db_nuclei, etc)
+            if cmd.startswith("db_"):
+                target_tool = cmd[3:]  # Cut "db_"
+                
+                # Import dispatcher
+                from lib.parsers.db_dispatcher import execute_tool, has_adapter
+                
+                if has_adapter(target_tool):
+                    # Execute the tool with the appropriate adapter
+                    execute_tool(target_tool, args, cwd=self._get_home())
+                else:
+                    smf.printf(f"[!]{CC.YELLOW} DB Adapter not found for => {CC.RESET}", target_tool)
+                return
+                
             success = self._execute_external(cmd, args)
             if not success:
                 smf.printf(
