@@ -72,7 +72,7 @@ class DataBuilder:
         }
         return self
 
-    def add_note(self, ntype: str = None, data: Union[Dict, List, str], **kwargs):
+    def add_note(self, ntype: str, data: Union[Dict, List, str], **kwargs):
         self.payload["note"] = {"ntype": ntype, "data": data, **kwargs}
         return self
 
