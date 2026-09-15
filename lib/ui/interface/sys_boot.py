@@ -9,7 +9,7 @@ import sys
 import smf
 
 try:
-    from lib.smf.core.booting.boot import boot as sysd
+    from lib.smf.core.booting.boot import boot
     from ..banner import banner as style_ui
     from .start_interfc import main
 except ImportError as e:
@@ -22,6 +22,6 @@ except ImportError as e:
 # Loading banner for style framework
 # call main to activate (Read Eval Print Loop) interface
 def systemb():
-    sysd()
+    boot()
     style_ui()
     main()
