@@ -7,7 +7,7 @@ import json
 import os
 import smf
 
-from apps.utility.colors import *
+from apps.utility.colors import CC
 from rootmap import ROOT
 
 
@@ -31,6 +31,6 @@ def check_update():
             smf.printf()
 
     except requests.exceptions.RequestException as e:
-        smf.printd("ERROR CONNECTION CHECK UPDATE =>", e, level="ERROR")
+        pass
     except Exception as e:
-        smf.printd("ERROR CHECK UPDATE", e, level="ERROR")
+        pass
