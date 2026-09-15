@@ -1,1 +1,1 @@
-from .cfg_options import default_options # noqa
+from .cfg_options import default_options  # noqa
