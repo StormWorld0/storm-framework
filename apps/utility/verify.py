@@ -47,6 +47,7 @@ def run_verif():
         # If returncode == 0, execution continues (Safe)
         return True
     except KeyboardInterrupt:
+        smf.printf("\n[*] Booting successfully stopped.")
         sys.exit(11)
     except Exception as e:
         smf.printd("INTEGRITY VERIFICATION", e, level="CRITICAL")
