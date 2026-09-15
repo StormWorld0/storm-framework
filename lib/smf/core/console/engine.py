@@ -8,9 +8,9 @@ import smf
 import os
 import shutil
 import subprocess
-import data.option.session as ops
 
 from apps.utility.colors import CC
+from data.option import default_options
 from lib.core import handler as i
 from lib.roar.plugin_api import plugin
 from lib.roar.crs import net_api as api
@@ -51,7 +51,7 @@ class Context:
 
     current_module: Any = None
     current_module_name: str = ""
-    options: dict = field(default_factory=ops.default_options)
+    options: dict = field(default_factory=default_options)
     exit: bool = False
     plugin: Any = plugin
     net: NetContext = field(default_factory=NetContext)
