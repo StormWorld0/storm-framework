@@ -8,7 +8,7 @@ import os
 from rootmap import ROOT
 from pathlib import Path
 
-from apps.utility.verify import *
+from apps.utility.verify import run_verif, check_critical_files
 from apps.utility.spin import SpinBoot
 
 from lib.roar.plugin_api import plugin
