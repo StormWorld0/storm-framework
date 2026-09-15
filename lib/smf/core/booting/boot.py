@@ -37,10 +37,12 @@ def boot():
             smf.printd("Binary synchronization is running", level="INFO")
             manager.sync_bin()
 
+            # Enabling PostgreSQL workspace database runtime
             if (config_path := Path.home() / ".smf" / "database.yml").exists():
                 db = DBManager(config_path)
                 db.current_workspace = "default"
 
+            # Check file/folder (.docker)
             if not os.path.exists(os.path.join(ROOT, ".docker")):
                 # Verify file integrity
                 smf.printd("Integrity verification is running", level="INFO")
