@@ -4,6 +4,7 @@
 # Complete information about the License is in the root directory.
 # Author: zxelzy
 
+import smf
 import ctypes
 import socket
 import fcntl
@@ -60,9 +61,11 @@ def is_docker() -> bool:
     score = 0
     threshold = 60
 
+    smf.printd("Starting the environment validation service", level="INFO")
     try:
         libc = ctypes.CDLL("libc.so.6")
     except OSError:
+        smf.printd("Binary libc.so.6 > Not found >> return False", level="INFO")
         return False
 
     # SYSFS MAGIC NUMBER CHECK (Syscall: statfs) - Weight: 40
@@ -74,6 +77,7 @@ def is_docker() -> bool:
         statfs_buf = Statfs()
         if libc.statfs(b"/", ctypes.byref(statfs_buf)) == 0:
             if statfs_buf.f_type in (OVERLAYFS_SUPER_MAGIC, AUFS_SUPER_MAGIC):
+                smf.printd("Syscall => STATF True > Score 40", level="INFO")
                 score += 40
 
     # PROCESS ENTROPY CHECK (Syscall: sysinfo) - Weight: 30
@@ -82,6 +86,7 @@ def is_docker() -> bool:
         sysinfo_buf = Sysinfo()
         if libc.sysinfo(ctypes.byref(sysinfo_buf)) == 0:
             if sysinfo_buf.procs < 50:
+                smf.printd("Syscall => SYSINF True > Score 30", level="INFO")
                 score += 30
 
     # MAC ADDRESS OUI CHECK (Kernel IOCTL) - Weight: 30
@@ -101,6 +106,7 @@ def is_docker() -> bool:
 
     eth0_mac = get_mac_address_ioctl("eth0")
     if eth0_mac.startswith("02:42"):
+        smf.printd("Syscall => IOCTL True > Score 30", level="INFO")
         score += 30
 
     return score >= threshold
