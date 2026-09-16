@@ -43,7 +43,7 @@ def boot():
                 db.current_workspace = "default"
 
             # Checking the environment using syscall
-            if not (r := is_docker):
+            if not is_docker():
                 smf.printd("Integrity verification is running", level="INFO")
                 run_verif()
 
