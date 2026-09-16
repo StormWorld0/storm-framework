@@ -131,7 +131,7 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 			Status: "SUCCESS", 
 			Data: map[string]interface{}{
 				"fileno": fd,
-			}
+			},
 		}
 
 	case "connect":
