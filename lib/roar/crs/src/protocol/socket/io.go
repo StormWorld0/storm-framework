@@ -1,4 +1,4 @@
-package network
+package socket
 
 import (
 	"encoding/base64"
