@@ -3,9 +3,7 @@
 import smf
 import time
 import sys
-import os
 
-from rootmap import ROOT
 from pathlib import Path
 
 from apps.utility.verify import run_verif, check_critical_files
