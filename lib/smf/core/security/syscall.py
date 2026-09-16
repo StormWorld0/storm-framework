@@ -4,7 +4,6 @@
 # Complete information about the License is in the root directory.
 # Author: zxelzy
 
-import os
 import ctypes
 import socket
 import fcntl
@@ -12,21 +11,23 @@ import struct
 
 # --- Definisi Struct untuk Syscalls ---
 
+
 class Statfs(ctypes.Structure):
     _fields_ = [
-        ('f_type', ctypes.c_long),
-        ('f_bsize', ctypes.c_long),
-        ('f_blocks', ctypes.c_long),
-        ('f_bfree', ctypes.c_long),
-        ('f_bavail', ctypes.c_long),
-        ('f_files', ctypes.c_long),
-        ('f_ffree', ctypes.c_long),
-        ('f_fsid', ctypes.c_long * 2),
-        ('f_namelen', ctypes.c_long),
-        ('f_frsize', ctypes.c_long),
-        ('f_flags', ctypes.c_long),
-        ('f_spare', ctypes.c_long * 4),
+        ("f_type", ctypes.c_long),
+        ("f_bsize", ctypes.c_long),
+        ("f_blocks", ctypes.c_long),
+        ("f_bfree", ctypes.c_long),
+        ("f_bavail", ctypes.c_long),
+        ("f_files", ctypes.c_long),
+        ("f_ffree", ctypes.c_long),
+        ("f_fsid", ctypes.c_long * 2),
+        ("f_namelen", ctypes.c_long),
+        ("f_frsize", ctypes.c_long),
+        ("f_flags", ctypes.c_long),
+        ("f_spare", ctypes.c_long * 4),
     ]
+
 
 class Sysinfo(ctypes.Structure):
     _fields_ = [
@@ -43,8 +44,13 @@ class Sysinfo(ctypes.Structure):
         ("totalhigh", ctypes.c_ulong),
         ("freehigh", ctypes.c_ulong),
         ("mem_unit", ctypes.c_uint),
-        ("_f", ctypes.c_char * (20 - ctypes.sizeof(ctypes.c_long) - ctypes.sizeof(ctypes.c_short))),
+        (
+            "_f",
+            ctypes.c_char
+            * (20 - ctypes.sizeof(ctypes.c_long) - ctypes.sizeof(ctypes.c_short)),
+        ),
     ]
+
 
 def is_docker() -> bool:
     """
@@ -62,9 +68,9 @@ def is_docker() -> bool:
     # SYSFS MAGIC NUMBER CHECK (Syscall: statfs) - Weight: 40
     # Unprivileged: All users have read-only access to '/' metadata.
     if libc:
-        OVERLAYFS_SUPER_MAGIC = 0x794c7630
+        OVERLAYFS_SUPER_MAGIC = 0x794C7630
         AUFS_SUPER_MAGIC = 0x61756673
-        
+
         statfs_buf = Statfs()
         if libc.statfs(b"/", ctypes.byref(statfs_buf)) == 0:
             if statfs_buf.f_type in (OVERLAYFS_SUPER_MAGIC, AUFS_SUPER_MAGIC):
@@ -79,19 +85,21 @@ def is_docker() -> bool:
                 score += 30
 
     # MAC ADDRESS OUI CHECK (Kernel IOCTL) - Weight: 30
-    # Unprivileged: Reading MAC address (SIOCGIFHWADDR) does not require CAP_NET_ADMIN, 
+    # Unprivileged: Reading MAC address (SIOCGIFHWADDR) does not require CAP_NET_ADMIN,
     # just need open() access to a regular socket.
     def get_mac_address_ioctl(ifname: str) -> str:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
-            info = fcntl.ioctl(s.fileno(), 0x8927, struct.pack('256s', bytes(ifname, 'utf-8')[:15]))
-            return ':'.join('%02x' % b for b in info[18:24])
+            info = fcntl.ioctl(
+                s.fileno(), 0x8927, struct.pack("256s", bytes(ifname, "utf-8")[:15])
+            )
+            return ":".join("%02x" % b for b in info[18:24])
         except Exception:
             return ""
         finally:
             s.close()
 
-    eth0_mac = get_mac_address_ioctl('eth0')
+    eth0_mac = get_mac_address_ioctl("eth0")
     if eth0_mac.startswith("02:42"):
         score += 30
 
