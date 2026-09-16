@@ -9,7 +9,7 @@ import socket
 import fcntl
 import struct
 
-# --- Definisi Struct untuk Syscalls ---
+# --- Struct Definition for Syscalls ---
 
 
 class Statfs(ctypes.Structure):
