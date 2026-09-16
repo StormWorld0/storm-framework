@@ -4,7 +4,7 @@ import (
 	h "github.com/StormWorld0/storm-framework/lib/roar/crs/src/protocol/http"
 	d "github.com/StormWorld0/storm-framework/lib/roar/crs/src/protocol/dns"
 	w "github.com/StormWorld0/storm-framework/lib/roar/crs/src/protocol/whois"
-	n "github.com/StormWorld0/storm-framework/lib/roar/crs/src/protocol/network"
+	s "github.com/StormWorld0/storm-framework/lib/roar/crs/src/protocol/socket"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 )
 
@@ -15,5 +15,5 @@ var Handlers = map[string]Handler{
 	"HTTP_SEND":         h.HTTP,
 	"DNS_SEND":          d.DNS,
 	"WHOIS_SEND":        w.WHOIS,
-	"NETWORK_SEND":      n.Network,
+	"SOCKET_SEND":       s.Socket,
 }
