@@ -304,8 +304,8 @@ class Socket(SocketState):
         return self.initial_response.status
 
     def socket(
-        self, 
-        addrf: str, 
+        self,
+        addrf: str,
         stype: str,
         proto: str = None,
         **kwargs,
@@ -326,9 +326,9 @@ class Socket(SocketState):
         return SocketResponse(resp)
 
     def connect(
-        self, 
-        host: str, 
-        port: str = None, 
+        self,
+        host: str,
+        port: str = None,
         timeout: float = None,
         **kwargs,
     ) -> SocketResponse:
@@ -367,8 +367,8 @@ class Socket(SocketState):
         return SocketResponse(resp)
 
     def recv(
-        self, 
-        readsize: int = None, 
+        self,
+        readsize: int = None,
         timeout: float = 0.3,
         **kwargs,
     ) -> SocketResponse:
@@ -386,10 +386,10 @@ class Socket(SocketState):
         return SocketResponse(resp)
 
     def uptls(
-        self, 
-        cert: str, 
-        key: str, 
-        ca: str = None, 
+        self,
+        cert: str,
+        key: str,
+        ca: str = None,
         verify: bool = False,
         **kwargs,
     ) -> SocketResponse:
