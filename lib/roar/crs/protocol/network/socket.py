@@ -288,22 +288,6 @@ class Socket(SocketState):
     Hanya berfokus pada eksekusi instruksi jaringan ke Engine Go.
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.initial_response = self.connect()
-
-    # --- VALIDATION GATE PROPERTIES ---
-    @property
-    def ok(self) -> bool:
-        """Boolean status of open connection success."""
-        return self.initial_response.ok
-
-    @property
-    def status(self) -> str:
-        """Status string of the open process (SUCCESS/ERROR/TIMEOUT)."""
-        return self.initial_response.status
-
-    @staticmethod
     def socket(
         self,
         addrf: str,
