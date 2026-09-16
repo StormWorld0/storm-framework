@@ -16,6 +16,8 @@ from lib.roar.cache import cache_modules as cache
 from lib.roar.callbin import manager
 from lib.smf.postgresql import DBManager
 
+from ..security.syscall import is_docker
+
 
 def boot():
     smf.printd("Booting Storm Framework", level="INFO")
@@ -42,9 +44,8 @@ def boot():
                 db = DBManager(config_path)
                 db.current_workspace = "default"
 
-            # Check file/folder (.docker)
-            if not os.path.exists(os.path.join(ROOT, ".docker")):
-                # Verify file integrity
+            # Checking the environment using syscall
+            if not is_docker:
                 smf.printd("Integrity verification is running", level="INFO")
                 run_verif()
 
