@@ -184,6 +184,8 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 			return packet.ResponsePacket{Status: "ERROR", Message: "DNS Resolution failed: " + host}
 		}
 
+		afInt := ParseAF(req.AF)
+		
 		var sockAddr syscall.Sockaddr
 		if afInt == syscall.AF_INET6 {
 			var addr16 [16]byte
