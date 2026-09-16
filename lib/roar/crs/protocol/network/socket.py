@@ -21,7 +21,9 @@ class SocketState:
         self,
         host: str = "",
         port: int = 0,
-        protocol: str = "tcp",
+        addr_fam: str = "",
+        stype: str = "",
+        protocol: str = "0",
         timeout: float = 10.0,
         readsize: int = 0,
         ratelimit: int = 0,
@@ -45,6 +47,10 @@ class SocketState:
         self.keepalive = keepalive
         self.mode = mode
         self.infotls = infotls
+
+        # AF_* and SOCK_*
+        self.addr_fam = addr_fam
+        self.stype = stype
 
         # Isolasi sesi Go IPC
         self.sessid = sessid if sessid else f"smf_sess_{uuid.uuid4().hex[:12]}"
@@ -83,7 +89,11 @@ class IPCPayloadBuilder:
     @staticmethod
     def build(
         state: SocketState,
+        host: str = None,
+        port: str = None,
         data: str | bytes = b"",
+        addr_fam: str = None,
+        stype: str = None,
         infotls: bool = None,
         verify: bool = None,
         cert: str = None,
@@ -103,9 +113,6 @@ class IPCPayloadBuilder:
         if protocol is not None:
             if protocol.lower() in ["tls", "ssl"]:
                 state.is_tls = True
-                state.protocol = "tls"
-
-        current_proto = "tls" if state.is_tls else state.protocol
 
         # Encoding muatan data
         data_str = ""
@@ -114,11 +121,13 @@ class IPCPayloadBuilder:
             data_str = base64.b64encode(data_bytes).decode("utf-8")
 
         return {
-            "primitive": "NETWORK_SEND",
-            "host": state.host,
-            "port": state.port,
+            "primitive": "SOCKET_SEND",
+            "host": host if host is not None else state.host,
+            "port": int(port) if port is not None else state.port,
             "data": data_str,
-            "protocol": current_proto,
+            "addr-fam": addr_fam,
+            "stype": stype,
+            "protocol": protocol if protocol is not None else state.protocol,
             "timeout": timeout if timeout is not None else state.timeout,
             "readsize": readsize if readsize is not None else state.readsize,
             "ratelimit": ratelimit if ratelimit is not None else state.ratelimit,
@@ -187,6 +196,11 @@ class SocketResponse:
     def message(self) -> str:
         """Mengembalikan pesan ERROR/SUCCESS/TIMEOUT."""
         return self._message
+
+    @property
+    def fileno(self) -> int:
+        """Mengembalikan respons FD (File-Descriptor) dari Open Socket."""
+        return self._data.get("fileno", 0)
 
     @property
     def raw_bytes(self) -> bytes:
@@ -276,7 +290,7 @@ class Socket(SocketState):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.initial_response = self.open()
+        self.initial_response = self.connect()
 
     # --- VALIDATION GATE PROPERTIES ---
     @property
@@ -289,24 +303,47 @@ class Socket(SocketState):
         """Status string of the open process (SUCCESS/ERROR/TIMEOUT)."""
         return self.initial_response.status
 
-    @property
-    def message(self) -> str:
-        """Detailed message of the open connection process."""
-        return self.initial_response.message
-
-    def open(self, timeout: float = None) -> SocketResponse:
-        """Open connection"""
-        self._ensure_open("open")
+    def socket(
+        self, 
+        addrf: str, 
+        stype: str,
+        proto: str = None,
+        **kwargs,
+    ) -> SocketResponse:
+        """Open Socket"""
+        self._ensure_open("socket")
         packet = IPCPayloadBuilder.build(
             state=self,
-            mode="open",
-            timeout=timeout,
+            addr_fam=addrf,
+            stype=stype,
+            protocol=proto,
+            mode="socket",
             infotls=False,
             close_session=False,
         )
 
         resp = CRS.send(packet)
+        return SocketResponse(resp)
 
+    def connect(
+        self, 
+        host: str, 
+        port: str = None, 
+        timeout: float = None,
+        **kwargs,
+    ) -> SocketResponse:
+        """Open Connection"""
+        self._ensure_open("connect")
+        packet = IPCPayloadBuilder.build(
+            state=self,
+            host=host,
+            port=port,
+            mode="connect",
+            infotls=False,
+            close_session=False,
+        )
+
+        resp = CRS.send(packet)
         return SocketResponse(resp)
 
     def send(
@@ -327,10 +364,14 @@ class Socket(SocketState):
         )
 
         resp = CRS.send(packet)
-
         return SocketResponse(resp)
 
-    def recv(self, readsize: int = None, timeout: float = 0.3) -> SocketResponse:
+    def recv(
+        self, 
+        readsize: int = None, 
+        timeout: float = 0.3,
+        **kwargs,
+    ) -> SocketResponse:
         self._ensure_open("receive")
         packet = IPCPayloadBuilder.build(
             state=self,
@@ -342,11 +383,15 @@ class Socket(SocketState):
         )
 
         resp = CRS.send(packet)
-
         return SocketResponse(resp)
 
     def uptls(
-        self, cert: str, key: str, ca: str = None, verify: bool = True
+        self, 
+        cert: str, 
+        key: str, 
+        ca: str = None, 
+        verify: bool = False,
+        **kwargs,
     ) -> SocketResponse:
         if self.is_tls:
             smf.printd("The connection is already using TLS", level="WARN")
@@ -356,7 +401,6 @@ class Socket(SocketState):
             state=self,
             verify=verify,
             mode="upgrade_tls",
-            protocol="tls",
             cert=cert,
             key=key,
             ca=ca,
