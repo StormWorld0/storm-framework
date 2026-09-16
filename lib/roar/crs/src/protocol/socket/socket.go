@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"os"
 	"net"
 	"reflect"
 	"strconv"
@@ -164,12 +165,6 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 			
 			return packet.ResponsePacket{Status: "SUCCESS", Data: generateMetadata(0)}
 		}
-		
-		// Pastikan yang ada di session adalah raw FD (int) dari case "socket"
-		rawFD, isInt := val.(int)
-		if !isInt {
-			return packet.ResponsePacket{Status: "ERROR", Message: "Session does not contain a raw socket FD"}
-		}
 
 		// 2. Resolve DNS & Siapkan Address (syscall.Connect butuh raw IP, bukan string)
 		addr, err := BuildTarget(req) // format: "host:port"
@@ -190,7 +185,7 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 		}
 
 		var sockAddr syscall.Sockaddr
-		if req.AF == syscall.AF_INET6 {
+		if afInt == syscall.AF_INET6 {
 			var addr16 [16]byte
 			copy(addr16[:], ips[0].To16())
 			sockAddr = &syscall.SockaddrInet6{Port: port, Addr: addr16}
