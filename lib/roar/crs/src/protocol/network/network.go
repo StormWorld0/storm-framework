@@ -11,6 +11,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
@@ -37,7 +38,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	// Normalisasi Primitif
 	mode := strings.ToLower(req.Mode)
 	if mode == "" {
-		mode = "open" // Fallback primitive
+		mode = "socket" // Fallback primitive
 	}
 
 	if mode == "close" {
@@ -55,11 +56,22 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 
 	// Ambil Sesi Aktif (Jika Ada)
 	var conn net.Conn
+	var rawFD int = -1
 	var isReused bool
+	
 	if req.SessionID != "" {
 		if val, ok := utils.ActiveSessions.Load(req.SessionID); ok {
-			conn = val.(net.Conn)
-			isReused = true
+			// Evaluasi tipe data yang tersimpan di dalam sync.Map
+			switch v := val.(type) {
+			case net.Conn:
+				conn = v
+				isReused = true // Sudah berupa koneksi aktif
+			case int:
+				rawFD = v
+				// isReused tidak di-set true karena belum bisa dipakai send/recv
+			default:
+				return packet.ResponsePacket{Status: "ERROR", Message: "Corrupted session data"}
+			}
 		}
 	}
 
@@ -76,41 +88,6 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 			}
 		}
 	}()
-
-	// Auto-Dial: Pastikan Koneksi Tersedia
-	// (Mengizinkan arsitektur 'single-shot' di mana user bisa panggil recv/send tanpa open)
-	if conn == nil {
-		addr, err := BuildTarget(req)
-		if err != nil {
-			return packet.ResponsePacket{Status: "ERROR", Message: "Build target failed: " + err.Error()}
-		}
-
-		fd := utils.GetDialer()
-		if fd == nil {
-			return packet.ResponsePacket{Status: "ERROR", Message: "Global dialer not initialized"}
-		}
-
-		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-		defer cancel()
-
-		rawConn, err := fd.Dial(ctx, "tcp", addr)
-		if err != nil {
-			return packet.ResponsePacket{Status: "ERROR", Message: "TCP Dial failed: " + err.Error()}
-		}
-		conn = rawConn
-
-		// Evaluasi TLS State sejak awal (Jika protocol == tls)
-		protocol := strings.ToLower(req.Protocol)
-		hasCertKey := req.TLSCert != "" && req.TLSKey != ""
-		if protocol == "tls" || protocol == "ssl" || hasCertKey {
-			tlsConn, err := performTLSHandshake(ctx, conn, addr, req)
-			if err != nil {
-				conn.Close()
-				return packet.ResponsePacket{Status: "ERROR", Message: "Initial TLS Handshake failed: " + err.Error()}
-			}
-			conn = tlsConn
-		}
-	}
 
 	// Helper Closure untuk Assembly Metadata (Mencegah duplikasi kode)
 	generateMetadata := func(readBytes int) map[string]interface{} {
@@ -135,14 +112,101 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 
 	// Primitive State Machine (Routing Eksekusi)
 	switch mode {
-	case "open":
+	case "socket":
+		fd, err := syscall.Socket(req.AF, req.SType, 0)
+		if err != nil {
+			return packet.ResponsePacket{Status: "ERROR", Message: "Failed to create socket: " + err.Error()}
+		}
+		
 		// Koneksi sudah terbuka di fase Auto-Dial. 
 		if req.SessionID != "" && req.KeepAlive {
-			utils.ActiveSessions.Store(req.SessionID, conn)
+			utils.ActiveSessions.Store(req.SessionID, fd)
 			keepSession = true
 		}
-		return packet.ResponsePacket{Status: "SUCCESS", Data: generateMetadata(0)}
+		return packet.ResponsePacket{
+			Status: "SUCCESS", 
+			Data: map[string]interface{}{
+				"file_decript": fd,
+			}
+		}
 
+	case "connect":
+		if req.SessionID == "" {
+			return packet.ResponsePacket{Status: "ERROR", Message: "SessionID is required for connect"}
+		}
+
+		if rawFD == -1 {
+			return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found for this session. Call 'socket' primitive first."}
+		}
+		
+		// Pastikan yang ada di session adalah raw FD (int) dari case "socket"
+		rawFD, isInt := val.(int)
+		if !isInt {
+			return packet.ResponsePacket{Status: "ERROR", Message: "Session does not contain a raw socket FD"}
+		}
+
+		// 2. Resolve DNS & Siapkan Address (syscall.Connect butuh raw IP, bukan string)
+		addr, _ := BuildTarget(req) // format: "host:port"
+		host, portStr, err := net.SplitHostPort(addr)
+		if err != nil {
+			host = addr
+			portStr = "0"
+		}
+		
+		port, _ := strconv.Atoi(portStr)
+		ips, err := net.LookupIP(host)
+		if err != nil || len(ips) == 0 {
+			return packet.ResponsePacket{Status: "ERROR", Message: "DNS Resolution failed: " + host}
+		}
+
+		var sockAddr syscall.Sockaddr
+		if req.AF == syscall.AF_INET6 {
+			var addr16 [16]byte
+			copy(addr16[:], ips[0].To16())
+			sockAddr = &syscall.SockaddrInet6{Port: port, Addr: addr16}
+		} else {
+			// Default ke IPv4 (AF_INET)
+			var addr4 [4]byte
+			copy(addr4[:], ips[0].To4())
+			sockAddr = &syscall.SockaddrInet4{Port: port, Addr: addr4}
+		}
+
+		// 3. Lakukan OS-Level Connect
+		// Ini berlaku untuk STREAM (TCP), DGRAM (UDP), maupun menghubungkan RAW socket
+		if err := syscall.Connect(rawFD, sockAddr); err != nil {
+			return packet.ResponsePacket{Status: "ERROR", Message: "OS Connect failed: " + err.Error()}
+		}
+
+		// ================================
+		// Mengembalikan FD ke net.Conn
+		// ================================
+		
+		// Golang butuh socket dalam keadaan non-blocking agar tidak hang!
+		if err := syscall.SetNonblock(rawFD, true); err != nil {
+			return packet.ResponsePacket{Status: "ERROR", Message: "Failed to set non-blocking: " + err.Error()}
+		}
+
+		// Bungkus FD menjadi os.File
+		file := os.NewFile(uintptr(rawFD), fmt.Sprintf("custom_socket_%d", rawFD))
+		
+		// Konversi os.File menjadi net.Conn
+		rawConn, err := net.FileConn(file)
+		if err != nil {
+			file.Close() // Mencegah memory/FD leak jika gagal
+			return packet.ResponsePacket{Status: "ERROR", Message: "Failed to wrap net.Conn: " + err.Error()}
+		}
+		
+		// File asli ditutup karena net.FileConn otomatis membuat dup() (duplikat FD)
+		file.Close()
+		conn = rawConn
+
+		// 4. Timpa isi Session dengan net.Conn yang baru
+		// Mulai dari detik ini, request send/recv/upgrade_tls akan mendeteksi `net.Conn` normal!
+		utils.ActiveSessions.Store(req.SessionID, conn)
+		keepSession = true 
+
+		return packet.ResponsePacket{Status: "SUCCESS", Data: generateMetadata(0)}
+		
 	case "upgrade_tls":
 		// Mode khusus untuk kerentanan STARTTLS atau Protocol Smuggling
 		if ctls.IsTLSConn(conn) {
@@ -166,7 +230,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		}
 		return packet.ResponsePacket{Status: "SUCCESS", Data: generateMetadata(0)}
 
-	case "send", "send_only":
+	case "send":
 		if err := ExecuteWrite(conn, req.Data, timeout); err != nil {
 			return packet.ResponsePacket{Status: "ERROR", Message: "Write failed: " + err.Error()}
 		}
@@ -177,7 +241,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		}
 		return packet.ResponsePacket{Status: "SUCCESS", Data: generateMetadata(0)}
 
-	case "recv", "recv_only":
+	case "recv":
 		buffer, n, bufPtr, err := ExecuteRead(conn, req.ReadSize, timeout)
 		defer ReleaseBuffer(bufPtr)
 
