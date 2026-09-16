@@ -1,7 +1,7 @@
 import smf
 
 metadata = {
-    "Name": "Publicly accessible port scanning",
+    "Name": "Testing TCP Socket",
     "Description": """
 Testing Socket
 """,
