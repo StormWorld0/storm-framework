@@ -31,6 +31,10 @@ func BuildTarget(req packet.RequestPacket) (string, error) {
 		hostOnly = hostOnly[:idx]
 	}
 
+	if strings.HasPrefix(hostOnly, "[") && strings.HasSuffix(hostOnly, "]") {
+		hostOnly = hostOnly[1 : len(hostOnly)-1]
+	}
+
 	finalPort := 0
 	if req.Port != 0 {
 		finalPort = req.Port
