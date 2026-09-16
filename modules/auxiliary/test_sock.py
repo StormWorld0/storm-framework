@@ -18,20 +18,41 @@ def execute(options, net):
     ip = options.get("IP")
     port = options.get("PORT")
 
-    sock = net.Socket.socket("AF_INET", "SOCK_STREAM")
+    sock = net.Socket()
+
     try:
-        if sock.ok:
-            smf.printf(sock.fileno)
+        result = sock.socket("AF_INET", "SOCK_STREAM")
 
-        sock.connect(ip, port)
+        if result.ok:
+            smf.printf("Socket created:", result.fileno)
 
-        data = b"GET /anything HTTP/1.1\r\nHost: httpbin.org\r\nConnection: close\r\n\r\n"
-        sock.send(data, timeout=1.0)
+        result = sock.connect(ip, port)
 
-        if res := sock.recv(1024):
-            smf.printf("String response =>", res.str_bytes)
-            smf.printf("Raw response    =>", res.raw_bytes)
-            smf.printf("Hex response    =>", res.hex_bytes)
-            smf.printf("Int response    =>", res.read_bytes)
+        if not result.ok:
+            smf.printd("Connect failed", result, level="ERROR")
+            return
+
+        data = (
+            b"GET /anything HTTP/1.1\r\n"
+            b"Host: httpbin.org\r\n"
+            b"Connection: close\r\n"
+            b"\r\n"
+        )
+
+        result = sock.send(data, timeout=1.0)
+
+        if not result.ok:
+            smf.printd("Send failed", result, level="ERROR")
+            return
+
+        result = sock.recv(1024)
+
+        if result.ok:
+            smf.printf("String response =>", result.str_bytes)
+            smf.printf("Raw response    =>", result.raw_bytes)
+            smf.printf("Hex response    =>", result.hex_bytes)
+            smf.printf("Int response    =>", result.read_bytes)
     except Exception as e:
         smf.printd("Socket testing failed", e, level="ERROR")
+    finally:
+        sock.close()
