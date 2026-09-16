@@ -13,6 +13,7 @@ Testing Socket
 }
 REQUIRED_OPTIONS = {"IP": "", "PORT": ""}
 
+
 def execute(options, net):
     ip = options.get("IP")
     port = options.get("PORT")
@@ -21,13 +22,13 @@ def execute(options, net):
     try:
         if sock.ok:
             smf.printf(sock.fileno)
-            
+
         sock.connect(ip, port)
 
         data = b"GET /anything HTTP/1.1\r\nHost: httpbin.org\r\nConnection: close\r\n\r\n"
         sock.send(data, timeout=1.0)
 
-        if (res := sock.recv(1024)):
+        if res := sock.recv(1024):
             smf.printf("String response =>", res.str_bytes)
             smf.printf("Raw response    =>", res.raw_bytes)
             smf.printf("Hex response    =>", res.hex_bytes)
