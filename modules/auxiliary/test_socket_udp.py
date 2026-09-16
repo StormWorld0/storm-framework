@@ -18,12 +18,12 @@ REQUIRED_OPTIONS = {"IP": "", "PORT": ""}
 def build_dns_query(domain: str, txid: int = 0x1234) -> bytes:
     header = struct.pack(
         "!HHHHHH",
-        txid,       # Transaction ID
-        0x0100,     # Standard query + recursion desired
-        1,          # QDCOUNT
-        0,          # ANCOUNT
-        0,          # NSCOUNT
-        0,          # ARCOUNT
+        txid,  # Transaction ID
+        0x0100,  # Standard query + recursion desired
+        1,  # QDCOUNT
+        0,  # ANCOUNT
+        0,  # NSCOUNT
+        0,  # ARCOUNT
     )
 
     qname = b""
@@ -41,10 +41,11 @@ def build_dns_query(domain: str, txid: int = 0x1234) -> bytes:
     )
     return header + qname + question
 
+
 def execute(options, net):
     host = options.get("HOST")
     port = 53
-    
+
     sock = net.Socket()
 
     try:
