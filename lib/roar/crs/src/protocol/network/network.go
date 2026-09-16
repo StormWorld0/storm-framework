@@ -113,7 +113,11 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 	// Primitive State Machine (Routing Eksekusi)
 	switch mode {
 	case "socket":
-		fd, err := syscall.Socket(req.AF, req.SType, 0)
+		afInt := ParseAF(req.AF)               // req.AF adalah string, misal "AF_INET"
+		sInt := ParseSockType(req.SType)       // req.SType adalah string, misal "SOCK_STREAM"
+		protoInt := ParseProtocol(req.Protocol) // req.Protocol adalah string, misal "IPPROTO_TCP"
+		
+		fd, err := syscall.Socket(afInt, sInt, protoInt)
 		if err != nil {
 			return packet.ResponsePacket{Status: "ERROR", Message: "Failed to create socket: " + err.Error()}
 		}
@@ -126,7 +130,7 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		return packet.ResponsePacket{
 			Status: "SUCCESS", 
 			Data: map[string]interface{}{
-				"file_decript": fd,
+				"fileno": fd,
 			}
 		}
 
