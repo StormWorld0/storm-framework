@@ -1,4 +1,4 @@
-package network
+package socket
 
 import (
 	"context"
@@ -20,7 +20,7 @@ import (
 )
 
 // Network adalah entry point eksekusi koneksi menggunakan POSIX-like primitive operations.
-func Network(req packet.RequestPacket) packet.ResponsePacket {
+func Socket(req packet.RequestPacket) packet.ResponsePacket {
 	utils.Take()
 	startTime := time.Now()
 
@@ -140,7 +140,29 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		}
 
 		if rawFD == -1 {
-			return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found for this session. Call 'socket' primitive first."}
+			 addr, err := BuildTarget(req)
+			 if err != nil {
+                return packet.ResponsePacket{Status: "ERROR", Message: "Build target failed: " + err.Error()}
+             }
+
+            fd := utils.GetDialer()
+            if fd == nil {
+                return packet.ResponsePacket{Status: "ERROR", Message: "Global dialer not initialized"}
+            }
+
+            ctx, cancel := context.WithTimeout(context.Background(), timeout)
+            defer cancel()
+
+            rawConn, err := fd.Dial(ctx, "tcp", addr)
+            if err != nil {
+                return packet.ResponsePacket{Status: "ERROR", Message: "TCP Dial failed: " + err.Error()}
+            }
+            conn = rawConn
+			
+			utils.ActiveSessions.Store(req.SessionID, conn)
+		    keepSession = true
+			
+			return packet.ResponsePacket{Status: "SUCCESS", Data: generateMetadata(0)}
 		}
 		
 		// Pastikan yang ada di session adalah raw FD (int) dari case "socket"
@@ -150,7 +172,11 @@ func Network(req packet.RequestPacket) packet.ResponsePacket {
 		}
 
 		// 2. Resolve DNS & Siapkan Address (syscall.Connect butuh raw IP, bukan string)
-		addr, _ := BuildTarget(req) // format: "host:port"
+		addr, err := BuildTarget(req) // format: "host:port"
+		if err != nil {
+            return packet.ResponsePacket{Status: "ERROR", Message: "Build target failed: " + err.Error()}
+        }
+		
 		host, portStr, err := net.SplitHostPort(addr)
 		if err != nil {
 			host = addr
