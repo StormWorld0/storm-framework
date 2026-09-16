@@ -63,7 +63,7 @@ def execute(options, net):
             smf.printd("DNS connect failed", result, level="ERROR")
             return
 
-        query = build_dns_query(example.com)
+        query = build_dns_query("example.com")
 
         result = sock.send(query, timeout=2.0)
 
