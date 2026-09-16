@@ -18,7 +18,7 @@ def execute(options, net):
     ip = options.get("IP")
     port = options.get("PORT")
 
-    sock = net.Socket.socket(AF_INET, SOCK_STREAM)
+    sock = net.Socket.socket("AF_INET", "SOCK_STREAM")
     try:
         if sock.ok:
             smf.printf(sock.fileno)
