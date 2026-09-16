@@ -65,7 +65,6 @@ def is_docker() -> bool:
     try:
         libc = ctypes.CDLL("libc.so.6")
     except OSError:
-        smf.printd("Binary libc.so.6 > Not found >> return False", level="INFO")
         return False
 
     # SYSFS MAGIC NUMBER CHECK (Syscall: statfs) - Weight: 40
