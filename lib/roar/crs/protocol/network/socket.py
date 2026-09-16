@@ -303,6 +303,7 @@ class Socket(SocketState):
         """Status string of the open process (SUCCESS/ERROR/TIMEOUT)."""
         return self.initial_response.status
 
+    @staticmethod
     def socket(
         self,
         addrf: str,
@@ -347,10 +348,10 @@ class Socket(SocketState):
         return SocketResponse(resp)
 
     def send(
-        self,
         data: str | bytes,
         timeout: float = None,
         mode: str = "send",
+        self,
         **kwargs,
     ) -> SocketResponse:
         self._ensure_open("send")
@@ -367,9 +368,9 @@ class Socket(SocketState):
         return SocketResponse(resp)
 
     def recv(
-        self,
         readsize: int = None,
         timeout: float = 0.3,
+        self,
         **kwargs,
     ) -> SocketResponse:
         self._ensure_open("receive")
@@ -386,11 +387,11 @@ class Socket(SocketState):
         return SocketResponse(resp)
 
     def uptls(
-        self,
         cert: str,
         key: str,
         ca: str = None,
         verify: bool = False,
+        self,
         **kwargs,
     ) -> SocketResponse:
         if self.is_tls:
