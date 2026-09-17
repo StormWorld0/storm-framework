@@ -190,7 +190,7 @@ class TelnetClient:
             if self.resp_con.ok:
                 resp = self.sock.recv(readsize=4096, timeout=read_timeout)
 
-                if resp.status is ("ERROR", "WARN"):
+                if resp.status in ("ERROR", "WARN"):
                     break
 
                 if resp.ok and not resp.raw_bytes:
