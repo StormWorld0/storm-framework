@@ -407,6 +407,7 @@ class Socket(SocketState):
     ) -> SocketResponse:
         self._ensure_open("create")
         packet = IPCPayloadBuilder.build(
+            state=self,
             host=host,
             port=port,
             timeout=timeout,
