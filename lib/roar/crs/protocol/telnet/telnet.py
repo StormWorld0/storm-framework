@@ -199,7 +199,7 @@ class TelnetClient:
 
                 if resp.status == "ERROR" or resp.status == "WARN":
                     break
-                    
+
                 if resp.ok and not resp.raw_bytes:
                     if self._buffer:
                         break
@@ -225,7 +225,7 @@ class TelnetClient:
         raw: bool = False,
     ) -> Tuple[Union[str, bytes], int]:
         """Mengirim data Telnet dan langsung membaca Response"""
-        
+
         if isinstance(command, str):
             cmd_payload = f"{command}\r\n".encode("utf-8")
         else:
