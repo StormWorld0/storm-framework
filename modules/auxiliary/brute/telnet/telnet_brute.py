@@ -127,7 +127,10 @@ def execute(options, net):
 
                 # Username yang ditemukan di Loop A
                 _, r = con.send(user, expected=promt_pass)
-
+                if r < 0:
+                    smf.printf(f"[*] Username not valid => {user}")
+                    continue
+                    
                 # Coba password
                 _, r = con.send(password, expected=promt_shell)
                 if r < 0:
