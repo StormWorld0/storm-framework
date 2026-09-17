@@ -5,7 +5,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// ParseAF menerjemahkan string Address Family menjadi konstanta (int)
+// ParseAF menerjemahkan string Address Family menjadi konstanta unix (int)
 func ParseAF(af string) int {
 	switch strings.ToUpper(af) {
 	case "AF_INET":
@@ -22,7 +22,7 @@ func ParseAF(af string) int {
 	}
 }
 
-// ParseSockType menerjemahkan string Socket Type menjadi konstanta syscall (int)
+// ParseSockType menerjemahkan string Socket Type menjadi konstanta unix (int)
 func ParseSockType(stype string) int {
 	switch strings.ToUpper(stype) {
 	case "SOCK_STREAM":
@@ -38,7 +38,7 @@ func ParseSockType(stype string) int {
 	}
 }
 
-// ParseProtocol menerjemahkan string Protocol menjadi konstanta syscall (int)
+// ParseProtocol menerjemahkan string Protocol menjadi konstanta unix (int)
 func ParseProtocol(proto string) int {
 	switch strings.ToUpper(proto) {
 	case "IPPROTO_IP", "0":
