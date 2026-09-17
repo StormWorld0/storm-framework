@@ -206,7 +206,7 @@ class SocketResponse:
 
     def _trace(self) -> StackTrace | None:
         """Melempar stack trace"""
-        if (sts := self.status.upper() == "CRITICAL"):
+        if sts := self.status.upper() == "CRITICAL":
             msg = self.message
             return StackTrace(sts, msg)
         return None
