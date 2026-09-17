@@ -64,22 +64,12 @@ class TelnetClient:
 
     def __init__(self, host: str, port: int = 23, timeout: float = 3.0, **kwargs):
         """Open koneksi Telnet di atas TCP Socket"""
-        self.host = host
-        self.port = port
-        self.timeout = timeout
-
-        self.resp_open = self._open_socket()
-        self._is_open = True if self.resp_open.ok else False
-
-        self._buffer = b""
-        self._iac_fragment = b""
-
-    def _open_socket(self):
-        """Open socket and Open connection"""
         self.sock = Socket()
         self.sock.timeout(self.timeout)
         self.resp_con = self.sock.create_connection(self.host, self.port)
-        return self
+        self.timeout = timeout
+        self._buffer = b""
+        self._iac_fragment = b""
 
     @property
     def ok(self) -> bool:
@@ -169,8 +159,6 @@ class TelnetClient:
         raw: bool = False,
     ) -> Tuple[Union[str, bytes], int]:
         """Membaca Response Telnet (Tuple return: data, match_index)"""
-        if not self._is_open:
-            self._open_socket()
 
         # Guard: Jika expected kosong, buat fallback list kosong agar tidak loop tanpa henti
         if expected == "" or expected == b"":
@@ -209,6 +197,9 @@ class TelnetClient:
             if self.resend.ok:
                 resp = self.sock.recv(readsize=4096, timeout=read_timeout)
 
+                if resp.status == "ERROR" or resp.status == "WARN":
+                    break
+                    
                 if resp.ok and not resp.raw_bytes:
                     if self._buffer:
                         break
@@ -234,13 +225,11 @@ class TelnetClient:
         raw: bool = False,
     ) -> Tuple[Union[str, bytes], int]:
         """Mengirim data Telnet dan langsung membaca Response"""
+        
         if isinstance(command, str):
             cmd_payload = f"{command}\r\n".encode("utf-8")
         else:
             cmd_payload = command + b"\r\n"
-
-        if not self._is_open:
-            self._open_socket()
 
         self.resend = self.sock.send(cmd_payload, timeout=timeout)
         return self.read(expected, timeout, raw)
