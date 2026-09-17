@@ -9,11 +9,11 @@ import (
 	"io"
 	"os"
 	"net"
+	"time"
 	"reflect"
 	"strconv"
 	"strings"
-	"syscall"
-	"time"
+	"golang.org/x/sys/unix"
 
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/utils"
@@ -118,7 +118,7 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 		sInt := ParseSockType(req.SType)       // req.SType adalah string, misal "SOCK_STREAM"
 		protoInt := ParseProtocol(req.Protocol) // req.Protocol adalah string, misal "IPPROTO_TCP"
 		
-		fd, err := syscall.Socket(afInt, sInt, protoInt)
+		fd, err := unix.Socket(afInt, sInt, protoInt)
 		if err != nil {
 			return packet.ResponsePacket{Status: "ERROR", Message: "Failed to create socket: " + err.Error()}
 		}
@@ -164,22 +164,33 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 
 		afInt := ParseAF(req.AF)
 		
-		var sockAddr syscall.Sockaddr
-		if afInt == syscall.AF_INET6 {
+		var sockAddr unix.Sockaddr
+		if afInt == unix.AF_INET6 {
 			var addr16 [16]byte
 			copy(addr16[:], ips[0].To16())
-			sockAddr = &syscall.SockaddrInet6{Port: port, Addr: addr16}
+			sockAddr = &unix.SockaddrInet6{Port: port, Addr: addr16}
 		} else {
 			// Default ke IPv4 (AF_INET)
 			var addr4 [4]byte
 			copy(addr4[:], ips[0].To4())
-			sockAddr = &syscall.SockaddrInet4{Port: port, Addr: addr4}
+			sockAddr = &unix.SockaddrInet4{Port: port, Addr: addr4}
 		}
 
-		// 3. Lakukan OS-Level Connect
-		// Ini berlaku untuk STREAM (TCP), DGRAM (UDP), maupun menghubungkan RAW socket
-		if err := syscall.Connect(rawFD, sockAddr); err != nil {
-			return packet.ResponsePacket{Status: "ERROR", Message: "OS Connect failed: " + err.Error()}
+		// Eksekusi Connect dengan Goroutine & Timeout Manual yang aman
+		errChan := make(chan error, 1)
+		go func() {
+			errChan <- unix.Connect(rawFD, sockAddr)
+		}()
+
+		select {
+		case err := <-errChan:
+			if err != nil {
+				return packet.ResponsePacket{Status: "ERROR", Message: "OS Connect failed: " + err.Error()}
+			}
+		case <-time.After(timeout):
+			// Timeout tercapai!
+			unix.Close(rawFD)
+			return packet.ResponsePacket{Status: "ERROR", Message: "Connect timeout expired. Socket aborted."}
 		}
 
 		// ================================
@@ -187,7 +198,7 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 		// ================================
 		
 		// Golang butuh socket dalam keadaan non-blocking agar tidak hang!
-		if err := syscall.SetNonblock(rawFD, true); err != nil {
+		if err := unix.SetNonblock(rawFD, true); err != nil {
 			return packet.ResponsePacket{Status: "ERROR", Message: "Failed to set non-blocking: " + err.Error()}
 		}
 
