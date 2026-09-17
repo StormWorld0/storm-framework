@@ -452,7 +452,7 @@ class Socket(SocketState):
         packet = IPCPayloadBuilder.build(state=self, mode="close", close_session=True)
         resp = CRS.send(packet)
         self._is_closed = True
-        
+
         response = SocketResponse(resp)
         response._trace()
         return response
