@@ -376,6 +376,7 @@ class Socket(SocketState):
         verify: bool = False,
         **kwargs,
     ) -> SocketResponse:
+        self._ensure_open("uptls")
         if self.is_tls:
             smf.printd("The connection is already using TLS", level="WARN")
             return {"status": "WARN", "message": "Already TLS"}
@@ -404,6 +405,7 @@ class Socket(SocketState):
         timeout: float = None,
         **kwargs,
     ) -> SocketResponse:
+        self._ensure_open("create")
         packet = IPCPayloadBuilder.build(
             host=host,
             port=port,
