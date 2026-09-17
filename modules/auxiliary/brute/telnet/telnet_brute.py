@@ -70,7 +70,7 @@ def execute(options, net):
         return
 
     success = False
-    
+
     # Loop setiap username
     for username in read_wordlist(username_file):
         if not username:
