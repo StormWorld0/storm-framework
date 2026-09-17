@@ -288,6 +288,10 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 
 		if err != nil && err != io.EOF {
 			if n == 0 {
+				if req.SessionID != "" && req.KeepAlive {
+			        utils.ActiveSessions.Store(req.SessionID, conn)
+			        keepSession = true
+		        }
 				return packet.ResponsePacket{
 					Status:  "ERROR",
 					Message: "Read failed: " + err.Error(),
