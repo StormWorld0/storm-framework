@@ -67,7 +67,7 @@ class TelnetClient:
         self.sock = Socket()
         self.resp_open = self._open_socket(host, port, timeout)
         self._is_open = True if self.resp_open.ok else False
-        
+
         self.timeout = timeout
         self._buffer = b""
         self._iac_fragment = b""
@@ -80,7 +80,7 @@ class TelnetClient:
             self.resp_con = self.sock.connect(host, port)
             return self
         return self
-        
+
     @property
     def ok(self) -> bool:
         """Returns True on success"""
