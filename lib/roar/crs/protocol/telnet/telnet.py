@@ -67,10 +67,10 @@ class TelnetClient:
         self.host = host
         self.port = port
         self.timeout = timeout
-        
+
         self.resp_open = self._open_socket()
         self._is_open = True if self.resp_open.ok else False
-        
+
         self._buffer = b""
         self._iac_fragment = b""
 
