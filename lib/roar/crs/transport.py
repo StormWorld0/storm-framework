@@ -120,6 +120,7 @@ class CRS:
     @classmethod
     def _stderr_reader(cls, my_proc):
         """A standalone thread to asynchronously consume and log engine stderr."""
+        message = {}
         try:
             while my_proc and my_proc.poll() is None:
                 line = my_proc.stderr.readline()
@@ -130,9 +131,10 @@ class CRS:
                 line_str = line.strip()
                 if line_str:
                     smf.printd("CRS Engine STDERR", line_str, level="ERROR")
+                    message += {"status": "CRITICAL", "message": f"CRS Engine stderr: {line_str}"}
 
+            return message
         except (BrokenPipeError, OSError, ValueError):
-            # Ignore all these errors and only take the error exception
             pass
         except Exception as e:
             smf.printd("Exception in CRS stderr reader", e, level="ERROR")
