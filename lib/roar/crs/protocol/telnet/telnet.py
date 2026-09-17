@@ -192,7 +192,7 @@ class TelnetClient:
 
                 if resp.status is ("ERROR", "WARN"):
                     break
-                    
+
                 if resp.ok and not resp.raw_bytes:
                     if self._buffer:
                         break
