@@ -204,9 +204,9 @@ class SocketResponse:
         """Mengembalikan pesan ERROR/SUCCESS/TIMEOUT."""
         return self._message
 
-    def _trace(self) -> StackTrace:
+    def _trace(self) -> StackTrace | None:
         """Melempar stack trace"""
-        if sts := self.status.upper() == "CRITICAL":
+        if (sts := self.status.upper() == "CRITICAL"):
             msg = self.message
             return StackTrace(sts, msg)
         return None
