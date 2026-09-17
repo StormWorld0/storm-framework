@@ -184,7 +184,7 @@ class TelnetClient:
             if (time.time() - start_time) >= wait_time:
                 break
 
-            read_timeout = 0.3 if self._buffer else wait_time
+            read_timeout = 0.8 if self._buffer else wait_time
 
             # Memperbaiki state checker: Evaluasi status koneksi keseluruhan (resp_con), bukan variabel independen.
             if self.resp_con.ok:
