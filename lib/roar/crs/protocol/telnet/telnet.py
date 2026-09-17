@@ -65,28 +65,36 @@ class TelnetClient:
     def __init__(self, host: str, port: int = 23, timeout: float = 3.0, **kwargs):
         """Open koneksi Telnet di atas TCP Socket"""
         self.sock = Socket()
-        self.sock.socket("AF_INET", "SOCK_STREAM")
-        self.sock.timeout(timeout)
-        self.resp = self.sock.connect(host, port)
-
+        self.resp_open = self._open_socket(host, port, timeout)
+        self._is_open = True if self.resp_open.ok else False
+        
         self.timeout = timeout
         self._buffer = b""
         self._iac_fragment = b""
 
+    def _open_socket(self, host, port, timeout):
+        """Open socket and Open connection"""
+        resp = self.sock.socket("AF_INET", "SOCK_STREAM")
+        if resp.ok:
+            self.sock.timeout(timeout)
+            self.resp_con = self.sock.connect(host, port)
+            return self
+        return self
+        
     @property
     def ok(self) -> bool:
         """Returns True on success"""
-        return self.resp
+        return self.resp_con.ok
 
     @property
     def status(self) -> str:
         """Status string of the open process (SUCCESS/ERROR/TIMEOUT)."""
-        return self.resp.status
+        return self.resp_con.status
 
     @property
     def message(self) -> str:
         """Detailed message of the open connection process."""
-        return self.resp.message
+        return self.resp_con.message
 
     def _negotiate_iac(self, raw_data: bytes) -> bytes:
         data = self._iac_fragment + raw_data
@@ -161,6 +169,8 @@ class TelnetClient:
         raw: bool = False,
     ) -> Tuple[Union[str, bytes], int]:
         """Membaca Response Telnet (Tuple return: data, match_index)"""
+        if not self._is_open:
+            return self.resp_open.ok, -1
 
         # Guard: Jika expected kosong, buat fallback list kosong agar tidak loop tanpa henti
         if expected == "" or expected == b"":
@@ -229,8 +239,12 @@ class TelnetClient:
         else:
             cmd_payload = command + b"\r\n"
 
-        self.resend = self.sock.send(cmd_payload, timeout=timeout)
-        return self.read(expected, timeout, raw)
+        if self._is_open:
+            self.resend = self.sock.send(cmd_payload, timeout=timeout)
+            return self.read(expected, timeout, raw)
+
+        # Return response open connection jika _is_open False
+        return self.resp_open.ok, -1
 
     def close(self):
         self.sock.close()
