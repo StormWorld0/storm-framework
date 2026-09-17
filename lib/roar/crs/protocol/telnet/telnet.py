@@ -66,8 +66,8 @@ class TelnetClient:
         """Open koneksi Telnet di atas TCP Socket"""
         self.sock = Socket()
         self.sock.socket("AF_INET", "SOCK_STREAM")
-        self.sock.connect(host, port)
         self.sock.timeout(timeout)
+        self.resp = self.sock.connect(host, port)
 
         self.timeout = timeout
         self._buffer = b""
@@ -76,17 +76,17 @@ class TelnetClient:
     @property
     def ok(self) -> bool:
         """Returns True on success"""
-        return self.sock.ok
+        return self.resp
 
     @property
     def status(self) -> str:
         """Status string of the open process (SUCCESS/ERROR/TIMEOUT)."""
-        return self.sock.status
+        return self.resp.status
 
     @property
     def message(self) -> str:
         """Detailed message of the open connection process."""
-        return self.sock.message
+        return self.resp.message
 
     def _negotiate_iac(self, raw_data: bytes) -> bytes:
         data = self._iac_fragment + raw_data
