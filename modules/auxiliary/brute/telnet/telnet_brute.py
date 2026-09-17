@@ -70,7 +70,7 @@ def execute(options, net):
         return
 
     success = False
-
+    
     # Loop setiap username
     for username in read_wordlist(username_file):
         if not username:
@@ -94,14 +94,16 @@ def execute(options, net):
                     # Username diterima, kirim password
                     _, r = con.send(password, expected=promt_shell)
                     if r < 0:
+                        user = username
                         smf.printf(
                             f"{CC.YELLOW}[*] U:{username} P:{password} {SYM_FAILED}{CC.RESET}"
                         )
+                        continue
 
                     if r >= 0:
                         # Berhasil login!
                         smf.printf(
-                            f"{CC.GREEN}[✓] Bruteforce successful. U={username}:P={password} {SYM_SUCCESS}{CC.RESET}\n"
+                            f"{CC.GREEN}[✓7] Bruteforce successful. U={username}:P={password} {SYM_SUCCESS}{CC.RESET}\n"
                         )
                         success = True
                         return  # berhenti total
