@@ -130,7 +130,7 @@ class CRS:
                 # Take all stderr and throw it to smflogd
                 line_str = line.strip()
                 if line_str:
-                    smf.printd("CRS Engine STDERR", line_str, level="ERROR")
+                    smf.printd("CRS Engine STDERR", line_str, level="CRITICAL")
                     message += {
                         "status": "CRITICAL",
                         "message": f"CRS Engine stderr: {line_str}",
