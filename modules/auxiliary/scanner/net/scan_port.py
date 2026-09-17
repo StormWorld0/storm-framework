@@ -36,7 +36,7 @@ def get_service_banner(ip, port, net):
         r = sock.socket("AF_INET", "SOCK_STREAM")
         if r.ok:
             return f"{C.ERROR} CLOSED " + STATUS_CLOSED, None
-            
+
         s = sock.connect(
             host=ip,
             port=port,
