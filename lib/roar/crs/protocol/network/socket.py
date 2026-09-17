@@ -394,12 +394,12 @@ class Socket(SocketState):
         resp = CRS.send(packet)
         if resp.get("status") == "SUCCESS":
             self.is_tls = True
-            
+
         return SocketResponse(resp)
 
     def create_connection(
-        self, 
-        host: str, 
+        self,
+        host: str,
         port: str | int = None,
         timeout: float = None,
         **kwargs,
@@ -412,7 +412,7 @@ class Socket(SocketState):
             infotls=False,
             close_session=False,
         )
-        
+
         resp = CRS.send(packet)
         return SocketResponse(resp)
 
