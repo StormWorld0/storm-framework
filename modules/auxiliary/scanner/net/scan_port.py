@@ -26,11 +26,14 @@ def get_service_banner(ip, port, net):
     Checking port status and parsing banner/version information via Go CRS Engine.
     """
     try:
+        sock = net.Socket()
+        
         # Jika port HTTP, kita langsung titip payload 'HEAD /' di field Bod
         payload_body = ""
         if port in [80, 443, 8080]:
             payload_body = f"HEAD / HTTP/1.1\r\nHost: {ip}\r\nConnection: close\r\n\r\n"
-        s = net.Socket(
+    
+        s = sock.socket(
             host=ip,
             port=port,
             timeout=2.0,
@@ -39,9 +42,9 @@ def get_service_banner(ip, port, net):
         if not s.ok:
             return f"{C.ERROR} CLOSED " + STATUS_CLOSED, None
 
-        r = s.send(data=payload_body, timeout=0.5)
+        r = sock.send(payload_body, timeout=0.5)
         if r.ok:
-            res = s.recv(1024)
+            res = sock.recv(1024)
 
         # Jika Go berhasil melakukan Dial (Socket Terbuka)
         if res.ok:
@@ -89,7 +92,7 @@ def get_service_banner(ip, port, net):
         smf.printd("Global error service", e, level="ERROR")
         return f"{C.ERROR} ERROR ", None
     finally:
-        s.close()
+        sock.close()
 
 
 REQUIRED_OPTIONS = {"IP": ""}
