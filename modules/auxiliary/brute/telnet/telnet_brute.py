@@ -120,7 +120,6 @@ def execute(options, net):
     if user != "":
         for password in passwords:
             con = None
-
             try:
                 con = net.Telnet(ip, port, timeout=1.0)
                 if not con.ok:
@@ -128,9 +127,7 @@ def execute(options, net):
 
                 # Username yang ditemukan di Loop A
                 _, r = con.send(user, expected=promt_pass)
-                if r < 0:
-                    continue
-
+                
                 # Coba password
                 _, r = con.send(password, expected=promt_shell)
                 if r < 0:
