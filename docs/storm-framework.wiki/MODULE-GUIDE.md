@@ -96,7 +96,7 @@ def execute(options):
 
 Now the module is only implemented as a template, use CRS to handle connections with high stability and maximum speed. CRS will handle connections according to the required protocol, no longer depending on external libraries so that it is easier when experiencing bugs/errors with the connection being used.
 
-We have made documentation [CRS ENGINE](https://github.com/StormWorld0/storm-framework/blob/main/docs/storm-framework.wiki/CRS_ENGINE.md) You can read it to find out more.
+We have made documentation [CRS ENGINE](https://storm-framework.pages.dev/storm-framework.wiki/CRS-ENGINE) You can read it to find out more.
 
 ### Implementation
 
@@ -104,15 +104,22 @@ The way to use CRS is to call the API of the required protocol and send data the
 
 ```python
 def execute(options, net):
-    ip = options.get("IP")
+    host = options.get("HOST")
     port = options.get("PORT")
 
-    data = b"0x01..." # Data Bytes
-    s = net.Socket(ip, port, timeout=2) # Open connection
-    s.send(data, timeout=3) # Send data
-    resp = s.recv(1024) # Read buffer
+    sock = net.Socket()
+    resp = sock.socket(AF_INET, SOCK_STREAM, IPPROTO_IP) # Open Socket
+    smf.printf(resp.fileno) # Print File-Decryptor (FD)
 
-    if resp.status == "SUCCESS":
+    sock.timeout(2.0) # Set global timeout
+    sock.connect(host, port) # Connected to Socket
+
+    data = b"0x01..." # Data Bytes
+
+    sock.send(data) # Send data
+    resp = sock.recv(1024) # Read buffer
+
+    if resp.ok:
         smf.printf("Raw Bytes", resp.raw_bytes)
         smf.printf("String Bytes", resp.str_bytes)
         smf.printf("Amount Bytes", resp.read_bytes)
@@ -125,21 +132,21 @@ def execute(options, net):
 
     try:
         # Upgrade TLS connection
-        r = s.uptls(cert, key, ca, verify=False)
+        r = sock.uptls(cert, key, ca, verify=False)
 
         # Automatically use TLS connection after upgrade
-        s.send()
-        s.recv()
-    except Exception:
-        smf.printf(r.message)
+        sock.send()
+        sock.recv()
+    except Exception as e:
+        smf.printd("Label message", e, level="ERROR") # Enter error exception into database
     finally:
-        s.close() # Stop the connection so it doesn't hang
+        sock.close() # Stop the connection so it doesn't hang
 
     smf.printf("Cipher Suite", r.tls.cipher)
     smf.printf("Version TLS 1.0/1.1/1.2/1.3", r.tls.version)
 ```
 
-If you want to know what data is issued by the existing protocols, you can see it at [CRS ENGINE DOCS](https://github.com/StormWorld0/storm-framework/blob/main/docs/storm-framework.wiki/CRS_ENGINE.md)
+If you want to know what data is issued by the existing protocols, you can see it at [CRS ENGINE DOCS](https://storm-framework.pages.dev/storm-framework.wiki/CRS-ENGINE)
 
 
 
