@@ -204,7 +204,7 @@ class SocketResponse:
         """Mengembalikan pesan ERROR/SUCCESS/TIMEOUT."""
         return self._message
 
-    def _trace(self) -> StackTrace | None:
+    def _trace(self) -> None:
         """Melempar stack trace"""
         if (sts := self.status.upper()) == "CRITICAL":
             msg = self.message
@@ -322,8 +322,9 @@ class Socket(SocketState):
         )
 
         resp = CRS.send(packet)
-        resp._trace()
-        return SocketResponse(resp)
+        response = SocketResponse(resp)
+        response._trace()
+        return response
 
     def connect(
         self,
@@ -343,8 +344,9 @@ class Socket(SocketState):
         )
 
         resp = CRS.send(packet)
-        resp._trace()
-        return SocketResponse(resp)
+        response = SocketResponse(resp)
+        response._trace()
+        return response
 
     def send(
         self,
@@ -363,8 +365,9 @@ class Socket(SocketState):
         )
 
         resp = CRS.send(packet)
-        resp._trace()
-        return SocketResponse(resp)
+        response = SocketResponse(resp)
+        response._trace()
+        return response
 
     def recv(
         self,
@@ -383,8 +386,9 @@ class Socket(SocketState):
         )
 
         resp = CRS.send(packet)
-        resp._trace()
-        return SocketResponse(resp)
+        response = SocketResponse(resp)
+        response._trace()
+        return response
 
     def uptls(
         self,
@@ -414,8 +418,9 @@ class Socket(SocketState):
         if resp.get("status") == "SUCCESS":
             self.is_tls = True
 
-        resp._trace()
-        return SocketResponse(resp)
+        response = SocketResponse(resp)
+        response._trace()
+        return response
 
     def create_connection(
         self,
@@ -436,19 +441,21 @@ class Socket(SocketState):
         )
 
         resp = CRS.send(packet)
-        resp._trace()
-        return SocketResponse(resp)
+        response = SocketResponse(resp)
+        response._trace()
+        return response
 
     def close(self) -> SocketResponse:
         if self._is_closed:
             return {"status": "already_closed", "session_id": self.sessid}
 
         packet = IPCPayloadBuilder.build(state=self, mode="close", close_session=True)
-
         resp = CRS.send(packet)
         self._is_closed = True
-        resp._trace()
-        return SocketResponse(resp)
+        
+        response = SocketResponse(resp)
+        response._trace()
+        return response
 
     def timeout(self, value: float):
         self._timeout = value
