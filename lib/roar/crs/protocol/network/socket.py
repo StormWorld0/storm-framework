@@ -313,8 +313,7 @@ class Socket(SocketState):
     def connect(
         self,
         host: str,
-        port: str = None,
-        timeout: float = None,
+        port: str | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Open Connection"""
@@ -323,7 +322,6 @@ class Socket(SocketState):
             state=self,
             host=host,
             port=port,
-            timeout=timeout,
             mode="connect",
             infotls=False,
             close_session=False,
@@ -354,7 +352,7 @@ class Socket(SocketState):
     def recv(
         self,
         readsize: int = None,
-        timeout: float = 0.3,
+        timeout: float = None,
         **kwargs,
     ) -> SocketResponse:
         self._ensure_open("receive")
@@ -384,20 +382,38 @@ class Socket(SocketState):
 
         packet = IPCPayloadBuilder.build(
             state=self,
-            verify=verify,
-            mode="upgrade_tls",
             cert=cert,
             key=key,
             ca=ca,
+            verify=verify,
+            mode="upgrade_tls",
             infotls=True,
             close_session=False,
         )
 
         resp = CRS.send(packet)
-
         if resp.get("status") == "SUCCESS":
             self.is_tls = True
+            
+        return SocketResponse(resp)
 
+    def create_connection(
+        self, 
+        host: str, 
+        port: str | int = None,
+        timeout: float = None,
+        **kwargs,
+    ) -> SocketResponse:
+        packet = IPCPayloadBuilder.build(
+            host=host,
+            port=port,
+            timeout=timeout,
+            mode="create",
+            infotls=False,
+            close_session=False,
+        )
+        
+        resp = CRS.send(packet)
         return SocketResponse(resp)
 
     def close(self) -> SocketResponse:
@@ -408,8 +424,11 @@ class Socket(SocketState):
 
         resp = CRS.send(packet)
         self._is_closed = True
-
         return SocketResponse(resp)
+
+    def timeout(self, value: float):
+        self.timeout = value
+        return self
 
     def __enter__(self):
         return self
