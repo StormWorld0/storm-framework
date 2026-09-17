@@ -64,9 +64,7 @@ def execute(options, net):
 
     passwords = list(read_wordlist(password_file))
     if not passwords:
-        smf.printf(
-            f"{CC.RED}[!] Password wordlist is empty or unreadable.{CC.RESET}"
-        )
+        smf.printf(f"{CC.RED}[!] Password wordlist is empty or unreadable.{CC.RESET}")
         return
 
     success = False
@@ -93,8 +91,7 @@ def execute(options, net):
 
             if r < 0:
                 smf.printf(
-                    f"{CC.YELLOW}[*] Username: {username} "
-                    f"{SYM_FAILED}{CC.RESET}"
+                    f"{CC.YELLOW}[*] Username: {username} " f"{SYM_FAILED}{CC.RESET}"
                 )
                 con.close()
                 con = None
@@ -103,9 +100,7 @@ def execute(options, net):
             # Username valid
             if r >= 0:
                 user = username
-                smf.printf(
-                    f"[✓] {CC.GREEN}Username found => {user}{CC.RESET}"
-                )
+                smf.printf(f"[✓] {CC.GREEN}Username found => {user}{CC.RESET}")
 
                 con.close()
                 con = None
@@ -118,7 +113,6 @@ def execute(options, net):
     finally:
         if con:
             con.close()
-
 
     # =========================
     # LOOP B — COBA PASSWORD
@@ -156,19 +150,15 @@ def execute(options, net):
                 success = True
                 return
             except KeyboardInterrupt:
-                smf.printf(
-                    f"\n{CC.YELLOW}[*] Bruteforce stopped.{CC.RESET}"
-                )
+                smf.printf(f"\n{CC.YELLOW}[*] Bruteforce stopped.{CC.RESET}")
                 return
             except Exception as e:
-                smf.printf(
-                    f"Error while trying {user}:{password}: {e}"
-                )
+                smf.printf(f"Error while trying {user}:{password}: {e}")
                 return
             finally:
                 if con:
                     con.close()
-                    
+
     if not success:
         smf.printf(
             f"{CC.YELLOW}[!] Bruteforce failed, no valid combination found.{CC.RESET}"
