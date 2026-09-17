@@ -41,7 +41,7 @@ class SocketState:
         self.host = host
         self.port = int(port)
         self.protocol = protocol
-        self.timeout = float(timeout)
+        self._timeout = float(timeout)
         self.readsize = int(readsize)
         self.ratelimit = int(ratelimit)
         self.keepalive = keepalive
@@ -49,8 +49,8 @@ class SocketState:
         self.infotls = infotls
 
         # AF_* and SOCK_*
-        self.addr_fam = addr_fam
-        self.stype = stype
+        self.addr_fam = str(addr_fam)
+        self.stype = str(stype)
 
         # Isolasi sesi Go IPC
         self.sessid = sessid if sessid else f"smf_sess_{uuid.uuid4().hex[:12]}"
@@ -125,10 +125,10 @@ class IPCPayloadBuilder:
             "host": host if host is not None else state.host,
             "port": int(port) if port is not None else state.port,
             "data": data_str,
-            "addr-fam": addr_fam,
-            "stype": stype,
-            "protocol": protocol if protocol is not None else state.protocol,
-            "timeout": timeout if timeout is not None else state.timeout,
+            "addr-fam": str(addr_fam),
+            "stype": str(stype),
+            "protocol": str(protocol) if protocol is not None else state.protocol,
+            "timeout": float(timeout) if timeout is not None else state._timeout,
             "readsize": readsize if readsize is not None else state.readsize,
             "ratelimit": ratelimit if ratelimit is not None else state.ratelimit,
             "session_id": state.sessid,
@@ -427,7 +427,7 @@ class Socket(SocketState):
         return SocketResponse(resp)
 
     def timeout(self, value: float):
-        self.timeout = value
+        self._timeout = value
         return self
 
     def __enter__(self):
