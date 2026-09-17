@@ -323,6 +323,7 @@ class Socket(SocketState):
             state=self,
             host=host,
             port=port,
+            timeout=timeout,
             mode="connect",
             infotls=False,
             close_session=False,
@@ -335,7 +336,6 @@ class Socket(SocketState):
         self,
         data: str | bytes,
         timeout: float = None,
-        mode: str = "send",
         **kwargs,
     ) -> SocketResponse:
         self._ensure_open("send")
@@ -345,6 +345,7 @@ class Socket(SocketState):
             timeout=timeout,
             mode=mode,
             infotls=False,
+            mode="send",
             close_session=False,
         )
 
