@@ -34,7 +34,7 @@ def get_service_banner(ip, port, net):
             payload_body = f"HEAD / HTTP/1.1\r\nHost: {ip}\r\nConnection: close\r\n\r\n"
 
         r = sock.socket("AF_INET", "SOCK_STREAM")
-        if r.ok:
+        if not r.ok:
             return f"{C.ERROR} CLOSED " + STATUS_CLOSED, None
 
         s = sock.connect(
