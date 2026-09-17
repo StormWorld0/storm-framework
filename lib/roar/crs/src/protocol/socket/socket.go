@@ -141,29 +141,7 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 		}
 
 		if rawFD == -1 {
-			 addr, err := BuildTarget(req)
-			 if err != nil {
-                return packet.ResponsePacket{Status: "ERROR", Message: "Build target failed: " + err.Error()}
-             }
-
-            fd := utils.GetDialer()
-            if fd == nil {
-                return packet.ResponsePacket{Status: "ERROR", Message: "Global dialer not initialized"}
-            }
-
-            ctx, cancel := context.WithTimeout(context.Background(), timeout)
-            defer cancel()
-
-            rawConn, err := fd.Dial(ctx, "tcp", addr)
-            if err != nil {
-                return packet.ResponsePacket{Status: "ERROR", Message: "TCP Dial failed: " + err.Error()}
-            }
-            conn = rawConn
-			
-			utils.ActiveSessions.Store(req.SessionID, conn)
-		    keepSession = true
-			
-			return packet.ResponsePacket{Status: "SUCCESS", Data: generateMetadata(0)}
+			 return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found for this session. Call 'socket' primitive first."} 
 		}
 
 		// 2. Resolve DNS & Siapkan Address (syscall.Connect butuh raw IP, bukan string)
@@ -232,6 +210,31 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 		utils.ActiveSessions.Store(req.SessionID, conn)
 		keepSession = true 
 
+		return packet.ResponsePacket{Status: "SUCCESS", Data: generateMetadata(0)}
+
+	case "create":
+		addr, err := BuildTarget(req)
+		if err != nil {
+            return packet.ResponsePacket{Status: "ERROR", Message: "Build target failed: " + err.Error()}
+        }
+
+        fd := utils.GetDialer()
+        if fd == nil {
+            return packet.ResponsePacket{Status: "ERROR", Message: "Global dialer not initialized"}
+        }
+
+        ctx, cancel := context.WithTimeout(context.Background(), timeout)
+        defer cancel()
+
+        rawConn, err := fd.Dial(ctx, "tcp", addr)
+        if err != nil {
+            return packet.ResponsePacket{Status: "ERROR", Message: "TCP Dial failed: " + err.Error()}
+        }
+        conn = rawConn
+			
+		utils.ActiveSessions.Store(req.SessionID, conn)
+		keepSession = true
+			
 		return packet.ResponsePacket{Status: "SUCCESS", Data: generateMetadata(0)}
 		
 	case "upgrade_tls":
