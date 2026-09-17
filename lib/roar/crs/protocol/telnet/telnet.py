@@ -240,7 +240,7 @@ class TelnetClient:
 
         if not self._is_open:
             self._open_socket()
-            
+
         self.resend = self.sock.send(cmd_payload, timeout=timeout)
         return self.read(expected, timeout, raw)
 
