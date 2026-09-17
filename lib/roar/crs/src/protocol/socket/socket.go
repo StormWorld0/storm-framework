@@ -52,7 +52,7 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 			}
 			return packet.ResponsePacket{Status: "SUCCESS", Message: "No active session found to close"}
 		}
-		return packet.ResponsePacket{Status: "WARNING", Message: "Incomplete data to close the connection"}
+		return packet.ResponsePacket{Status: "WARN", Message: "Incomplete data to close the connection"}
 	}
 
 	// Ambil Sesi Aktif (Jika Ada)
@@ -310,7 +310,7 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 		meta["hex_bytes"] = hex.EncodeToString(buffer[:n])
 
 		if err == io.EOF {
-			return packet.ResponsePacket{Status: "INFO", Message: "EOF Read: " + err.Error()}
+			return packet.ResponsePacket{Status: "WARN", Message: "EOF Read: " + err.Error()}
 		}
 
 		return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
