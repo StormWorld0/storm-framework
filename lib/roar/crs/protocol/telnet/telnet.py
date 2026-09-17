@@ -67,7 +67,7 @@ class TelnetClient:
         self.sock = Socket()
         self.sock.connect(host, port)
         self.sock.timeout(timeout)
-        
+
         self.timeout = timeout
         self._buffer = b""
         self._iac_fragment = b""
