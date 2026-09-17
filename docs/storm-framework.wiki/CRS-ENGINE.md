@@ -386,17 +386,17 @@ sock.timeout(value)
 - **Response**
 ```python
 # send data
-r = s.send(data, timeout)
+r = sock.send(data, timeout)
 smf.printf(r.status, r.message)
 smf.printf(r.isreused, r.rtt_ms, etc.)
 
 # read buffer
-r = s.recv(readsize)
+r = sock.recv(readsize)
 smf.printf(r.status, r.message)
 smf.printf(r.raw_bytes, r.hex_bytes, etc.)
 
 # TLS Upgrade
-r = s.uptls(cert, key, ca, verify)
+r = sock.uptls(cert, key, ca, verify)
 smf.printf(r.status, r.message)
 smf.printf(r.tls.version, r.tls.cipher, etc.)
 ```
