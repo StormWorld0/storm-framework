@@ -110,10 +110,8 @@ def execute(options, net):
                 smf.printf(f"\n{CC.YELLOW}[*] Bruteforce stopped.{CC.RESET}")
                 return
             except Exception as e:
-                # Error koneksi, mungkin timeout, lewati password ini
                 smf.printf(f"Error while trying {username}:{password}", e)
-                # Jangan langsung return, coba password lain
-                continue
+                return
             finally:
                 if con:
                     con.close()
