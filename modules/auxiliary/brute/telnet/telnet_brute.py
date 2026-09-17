@@ -127,7 +127,7 @@ def execute(options, net):
 
                 # Username yang ditemukan di Loop A
                 _, r = con.send(user, expected=promt_pass)
-                
+
                 # Coba password
                 _, r = con.send(password, expected=promt_shell)
                 if r < 0:
