@@ -143,10 +143,13 @@ class IPCPayloadBuilder:
             "goroutine": state.con,
         }
 
+
 class StackTrace:
     """Melempar stack trace dari response stderr CRS"""
+
     def __init__(self, status: str, message: str):
         raise Exception(status, message)
+
 
 class TLSMetadata:
     """
@@ -203,7 +206,7 @@ class SocketResponse:
 
     def _trace(self) -> StackTrace:
         """Melempar stack trace"""
-        if (sts := self.status.upper() == "CRITICAL"):
+        if sts := self.status.upper() == "CRITICAL":
             msg = self.message
             return StackTrace(sts, msg)
         return None
