@@ -74,22 +74,46 @@ All protocols definitely have different parameters, here you can learn what para
 
 ### 🔌 Socket Parameters
 
-**1. Open Connection**
+**1. Open Socket**
 ```python
-def execute(options, net):
-    s = net.Socket(host, port, timeout)
+sock = net.Socket()
+sock.socket(addrf, stype, proto)
+```
+**Inheritance:** `net.Socket()` will inherit all the functions below it, and all of those functions will only return Response.
+
+**Parameter**
+- **addrf:** Address Family such as: AF_INET, AF_INET6, AF_UNIX, AF_UNSPEC | str
+- **stype:** Sock Type like: SOCK_STREAM, SOCK_DGRAM, SOCK_RAW, SOCK_SEQPACKET | str
+- **proto:** Protocols such as: IPPROTO_IP, IPPROTO_ICMP, IPPROTO_TCP, etc. | str | Default 0 = Determined by Kernel UNIX
+
+**Response**
+- **status:** SUCCESS/WARNING/ERROR/TIMEOUT.
+- **fileno:** This will return the number of File-Decryptor (FD).
+
+**2. Connect to Socket**
+```python
+sock.connect(host, port, timeout)
 ```
 **Parameter**
-- **host:** This can be IP/HTTP/Domain, for example http://ip:port.
+- **host:** This can be IP/Hostname.
 - **port:** This is a typical port.
 - **timeout:** To limit the open connection time.
 
-**Inheritance**  
-Just inherit the child classes of Socket like recv, send, uptls.
+**Response**
+- **status:** SUCCESS/WARNING/ERROR/TIMEOUT.
+- **message:** Messages adjust to status.
 
-**2. Send Data**
+- **ok:** Return boolean from SUCCESS status. Allows the syntax: if r.ok:
+- **isreused:** Returns a Boolean. True=Using the same connection. False=Create a new connection.
+- **rtt_ms:** Returns the Round Trip Time in milliseconds.
+- **checked_type:** Returns the connection status to see if the tls/tcp connection is working. | Debug.
+- **status_tls:** Returns a Boolean. If True=TLS is enabled. False=TLS is disabled.
+- **remote_ip:** Returns the target IP:PORT.
+- **local_ip:** Returns local IP:PORT.
+
+**3. Send Data**
 ```python
-s.send(data, timeout)
+sock.send(data, timeout)
 ```
 **Parameter**
 - **data:** Can be bytes / http request / payload etc.
@@ -105,9 +129,9 @@ s.send(data, timeout)
 - **checked_type:** Returns the connection status to see if the tls/tcp connection is working. | Debug.
 - **status_tls:** Returns a Boolean. If True=TLS is enabled. False=TLS is disabled.
 
-**3. Viewing the buffer**
+**4. Viewing the buffer**
 ```python
-raw = s.recv(readsize, timeout)
+raw = sock.recv(readsize, timeout)
 ```
 **Parameter**
 - **readsize:** To determine how many bytes of buffer to take.
@@ -130,9 +154,9 @@ raw = s.recv(readsize, timeout)
 - **status_tls:** Returns a Boolean. If True=TLS is active. False=TLS is disabled.
 
 
-**4. TLS Upgrade**
+**5. TLS Upgrade**
 ```python
-r = s.uptls(cert, key, ca, verify)
+r = sock.uptls(cert, key, ca, verify)
 ```
 **Parameter**
 - **cert:** Path to the certificate file.
@@ -172,6 +196,26 @@ Automatically inherits TLS connections to send/recv and send/recv usage remains 
 - **dns_name:** Returns a list of hostnames in the Subject Alternative Name (SAN) extension.
 - **expires:** Returns the certificate Expiration Time in RFC3339 format.
 - **cert_chain:** Returns the number of certificate chains that were successfully verified.
+
+**6. Timeout**
+```python
+sock.timeout(value)
+```
+**Description:** The timeout function is created to set a default timeout for all functions that are executed after it, so that there is no need to implement timeouts repeatedly in each function.
+
+**Value:** In this parameter, the input must be in the form of a float such as: 1.0, 10.5, etc.
+
+**7. Creating Connection**
+```python
+sock.create_connection(host, port, timeout)
+```
+**Description:** This function is used to immediately open a connection quickly without having to perform socket() and connect() literacy because this is done automatically by the binary CRS. This makes it faster and requires less code. Send, receive, and uptls still require manual processing afterward.
+
+**8. Closing the connection**
+```python
+sock.close()
+```
+**Description:** This is used to close the connection when it is finished or when an error occurs, so that the connection does not hang and to avoid OOM.
 
 ---
 
@@ -311,24 +355,32 @@ res, var = r.read(expected, timeout, raw)
 - **Status:** `Stateful`
 - **Inheritance**
 ```python
-# Open legacy connection
-s = net.Socket(host, port, timeout)
+sock = net.Socket()
+
+# Open Socket
+sock.socket(addrf, stype, proto)
+
+# Open connection to Socket
+sock.connect(host, port, timeout)
 
 # Send Data
-s.send(data, timeout)
+sock.send(data, timeout)
 
 # Buffer Fetching
-s.recv(readsize)
+sock.recv(readsize, timeout)
 
 # TLS Upgrade has legacy
-s.uptls(cert, key, ca, verify)
+sock.uptls(cert, key, ca, verify)
 
 # Automatically be on a TLS encrypted connection
-s.send()
-s.recv()
+sock.send()
+sock.recv()
 
-# Boolean SUCCESS
-if s.ok:
+# Closing Connection
+sock.close()
+
+# Timeout function
+sock.timeout(value)
 ```
 
 - **Response**
