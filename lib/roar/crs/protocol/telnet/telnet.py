@@ -64,21 +64,20 @@ class TelnetClient:
 
     def __init__(self, host: str, port: int = 23, timeout: float = 3.0, **kwargs):
         """Open koneksi Telnet di atas TCP Socket"""
-        self.sock = Socket()
-        self.resp_open = self._open_socket(host, port, timeout)
+        self.resp_open = self._open_socket()
         self._is_open = True if self.resp_open.ok else False
 
+        self.host = host
+        self.port = port
         self.timeout = timeout
         self._buffer = b""
         self._iac_fragment = b""
 
-    def _open_socket(self, host, port, timeout):
+    def _open_socket(self):
         """Open socket and Open connection"""
-        resp = self.sock.socket("AF_INET", "SOCK_STREAM")
-        if resp.ok:
-            self.sock.timeout(timeout)
-            self.resp_con = self.sock.connect(host, port)
-            return self
+        self.sock = Socket()
+        self.sock.timeout(self.timeout)
+        self.resp_con = self.sock.create_connection(self.host, self.port)
         return self
 
     @property
@@ -170,7 +169,7 @@ class TelnetClient:
     ) -> Tuple[Union[str, bytes], int]:
         """Membaca Response Telnet (Tuple return: data, match_index)"""
         if not self._is_open:
-            return self.resp_open.ok, -1
+            self._open_socket()
 
         # Guard: Jika expected kosong, buat fallback list kosong agar tidak loop tanpa henti
         if expected == "" or expected == b"":
@@ -239,12 +238,11 @@ class TelnetClient:
         else:
             cmd_payload = command + b"\r\n"
 
-        if self._is_open:
-            self.resend = self.sock.send(cmd_payload, timeout=timeout)
-            return self.read(expected, timeout, raw)
-
-        # Return response open connection jika _is_open False
-        return self.resp_open.ok, -1
+        if not self._is_open:
+            self._open_socket()
+            
+        self.resend = self.sock.send(cmd_payload, timeout=timeout)
+        return self.read(expected, timeout, raw)
 
     def close(self):
         self.sock.close()
