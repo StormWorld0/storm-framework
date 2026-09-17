@@ -2,14 +2,11 @@
 # -- License SMF
 # -- Author zxelzy (Refactored)
 import time
-
 from typing import Optional, Union, List, Tuple
 from ..network import Socket
 
-
 class TelnetCmd:
     """Constants for Telnet Commands (RFC 854 & Extensions)"""
-
     EOF = b"\xec"
     SUSP = b"\xed"
     ABORT = b"\xee"
@@ -31,10 +28,8 @@ class TelnetCmd:
     DONT = b"\xfe"
     IAC = b"\xff"
 
-
 class TelnetOpt:
     """Constants for Telnet Options (RFC Extensions)"""
-
     BINARY = b"\x00"
     ECHO = b"\x01"
     RCP = b"\x02"
@@ -55,13 +50,11 @@ class TelnetOpt:
     OLD_ENVIRON = b"\x24"
     NEW_ENVIRON = b"\x27"
 
-
 class TelnetClient:
     """
     Telnet Protocol Wrapper di atas Socket Engine.
     Terintegrasi dengan TelnetCmd & TelnetOpt untuk kontrol granular dan Type-Safety.
     """
-
     def __init__(self, host: str, port: int = 23, timeout: float = 3.0, **kwargs):
         """Open koneksi Telnet di atas TCP Socket"""
         self.sock = Socket()
@@ -89,7 +82,6 @@ class TelnetClient:
     def _negotiate_iac(self, raw_data: bytes) -> bytes:
         data = self._iac_fragment + raw_data
         self._iac_fragment = b""
-
         clean_data = bytearray()
         i = 0
         length = len(data)
@@ -111,15 +103,13 @@ class TelnetClient:
                     if i + 2 >= length:
                         self._iac_fragment = data[i:]
                         break
-
+                    
                     opt = data[i + 2 : i + 3]
-
                     # Auto-Rejection / Hardened Fallback
                     if cmd in (TelnetCmd.DO, TelnetCmd.DONT):
                         self.sock.send(TelnetCmd.IAC + TelnetCmd.WONT + opt)
                     elif cmd in (TelnetCmd.WILL, TelnetCmd.WONT):
                         self.sock.send(TelnetCmd.IAC + TelnetCmd.DONT + opt)
-
                     i += 3
                 elif cmd == TelnetCmd.SB:
                     end_sb = data.find(TelnetCmd.IAC + TelnetCmd.SE, i)
@@ -129,18 +119,9 @@ class TelnetClient:
                     else:
                         i = end_sb + 2
                 elif cmd in (
-                    TelnetCmd.NOP,
-                    TelnetCmd.DM,
-                    TelnetCmd.BRK,
-                    TelnetCmd.IP,
-                    TelnetCmd.AO,
-                    TelnetCmd.AYT,
-                    TelnetCmd.EC,
-                    TelnetCmd.EL,
-                    TelnetCmd.GA,
-                    TelnetCmd.EOF,
-                    TelnetCmd.SUSP,
-                    TelnetCmd.ABORT,
+                    TelnetCmd.NOP, TelnetCmd.DM, TelnetCmd.BRK, TelnetCmd.IP,
+                    TelnetCmd.AO, TelnetCmd.AYT, TelnetCmd.EC, TelnetCmd.EL,
+                    TelnetCmd.GA, TelnetCmd.EOF, TelnetCmd.SUSP, TelnetCmd.ABORT,
                     TelnetCmd.EOR,
                 ):
                     i += 2
@@ -159,8 +140,6 @@ class TelnetClient:
         raw: bool = False,
     ) -> Tuple[Union[str, bytes], int]:
         """Membaca Response Telnet (Tuple return: data, match_index)"""
-
-        # Guard: Jika expected kosong, buat fallback list kosong agar tidak loop tanpa henti
         if expected == "" or expected == b"":
             expected_list = []
         elif not isinstance(expected, (list, tuple)):
@@ -173,31 +152,28 @@ class TelnetClient:
             for item in expected_list
         ]
 
-        # `timeout or self.timeout` untuk mengakomodasi timeout=0
         wait_time = timeout if timeout is not None else self.timeout
         start_time = time.time()
 
         while True:
-            # Jika punya expected condition, periksa buffer
             if expected_bytes:
                 for idx, exp in enumerate(expected_bytes):
                     if exp in self._buffer:
                         pos = self._buffer.find(exp) + len(exp)
                         result = self._buffer[:pos]
                         self._buffer = self._buffer[pos:]
-                        return (
-                            result if raw else result.decode("utf-8", errors="ignore")
-                        ), idx
+                        return (result if raw else result.decode("utf-8", errors="ignore")), idx
 
-            # Cek waktu tunggu (Timeout)
             if (time.time() - start_time) >= wait_time:
                 break
 
             read_timeout = 0.3 if self._buffer else wait_time
-            if self.resend.ok:
+            
+            # Memperbaiki state checker: Evaluasi status koneksi keseluruhan (resp_con), bukan variabel independen.
+            if self.resp_con.ok:
                 resp = self.sock.recv(readsize=4096, timeout=read_timeout)
 
-                if resp.status == "ERROR" or resp.status == "WARN":
+                if resp.status in ("ERROR", "WARN"):
                     break
 
                 if resp.ok and not resp.raw_bytes:
@@ -210,8 +186,9 @@ class TelnetClient:
 
                 if not expected_bytes:
                     break
+            else:
+                break
 
-        # Timeout / Selesai membaca: Kembalikan sisa buffer (jika ada)
         res = self._buffer
         self._buffer = b""
         response = res if raw else res.decode("utf-8", errors="ignore")
@@ -225,13 +202,22 @@ class TelnetClient:
         raw: bool = False,
     ) -> Tuple[Union[str, bytes], int]:
         """Mengirim data Telnet dan langsung membaca Response"""
-
+        
+        # Mencegah payload biner (negosiasi IAC) rusak akibat penambahan CRLF otomatis
         if isinstance(command, str):
             cmd_payload = f"{command}\r\n".encode("utf-8")
         else:
-            cmd_payload = command + b"\r\n"
+            # Jika diawali dengan byte IAC, asumsikan ini adalah perintah protokol murni
+            if command.startswith(TelnetCmd.IAC):
+                cmd_payload = command
+            else:
+                cmd_payload = command + b"\r\n"
 
-        self.resend = self.sock.send(cmd_payload, timeout=timeout)
+        # Validasi pengiriman. Jika socket drop, gagalkan langsung tanpa menunggu siklus read.
+        send_status = self.sock.send(cmd_payload, timeout=timeout)
+        if not send_status.ok:
+            return (b"" if raw else ""), -1
+
         return self.read(expected, timeout, raw)
 
     def close(self):
@@ -242,3 +228,4 @@ class TelnetClient:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
+        
