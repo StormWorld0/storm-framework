@@ -27,12 +27,12 @@ def get_service_banner(ip, port, net):
     """
     try:
         sock = net.Socket()
-        
+
         # Jika port HTTP, kita langsung titip payload 'HEAD /' di field Bod
         payload_body = ""
         if port in [80, 443, 8080]:
             payload_body = f"HEAD / HTTP/1.1\r\nHost: {ip}\r\nConnection: close\r\n\r\n"
-    
+
         s = sock.socket(
             host=ip,
             port=port,
