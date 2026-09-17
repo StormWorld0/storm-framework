@@ -37,12 +37,7 @@ def get_service_banner(ip, port, net):
         if not r.ok:
             return f"{C.ERROR} CLOSED " + STATUS_CLOSED, None
 
-        s = sock.connect(
-            host=ip,
-            port=port,
-            timeout=2.0,
-        )
-
+        s = sock.connect(ip, port)
         if not s.ok:
             return f"{C.ERROR} CLOSED " + STATUS_CLOSED, None
 
