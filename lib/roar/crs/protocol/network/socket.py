@@ -343,7 +343,6 @@ class Socket(SocketState):
             state=self,
             data=data,
             timeout=timeout,
-            mode=mode,
             infotls=False,
             mode="send",
             close_session=False,
