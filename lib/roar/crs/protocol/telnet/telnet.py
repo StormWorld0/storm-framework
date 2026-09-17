@@ -65,7 +65,7 @@ class TelnetClient:
     def __init__(self, host: str, port: int = 23, timeout: float = 3.0, **kwargs):
         """Open koneksi Telnet di atas TCP Socket"""
         self.sock = Socket()
-        self.sock.timeout(self.timeout)
+        self.sock.timeout(timeout)
         self.resp_con = self.sock.create_connection(self.host, self.port)
         self.timeout = timeout
         self._buffer = b""
