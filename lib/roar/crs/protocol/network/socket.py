@@ -143,6 +143,10 @@ class IPCPayloadBuilder:
             "goroutine": state.con,
         }
 
+class StackTrace:
+    """Melempar stack trace dari response stderr CRS"""
+    def __init__(self, status: str, message: str):
+        raise Exception(status, message)
 
 class TLSMetadata:
     """
@@ -196,6 +200,13 @@ class SocketResponse:
     def message(self) -> str:
         """Mengembalikan pesan ERROR/SUCCESS/TIMEOUT."""
         return self._message
+
+    def _trace(self) -> StackTrace:
+        """Melempar stack trace"""
+        if (sts := self.status.upper() == "CRITICAL"):
+            msg = self.message
+            return StackTrace(sts, msg)
+        return None
 
     @property
     def fileno(self) -> int:
@@ -308,6 +319,7 @@ class Socket(SocketState):
         )
 
         resp = CRS.send(packet)
+        resp._trace()
         return SocketResponse(resp)
 
     def connect(
@@ -328,6 +340,7 @@ class Socket(SocketState):
         )
 
         resp = CRS.send(packet)
+        resp._trace()
         return SocketResponse(resp)
 
     def send(
@@ -347,6 +360,7 @@ class Socket(SocketState):
         )
 
         resp = CRS.send(packet)
+        resp._trace()
         return SocketResponse(resp)
 
     def recv(
@@ -366,6 +380,7 @@ class Socket(SocketState):
         )
 
         resp = CRS.send(packet)
+        resp._trace()
         return SocketResponse(resp)
 
     def uptls(
@@ -396,6 +411,7 @@ class Socket(SocketState):
         if resp.get("status") == "SUCCESS":
             self.is_tls = True
 
+        resp._trace()
         return SocketResponse(resp)
 
     def create_connection(
@@ -417,6 +433,7 @@ class Socket(SocketState):
         )
 
         resp = CRS.send(packet)
+        resp._trace()
         return SocketResponse(resp)
 
     def close(self) -> SocketResponse:
@@ -427,6 +444,7 @@ class Socket(SocketState):
 
         resp = CRS.send(packet)
         self._is_closed = True
+        resp._trace()
         return SocketResponse(resp)
 
     def timeout(self, value: float):
