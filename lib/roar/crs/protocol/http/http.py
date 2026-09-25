@@ -13,6 +13,13 @@ from lib.smf.ingest import push_to_queue, DataBuilder
 from ...transport import CRS
 
 
+class StackTrace:
+    """Melempar stack trace dari response stderr CRS"""
+
+    def __init__(self, status: str, message: str):
+        raise Exception(status, message)
+
+
 class HTTPTLSMetadata:
     """
     Data Transfer Object (DTO) untuk metadata TLS dari HTTP Response Go Engine.
@@ -231,6 +238,13 @@ class HTTPResponse:
         )
         return payload
 
+    def _trace(self) -> None:
+        """Melempar stack trace"""
+        if (sts := self.status.upper()) == "CRITICAL":
+            msg = self.message
+            return StackTrace(sts, msg)
+        return None
+
     def __bool__(self):
         """Shorthand: if r.ok: ... (True jika request HTTP bernilai OK/Sukses)."""
         return self.ok
@@ -288,6 +302,7 @@ class HTTPClient:
 
         raw_res = CRS.send(packet)
         res = HTTPResponse(raw_res)
+        res._trace()
 
         try:
             db_payload = res._to_db_payload(method, url, tls)
