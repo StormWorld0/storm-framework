@@ -13,6 +13,13 @@ from apps.utility.colors import CC
 from ...transport import CRS
 
 
+class StackTrace:
+    """Melempar stack trace dari response stderr CRS"""
+
+    def __init__(self, status: str, message: str):
+        raise Exception(status, message)
+
+
 class WHOISResponse:
     """
     Data Transfer Object (DTO) untuk membungkus raw dictionary dari respons DNS Go.
@@ -210,6 +217,13 @@ class WHOISResponse:
         )
         return payload
 
+    def _trace(self) -> None:
+        """Melempar stack trace"""
+        if (sts := self.status.upper()) == "CRITICAL":
+            msg = self.message
+            return StackTrace(sts, msg)
+        return None
+
     def __bool__(self):
         return self.ok
 
@@ -248,6 +262,7 @@ class WhoisIP:
 
         raw_resp = CRS.send(packet)
         res = WHOISResponse(raw_resp)
+        res._trace()
 
         try:
             db_payload = res._to_db_payload(ip)
