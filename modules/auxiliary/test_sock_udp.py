@@ -43,7 +43,7 @@ def build_dns_query(domain: str, txid: int = 0x1234) -> bytes:
 
 
 def execute(options, net):
-    ip = options.get("IP")
+    ip = options.get("HOST")
     port = 53
 
     sock = net.Socket()
