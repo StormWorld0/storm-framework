@@ -12,7 +12,7 @@ Testing Socket
     "License": "SMF License",
     "Date": "2026-09-17",
 }
-REQUIRED_OPTIONS = {"IP": ""}
+REQUIRED_OPTIONS = {"HOST": ""}
 
 
 def build_dns_query(domain: str, txid: int = 0x1234) -> bytes:
