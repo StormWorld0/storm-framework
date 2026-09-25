@@ -12,11 +12,13 @@ from lib.smf.ingest import push_to_queue, DataBuilder
 from apps.utility.colors import CC
 from ...transport import CRS
 
+
 class StackTrace:
     """Melempar stack trace dari response stderr CRS"""
 
     def __init__(self, status: str, message: str):
         raise Exception(status, message)
+
 
 class WHOISResponse:
     """
