@@ -11,11 +11,11 @@ Testing Socket
     "License": "SMF License",
     "Date": "2026-09-17",
 }
-REQUIRED_OPTIONS = {"IP": "", "PORT": ""}
+REQUIRED_OPTIONS = {"HOST": "", "PORT": ""}
 
 
 def execute(options, net):
-    ip = options.get("IP")
+    ip = options.get("HOST")
     port = options.get("PORT")
 
     sock = net.Socket()
