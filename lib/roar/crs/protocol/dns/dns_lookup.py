@@ -9,6 +9,13 @@ from lib.smf.ingest import push_to_queue, DataBuilder
 from ...transport import CRS
 
 
+class StackTrace:
+    """Melempar stack trace dari response stderr CRS"""
+
+    def __init__(self, status: str, message: str):
+        raise Exception(status, message)
+
+
 class DNSResponse:
     """
     Data Transfer Object (DTO) untuk membungkus raw dictionary dari respons DNS Go.
@@ -77,6 +84,13 @@ class DNSResponse:
         )
         return payload
 
+    def _trace(self) -> None:
+        """Melempar stack trace"""
+        if (sts := self.status.upper()) == "CRITICAL":
+            msg = self.message
+            return StackTrace(sts, msg)
+        return None
+
     def __bool__(self):
         """Memungkinkan sintaks shorthand: if response: ..."""
         return self.ok
@@ -126,6 +140,7 @@ class DNSResolver:
         # Kirim via IPC dan langsung bungkus hasilnya
         raw_res = CRS.send(packet)
         res = DNSResponse(raw_res)
+        res._trace()
 
         try:
             db_payload = res._to_db_payload(domain, proto)
