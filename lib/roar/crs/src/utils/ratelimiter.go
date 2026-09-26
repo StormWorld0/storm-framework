@@ -42,23 +42,25 @@ func (e *EngineRateLimiter) SetRate(maxUnits int) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	// 1. Cleanup Limiter Lama:
+	// Cleanup Limiter Lama:
 	// Jika sebelumnya sudah ada limiter yang berjalan, batalkan context-nya.
 	// Ini akan membunuh background goroutine (ticker) bawaan projectdiscovery/ratelimit.
 	if e.cancelFunc != nil {
 		e.cancelFunc()
+		e.cancelFunc = nil
 	}
 
-	// 2. Buat Lifecycle Baru:
+	// Jika ratelimit 0 maka di anggap tidak ada
+	if maxUnits <= 0 {
+		e.limiter = nil
+		return
+	}
+
+	// Buat Lifecycle Baru:
 	// Turunkan context baru dari rootCtx IPC daemon.
 	// Jika daemon terkena sigterm, rootCtx mati, otomatis ctx ini juga mati.
 	ctx, cancel := context.WithCancel(e.ctx)
 	e.cancelFunc = cancel
-
-	if maxUnits <= 0 {
-		e.limiter = ratelimit.NewUnlimited(ctx)
-		return
-	}
 
 	e.limiter = ratelimit.New(ctx, uint(maxUnits), time.Second)
 }
