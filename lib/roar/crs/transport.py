@@ -131,10 +131,12 @@ class CRS:
                 line_str = line.strip()
                 if line_str:
                     smf.printd("CRS Engine STDERR", line_str, level="CRITICAL")
-                    message.update({
-                        "status": "CRITICAL",
-                        "message": f"CRS Engine stderr: {line_str}",
-                    })
+                    message.update(
+                        {
+                            "status": "CRITICAL",
+                            "message": f"CRS Engine stderr: {line_str}",
+                        }
+                    )
 
             return message
         except (BrokenPipeError, OSError, ValueError):
