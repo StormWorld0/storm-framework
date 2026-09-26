@@ -42,19 +42,6 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 		mode = "socket" // Fallback primitive
 	}
 
-	if mode == "close" {
-		if req.SessionID != "" && req.CloseSess {
-			// Atomic LoadAndDelete menjamin keamanan antar Goroutine
-			if val, ok := utils.ActiveSessions.LoadAndDelete(req.SessionID); ok {
-				targetConn := val.(net.Conn)
-				targetConn.Close() // Membunuh socket yang BENAR, mencegah memory/socket leak
-				return packet.ResponsePacket{Status: "SUCCESS", Message: "Session closed"}
-			}
-			return packet.ResponsePacket{Status: "SUCCESS", Message: "No active session found to close"}
-		}
-		return packet.ResponsePacket{Status: "WARN", Message: "Incomplete data to close the connection"}
-	}
-
 	// Ambil Sesi Aktif (Jika Ada)
 	var conn net.Conn
 	var rawFD int = -1
@@ -74,6 +61,23 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 				return packet.ResponsePacket{Status: "ERROR", Message: "Corrupted session data"}
 			}
 		}
+	}
+
+	// Menutup semua koneksi yang di simpan
+	if mode == "close" {
+		if req.SessionID != "" && req.CloseSess {
+			if _, ok := utils.ActiveSessions.LoadAndDelete(req.SessionID); ok {
+                if conn != nil {
+                    conn.Close() // Tutup net.Conn
+				}
+                if rawFD != -1 {
+                    unix.Close(rawFD) // Tutup File Descriptor
+				}
+				return packet.ResponsePacket{Status: "SUCCESS", Message: "Session closed"}
+			}
+			return packet.ResponsePacket{Status: "WARN", Message: "No active session found to close"}
+		}
+		return packet.ResponsePacket{Status: "WARN", Message: "Incomplete data to close the connection"}
 	}
 
 	keepSession := false
@@ -131,11 +135,12 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
         
             l, err := net.ListenUnix("unix", addr)
             if err != nil {
-                return
+                return 
             }
             defer l.Close()
 
-            // Tunggu Python Accept) - akan otomatis mati/lepas kalau Go diclose
+			// Bunuh dalam 3 detik timeout!
+            l.SetDeadline(time.Now().Add(3 * time.Second))
             unxConn, err := l.AcceptUnix()
             if err != nil {
                 return
