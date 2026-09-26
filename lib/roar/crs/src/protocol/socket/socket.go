@@ -327,7 +327,7 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 			        keepSession = true
 		        }
 				return packet.ResponsePacket{
-					Status:  "ERROR",
+					Status:  "TIMEOUT",
 					Message: "Read failed: " + err.Error(),
 					Data:    generateMetadata(0),
 				}
