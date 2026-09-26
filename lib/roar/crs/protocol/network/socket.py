@@ -470,3 +470,7 @@ class Socket(SocketState):
     def __repr__(self):
         tls_state = "TLS" if self.is_tls else "TCP"
         return f"<Socket host='{self.host}:{self.port}' proto='{tls_state}' sessid='{self.sessid}' closed={self._is_closed}>"
+
+
+# ---- End ---- #
+socket = Socket()
