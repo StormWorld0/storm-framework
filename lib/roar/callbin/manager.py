@@ -1,11 +1,11 @@
 # -- https://github.com/StormWorld0/storm-framework
 # -- SMF License
 import os
+import smf
 import sqlite3
+
 from pathlib import Path
 from typing import Optional
-
-import smf
 from rootmap import ROOT
 
 _BASE_DIR = Path(ROOT).resolve()
