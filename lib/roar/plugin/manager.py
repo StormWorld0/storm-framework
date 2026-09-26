@@ -70,7 +70,9 @@ def load_module(plugin_name: str) -> bool:
     with _lock:
         plugin_path = resolve_plugin_path(plugin_name)
         if not plugin_path or not plugin_path.exists():
-            smf.printf(f"[!]{CC.YELLOW} Plugin not found on disk =>{CC.RESET}", plugin_name)
+            smf.printf(
+                f"[!]{CC.YELLOW} Plugin not found on disk =>{CC.RESET}", plugin_name
+            )
             return False
 
         try:
@@ -169,7 +171,9 @@ def load(plugin_name: str) -> bool:
         if success:
             ACTIVE_PLUGINS.add(plugin_name)
             _store.add_plugin(plugin_name)
-            smf.printf(f"[✓]{CC.GREEN} Plugin loaded successfully =>{CC.RESET}", plugin_name)
+            smf.printf(
+                f"[✓]{CC.GREEN} Plugin loaded successfully =>{CC.RESET}", plugin_name
+            )
         return success
 
 
@@ -200,7 +204,9 @@ def unload(plugin_name: str) -> bool:
             # Call the Garbage Collector
             gc.collect()
 
-            smf.printf(f"[✓]{CC.GREEN} Plugin unloaded completely =>{CC.RESET}", plugin_name)
+            smf.printf(
+                f"[✓]{CC.GREEN} Plugin unloaded completely =>{CC.RESET}", plugin_name
+            )
             return True
         except Exception as e:
             smf.printd(f"Failed to unload plugin {plugin_name}", e, level="CRITICAL")
