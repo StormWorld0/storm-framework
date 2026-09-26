@@ -9,6 +9,7 @@ from pathlib import Path
 from apps.utility.verify import run_verif, check_critical_files
 from apps.utility.spin import SpinBoot
 
+from lib.roar.crs import CRS
 from lib.roar.plugin_api import plugin
 from lib.roar.cache import cache_modules as cache
 from lib.roar.callbin import manager
@@ -24,6 +25,12 @@ def boot():
             # Check core startup security
             smf.printd("System synchronization is running", level="INFO")
             check_critical_files()
+
+            # Connection Runtime Service Daemon
+            smf.printd("Connection Runtime Service Daemon turned on", level="INFO")
+            proc = CRS._turn_on_process()
+            if not proc:
+                smf.printd("Failed to start Connection Runtime Service Daemon", level="WARN")
 
             # Plugin Daemon Service Manager
             smf.printd("Plugin daemon service is running", level="INFO")
