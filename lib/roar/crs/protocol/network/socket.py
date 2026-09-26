@@ -449,7 +449,7 @@ class Socket(SocketState):
 
     def close(self) -> SocketResponse:
         if self._is_closed:
-            return {"status": "already_closed", "session_id": self.sessid}
+            return SocketResponse({"status": "already_closed", "session_id": self.sessid, "data": {}})
 
         packet = IPCPayloadBuilder.build(state=self, mode="close", close_session=True)
         resp = CRS.send(packet)
