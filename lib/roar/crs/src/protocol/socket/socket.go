@@ -122,16 +122,45 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 		if err != nil {
 			return packet.ResponsePacket{Status: "ERROR", Message: "Failed to create socket: " + err.Error()}
 		}
+
+		udsPath := fmt.Sprintf("@storm_fd_%s", req.MsgID)
+
+		go func(fdInt int, path string) {
+            realPath := strings.Replace(path, "@", "\x00", 1)
+            addr, _ := net.ResolveUnixAddr("unix", realPath)
+        
+            l, err := net.ListenUnix("unix", addr)
+            if err != nil {
+                return
+            }
+            defer l.Close()
+
+            // Tunggu Python Accept) - akan otomatis mati/lepas kalau Go diclose
+            unxConn, err := l.AcceptUnix()
+            if err != nil {
+                return
+            }
+            defer unxConn.Close()
+
+            // Serahkan FD dengan SCM_RIGHTS
+            rawConn, _ := unxConn.SyscallConn()
+            rawConn.Control(func(sysFd uintptr) {
+                rights := unix.UnixRights(fdInt)
+                // Kirim 1 byte dummy ("F") beserta hak akses FD-nya
+                unix.Sendmsg(int(sysFd), []byte("F"), rights, nil, 0)
+            })
+        }(fd, udsPath)
 		
 		// Koneksi sudah terbuka di fase Auto-Dial. 
 		if req.SessionID != "" && req.KeepAlive {
 			utils.ActiveSessions.Store(req.SessionID, fd)
 			keepSession = true
 		}
+		
 		return packet.ResponsePacket{
 			Status: "SUCCESS", 
 			Data: map[string]interface{}{
-				"fileno": fd,
+				"uds_path": udsPath,
 			},
 		}
 
@@ -144,7 +173,7 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 			 return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found for this session. Call 'socket' primitive first."} 
 		}
 
-		// 2. Resolve DNS & Siapkan Address (syscall.Connect butuh raw IP, bukan string)
+		// Resolve DNS & Siapkan Address (syscall.Connect butuh raw IP, bukan string)
 		addr, err := BuildTarget(req) // format: "host:port"
 		if err != nil {
             return packet.ResponsePacket{Status: "ERROR", Message: "Build target failed: " + err.Error()}
