@@ -6,12 +6,13 @@
 
 import smf
 import ctypes
-import socket
 import fcntl
 import struct
 
-# --- Struct Definition for Syscalls ---
+from lib.roar.crs.protocol import Socket
 
+
+# --- Struct Definition for Syscalls ---
 
 class Statfs(ctypes.Structure):
     _fields_ = [
@@ -92,16 +93,17 @@ def is_docker() -> bool:
     # Unprivileged: Reading MAC address (SIOCGIFHWADDR) does not require CAP_NET_ADMIN,
     # just need open() access to a regular socket.
     def get_mac_address_ioctl(ifname: str) -> str:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock = Socket()
+        s = sock.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
             info = fcntl.ioctl(
-                s.fileno(), 0x8927, struct.pack("256s", bytes(ifname, "utf-8")[:15])
+                s.fileno, 0x8927, struct.pack("256s", bytes(ifname, "utf-8")[:15])
             )
             return ":".join("%02x" % b for b in info[18:24])
         except Exception:
             return ""
         finally:
-            s.close()
+            sock.close()
 
     eth0_mac = get_mac_address_ioctl("eth0")
     if eth0_mac.startswith("02:42"):
