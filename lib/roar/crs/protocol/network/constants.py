@@ -1,10 +1,11 @@
 class ConstantsMix:
     """Address Family"""
+
     AF_INET = "2"
     AF_INET6 = "10"
     AF_UNIX = "1"
     AF_UNSPEC = "0"
-    
+
     """Sock Type"""
     SOCK_STREAM = "1"
     SOCK_DGRAM = "2"
