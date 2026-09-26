@@ -217,6 +217,29 @@ sock.close()
 ```
 **Description:** This is used to close the connection when it is finished or when an error occurs, so that the connection does not hang and to avoid OOM.
 
+**9. Argument Socket**
+```python
+sock.AF_INET
+sock.AF_INET6
+sock.AF_UNIX
+sock.AF_UNSPEC
+```
+```python
+sock.SOCK_STREAM
+sock.SOCK_DGRAM
+sock.SOCK_RAW
+sock.SOCK_SEQPACKET
+```
+```python
+sock.IPPROTO_IP
+sock.IPPROTO_ICMP
+sock.IPPROTO_TCP
+sock.IPPROTO_UDP
+sock.IPPROTO_RAW
+```
+**Usage:** `sock.socket(sock.AF_INET, sock.SOCK_STREAM, sock.IPPROTO_IP)`  
+**Description:** For RAW users, you can create manual SYN, ACK, etc. handshakes independently, because CRS only bridges communication with the kernel.
+
 ---
 
 ### ☎️ DNS
@@ -381,6 +404,14 @@ sock.close()
 
 # Timeout function
 sock.timeout(value)
+
+# Create a tcp stream connection
+sock.create_connection(host, port, timeout)
+
+# socket argument function
+sock.AF_*
+sock.SOCK_*
+sock.IPPROTO_*
 ```
 
 - **Response**
