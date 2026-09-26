@@ -39,7 +39,8 @@ def execute(options, net):
             b"\r\n"
         )
 
-        result = sock.send(data, timeout=1.0)
+        sock.timeout(1.0)
+        result = sock.send(data)
 
         if not result.ok:
             smf.printd("Send failed", result, level="ERROR")
