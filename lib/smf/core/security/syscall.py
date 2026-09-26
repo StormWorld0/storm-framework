@@ -93,7 +93,7 @@ def is_docker() -> bool:
     # Unprivileged: Reading MAC address (SIOCGIFHWADDR) does not require CAP_NET_ADMIN,
     # just need open() access to a regular socket.
     def get_mac_address_ioctl(ifname: str) -> str:
-        sock = Socket
+        sock = Socket()
         s = sock.socket(sock.AF_INET, sock.SOCK_DGRAM)
         try:
             info = fcntl.ioctl(
