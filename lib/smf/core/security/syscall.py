@@ -11,8 +11,8 @@ import struct
 
 from lib.roar.crs.protocol import Socket
 
-
 # --- Struct Definition for Syscalls ---
+
 
 class Statfs(ctypes.Structure):
     _fields_ = [
