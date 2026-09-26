@@ -401,7 +401,8 @@ class Socket(SocketState):
         self._ensure_open("uptls")
         if self.is_tls:
             smf.printd("The connection is already using TLS", level="WARN")
-            return {"status": "WARN", "message": "Already TLS"}
+            return SocketResponse({"status": "WARN", "message": "Already TLS", "data": {}})
+
 
         packet = IPCPayloadBuilder.build(
             state=self,
@@ -470,7 +471,3 @@ class Socket(SocketState):
     def __repr__(self):
         tls_state = "TLS" if self.is_tls else "TCP"
         return f"<Socket host='{self.host}:{self.port}' proto='{tls_state}' sessid='{self.sessid}' closed={self._is_closed}>"
-
-
-# ---- End ---- #
-socket = Socket()
