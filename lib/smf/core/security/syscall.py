@@ -94,7 +94,7 @@ def is_docker() -> bool:
     # just need open() access to a regular socket.
     def get_mac_address_ioctl(ifname: str) -> str:
         sock = Socket()
-        s = sock.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s = sock.socket("AF_INET", "SOCK_DGRAM")
         try:
             info = fcntl.ioctl(
                 s.fileno, 0x8927, struct.pack("256s", bytes(ifname, "utf-8")[:15])
