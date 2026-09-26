@@ -8,13 +8,13 @@ import (
 // ParseAF menerjemahkan string Address Family menjadi konstanta unix (int)
 func ParseAF(af string) int {
 	switch strings.ToUpper(af) {
-	case "AF_INET":
+	case "AF_INET", "2":
 		return unix.AF_INET
-	case "AF_INET6":
+	case "AF_INET6", "10":
 		return unix.AF_INET6
-	case "AF_UNIX":
+	case "AF_UNIX", "1":
 		return unix.AF_UNIX
-	case "AF_UNSPEC":
+	case "AF_UNSPEC", "0":
 		return unix.AF_UNSPEC
 	default:
 		// Default fallback yang wajar untuk arsitektur jaringan saat ini
@@ -25,13 +25,13 @@ func ParseAF(af string) int {
 // ParseSockType menerjemahkan string Socket Type menjadi konstanta unix (int)
 func ParseSockType(stype string) int {
 	switch strings.ToUpper(stype) {
-	case "SOCK_STREAM":
+	case "SOCK_STREAM", "1":
 		return unix.SOCK_STREAM
-	case "SOCK_DGRAM":
+	case "SOCK_DGRAM", "2":
 		return unix.SOCK_DGRAM
-	case "SOCK_RAW":
+	case "SOCK_RAW", "3":
 		return unix.SOCK_RAW
-	case "SOCK_SEQPACKET":
+	case "SOCK_SEQPACKET", "5":
 		return unix.SOCK_SEQPACKET
 	default:
 		return unix.SOCK_STREAM // Default fallback
