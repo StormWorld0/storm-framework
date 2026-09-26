@@ -28,7 +28,7 @@ class CRS:
     _stderr_thread = None
 
     @classmethod
-    def _turn_on_process_crs(cls):
+    def _turn_on_process(cls):
         # 1st Check (Fast path tanpa antre)
         if cls._process is not None and cls._process.poll() is None:
             return cls._process
@@ -146,7 +146,7 @@ class CRS:
 
     @classmethod
     def send(cls, data: dict) -> dict:
-        proc = cls._turn_on_process_crs()
+        proc = cls._turn_on_process()
         if not proc:
             return {"status": "ERROR", "message": "Engine binary not running"}
 
