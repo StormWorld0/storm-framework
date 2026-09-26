@@ -30,7 +30,9 @@ def boot():
             smf.printd("Connection Runtime Service Daemon turned on", level="INFO")
             proc = CRS._turn_on_process()
             if not proc:
-                smf.printd("Failed to start Connection Runtime Service Daemon", level="WARN")
+                smf.printd(
+                    "Failed to start Connection Runtime Service Daemon", level="WARN"
+                )
 
             # Plugin Daemon Service Manager
             smf.printd("Plugin daemon service is running", level="INFO")
