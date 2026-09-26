@@ -137,7 +137,7 @@ class IPCPayloadBuilder:
             "ratelimit": ratelimit if ratelimit is not None else state.ratelimit,
             "session_id": state.sessid,
             "keep-alive": state.keepalive,
-            "close_session": close_session,
+            "close-session": close_session,
             "mode": mode if mode is not None else state.mode,
             "verify": verify if verify is not None else state.verify,
             "info_tls": infotls if infotls is not None else state.infotls,
