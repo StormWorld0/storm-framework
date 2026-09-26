@@ -8,6 +8,7 @@ import base64
 
 from typing import Dict, Any, Optional
 from apps.utility.colors import CC
+from .constants import ConstantsMix
 from ...transport import CRS
 
 
@@ -295,7 +296,7 @@ class SocketResponse:
         return f"<SocketResponse Status={self.status} Read={self.read_bytes}b RTT={self.rtt_ms}ms>"
 
 
-class Socket(SocketState):
+class Socket(SocketState, ConstantsMix):
     """
     Domain 3: Facade Antarmuka Eksternal.
     Mewarisi SocketState untuk mempertahankan kompatibilitas atribut (Backward Compatibility).
