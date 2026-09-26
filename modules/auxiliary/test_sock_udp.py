@@ -49,7 +49,7 @@ def execute(options, net):
     sock = net.Socket()
 
     try:
-        result = sock.socket("AF_INET", "SOCK_DGRAM", "17")
+        result = sock.socket(sock.AF_INET, sock.SOCK_DGRAM, sock.IPPROTO_UDP)
 
         if not result.ok:
             smf.printd("Socket creation failed", result, level="ERROR")
