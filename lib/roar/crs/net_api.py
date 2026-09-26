@@ -3,7 +3,7 @@ from .protocol import (
     requests as DNSL,
     ipwhois as IPWhois,
     domwhois as DWhois,
-    socket as Socket,
+    Socket,
     TelnetClient as Telnet,
 )
 
