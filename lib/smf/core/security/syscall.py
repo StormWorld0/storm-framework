@@ -9,7 +9,7 @@ import ctypes
 import fcntl
 import struct
 
-from lib.roar.crs.protocol import socket
+from lib.roar.crs.protocol import Socket
 
 # --- Struct Definition for Syscalls ---
 
@@ -93,7 +93,8 @@ def is_docker() -> bool:
     # Unprivileged: Reading MAC address (SIOCGIFHWADDR) does not require CAP_NET_ADMIN,
     # just need open() access to a regular socket.
     def get_mac_address_ioctl(ifname: str) -> str:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock = Socket
+        s = sock.socket(sock.AF_INET, sock.SOCK_DGRAM)
         try:
             info = fcntl.ioctl(
                 s.fileno, 0x8927, struct.pack("256s", bytes(ifname, "utf-8")[:15])
