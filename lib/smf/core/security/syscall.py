@@ -10,7 +10,6 @@ import fcntl
 import struct
 
 from lib.roar.crs.protocol import Socket
-from lib.pid_manager import PIDManager as pid
 
 # --- Struct Definition for Syscalls ---
 
@@ -105,7 +104,6 @@ def is_docker() -> bool:
             return ""
         finally:
             sock.close()
-            pid.cleanup(1.0)
 
     eth0_mac = get_mac_address_ioctl("eth0")
     if eth0_mac.startswith("02:42"):
