@@ -108,8 +108,8 @@ def execute(options, net):
     port = options.get("PORT")
 
     sock = net.Socket()
-    resp = sock.socket(AF_INET, SOCK_STREAM, IPPROTO_IP) # Open Socket
-    smf.printf(resp.fileno) # Print File-Decryptor (FD)
+    res = sock.socket(sock.AF_INET, sock.SOCK_STREAM, sock.IPPROTO_IP) # Open Socket
+    smf.printf(res.fileno) # Print File-Decryptor (FD)
 
     sock.timeout(2.0) # Set global timeout
     sock.connect(host, port) # Connected to Socket
