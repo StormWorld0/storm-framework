@@ -8,7 +8,10 @@ import base64
 
 from typing import Dict, Any, Optional
 from apps.utility.colors import CC
+
 from .constants import ConstantsMix
+from .utils_fd import real_fd
+
 from ...transport import CRS
 
 
@@ -215,7 +218,11 @@ class SocketResponse:
     @property
     def fileno(self) -> int:
         """Mengembalikan respons FD (File-Descriptor) dari Open Socket."""
-        return self._data.get("fileno", 0)
+        if not (uds := self._data.get("uds_path")):
+            return -1
+
+        fd = real_fd(uds)
+        return fd
 
     @property
     def raw_bytes(self) -> bytes:
