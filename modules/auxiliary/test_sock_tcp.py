@@ -21,7 +21,7 @@ def execute(options, net):
     sock = net.Socket()
 
     try:
-        result = sock.socket("AF_INET", "SOCK_STREAM")
+        result = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
 
         if result.ok:
             smf.printf("Socket created:", result.fileno)
