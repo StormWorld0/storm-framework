@@ -23,7 +23,7 @@ class Socket(SocketState, ConstantsMix):
         self,
         addrf: str | int,
         stype: str | int,
-        sproto: str | int = 0,
+        sproto: str | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Open Socket"""
@@ -47,7 +47,7 @@ class Socket(SocketState, ConstantsMix):
         self,
         level: str | int,
         name: str | int,
-        value: int = 0,
+        value: int = None,
         **kwargs,
     ) -> SocketResponse:
         """Socket Options Configuration"""
