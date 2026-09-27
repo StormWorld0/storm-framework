@@ -276,12 +276,22 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 			return packet.ResponsePacket{Status: "ERROR", Message: "Bind failed: " + err.Error()}
 		}
 
+		localAddr, err := unix.Getsockname(rawFD)
+		if err != nil {
+			return packet.ResponsePacket{Status: "ERROR", Message: "Failed to see local addr & port: " + err.Error()}
+		}
+
 		if req.SessionID != "" && req.KeepAlive {
 			utils.ActiveSessions.Store(req.SessionID, rawFD)
 			keepSession = true
 		}
 		
-		return packet.ResponsePacket{Status: "SUCCESS", Data: map[string]interface{}{"bound_to": addr}}
+		return packet.ResponsePacket{
+			Status: "SUCCESS", 
+			Data: map[string]interface{}{
+				"local_ip": localAddr
+			}
+		}
 
 	case "listen":
 		if rawFD == -1 {
