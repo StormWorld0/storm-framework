@@ -22,7 +22,7 @@ type ExecutionContext struct {
 	KeepSession bool
 }
 
-func NewSessionContext(req packet.RequestPacket) *ExecutionContext {
+func NewExecutionContext(req packet.RequestPacket) *ExecutionContext {
 	timeout := 5 * time.Second
 	if req.Timeout > 0 {
 		timeout = time.Duration(req.Timeout * float64(time.Second))
@@ -46,6 +46,7 @@ func (ctx *ExecutionContext) LoadSessionState() error {
 	if ctx.Req.SessionID == "" {
 		return nil
 	}
+
 	val, ok := utils.ActiveSessions.Load(ctx.Req.SessionID)
 	if !ok {
 		return nil
