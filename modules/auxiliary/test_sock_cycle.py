@@ -15,7 +15,7 @@ REQUIRED_OPTIONS = {"HOST": ""}
 
 
 def execute(options, net):
-    host = options.get("HOST", "127.0.0.1")
+    host = options.get("HOST")
 
     sock = net.Socket()
 
@@ -24,7 +24,6 @@ def execute(options, net):
         resp = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
         if resp.ok:
             smf.printf("[*] File Descriptor =>", resp.fileno)
-            return
 
         # Set SockOpt (SO_REUSEADDR)
         resp = sock.setsockopt(sock.SOL_SOCKET, sock.SO_REUSEADDR, 1)
