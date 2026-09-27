@@ -29,7 +29,7 @@ type RequestPacket struct {
 	// Standard parameters
 	Host          string            `json:"host,omitempty"`      // URL / IP / Domain
 	Ip            string            `json:"ip,omitempty"`        // 127.0.0.1
-	Port          int               `json:"port,omitempty"`      // PORT 1 - 65535
+	Port          *int              `json:"port,omitempty"`      // PORT 1 - 65535
 	
 	// General parameters
 	Timeout       float64           `json:"timeout,omitempty"`   // float / default
