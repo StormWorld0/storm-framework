@@ -50,7 +50,7 @@ class Socket(SocketState, ConstantsMix):
         value: int = 0,
         **kwargs,
     ) -> SocketResponse:
-        """"""
+        """Socket Options Configuration"""
         self._ensure_open("setsockopt")
         packet = IPCPayloadBuilder.build(
             state=self,
