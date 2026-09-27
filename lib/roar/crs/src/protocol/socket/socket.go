@@ -126,7 +126,7 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 	case "socket":
 		afInt := ParseAF(req.AF)               // req.AF adalah string, misal "AF_INET"
 		sInt := ParseSockType(req.SType)       // req.SType adalah string, misal "SOCK_STREAM"
-		protoInt := ParseProtocol(req.Protocol) // req.Protocol adalah string, misal "IPPROTO_TCP"
+		protoInt := ParseProtocol(req.SProto)  // req.Protocol adalah string, misal "IPPROTO_TCP"
 		
 		fd, err := unix.Socket(afInt, sInt, protoInt)
 		if err != nil {
