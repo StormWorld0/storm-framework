@@ -1,4 +1,6 @@
 import smf
+import uuid
+import base64
 
 from apps.utility.colors import CC
 
