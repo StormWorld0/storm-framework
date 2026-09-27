@@ -83,11 +83,17 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 	keepSession := false
 	defer func() {
 		// Socket HANYA ditutup jika:
-		// 1. keepSession bernilai false (terjadi error/bukan keep-alive)
-		// 2. socket tidak nil
-		if !keepSession && conn != nil {
-			conn.Close()
-			// Jika terjadi error di tengah jalan, pastikan Session dihapus dari map
+		// 1. keepSession bernilai false
+		// 2. socket tidak nil / rawFD ada
+		if !keepSession {
+			// Clean up state 2 (Golang abstraction)
+			if conn != nil {
+				conn.Close()
+			} else if rawFD != -1 {
+				// Clean up state 1 (OS Raw FD)
+				unix.Close(rawFD)
+			}
+			// Jika terjadi error di tengah jalan maka hapus sessions
 			if req.SessionID != "" {
 				utils.ActiveSessions.Delete(req.SessionID)
 			}
@@ -169,6 +175,195 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 			},
 		}
 
+	case "setsockopt":
+		if req.SessionID == "" {
+			return packet.ResponsePacket{Status: "ERROR", Message: "SessionID is required for setsockopt"}
+		}
+
+		// Resolusi File Descriptor (FD) secara dinamis
+		var targetFD int = -1
+		
+		if rawFD != -1 {
+			// State 1: Socket masih berupa raw POSIX FD (misal setelah primitif 'socket' / 'accept')
+			targetFD = rawFD
+		} else if conn != nil {
+			// State 2: Socket sudah dibungkus net.Conn (Golang abstraction)
+			// Lakukan type assertion ke interface SyscallConn untuk bypass abstraksi
+			if sc, ok := conn.(interface{ SyscallConn() (syscall.RawConn, error) }); ok {
+				raw, err := sc.SyscallConn()
+				if err != nil {
+					return packet.ResponsePacket{Status: "ERROR", Message: "Failed to get SyscallConn: " + err.Error()}
+				}
+				
+				// .Control() menjeda epoll/kqueue Golang sesaat agar manipulasi FD aman dari race condition
+				err = raw.Control(func(fd uintptr) {
+					targetFD = int(fd)
+				})
+				if err != nil {
+					return packet.ResponsePacket{Status: "ERROR", Message: "FD Control failed: " + err.Error()}
+				}
+			}
+		}
+
+		if targetFD == -1 {
+			return packet.ResponsePacket{Status: "ERROR", Message: "Could not obtain raw FD for setsockopt. Invalid socket state."}
+		}
+
+		// Parsing Parameter Option
+		level := ParseOptLevel(req.OptLevel)
+		optName := ParseOptName(req.OptName)
+		optVal := int(req.OptVal)
+
+		// Eksekusi Syscall
+		if err := unix.SetsockoptInt(targetFD, level, optName, optVal); err != nil {
+			return packet.ResponsePacket{Status: "ERROR", Message: "Setsockopt failed: " + err.Error()}
+		}
+
+		// Pertahankan referensi sesi
+		if req.SessionID != "" && req.KeepAlive {
+			keepSession = true 
+		}
+
+		return packet.ResponsePacket{
+			Status: "SUCCESS", 
+			Data: map[string]interface{}{
+				"target_fd": targetFD,
+				"level":     level,
+				"opt_name":  optName,
+				"opt_val":   optVal,
+			},
+		}
+
+	case "bind":
+		if req.SessionID == "" {
+			return packet.ResponsePacket{Status: "ERROR", Message: "SessionID is required for bind"}
+		}
+		if rawFD == -1 {
+			return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found. Call 'socket' primitive first."}
+		}
+
+		addr, err := BuildTarget(req)
+		if err != nil {
+			return packet.ResponsePacket{Status: "ERROR", Message: "Build target failed: " + err.Error()}
+		}
+
+		host, portStr, err := net.SplitHostPort(addr)
+		if err != nil {
+			host = addr
+			portStr = "0"
+		}
+		
+		port, _ := strconv.Atoi(portStr)
+		ips, err := net.LookupIP(host)
+		if err != nil || len(ips) == 0 {
+			return packet.ResponsePacket{Status: "ERROR", Message: "DNS Resolution failed: " + host}
+		}
+
+		afInt := ParseAF(req.AF)
+		var sockAddr unix.Sockaddr
+		if afInt == unix.AF_INET6 {
+			var addr16 [16]byte
+			copy(addr16[:], ips[0].To16())
+			sockAddr = &unix.SockaddrInet6{Port: port, Addr: addr16}
+		} else {
+			var addr4 [4]byte
+			copy(addr4[:], ips[0].To4())
+			sockAddr = &unix.SockaddrInet4{Port: port, Addr: addr4}
+		}
+
+		if err := unix.Bind(rawFD, sockAddr); err != nil {
+			return packet.ResponsePacket{Status: "ERROR", Message: "Bind failed: " + err.Error()}
+		}
+
+		if req.SessionID != "" && req.KeepAlive {
+			utils.ActiveSessions.Store(req.SessionID, rawFD)
+			keepSession = true
+		}
+		
+		return packet.ResponsePacket{Status: "SUCCESS", Data: map[string]interface{}{"bound_to": addr}}
+
+	case "listen":
+		if rawFD == -1 {
+			return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found for listen."}
+		}
+
+		// Backlog mendefinisikan panjang antrean koneksi. Di-override dari req.ReadSize atau default 128 (SOMAXCONN)
+		backlog := 128
+		if req.ReadSize > 0 {
+			backlog = int(req.ReadSize)
+		}
+
+		if err := unix.Listen(rawFD, backlog); err != nil {
+			return packet.ResponsePacket{Status: "ERROR", Message: "Listen failed: " + err.Error()}
+		}
+
+		if req.SessionID != "" && req.KeepAlive {
+			utils.ActiveSessions.Store(req.SessionID, rawFD)
+			keepSession = true
+		}
+		
+		return packet.ResponsePacket{Status: "SUCCESS", Data: map[string]interface{}{"backlog": backlog}}
+
+	case "accept":
+		if rawFD == -1 {
+			return packet.ResponsePacket{Status: "ERROR", Message: "No raw listener socket (FD) found."}
+		}
+
+		// Inject SO_RCVTIMEO di OS-level untuk accept(). 
+		// Menghindari goroutine leak yang diakibatkan oleh blocking syscall unix.Accept.
+		tv := unix.NsecToTimeval(timeout.Nanoseconds())
+		unix.SetsockoptTimeval(rawFD, unix.SOL_SOCKET, unix.SO_RCVTIMEO, &tv)
+
+		nFD, sa, err := unix.Accept(rawFD)
+		if err != nil {
+			if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
+				return packet.ResponsePacket{Status: "TIMEOUT", Message: "Accept timeout expired. No incoming connections."}
+			}
+			return packet.ResponsePacket{Status: "ERROR", Message: "Accept failed: " + err.Error()}
+		}
+
+		// Kembalikan FD baru ke Non-Blocking mode (Wajib untuk runtime epoll/kqueue Golang net.Conn)
+		if err := unix.SetNonblock(nFD, true); err != nil {
+			unix.Close(nFD)
+			return packet.ResponsePacket{Status: "ERROR", Message: "Failed to set non-blocking on accepted socket: " + err.Error()}
+		}
+
+		// Bungkus accepted FD menjadi os.File
+		file := os.NewFile(uintptr(nFD), fmt.Sprintf("socket_accepted_%d", nFD))
+
+		// Ubah os.File menjadi net.conn
+		rawConn, err := net.FileConn(file)
+		if err != nil {
+			unix.Close(nFD)
+			file.Close()
+			return packet.ResponsePacket{Status: "ERROR", Message: "Failed to wrap accepted net.Conn: " + err.Error()}
+		}
+
+		// File asli ditutup karena net.FileConn otomatis membuat dup() (duplikat FD)
+		file.Close()
+		conn = rawConn
+
+		if req.SessionID != "" && req.KeepAlive {
+			utils.ActiveSessions.Store(req.SessionID, conn)
+			keepSession = true
+		}
+
+		meta := generateMetadata(0)
+		
+		// Parse Remote IP
+		var acceptedFrom string
+		switch saddr := sa.(type) {
+		case *unix.SockaddrInet4:
+			acceptedFrom = fmt.Sprintf("%d.%d.%d.%d:%d", saddr.Addr[0], saddr.Addr[1], saddr.Addr[2], saddr.Addr[3], saddr.Port)
+		case *unix.SockaddrInet6:
+			acceptedFrom = fmt.Sprintf("[%x]:%d", saddr.Addr, saddr.Port)
+		}
+		if acceptedFrom != "" {
+			meta["remote_ip"] = acceptedFrom
+		}
+
+		return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
+
 	case "connect":
 		if req.SessionID == "" {
 			return packet.ResponsePacket{Status: "ERROR", Message: "SessionID is required for connect"}
@@ -237,7 +432,7 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 		}
 
 		// Bungkus FD menjadi os.File
-		file := os.NewFile(uintptr(rawFD), fmt.Sprintf("custom_socket_%d", rawFD))
+		file := os.NewFile(uintptr(rawFD), fmt.Sprintf("socket_connect_%d", rawFD))
 		
 		// Konversi os.File menjadi net.Conn
 		rawConn, err := net.FileConn(file)
@@ -252,8 +447,10 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 
 		// 4. Timpa isi Session dengan net.Conn yang baru
 		// Mulai dari detik ini, request send/recv/upgrade_tls akan mendeteksi `net.Conn` normal!
-		utils.ActiveSessions.Store(req.SessionID, conn)
-		keepSession = true 
+		if req.SessionID != "" && req.KeepAlive {
+		    utils.ActiveSessions.Store(req.SessionID, conn)
+		    keepSession = true
+		}
 
 		return packet.ResponsePacket{Status: "SUCCESS", Data: generateMetadata(0)}
 
