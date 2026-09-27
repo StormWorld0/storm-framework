@@ -1,142 +1,158 @@
 package socket
 
 import (
+	"fmt"
+	"strconv"
 	"strings"
+
 	"golang.org/x/sys/unix"
 )
 
-// ParseAF menerjemahkan string Address Family menjadi konstanta unix (int)
-func ParseAF(af int) int {
-	switch strings.ToUpper(af) {
-	case "AF_INET", 2:
-		return unix.AF_INET
-	case "AF_INET6", 10:
-		return unix.AF_INET6
-	case "AF_UNIX", 1:
-		return unix.AF_UNIX
-	case "AF_UNSPEC", 0:
-		return unix.AF_UNSPEC
-	default:
-		// Default fallback yang wajar untuk arsitektur jaringan saat ini
-		return unix.AF_INET 
+// Helper parser utama: Menerima int, float64 (dari JSON), atau string
+func parseConstant(input any, lookupMap map[string]int, defaultVal int) int {
+	if input == nil {
+		return defaultVal
 	}
+
+	switch v := input.(type) {
+	case int:
+		return v // Passthrough kalau pengguna kirim int
+	case float64:
+		return int(v) // Handling angka dari JSON Unmarshal
+	case string:
+		clean := strings.ToUpper(strings.TrimSpace(v))
+		if clean == "" {
+			return defaultVal
+		}
+
+		// 1. Cek dari mapping string ("AF_INET")
+		if val, exists := lookupMap[clean]; exists {
+			return val
+		}
+
+		// 2. Cek jika string berupa angka ("2")
+		if num, err := strconv.Atoi(clean); err == nil {
+			return num
+		}
+	}
+
+	return defaultVal
 }
 
-// ParseSockType menerjemahkan string Socket Type menjadi konstanta unix (int)
-func ParseSockType(stype string) int {
-	switch strings.ToUpper(stype) {
-	case "SOCK_STREAM", 1:
-		return unix.SOCK_STREAM
-	case "SOCK_DGRAM", 2:
-		return unix.SOCK_DGRAM
-	case "SOCK_RAW", 3:
-		return unix.SOCK_RAW
-	case "SOCK_SEQPACKET", 5:
-		return unix.SOCK_SEQPACKET
-	default:
-		return unix.SOCK_STREAM // Default fallback SOCK_STREAM
-	}
+// --- MAPPING TABLES ---
+
+var afMap = map[string]int{
+	"AF_INET":   unix.AF_INET,
+	"AF_INET6":  unix.AF_INET6,
+	"AF_UNIX":   unix.AF_UNIX,
+	"AF_UNSPEC": unix.AF_UNSPEC,
 }
 
-// ParseProtocol menerjemahkan string Protocol menjadi konstanta unix (int)
-func ParseProtocol(proto string) int {
-	switch strings.ToUpper(proto) {
-	case "IPPROTO_IP", "0":
-		return 0
-	case "IPPROTO_ICMP", "1":
-		return unix.IPPROTO_ICMP
-	case "IPPROTO_TCP", "6":
-		return unix.IPPROTO_TCP
-	case "IPPROTO_UDP", "17":
-		return unix.IPPROTO_UDP
-	case "IPPROTO_RAW", "255":
-		return unix.IPPROTO_RAW
-	default:
-		return 0 // Fallback ke IP (OS akan memilih default berdasarkan SockType)
-	}
+var sockTypeMap = map[string]int{
+	"SOCK_STREAM":    unix.SOCK_STREAM,
+	"SOCK_DGRAM":     unix.SOCK_DGRAM,
+	"SOCK_RAW":       unix.SOCK_RAW,
+	"SOCK_SEQPACKET": unix.SOCK_SEQPACKET,
 }
 
-func ParseOptLevel(level string) int {
-	switch strings.ToUpper(name) {
-	case "SOL_SOCKET":
-		return unix.SOL_SOCKET
-	case "IPPROTO_TCP", "6":
-		return unix.IPPROTO_TCP
-	case "IPPROTO_IP", "0":
-		return unix.IPPROTO_IP
-	case "IPPROTO_IPV6":
-		return unix.IPPROTO_IPV6
-	default:
-		return unix.SOL_SOCKET
-	}
+var protoMap = map[string]int{
+	"IPPROTO_IP":   unix.IPPROTO_IP,
+	"IPPROTO_ICMP": unix.IPPROTO_ICMP,
+	"IPPROTO_TCP":  unix.IPPROTO_TCP,
+	"IPPROTO_UDP":  unix.IPPROTO_UDP,
+	"IPPROTO_RAW":  unix.IPPROTO_RAW,
+	"IPPROTO_IPV6": unix.IPPROTO_IPV6,
 }
 
-func ParseOptName(name string) int {
-	switch strings.ToUpper(name) {
-	// SOL
-	case "SO_REUSEADDR":
-		return unix.SO_REUSEADDR
-	case "SO_REUSEPORT":
-		return unix.SO_REUSEPORT
-	case "SO_KEEPALIVE":
-		return unix.SO_KEEPALIVE
-	case "SO_BROADCAST":
-		return unix.SO_BROADCAST
-	case "SO_RCVBUF":
-		return unix.SO_RCVBUF
-	case "SO_SNDBUF":
-		return unix.SO_SNDBUF
-	case "SO_RCVTIMEO":
-		return unix.SO_RCVTIMEO
-	case "SO_SNDTIMEO":
-		return unix.SO_SNDTIMEO
-	case "SO_LINGER":
-		return unix.SO_LINGER
-	case "SO_BINDTODEVICE":
-		return unix.SO_BINDTODEVICE
-	case "SO_ERROR":
-		return unix.SO_ERROR
-	case "SO_TYPE":
-		return unix.SO_TYPE
-	case "SO_DONTROUTE":
-		return unix.SO_DONTROUTE
+var optLevelMap = map[string]int{
+	"SOL_SOCKET":   unix.SOL_SOCKET,
+	"IPPROTO_TCP":  unix.IPPROTO_TCP,
+	"IPPROTO_IP":   unix.IPPROTO_IP,
+	"IPPROTO_IPV6": unix.IPPROTO_IPV6,
+}
 
-	// TCP
-	case "TCP_NODELAY":
-		return unix.TCP_NODELAY
-	case "TCP_MAXSEG":
-		return unix.TCP_MAXSEG
-	case "TCP_KEEPIDLE":
-		return unix.TCP_KEEPIDLE
-	case "TCP_KEEPINTVL":
-		return unix.TCP_KEEPINTVL
-	case "TCP_KEEPCNT":
-		return unix.TCP_KEEPCNT
-	case "TCP_QUICKACK":
-		return unix.TCP_QUICKACK
-	case "TCP_FASTOPEN":
-		return unix.TCP_FASTOPEN
-	case "TCP_CONGESTION":
-		return unix.TCP_CONGESTION
+var optNameMap = map[string]int{
+	// SOL_SOCKET (Level 1)
+	"SO_DEBUG":                 unix.SO_DEBUG,
+	"SO_REUSEADDR":             unix.SO_REUSEADDR,
+	"SO_TYPE":                  unix.SO_TYPE,
+	"SO_ERROR":                 unix.SO_ERROR,
+	"SO_DONTROUTE":             unix.SO_DONTROUTE,
+	"SO_BROADCAST":             unix.SO_BROADCAST,
+	"SO_SNDBUF":                unix.SO_SNDBUF,
+	"SO_RCVBUF":                unix.SO_RCVBUF,
+	"SO_KEEPALIVE":             unix.SO_KEEPALIVE,
+	"SO_OOBINLINE":             unix.SO_OOBINLINE,
+	"SO_NO_CHECK":              unix.SO_NO_CHECK,
+	"SO_PRIORITY":              unix.SO_PRIORITY,
+	"SO_LINGER":                unix.SO_LINGER,
+	"SO_BSDCOMPAT":             unix.SO_BSDCOMPAT,
+	"SO_REUSEPORT":             unix.SO_REUSEPORT,
+	"SO_PASSCRED":              unix.SO_PASSCRED,
+	"SO_PEERCRED":              unix.SO_PEERCRED,
+	"SO_RCVLOWAT":              unix.SO_RCVLOWAT,
+	"SO_SNDLOWAT":              unix.SO_SNDLOWAT,
+	"SO_RCVTIMEO":              unix.SO_RCVTIMEO,
+	"SO_SNDTIMEO":              unix.SO_SNDTIMEO,
+	"SO_BINDTODEVICE":          unix.SO_BINDTODEVICE,
+	"SO_ATTACH_FILTER":         unix.SO_ATTACH_FILTER,
+	"SO_DETACH_FILTER":         unix.SO_DETACH_FILTER,
+	"SO_TIMESTAMP":             unix.SO_TIMESTAMP,
+	"SO_ACCEPTCONN":            unix.SO_ACCEPTCONN,
 
-	// IPV4
-	case "IP_TTL":
-		return unix.IP_TTL
-	case "IP_TOS":
-		return unix.IP_TOS
-	case "IP_HDRINCL":
-		return unix.IP_HDRINCL
-	case "IP_ADD_MEMBERSHIP":
-		return unix.IP_ADD_MEMBERSHIP
-	case "IP_DROP_MEMBERSHIP":
-		return unix.IP_DROP_MEMBERSHIP
+	// IPPROTO_TCP (Level 6)
+	"TCP_NODELAY":              unix.TCP_NODELAY,
+	"TCP_MAXSEG":               unix.TCP_MAXSEG,
+	"TCP_CORK":                 unix.TCP_CORK,
+	"TCP_KEEPIDLE":             unix.TCP_KEEPIDLE,
+	"TCP_KEEPINTVL":            unix.TCP_KEEPINTVL,
+	"TCP_KEEPCNT":              unix.TCP_KEEPCNT,
+	"TCP_SYNCNT":               unix.TCP_SYNCNT,
+	"TCP_LINGER2":              unix.TCP_LINGER2,
+	"TCP_DEFER_ACCEPT":         unix.TCP_DEFER_ACCEPT,
+	"TCP_WINDOW_CLAMP":         unix.TCP_WINDOW_CLAMP,
+	"TCP_INFO":                 unix.TCP_INFO,
+	"TCP_QUICKACK":             unix.TCP_QUICKACK,
+	"TCP_CONGESTION":           unix.TCP_CONGESTION,
+	"TCP_MD5SIG":               unix.TCP_MD5SIG,
+	"TCP_THIN_LINEAR_TIMEOUTS": unix.TCP_THIN_LINEAR_TIMEOUTS,
+	"TCP_THIN_DUPACK":          unix.TCP_THIN_DUPACK,
+	"TCP_USER_TIMEOUT":         unix.TCP_USER_TIMEOUT,
+	"TCP_REPAIR":               unix.TCP_REPAIR,
+	"TCP_FASTOPEN":             unix.TCP_FASTOPEN,
+	"TCP_TIMESTAMP":            unix.TCP_TIMESTAMP,
+	"TCP_NOTSENT_LOWAT":        unix.TCP_NOTSENT_LOWAT,
 
-	// IPV6
-	case "IPV6_V6ONLY":
-		return unix.IPV6_V6ONLY
-	case "IPV6_UNICAST_HOPS":
-		return unix.IPV6_UNICAST_HOPS
-	default:
-		return unix.SO_REUSEADDR
-	}
+	// IPPROTO_IP (Level 0)
+	"IP_TOS":                   unix.IP_TOS,
+	"IP_TTL":                   unix.IP_TTL,
+	"IP_HDRINCL":               unix.IP_HDRINCL,
+	"IP_ADD_MEMBERSHIP":        unix.IP_ADD_MEMBERSHIP,
+	"IP_DROP_MEMBERSHIP":       unix.IP_DROP_MEMBERSHIP,
+
+	// IPPROTO_IPV6 (Level 41)
+	"IPV6_UNICAST_HOPS":        unix.IPV6_UNICAST_HOPS,
+	"IPV6_V6ONLY":              unix.IPV6_V6ONLY,
+}
+
+// --- PUBLIC PARSER FUNCTIONS ---
+
+func ParseAF(af any) int {
+	return parseConstant(af, afMap, unix.AF_INET)
+}
+
+func ParseSockType(stype any) int {
+	return parseConstant(stype, sockTypeMap, unix.SOCK_STREAM)
+}
+
+func ParseProtocol(proto any) int {
+	return parseConstant(proto, protoMap, 0)
+}
+
+func ParseOptLevel(level any) int {
+	return parseConstant(level, optLevelMap, unix.SOL_SOCKET)
+}
+
+func ParseOptName(name any) int {
+	return parseConstant(name, optNameMap, unix.SO_REUSEADDR)
 }
