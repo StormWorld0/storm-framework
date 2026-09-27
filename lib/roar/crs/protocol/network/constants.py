@@ -26,7 +26,7 @@ class ConstantsMix:
     """OptLevel"""
     SOL_SOCKET = 1
     
-	"""OptName - SOL_SOCKET (Level 1)"""
+    """OptName - SOL_SOCKET (Level 1)"""
     SO_DEBUG = 1
     SO_REUSEADDR = 2
     SO_TYPE = 3
