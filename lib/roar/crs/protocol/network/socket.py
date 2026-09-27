@@ -73,7 +73,7 @@ class Socket(SocketState, ConstantsMix):
         port: int,
         **kwargs,
     ) -> SocketResponse:
-        """"""
+        """Binding local connection"""
         self._ensure_open("bind")
         packet = IPCPayloadBuilder.build(
             state=self,
@@ -94,7 +94,7 @@ class Socket(SocketState, ConstantsMix):
         readsize: int,
         **kwargs,
     ) -> SocketResponse:
-        """"""
+        """Waiting for incoming connection"""
         self._ensure_open("listen")
         packet = IPCPayloadBuilder.build(
             state=self,
@@ -113,7 +113,7 @@ class Socket(SocketState, ConstantsMix):
         self,
         **kwargs,
     ) -> SocketResponse:
-        """"""
+        """Retrieving Incoming Connections"""
         self._ensure_open("accept")
         packet = IPCPayloadBuilder.build(
             state=self,
@@ -155,6 +155,7 @@ class Socket(SocketState, ConstantsMix):
         timeout: float = None,
         **kwargs,
     ) -> SocketResponse:
+        """Sending data"""
         self._ensure_open("send")
         packet = IPCPayloadBuilder.build(
             state=self,
@@ -176,6 +177,7 @@ class Socket(SocketState, ConstantsMix):
         timeout: float = None,
         **kwargs,
     ) -> SocketResponse:
+        """Taking Buffer"""
         self._ensure_open("receive")
         packet = IPCPayloadBuilder.build(
             state=self,
@@ -199,6 +201,7 @@ class Socket(SocketState, ConstantsMix):
         verify: bool = False,
         **kwargs,
     ) -> SocketResponse:
+        """Upgrade connection to TLS/SSL"""
         self._ensure_open("uptls")
         if self.is_tls:
             smf.printd("The connection is already using TLS", level="WARN")
@@ -232,6 +235,7 @@ class Socket(SocketState, ConstantsMix):
         timeout: float = None,
         **kwargs,
     ) -> SocketResponse:
+        """Creating a TCP Stream connection"""
         self._ensure_open("create")
         packet = IPCPayloadBuilder.build(
             state=self,
@@ -249,6 +253,7 @@ class Socket(SocketState, ConstantsMix):
         return response
 
     def close(self) -> SocketResponse:
+        """Disconnecting"""
         if self._is_closed:
             return SocketResponse(
                 {"status": "already_closed", "session_id": self.sessid, "data": {}}
@@ -263,6 +268,7 @@ class Socket(SocketState, ConstantsMix):
         return response
 
     def timeout(self, value: float):
+        """Global Timeout"""
         self._timeout = value
         return self
 
