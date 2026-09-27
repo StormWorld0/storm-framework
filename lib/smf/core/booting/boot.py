@@ -26,25 +26,24 @@ def boot():
             smf.printd("System synchronization is running", level="INFO")
             check_critical_files()
 
+            # Cache Binary synchronization
+            if not manager.sync_bin():
+                smf.printd("Failed to synchronize Binary", level="ERROR")
+                raise
+
             # Connection Runtime Service Daemon
-            smf.printd("Connection Runtime Service Daemon turned on", level="INFO")
-            proc = CRS._turn_on_process()
-            if not proc:
+            if not CRS._turn_on_process():
                 smf.printd(
                     "Failed to start Connection Runtime Service Daemon", level="WARN"
                 )
 
             # Plugin Daemon Service Manager
-            smf.printd("Plugin daemon service is running", level="INFO")
-            plugin.boot()
+            if not plugin.boot():
+                smf.printd("Failed to activate Plugin Service", level="WARN")
 
             # Cache modules synchronization
-            smf.printd("Modules synchronization is running", level="INFO")
-            cache.sync_modules()
-
-            # Cache Binary synchronization
-            smf.printd("Binary synchronization is running", level="INFO")
-            manager.sync_bin()
+            if not cache.sync_modules():
+                smf.printd("Failed to synchronize Modules", level="WARN")
 
             # Enabling PostgreSQL workspace database runtime
             if (config_path := Path.home() / ".smf" / "database.yml").exists():
