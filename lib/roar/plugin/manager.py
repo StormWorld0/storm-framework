@@ -213,9 +213,13 @@ def unload(plugin_name: str) -> bool:
             return False
 
 
-def boot() -> None:
+def boot() -> bool:
     for p_name in tuple(ACTIVE_PLUGINS):
-        load_module(p_name)
+        mod = load_module(p_name)
+        
+    if mod is False:
+        return False
+    return True
 
 
 def get_plugin(plugin_name: str) -> Any:
