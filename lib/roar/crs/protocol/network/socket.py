@@ -21,9 +21,9 @@ class Socket(SocketState, ConstantsMix):
 
     def socket(
         self,
-        addrf: str,
-        stype: str,
-        proto: str = None,
+        addrf: int,
+        stype: int,
+        sproto: int = 0,
         **kwargs,
     ) -> SocketResponse:
         """Open Socket"""
@@ -32,8 +32,92 @@ class Socket(SocketState, ConstantsMix):
             state=self,
             addr_fam=addrf,
             stype=stype,
-            sproto=proto,
+            sproto=sproto,
             mode="socket",
+            infotls=False,
+            close_session=False,
+        )
+
+        resp = CRS.send(packet)
+        response = SocketResponse(resp)
+        response._trace()
+        return response
+
+    def setsockopt(
+        self,
+        level: int,
+        name: int,
+        value: int = 0,
+        **kwargs,
+    ) -> SocketResponse:
+        """"""
+        self._ensure_open("setsockopt")
+        packet = IPCPayloadBuilder.build(
+            state=self,
+            level=level,
+            name=name,
+            value=value,
+            mode="setsockopt",
+            infotls=False,
+            close_session=False,
+        )
+
+        resp = CRS.send(packet)
+        response = SocketResponse(resp)
+        response._trace()
+        return response
+
+    def bind(
+        self,
+        host: int,
+        port: int,
+        **kwargs,
+    ) -> SocketResponse:
+        """"""
+        self._ensure_open("bind")
+        packet = IPCPayloadBuilder.build(
+            state=self,
+            host=host,
+            port=port,
+            mode="bind",
+            infotls=False,
+            close_session=False,
+        )
+
+        resp = CRS.send(packet)
+        response = SocketResponse(resp)
+        response._trace()
+        return response
+
+    def listen(
+        self,
+        readsize: int,
+        **kwargs,
+    ) -> SocketResponse:
+        """"""
+        self._ensure_open("listen")
+        packet = IPCPayloadBuilder.build(
+            state=self,
+            readsize=readsize,
+            mode="listen",
+            infotls=False,
+            close_session=False,
+        )
+
+        resp = CRS.send(packet)
+        response = SocketResponse(resp)
+        response._trace()
+        return response
+
+    def accept(
+        self,
+        **kwargs,
+    ) -> SocketResponse:
+        """"""
+        self._ensure_open("accept")
+        packet = IPCPayloadBuilder.build(
+            state=self,
+            mode="accept",
             infotls=False,
             close_session=False,
         )
