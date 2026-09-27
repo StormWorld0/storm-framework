@@ -48,4 +48,3 @@ def execute(options, net):
         smf.printd("Connection error", e, level="ERROR")
     finally:
         sock.close()
-
