@@ -37,7 +37,6 @@ class SocketState:
     ):
         self.host = host
         self.port = int(port)
-        self.protocol = protocol
         self._timeout = float(timeout)
         self.readsize = int(readsize)
         self.ratelimit = int(ratelimit)
