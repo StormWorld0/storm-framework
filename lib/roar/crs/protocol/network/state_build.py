@@ -15,9 +15,12 @@ class SocketState:
         self,
         host: str = "",
         port: int = 0,
-        addr_fam: str = "",
-        stype: str = "",
-        protocol: str = "0",
+        addr_fam: int = 0,
+        stype: int = 0,
+        sproto: int = 0,
+        level: int = 0,
+        name: int = 0,
+        value: int = 0,
         timeout: float = 10.0,
         readsize: int = 0,
         ratelimit: int = 0,
@@ -42,9 +45,15 @@ class SocketState:
         self.mode = mode
         self.infotls = infotls
 
-        # AF_* and SOCK_*
-        self.addr_fam = str(addr_fam)
-        self.stype = str(stype)
+        # AF_* and SOCK_* and IPPROTO_*
+        self.af = int(addr_fam)
+        self.stype = int(stype)
+        self.sproto = int(sproto)
+
+        #
+        self.level = int(level)
+        self.name = int(name)
+        self.value = int(value)
 
         # Isolasi sesi Go IPC
         self.sessid = sessid if sessid else f"smf_sess_{uuid.uuid4().hex[:12]}"
@@ -86,8 +95,12 @@ class IPCPayloadBuilder:
         host: str = None,
         port: str = None,
         data: str | bytes = b"",
-        addr_fam: str = None,
-        stype: str = None,
+        addr_fam: int = None,
+        stype: int = None,
+        sproto: int = None,
+        level: int = None,
+        name: int = None,
+        value: int = None,
         infotls: bool = None,
         verify: bool = None,
         cert: str = None,
@@ -97,16 +110,14 @@ class IPCPayloadBuilder:
         timeout: float = None,
         ratelimit: int = None,
         mode: str = None,
-        protocol: str = None,
         close_session: bool = False,
     ) -> dict:
         # Mutasi state keamanan secara dinamis dari operasi spesifik
         if verify is not None:
             state.verify = verify
 
-        if protocol is not None:
-            if protocol.lower() in ["tls", "ssl"]:
-                state.is_tls = True
+        if addr_fam is not None:
+            state.addr_fam = addr_fam
 
         # Encoding muatan data
         data_str = ""
@@ -119,9 +130,12 @@ class IPCPayloadBuilder:
             "host": host if host is not None else state.host,
             "port": int(port) if port is not None else state.port,
             "data": data_str,
-            "addr-fam": str(addr_fam),
-            "stype": str(stype),
-            "protocol": str(protocol) if protocol is not None else state.protocol,
+            "addr-fam": int(addr_fam) if addr_fam is not None else state.af,
+            "stype": int(stype),
+            "sproto": int(sproto),
+            "level": int(level),
+            "name": int(name),
+            "value": int(value),
             "timeout": float(timeout) if timeout is not None else state._timeout,
             "readsize": readsize if readsize is not None else state.readsize,
             "ratelimit": ratelimit if ratelimit is not None else state.ratelimit,
