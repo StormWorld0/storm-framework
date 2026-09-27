@@ -3,17 +3,13 @@
 # -- Author zxelzy
 
 import smf
-import base64
 
-from typing import Dict, Any, Optional
 
 from .state_build import SocketState, IPCPayloadBuilder
 from .response import SocketResponse
 from .constants import ConstantsMix
-from .utils_fd import real_fd
 
 from ...transport import CRS
-
 
 
 class Socket(SocketState, ConstantsMix):
