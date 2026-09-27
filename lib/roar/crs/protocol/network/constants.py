@@ -2,8 +2,10 @@
 # -- License SMF
 # -- Author zxelzy
 
+
 class ConstantsMix:
     """Address Family"""
+
     AF_UNSPEC = 0
     AF_UNIX = 1
     AF_INET = 2
