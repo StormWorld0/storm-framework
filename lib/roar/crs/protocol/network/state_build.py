@@ -14,7 +14,7 @@ class SocketState:
     def __init__(
         self,
         host: str = "",
-        port: str | int = 0,
+        port: str | int = -1,
         addr_fam: str | int = "",
         stype: str | int = "",
         sproto: str | int = "",
@@ -127,7 +127,7 @@ class IPCPayloadBuilder:
         return {
             "primitive": "SOCKET_SEND",
             "host": host if host is not None else state.host,
-            "port": int(port) if port is not None else state.port,
+            "port": port if port is not None else state.port,
             "data": data_str,
             "addr-fam": addr_fam if addr_fam is not None else state.af,
             "stype": stype,
