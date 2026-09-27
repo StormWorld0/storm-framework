@@ -25,7 +25,7 @@ class ConstantsMix:
 
     """OptLevel"""
     SOL_SOCKET = 1
-    
+
     """OptName - SOL_SOCKET (Level 1)"""
     SO_DEBUG = 1
     SO_REUSEADDR = 2
@@ -67,7 +67,7 @@ class ConstantsMix:
     TCP_WINDOW_CLAMP = 10
     TCP_INFO = 11
     TCP_QUICKACK = 12
-	TCP_CONGESTION = 13
+    TCP_CONGESTION = 13
     TCP_MD5SIG = 14
     TCP_THIN_LINEAR_TIMEOUTS = 16
     TCP_THIN_DUPACK = 17
