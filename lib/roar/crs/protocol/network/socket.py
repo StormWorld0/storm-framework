@@ -32,7 +32,7 @@ class Socket(SocketState, ConstantsMix):
             state=self,
             addr_fam=addrf,
             stype=stype,
-            protocol=proto,
+            sproto=proto,
             mode="socket",
             infotls=False,
             close_session=False,
