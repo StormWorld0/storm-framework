@@ -176,7 +176,7 @@ class StormSmartCache:
         except Exception as e:
             smf.printd(f"Error scanning directory: {directory}", e, level="ERROR")
 
-    def sync_modules(self) -> None:
+    def sync_modules(self) -> bool | None:
         smf.printd("Starting module synchronization routine", level="INFO")
         try:
             self.cursor.execute("SELECT path, mtime FROM module_cache")
@@ -205,9 +205,11 @@ class StormSmartCache:
                         )
             else:
                 smf.printd("No drift detected. Sync skipped.", level="INFO")
+
+            return True
         except Exception as e:
             smf.printd("Fatal error during sync", e, level="ERROR")
-            raise
+            return None
 
 
 # Global register untuk sync saat booting
