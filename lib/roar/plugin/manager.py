@@ -213,14 +213,14 @@ def unload(plugin_name: str) -> bool:
             return False
 
 
-def boot() -> bool:
+def boot() -> bool | None:
     smf.printd("Plugin service is running", level="INFO")
     try:
         for p_name in tuple(ACTIVE_PLUGINS):
             load_module(p_name)
         return True
     except Exception:
-        return False
+        return None
 
 
 def get_plugin(plugin_name: str) -> Any:
