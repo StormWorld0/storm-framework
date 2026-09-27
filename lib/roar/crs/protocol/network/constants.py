@@ -89,4 +89,3 @@ class ConstantsMix:
     """OptName - IPPROTO_IPV6 (Level 41)"""
     IPV6_UNICAST_HOPS = "IPV6_UNICAST_HOPS"
     IPV6_V6ONLY = "IPV6_V6ONLY"
-    
