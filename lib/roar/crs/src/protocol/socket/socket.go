@@ -18,6 +18,8 @@ var handlers = map[string]CommandHandler{
 	"upgrade_tls": handleUpgradeTLS,
 	"send":        handleSend,
 	"recv":        handleRecv,
+	"sendto":      handleSendTo,
+	"recvfrom":    handleRecvFrom,
 }
 
 // Socket adalah entry point eksekusi koneksi menggunakan POSIX-like primitive operations.
