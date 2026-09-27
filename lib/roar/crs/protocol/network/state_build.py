@@ -2,6 +2,7 @@ import smf
 
 from apps.utility.colors import CC
 
+
 class SocketState:
     """
     Manajemen Konfigurasi & State Sesi.
@@ -69,14 +70,14 @@ class SocketState:
             raise RuntimeError(
                 f"Cannot execute {operation}() on a closed Socket session."
             )
-          
+
 
 class IPCPayloadBuilder:
     """
     Data Marshalling & Payload Transformation.
     Terisolasi untuk menangani translasi state dan parameter operasional menjadi skema JSON/Dict.
     """
-  
+
     @staticmethod
     def build(
         state: SocketState,
