@@ -16,6 +16,7 @@ import (
 
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/utils"
+	ctls "github.com/StormWorld0/storm-framework/lib/roar/crs/src/tls"
 	"golang.org/x/sys/unix"
 )
 
