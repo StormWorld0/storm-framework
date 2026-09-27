@@ -14,7 +14,7 @@ from ...transport import CRS
 
 class Socket(SocketState, ConstantsMix):
     """
-    Domain 3: Facade Antarmuka Eksternal.
+    Facade Antarmuka Eksternal.
     Mewarisi SocketState untuk mempertahankan kompatibilitas atribut (Backward Compatibility).
     Hanya berfokus pada eksekusi instruksi jaringan ke Engine Go.
     """
