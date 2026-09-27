@@ -35,18 +35,19 @@ func BuildTarget(req packet.RequestPacket) (string, error) {
 		hostOnly = hostOnly[1 : len(hostOnly)-1]
 	}
 
-	finalPort := 0
-	if req.Port != 0 {
+	finalPort := -1
+	if req.Port >= 0 {
 		finalPort = req.Port
 	} else if portStr != "" {
-		if p, parseErr := strconv.Atoi(portStr); parseErr == nil && p > 0 {
+		if p, parseErr := strconv.Atoi(portStr); parseErr == nil && p >= 0 {
 			finalPort = p
 		}
 	}
 
-	if finalPort == 0 {
-		return "", fmt.Errorf("empty port error")
+	// Validasi: Error HANYA jika port berada di luar jangkauan valid socket (0 - 65535)
+	if finalPort < 0 || finalPort > 65535 {
+		return "", fmt.Errorf("invalid or missing port: %d", finalPort)
 	}
-
+	
 	return net.JoinHostPort(hostOnly, strconv.Itoa(finalPort)), nil
 }
