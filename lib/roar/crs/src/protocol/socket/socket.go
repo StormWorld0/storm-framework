@@ -289,8 +289,8 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 		return packet.ResponsePacket{
 			Status: "SUCCESS", 
 			Data: map[string]interface{}{
-				"local_ip": localAddr
-			}
+				"local_ip": localAddr,
+			},
 		}
 
 	case "listen":
