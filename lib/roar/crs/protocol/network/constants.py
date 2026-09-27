@@ -58,7 +58,7 @@ class ConstantsMix:
     TCP_NODELAY = 1
     TCP_MAXSEG = 2
     TCP_CORK = 3
-	TCP_KEEPIDLE = 4
+    TCP_KEEPIDLE = 4
     TCP_KEEPINTVL = 5
     TCP_KEEPCNT = 6
     TCP_SYNCNT = 7
@@ -77,7 +77,7 @@ class ConstantsMix:
     TCP_TIMESTAMP = 24
     TCP_NOTSENT_LOWAT = 25
 
-	"""OptName - IPPROTO_IP (Level 0)"""
+    """OptName - IPPROTO_IP (Level 0)"""
     IP_TOS = 1
     IP_TTL = 2
     IP_HDRINCL = 3
