@@ -221,7 +221,6 @@ def boot() -> bool:
         return True
     except Exception:
         return False
-        
 
 
 def get_plugin(plugin_name: str) -> Any:
