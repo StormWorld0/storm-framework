@@ -36,8 +36,8 @@ func BuildTarget(req packet.RequestPacket) (string, error) {
 	}
 
 	finalPort := -1
-	if req.Port >= 0 {
-		finalPort = req.Port
+	if req.Port != nil {
+		finalPort = *req.Port
 	} else if portStr != "" {
 		if p, parseErr := strconv.Atoi(portStr); parseErr == nil && p >= 0 {
 			finalPort = p
