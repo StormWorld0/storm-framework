@@ -121,7 +121,13 @@ class SocketResponse:
     @property
     def local_ip(self) -> str:
         """Mengecek IP keluar sebelum ke internet global"""
-        return self._data.get("local_ip", "unknown")
+        value = self._data.get("local_ip", "unknown")
+        if isinstance(value, dict):
+            addr = value.get("Addr")
+            port = value.get("Port")
+            if addr is not None and port is not None:
+                return f"{'.'.join(map(str, addr))}:{port}"
+        return value
 
     @property
     def rtt_ms(self) -> int:
