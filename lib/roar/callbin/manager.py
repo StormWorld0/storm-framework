@@ -40,7 +40,7 @@ def _get_db_connection() -> sqlite3.Connection:
     return conn
 
 
-def sync_bin() -> bool:
+def sync_bin() -> bool | None:
     smf.printd("Starting binary cache synchronization scan...", level="INFO")
     search_targets = {
         "module": _BASE_DIR / "external" / "source" / "out" / "modules",
@@ -123,7 +123,7 @@ def sync_bin() -> bool:
         return True
     except sqlite3.Error as e:
         smf.printd("I/O error during DB sync transaction.", e, level="ERROR")
-        return False
+        return None
 
 
 def _query_db(query_column: str, query_value: str) -> Optional[str]:
