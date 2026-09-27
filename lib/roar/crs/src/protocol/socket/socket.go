@@ -125,9 +125,9 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 	// Primitive State Machine (Routing Eksekusi)
 	switch mode {
 	case "socket":
-		afInt := ParseAF(req.AF)               // req.AF adalah string, misal "AF_INET"
-		sInt := ParseSockType(req.SType)       // req.SType adalah string, misal "SOCK_STREAM"
-		protoInt := ParseProtocol(req.SProto)  // req.Protocol adalah string, misal "IPPROTO_TCP"
+		afInt := ParseAF(req.AF)               // req.AF adalah any
+		sInt := ParseSockType(req.SType)       // req.SType adalah any
+		protoInt := ParseProtocol(req.SProto)  // req.SProto adalah any
 		
 		fd, err := unix.Socket(afInt, sInt, protoInt)
 		if err != nil {
