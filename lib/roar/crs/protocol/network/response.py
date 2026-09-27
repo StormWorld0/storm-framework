@@ -1,5 +1,6 @@
 from typing import Dict, Any, Optional
 
+
 class StackTrace:
     """Melempar stack trace dari response stderr CRS"""
 
@@ -153,4 +154,3 @@ class SocketResponse:
 
     def __repr__(self):
         return f"<SocketResponse Status={self.status} Read={self.read_bytes}b RTT={self.rtt_ms}ms>"
-  
