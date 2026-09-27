@@ -344,36 +344,19 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 
 		// Ubah os.File menjadi net.conn
 		rawConn, err := net.FileConn(file)
+		file.Close()
 		if err != nil {
-			unix.Close(nFD)
-			file.Close()
 			return packet.ResponsePacket{Status: "ERROR", Message: "Failed to wrap accepted net.Conn: " + err.Error()}
 		}
 
-		// File asli ditutup karena net.FileConn otomatis membuat dup() (duplikat FD)
-		file.Close()
 		conn = rawConn
 
 		if req.SessionID != "" && req.KeepAlive {
 			utils.ActiveSessions.Store(req.SessionID, conn)
 			keepSession = true
 		}
-
-		meta := generateMetadata(0)
 		
-		// Parse Remote IP
-		var acceptedFrom string
-		switch saddr := sa.(type) {
-		case *unix.SockaddrInet4:
-			acceptedFrom = fmt.Sprintf("%d.%d.%d.%d:%d", saddr.Addr[0], saddr.Addr[1], saddr.Addr[2], saddr.Addr[3], saddr.Port)
-		case *unix.SockaddrInet6:
-			acceptedFrom = fmt.Sprintf("[%x]:%d", saddr.Addr, saddr.Port)
-		}
-		if acceptedFrom != "" {
-			meta["remote_ip"] = acceptedFrom
-		}
-
-		return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
+		return packet.ResponsePacket{Status: "SUCCESS", Data: generateMetadata(0)}
 
 	case "connect":
 		if req.SessionID == "" {
@@ -439,6 +422,7 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 		
 		// Golang butuh socket dalam keadaan non-blocking agar tidak hang!
 		if err := unix.SetNonblock(rawFD, true); err != nil {
+			unix.Close(nFD)
 			return packet.ResponsePacket{Status: "ERROR", Message: "Failed to set non-blocking: " + err.Error()}
 		}
 
@@ -447,16 +431,14 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 		
 		// Konversi os.File menjadi net.Conn
 		rawConn, err := net.FileConn(file)
+		file.Close()
 		if err != nil {
-			file.Close() // Mencegah memory/FD leak jika gagal
 			return packet.ResponsePacket{Status: "ERROR", Message: "Failed to wrap net.Conn: " + err.Error()}
 		}
 		
-		// File asli ditutup karena net.FileConn otomatis membuat dup() (duplikat FD)
-		file.Close()
 		conn = rawConn
 
-		// 4. Timpa isi Session dengan net.Conn yang baru
+		// Timpa isi Session dengan net.Conn yang baru
 		// Mulai dari detik ini, request send/recv/upgrade_tls akan mendeteksi `net.Conn` normal!
 		if req.SessionID != "" && req.KeepAlive {
 		    utils.ActiveSessions.Store(req.SessionID, conn)
