@@ -42,7 +42,7 @@ def execute(options, net):
         if resp.ok:
             smf.printf("[✓] Socket is now LISTENING")
         else:
-            smf.printd(f"Listen failed", resp_listen.message, level="ERROR")
+            smf.printd(f"Listen failed", resp.message, level="ERROR")
 
     except Exception as e:
         smf.printd("Connection error", e, level="ERROR")
