@@ -2,12 +2,10 @@
 # -- License SMF
 # -- Author zxelzy
 
-import uuid
 import smf
 import base64
 
 from typing import Dict, Any, Optional
-from apps.utility.colors import CC
 
 from .state_build import SocketState, IPCPayloadBuilder
 from .constants import ConstantsMix
