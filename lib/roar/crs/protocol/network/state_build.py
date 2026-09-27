@@ -15,11 +15,11 @@ class SocketState:
         self,
         host: str = "",
         port: int = 0,
-        addr_fam: int = 0,
-        stype: int = 0,
-        sproto: int = 0,
-        level: int = 0,
-        name: int = 0,
+        addr_fam: str | int = 0,
+        stype: str | int = 0,
+        sproto: str | int = 0,
+        level: str | int = 0,
+        name: str | int = 0,
         value: int = 0,
         timeout: float = 10.0,
         readsize: int = 0,
@@ -45,13 +45,13 @@ class SocketState:
         self.infotls = infotls
 
         # AF_* and SOCK_* and IPPROTO_*
-        self.af = int(addr_fam)
-        self.stype = int(stype)
-        self.sproto = int(sproto)
+        self.af = addr_fam
+        self.stype = stype
+        self.sproto = sproto
 
         #
-        self.level = int(level)
-        self.name = int(name)
+        self.level = level
+        self.name = name
         self.value = int(value)
 
         # Isolasi sesi Go IPC
@@ -94,11 +94,11 @@ class IPCPayloadBuilder:
         host: str = None,
         port: str = None,
         data: str | bytes = b"",
-        addr_fam: int = None,
-        stype: int = None,
-        sproto: int = None,
-        level: int = None,
-        name: int = None,
+        addr_fam: str | int = None,
+        stype: str | int = None,
+        sproto: str | int = None,
+        level: str | int = None,
+        name: str | int = None,
         value: int = None,
         infotls: bool = None,
         verify: bool = None,
@@ -129,11 +129,11 @@ class IPCPayloadBuilder:
             "host": host if host is not None else state.host,
             "port": int(port) if port is not None else state.port,
             "data": data_str,
-            "addr-fam": int(addr_fam) if addr_fam is not None else state.af,
-            "stype": int(stype),
-            "sproto": int(sproto),
-            "level": int(level),
-            "name": int(name),
+            "addr-fam": addr_fam if addr_fam is not None else state.af,
+            "stype": stype,
+            "sproto": sproto,
+            "level": level,
+            "name": name,
             "value": int(value),
             "timeout": float(timeout) if timeout is not None else state._timeout,
             "readsize": readsize if readsize is not None else state.readsize,
