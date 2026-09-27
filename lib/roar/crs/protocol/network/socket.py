@@ -21,9 +21,9 @@ class Socket(SocketState, ConstantsMix):
 
     def socket(
         self,
-        addrf: int,
-        stype: int,
-        sproto: int = 0,
+        addrf: str | int,
+        stype: str | int,
+        sproto: str | int = 0,
         **kwargs,
     ) -> SocketResponse:
         """Open Socket"""
@@ -45,8 +45,8 @@ class Socket(SocketState, ConstantsMix):
 
     def setsockopt(
         self,
-        level: int,
-        name: int,
+        level: str | int,
+        name: str | int,
         value: int = 0,
         **kwargs,
     ) -> SocketResponse:
@@ -69,8 +69,8 @@ class Socket(SocketState, ConstantsMix):
 
     def bind(
         self,
-        host: int,
-        port: int,
+        host: str,
+        port: str | int,
         **kwargs,
     ) -> SocketResponse:
         """Binding local connection"""
