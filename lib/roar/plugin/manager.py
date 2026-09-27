@@ -216,7 +216,7 @@ def unload(plugin_name: str) -> bool:
 def boot() -> bool:
     for p_name in tuple(ACTIVE_PLUGINS):
         mod = load_module(p_name)
-        
+
     if mod is False:
         return False
     return True
