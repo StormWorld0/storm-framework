@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 	ctls "github.com/StormWorld0/storm-framework/lib/roar/crs/src/tls"
 )
 
@@ -17,6 +16,7 @@ func (ctx *ExecutionContext) GenerateMetadata(readBytes int) map[string]interfac
 		"isAlreadyTLS": strconv.FormatBool(ctls.IsTLSConn(ctx.Conn)),
 		"read_bytes":   readBytes,
 	}
+
 	if ctx.Conn != nil {
 		if addr := ctx.Conn.RemoteAddr(); addr != nil {
 			meta["remote_ip"] = addr.String()
@@ -25,8 +25,10 @@ func (ctx *ExecutionContext) GenerateMetadata(readBytes int) map[string]interfac
 			meta["local_ip"] = lAddr.String()
 		}
 	}
+
 	if ctx.Req.InfoTLS {
 		meta["info_tls"] = ctls.ExtractTLSInfo(ctx.Conn)
 	}
+
 	return meta
 }
