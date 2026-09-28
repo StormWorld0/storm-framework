@@ -31,12 +31,13 @@ def execute(options, net):
         # Global timeout
         sock.timeout(2.0)
 
-        # Bind to Host & Port 0 (Ephemeral)
+        # Send datagram
         resp = sock.sendto(dns_query, host, port)
         if not resp.ok:
             smf.printf("[!] Failed sendto =>", resp.message)
             return
 
+        # Get response Buffer and remote IP
         resp = sock.recvfrom(1024)
         if resp.ok:
             smf.printf("[✓] Remote IP    =>", resp.remote_ip)
