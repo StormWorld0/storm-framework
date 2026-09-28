@@ -77,7 +77,7 @@ All protocols definitely have different parameters, here you can learn what para
 **1. Open Socket**
 ```python
 sock = net.Socket()
-sock.socket(addrf, stype, proto)
+resp = sock.socket(addrf, stype, proto)
 ```
 **Inheritance:** `net.Socket()` will inherit all the functions below it, and all of those functions will only return Response.
 
@@ -87,26 +87,27 @@ sock.socket(addrf, stype, proto)
 - **proto:** Protocols such as: IPPROTO_IP, IPPROTO_ICMP, IPPROTO_TCP, etc. | str | Default 0 = Determined by Kernel UNIX
 
 **Response**
-- **status:** SUCCESS/WARNING/ERROR/TIMEOUT.
+- **status:** SUCCESS/WARN/ERROR/TIMEOUT.
 - **message:** Messages adjust to status.
 
-- **ok:** Return boolean from SUCCESS status. Allows the syntax: if r.ok:
+- **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
 - **fileno:** This will return the number of File-Decryptor (FD).
+
 
 **2. Connect to Socket**
 ```python
-sock.connect(host, port, timeout)
+resp = sock.connect(host, port, timeout)
 ```
 **Parameter**
-- **host:** This can be IP/Hostname.
-- **port:** This is a typical port.
+- **host:** This can be IP:Port / Hostname.
+- **port:** This is a typical Port.
 - **timeout:** To limit the open connection time.
 
 **Response**
-- **status:** SUCCESS/WARNING/ERROR/TIMEOUT.
+- **status:** SUCCESS/WARN/ERROR/TIMEOUT.
 - **message:** Messages adjust to status.
 
-- **ok:** Return boolean from SUCCESS status. Allows the syntax: if r.ok:
+- **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
 - **is_reused:** Returns a Boolean. True=Using the same connection. False=Create a new connection.
 - **rtt_ms:** Returns the Round Trip Time in milliseconds.
 - **checked_type:** Returns the connection status to see if the tls/tcp connection is working. | Debug.
@@ -114,23 +115,43 @@ sock.connect(host, port, timeout)
 - **remote_ip:** Returns the target IP:PORT.
 - **local_ip:** Returns local IP:PORT.
 
+
 **3. Send Data**
 ```python
-sock.send(data, timeout)
+resp = sock.send(data, timeout)
 ```
 **Parameter**
 - **data:** Can be bytes / http request / payload etc.
 - **timeout:** To limit the open connection time.
 
 **Response**
-- **status:** SUCCESS/WARNING/ERROR/TIMEOUT.
+- **status:** SUCCESS/WARN/ERROR/TIMEOUT.
 - **message:** Messages adjust to status.
 
-- **ok:** Return boolean from SUCCESS status. Allows the syntax: if r.ok:
+- **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
 - **is_reused:** Returns a Boolean. True=Using the same connection. False=Create a new connection.
 - **rtt_ms:** Returns the Round Trip Time in milliseconds.
 - **checked_type:** Returns the connection status to see if the tls/tcp connection is working. | Debug.
 - **status_tls:** Returns a Boolean. If True=TLS is enabled. False=TLS is disabled.
+
+```python
+resp = sock.sendto(data, host, port, flag, timeout)
+```
+**Parameter**
+- **data:** Can be bytes / http request / payload etc.
+- **host:** This can be IP:Port / Hostname.
+- **port:** This is a typical Port.
+- **flag:** MSG_* such as: `sock.MSG_OOB`, `sock.MSG_MORE`, etc. | str & int | Default 0.
+- **timeout:** To limit the open connection time.
+
+**Response**
+- **status:** SUCCESS/WARN/ERROR/TIMEOUT.
+- **message:** Messages adjust to status.
+
+- **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
+- **is_reused:** Returns a Boolean. True=Using the same connection. False=Create a new connection.
+- **rtt_ms:** Returns the Round Trip Time in milliseconds.
+
 
 **4. Viewing the buffer**
 ```python
@@ -138,15 +159,15 @@ raw = sock.recv(readsize, timeout)
 ```
 **Parameter**
 - **readsize:** To determine how many bytes of buffer to take.
-- **timeout:** To limit the open connection time. | Default 300ms.
+- **timeout:** To limit the open connection time.
 
 **Response**
-- **status:** SUCCESS/WARNING/ERROR/TIMEOUT.
+- **status:** SUCCESS/WARN/ERROR/TIMEOUT.
 - **message:** Messages adjust to status.
 
-- **ok:** Return boolean from SUCCESS status. Allows the syntax: if r.ok:
+- **ok:** Return boolean from SUCCESS status. Allows the syntax: if raw.ok:
 - **raw_bytes:** Returning Raw Bytes.
-- **str_bytes:** Returns Raw Bytes as UTF-8.
+- **str_bytes:** Returns Raw Bytes as String.
 - **hex_bytes:** Returns Hex Bytes.
 - **int_bytes:** Returns the number of Bytes.
 - **remote_ip:** Returns the target IP:PORT.
@@ -156,10 +177,31 @@ raw = sock.recv(readsize, timeout)
 - **checked_type:** Returns the connection status to see if the tls/tcp connection is working. | Debug.
 - **status_tls:** Returns a Boolean. If True=TLS is active. False=TLS is disabled.
 
+```python
+raw = sock.recvfrom(readsize, flag, timeout)
+```
+**Parameter**
+- **readsize:** To determine how many bytes of buffer to take.
+- **flag:** MSG_* such as: `sock.MSG_OOB`, `sock.MSG_MORE`, etc. | str & int | Default 0.
+- **timeout:** To limit the open connection time.
+
+**Response**
+- **status:** SUCCESS/WARN/ERROR/TIMEOUT.
+- **message:** Messages adjust to status.
+
+- **ok:** Return boolean from SUCCESS status. Allows the syntax: if raw.ok:
+- **raw_bytes:** Returning Raw Bytes.
+- **str_bytes:** Returns Raw Bytes as String.
+- **hex_bytes:** Returns Hex Bytes.
+- **int_bytes:** Returns the number of Bytes.
+- **remote_ip:** Returns the target IP:PORT.
+- **is_reused:** Returns a Boolean. True=Using the same connection. False=Create a new connection.
+- **rtt_ms:** Returns the Round Trip Time in milliseconds.
+
 
 **5. TLS Upgrade**
 ```python
-r = sock.uptls(cert, key, ca, verify)
+resp = sock.uptls(cert, key, ca, verify)
 ```
 **Parameter**
 - **cert:** Path to the certificate file.
@@ -171,10 +213,10 @@ r = sock.uptls(cert, key, ca, verify)
 Automatically inherits TLS connections to send/recv and send/recv usage remains the same.
 
 **Response**
-- **status:** SUCCESS/WARNING/ERROR/TIMEOUT.
+- **status:** SUCCESS/WARN/ERROR/TIMEOUT.
 - **message:** Messages adjust to status.
 
-- **ok:** Return boolean from SUCCESS status. Allows the syntax: if r.ok:
+- **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
 - **raw_bytes:** Returning Raw Bytes.
 - **str_bytes:** Returns Raw Bytes as UTF-8.
 - **hex_bytes:** Returns Hex Bytes.
@@ -200,7 +242,67 @@ Automatically inherits TLS connections to send/recv and send/recv usage remains 
 - **expires:** Returns the certificate Expiration Time in RFC3339 format.
 - **cert_chain:** Returns the number of certificate chains that were successfully verified.
 
-**6. Timeout**
+
+**6. Socket Options**
+```python
+resp = sock.setsockopt(level, name, value)
+```
+**Parameter**
+- **level:** OptLevel such as: `sock.SOL_SOCKET`, etc.
+- **name:** OptName such as: `sock.SO_REUSEADDR`, `sock.TCP_NODELAY`, etc.
+- **value:** OptVal it is the value of a pointer to a Buffer Memory | int
+
+**Response**
+- **status:** SUCCESS/WARN/ERROR/TIMEOUT.
+- **message:** Messages adjust to status.
+- **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
+
+
+**7. Bind**
+```python
+resp = sock.bind(host, port)
+```
+**Parameter**
+- **host:** This can be IP:Port / Hostname.
+- **port:** This is a typical Port.
+
+**Response**
+- **status:** SUCCESS/WARN/ERROR/TIMEOUT.
+- **message:** Messages adjust to status.
+
+- **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
+- **local_ip:** Returns local IP:PORT.
+
+
+**8. Listen**
+```python
+resp = sock.listen(backlog)
+```
+**Parameter**
+- **backlog:** Maximum limit of inbound connection queue allowed to hang before `accept()`.
+
+**Response**
+- **status:** SUCCESS/WARN/ERROR/TIMEOUT.
+- **message:** Messages adjust to status.
+- **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
+
+
+**9. Accept**
+```python
+resp = sock.accept()
+```
+**Parameter:** There isn't any.
+
+**Response**
+- **status:** SUCCESS/WARN/ERROR/TIMEOUT.
+- **message:** Messages adjust to status.
+
+- **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
+- **is_reused:** Returns a Boolean. True=Using the same connection. False=Create a new connection.
+- **rtt_ms:** Returns the Round Trip Time in milliseconds.
+
+
+**10. Timeout**
 ```python
 sock.timeout(value)
 ```
@@ -208,40 +310,28 @@ sock.timeout(value)
 
 **Value:** In this parameter, the input must be in the form of a float such as: 1.0, 10.5, etc.
 
-**7. Creating Connection**
+
+**11. Creating Connection**
 ```python
-sock.create_connection(host, port, timeout)
+resp = sock.create_connection(host, port, timeout)
 ```
 **Description:** This function is used to immediately open a connection quickly without having to perform socket() and connect() literacy because this is done automatically by the binary CRS. This makes it faster and requires less code. Send, receive, and uptls still require manual processing afterward.
 
-**8. Closing the connection**
+**Response**
+- **status:** SUCCESS/WARN/ERROR/TIMEOUT.
+- **message:** Messages adjust to status.
+- **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
+
+
+**12. Closing the connection**
 ```python
-sock.close()
+resp = sock.close()
 ```
 **Description:** This is used to close the connection when it is finished or when an error occurs, so that the connection does not hang and to avoid OOM.
 
-**9. Argument Socket**
-```python
-sock.AF_INET
-sock.AF_INET6
-sock.AF_UNIX
-sock.AF_UNSPEC
-```
-```python
-sock.SOCK_STREAM
-sock.SOCK_DGRAM
-sock.SOCK_RAW
-sock.SOCK_SEQPACKET
-```
-```python
-sock.IPPROTO_IP
-sock.IPPROTO_ICMP
-sock.IPPROTO_TCP
-sock.IPPROTO_UDP
-sock.IPPROTO_RAW
-```
-**Usage:** `sock.socket(sock.AF_INET, sock.SOCK_STREAM, sock.IPPROTO_IP)`  
-**Description:** For RAW users, you can create manual SYN, ACK, etc. handshakes independently, because CRS only bridges communication with the kernel.
+**Response**
+- **status:** SUCCESS/WARN/ERROR.
+- **message:** Messages adjust to status.
 
 ---
 
