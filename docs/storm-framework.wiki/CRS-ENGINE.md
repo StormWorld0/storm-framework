@@ -341,6 +341,15 @@ resp = sock.close()
 - **status:** SUCCESS/WARN/ERROR.
 - **message:** Messages adjust to status.
 
+
+**13. Exception Socket**
+```python
+try:
+    ...
+except sock.STrace:
+```
+**Description:** This is used to stop the program script when the CRS throws an ERROR/CRITICAL. Capture the ERROR message using smflogd if necessary.
+
 ---
 
 ### ☎️ DNS
@@ -348,7 +357,8 @@ resp = sock.close()
 **DNS Lookup**
 ```python
 def execute(options, net):
-    r = net.DNSL(domain, type, proto, timeout, rl, con)
+    req = net.DNSL()
+    r = req(domain, type, proto, timeout, rl, con)
 ```
 **Description:** DNSL are stateless, and you get a response immediately after each run.
 
@@ -371,6 +381,15 @@ def execute(options, net):
 - **truncated:** Indicator if the UDP payload is too large and is truncated (will trigger a retry via TCP).
 - **authoritative:** Indicator whether the response comes from the Authoritative Name Server directly.
 
+
+**Exception DNS**
+```python
+try:
+    ...
+except req.DTrace:
+```
+**Description:** This is used to stop the program script when the CRS throws an ERROR/CRITICAL. Capture the ERROR message using smflogd if necessary.
+
 ---
 
 ### 🖇️ HTTP Requests
@@ -378,7 +397,8 @@ def execute(options, net):
 **Implementation**
 ```python
 def execute(options, net):
-    r = net.HTTPR(method, url, header, body, redirect, rawhttp, tls, verify, retry, rl, timeout, con)
+    req = net.HTTPR()
+    r = req(method, url, header, body, redirect, rawhttp, tls, verify, retry, rl, timeout, con)
 ```
 **Description:** HTTP Requests are stateless, you can send them and get a response straight away.
 
@@ -423,6 +443,17 @@ def execute(options, net):
 - **dns_name:** Returns a list of hostnames in the Subject Alternative Name (SAN) extension.
 - **expires:** Returns the certificate Expiration Time in RFC3339 format.
 - **cert_chain:** Certificate chain successfully verified against a trusted root CA.
+
+
+**Exception HTTPR**
+```python
+try:
+    ...
+except req.HTrace:
+```
+**Description:** This is used to stop the program script when the CRS throws an ERROR/CRITICAL. Capture the ERROR message using smflogd if necessary.
+
+---
 
 ### 🔌 Telnet
 
