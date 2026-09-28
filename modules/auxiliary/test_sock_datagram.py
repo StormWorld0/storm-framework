@@ -13,7 +13,8 @@ Testing Socket
 }
 REQUIRED_OPTIONS = {"HOST": "", "PORT": ""}
 
-dns_query = b'\xaa\xbb\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\x01\x00\x01'
+dns_query = b"\xaa\xbb\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\x01\x00\x01"
+
 
 def execute(options, net):
     host = options.get("HOST")
@@ -29,7 +30,7 @@ def execute(options, net):
 
         # Global timeout
         sock.timeout(2.0)
-        
+
         # Bind to Host & Port 0 (Ephemeral)
         resp = sock.sendto(dns_query, host, port)
         if not resp.ok:
