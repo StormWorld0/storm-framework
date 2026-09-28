@@ -163,4 +163,4 @@ class SocketResponse:
         return self.ok
 
     def __repr__(self):
-        return f"<SocketResponse Status={self.status} Read={self.read_bytes}b RTT={self.rtt_ms}ms>"
+        return f"<SocketResponse Status={self.status} Read={self.int_bytes}b RTT={self.rtt_ms}ms>"
