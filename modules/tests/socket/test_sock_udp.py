@@ -78,12 +78,11 @@ def execute(options, net):
         # Retrieve response Buffer
         result = sock.recv(4096)
         if result.ok:
-            smf.printf("String Response    =>", result.str_bytes)
             smf.printf("Int Response       =>", result.int_bytes)
             smf.printf("Raw Response       =>", result.raw_bytes)
             smf.printf("Hex Response       =>", result.hex_bytes)
 
-    except Exception as e:
+    except sock.STrace as e:
         smf.printd("UDP DNS testing failed", e, level="ERROR")
     finally:
         sock.close()
