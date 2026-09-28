@@ -93,14 +93,14 @@ class Socket(SocketState, ConstantsMix):
 
     def listen(
         self,
-        readsize: int,
+        backlog: int,
         **kwargs,
     ) -> SocketResponse:
         """Waiting for incoming connection"""
         self._ensure_open("listen")
         packet = IPCPayloadBuilder.build(
             state=self,
-            readsize=readsize,
+            backlog=backlog,
             mode="listen",
             infotls=False,
             close_session=False,
