@@ -63,7 +63,7 @@ def execute(options, net):
             smf.printd("DNS connect failed", result, level="ERROR")
             return
 
-        # Global timeout 
+        # Global timeout
         sock.timeout(2.0)
 
         # Build data
