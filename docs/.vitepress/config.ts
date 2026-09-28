@@ -72,14 +72,14 @@ export default withMermaid(
           text: 'Architecture',
           collapsed: false,
           items: [
-            { text: 'Flow And Arch', link: '/storm-framework.wiki/FlowAndArch.md' },
+            { text: 'Flow And Arch', link: '/storm-framework.wiki/FlowAndArch' },
           ]
         },
         {
           text: 'Information',
           collapsed: false,
           items: [
-            { text: 'Constants Mixin Socket', link: '/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET.md' },
+            { text: 'Constants Mixin Socket', link: '/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET' },
           ]
         }
       ],
