@@ -21,6 +21,7 @@ class SocketState:
         level: str | int = "",
         name: str | int = "",
         value: int = 1,
+        flag: str | int = 0,
         timeout: float = 10.0,
         readsize: int = 0,
         ratelimit: int = 0,
@@ -49,10 +50,11 @@ class SocketState:
         self.stype = stype
         self.sproto = sproto
 
-        #
+        # SOL_* and SO_* and value and MSG_*
         self.level = level
         self.name = name
         self.value = int(value)
+        self.flag = flag
 
         # Isolasi sesi Go IPC
         self.sessid = sessid if sessid else f"smf_sess_{uuid.uuid4().hex[:12]}"
@@ -100,6 +102,7 @@ class IPCPayloadBuilder:
         level: str | int = None,
         name: str | int = None,
         value: int = None,
+        flag: str | int = None,
         infotls: bool = None,
         verify: bool = None,
         cert: str = None,
@@ -135,6 +138,7 @@ class IPCPayloadBuilder:
             "opt-level": level,
             "opt-name": name,
             "opt-value": int(value) if value is not None else state.value,
+            "flags": flag if flag is not None else state.flag,
             "timeout": float(timeout) if timeout is not None else state._timeout,
             "readsize": readsize if readsize is not None else state.readsize,
             "ratelimit": ratelimit if ratelimit is not None else state.ratelimit,
