@@ -463,6 +463,7 @@ func handleRecvFrom(ctx *ExecutionContext) packet.ResponsePacket {
 			"remote_ip":    sender,
 			"raw_bytes":    base64.StdEncoding.EncodeToString(buffer[:n]),
 			"hex_bytes":    hex.EncodeToString(buffer[:n]),
+			"read_bytes":   n,
 		},
 	}
 }
