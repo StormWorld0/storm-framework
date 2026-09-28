@@ -99,5 +99,3 @@ class ConstantsMix:
     MSG_PEEK = "MSG_PEEK"
     MSG_WAITALL = "MSG_WAITALL"
     MSG_TRUNC = "MSG_TRUNC"
-
-
