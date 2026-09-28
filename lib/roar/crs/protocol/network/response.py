@@ -109,7 +109,7 @@ class SocketResponse:
         return self._data.get("hex_bytes", "")
 
     @property
-    def read_bytes(self) -> int:
+    def int_bytes(self) -> int:
         """Mengembalikan bytes berupa angka"""
         return self._data.get("read_bytes", 0)
 
