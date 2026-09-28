@@ -49,10 +49,10 @@ def execute(options, net):
         result = sock.recv(1024)
 
         if result.ok:
-            smf.printf("String response =>", result.str_bytes)
+            smf.printf("Str response    =>", result.str_bytes)
             smf.printf("Raw response    =>", result.raw_bytes)
             smf.printf("Hex response    =>", result.hex_bytes)
-            smf.printf("Int response    =>", result.read_bytes)
+            smf.printf("Int response    =>", result.int_bytes)
     except Exception as e:
         smf.printd("Socket testing failed", e, level="ERROR")
     finally:
