@@ -394,7 +394,7 @@ func handleSendTo(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: err.Error()}
 	}
 
-	flag := ParseFlags(ctx.req.Flags)
+	flag := ParseFlags(ctx.Req.Flags)
 	
 	// Eksekusi menggunakan helper
 	if err := ExecuteSendTo(ctx.RawFD, ctx.Req.Data, sockAddr, ctx.Timeout, flag); err != nil {
@@ -412,7 +412,7 @@ func handleRecvFrom(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found for recvfrom."}
 	}
 
-	flag := ParseFlags(ctx.req.Flags)
+	flag := ParseFlags(ctx.Req.Flags)
 
 	buffer, n, sa, bufPtr, err := ExecuteRecvFrom(ctx.RawFD, int(ctx.Req.ReadSize), ctx.Timeout, flag)
 	defer ReleaseBuffer(bufPtr)
