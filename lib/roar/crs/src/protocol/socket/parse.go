@@ -136,14 +136,14 @@ var optNameMap = map[string]int{
 
 
 var flagsMap = map[string]int{
-	"MSG_DONTWAIT"    unix.MSG_DONTWAIT,
-	"MSG_OOB"         unix.MSG_OOB,
-	"MSG_MORE"        unix.MSG_MORE,
-	"MSG_NOSIGNAL"    unix.MSG_NOSIGNAL,
-	"MSG_CONFIRM"     unix.MSG_CONFIRM,
-	"MSG_PEEK"        unix.MSG_PEEK,
-	"MSG_WAITALL"     unix.MSG_WAITALL,
-	"MSG_TRUNC"       unix.MSG_TRUNC,
+	"MSG_DONTWAIT":    unix.MSG_DONTWAIT,
+	"MSG_OOB":         unix.MSG_OOB,
+	"MSG_MORE":        unix.MSG_MORE,
+	"MSG_NOSIGNAL":    unix.MSG_NOSIGNAL,
+	"MSG_CONFIRM":     unix.MSG_CONFIRM,
+	"MSG_PEEK":        unix.MSG_PEEK,
+	"MSG_WAITALL":     unix.MSG_WAITALL,
+	"MSG_TRUNC":       unix.MSG_TRUNC,
 }
 
 // --- PUBLIC PARSER FUNCTIONS ---
