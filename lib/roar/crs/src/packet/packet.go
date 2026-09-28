@@ -48,6 +48,7 @@ type RequestPacket struct {
 	CloseSess     bool              `json:"close-session"`       // Boolean to close active session.
 	Mode          string            `json:"mode"`                // To determine which mode you want to use.
 	Data          string            `json:"data,omitempty"`      // This data is encoded to b64 and string before entering json
+	BackLog       int               `json:"backlog,omitempty"`   // Contains free integer numbers
 	
 	// Custom TLS family
 	TLSKey        string            `json:"tls-key,omitempty"`   // TLSKey = Can path can raw pem
