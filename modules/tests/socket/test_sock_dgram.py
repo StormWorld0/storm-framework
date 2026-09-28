@@ -49,7 +49,7 @@ def execute(options, net):
             return
 
         smf.printf("[!] Failed recvfrom =>", resp.message)
-    except Exception as e:
+    except sock.STrace as e:
         smf.printd("Connection error", e, level="ERROR")
     finally:
         sock.close()
