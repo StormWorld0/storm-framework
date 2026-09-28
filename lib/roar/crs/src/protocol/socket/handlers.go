@@ -405,7 +405,7 @@ func handleSendTo(ctx *ExecutionContext) packet.ResponsePacket {
 
 	return packet.ResponsePacket{
 		Status: "SUCCESS", 
-		Data: Data: map[string]interface{}{
+		Data: map[string]interface{}{
 			"is_reused":    ctx.IsReused,
 			"rtt_ms":       time.Since(ctx.StartTime).Milliseconds(),
 		},
@@ -457,7 +457,7 @@ func handleRecvFrom(ctx *ExecutionContext) packet.ResponsePacket {
 
 	return packet.ResponsePacket{
 		Status: "SUCCESS", 
-		Data: Data: map[string]interface{}{
+		Data: map[string]interface{}{
 			"is_reused":    ctx.IsReused,
 			"rtt_ms":       time.Since(ctx.StartTime).Milliseconds(),
 			"remote_ip":    sender,
