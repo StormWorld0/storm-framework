@@ -5,11 +5,13 @@ from typing import Dict, Any, Optional
 from .utils_fd import real_fd
 
 
-class StackTrace:
+class SockTrace(Exception):
     """Melempar stack trace dari response stderr CRS"""
 
     def __init__(self, status: str, message: str):
-        raise Exception(status, message)
+        self.status = status
+        self.message = message
+        super().__init__(message)
 
 
 class TLSMetadata:
@@ -65,11 +67,10 @@ class SocketResponse:
         """Mengembalikan pesan ERROR/SUCCESS/TIMEOUT."""
         return self._message
 
-    def _trace(self) -> None:
-        """Melempar stack trace"""
-        if (sts := self.status.upper()) == "CRITICAL":
-            msg = self.message
-            return StackTrace(sts, msg)
+    def _trace(self):
+        """Melempar Exception"""
+        if (sts := self.status.upper()) in {"ERROR", "CRITICAL"}:
+            raise SockTrace(sts, self.message)
         return None
 
     @property
