@@ -6,6 +6,8 @@ import (
 	"net"
 	"sync"
 	"time"
+
+	"golang.org/x/sys/unix"
 )
 
 var bufferPool = sync.Pool{
@@ -13,6 +15,13 @@ var bufferPool = sync.Pool{
 		b := make([]byte, 4096)
 		return &b
 	},
+}
+
+// ReleaseBuffer mengembalikan buffer ke memory pool
+func ReleaseBuffer(bufPtr *[]byte) {
+	if bufPtr != nil {
+		bufferPool.Put(bufPtr)
+	}
 }
 
 // ExecuteWrite menangani dekode base64 dan pengiriman payload TCP/TLS.
@@ -55,10 +64,49 @@ func ExecuteRead(conn net.Conn, readSize int, timeout time.Duration) ([]byte, in
 	return buffer, n, bufPtr, err
 }
 
-// ReleaseBuffer mengembalikan buffer ke memory pool
-func ReleaseBuffer(bufPtr *[]byte) {
-	if bufPtr != nil {
-		bufferPool.Put(bufPtr)
+func ExecuteSendTo(fd int, data string, sa unix.Sockaddr, timeout time.Duration) error {
+	if data == "" {
+		return nil
 	}
+	
+	dataDec, err := base64.StdEncoding.DecodeString(data)
+	if err != nil {
+		return fmt.Errorf("base64 decode failed: %w", err)
+	}
+	
+	// Terapkan SO_SNDTIMEO untuk mencegah goroutine hang jika kernel send buffer penuh
+	if timeout > 0 {
+		tv := unix.NsecToTimeval(timeout.Nanoseconds())
+		unix.SetsockoptTimeval(fd, unix.SOL_SOCKET, unix.SO_SNDTIMEO, &tv)
+	}
+
+	// Flag default 0. Eksekusi pengiriman datagram
+	return unix.Sendto(fd, dataDec, 0, sa)
 }
 
+// ExecuteReadFrom mengeksekusi blocking recvfrom dengan timeout dan buffer pooling
+func ExecuteRecvFrom(fd int, readSize int, timeout time.Duration) ([]byte, int, unix.Sockaddr, *[]byte, error) {
+	if readSize <= 0 {
+		readSize = 4096
+	}
+
+	var buffer []byte
+	var bufPtr *[]byte
+
+	if readSize == 4096 {
+		bufPtr = bufferPool.Get().(*[]byte)
+		buffer = *bufPtr
+	} else {
+		buffer = make([]byte, readSize)
+	}
+
+	// Terapkan Timeout hanya jika > 0 untuk menghindari reset RCVTIMEO yang tidak perlu
+	if timeout > 0 {
+		tv := unix.NsecToTimeval(timeout.Nanoseconds())
+		unix.SetsockoptTimeval(fd, unix.SOL_SOCKET, unix.SO_RCVTIMEO, &tv)
+	}
+
+	// Eksekusi syscall membaca dari Raw Socket / UDP
+	n, sa, err := unix.Recvfrom(fd, buffer, 0)
+	return buffer, n, sa, bufPtr, err
+}
