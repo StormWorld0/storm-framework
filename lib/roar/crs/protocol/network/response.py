@@ -135,7 +135,7 @@ class SocketResponse:
         return self._data.get("rtt_ms", 0)
 
     @property
-    def isreused(self) -> bool:
+    def is_reused(self) -> bool:
         """Melihat apakah koneksi yang di gunakan sama dengan sebelumnya"""
         return self._data.get("is_reused", False)
 
