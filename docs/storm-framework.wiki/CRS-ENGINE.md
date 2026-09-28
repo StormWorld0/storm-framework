@@ -88,6 +88,9 @@ sock.socket(addrf, stype, proto)
 
 **Response**
 - **status:** SUCCESS/WARNING/ERROR/TIMEOUT.
+- **message:** Messages adjust to status.
+
+- **ok:** Return boolean from SUCCESS status. Allows the syntax: if r.ok:
 - **fileno:** This will return the number of File-Decryptor (FD).
 
 **2. Connect to Socket**
@@ -104,7 +107,7 @@ sock.connect(host, port, timeout)
 - **message:** Messages adjust to status.
 
 - **ok:** Return boolean from SUCCESS status. Allows the syntax: if r.ok:
-- **isreused:** Returns a Boolean. True=Using the same connection. False=Create a new connection.
+- **is_reused:** Returns a Boolean. True=Using the same connection. False=Create a new connection.
 - **rtt_ms:** Returns the Round Trip Time in milliseconds.
 - **checked_type:** Returns the connection status to see if the tls/tcp connection is working. | Debug.
 - **status_tls:** Returns a Boolean. If True=TLS is enabled. False=TLS is disabled.
@@ -124,7 +127,7 @@ sock.send(data, timeout)
 - **message:** Messages adjust to status.
 
 - **ok:** Return boolean from SUCCESS status. Allows the syntax: if r.ok:
-- **isreused:** Returns a Boolean. True=Using the same connection. False=Create a new connection.
+- **is_reused:** Returns a Boolean. True=Using the same connection. False=Create a new connection.
 - **rtt_ms:** Returns the Round Trip Time in milliseconds.
 - **checked_type:** Returns the connection status to see if the tls/tcp connection is working. | Debug.
 - **status_tls:** Returns a Boolean. If True=TLS is enabled. False=TLS is disabled.
@@ -145,10 +148,10 @@ raw = sock.recv(readsize, timeout)
 - **raw_bytes:** Returning Raw Bytes.
 - **str_bytes:** Returns Raw Bytes as UTF-8.
 - **hex_bytes:** Returns Hex Bytes.
-- **read_butes:** Returns the number of Bytes.
+- **int_bytes:** Returns the number of Bytes.
 - **remote_ip:** Returns the target IP:PORT.
 - **local_ip:** Returns local IP:PORT.
-- **isreused:** Returns a Boolean. True=Using the same connection. False=Create a new connection.
+- **is_reused:** Returns a Boolean. True=Using the same connection. False=Create a new connection.
 - **rtt_ms:** Returns the Round Trip Time in milliseconds.
 - **checked_type:** Returns the connection status to see if the tls/tcp connection is working. | Debug.
 - **status_tls:** Returns a Boolean. If True=TLS is active. False=TLS is disabled.
@@ -175,10 +178,10 @@ Automatically inherits TLS connections to send/recv and send/recv usage remains 
 - **raw_bytes:** Returning Raw Bytes.
 - **str_bytes:** Returns Raw Bytes as UTF-8.
 - **hex_bytes:** Returns Hex Bytes.
-- **read_butes:** Returns the number of Bytes.
+- **int_bytes:** Returns the number of Bytes.
 - **remote_ip:** Returns the server IP:PORT.
 - **local_ip:** Returns local IP:PORT.
-- **isreused:** Returns a Boolean. True=Using the same connection. False=Create a new connection.
+- **is_reused:** Returns a Boolean. True=Using the same connection. False=Create a new connection.
 - **rtt_ms:** Returns the Round Trip Time in milliseconds.
 - **checked_type:** Returns the connection status to see if the tls/tcp connection is working. | Debug.
 - **status_tls:** Returns a Boolean. True=TLS is enabled. False=TLS is disabled.
