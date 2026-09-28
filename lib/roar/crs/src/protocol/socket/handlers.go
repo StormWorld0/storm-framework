@@ -403,7 +403,13 @@ func handleSendTo(ctx *ExecutionContext) packet.ResponsePacket {
 
 	ctx.SaveSession(ctx.RawFD)
 
-	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadata(0)}
+	return packet.ResponsePacket{
+		Status: "SUCCESS", 
+		Data: Data: map[string]interface{}{
+			"is_reused":    ctx.IsReused,
+			"rtt_ms":       time.Since(ctx.StartTime).Milliseconds(),
+		},
+	}
 }
 
 
@@ -426,7 +432,6 @@ func handleRecvFrom(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{
 			Status:  "TIMEOUT",
 			Message: "Recvfrom Failed: " + err.Error(),
-			Data:    ctx.GenerateMetadata(0),
 		}
 	}
 
@@ -446,15 +451,18 @@ func handleRecvFrom(ctx *ExecutionContext) packet.ResponsePacket {
 
 	sender := net.JoinHostPort(senderIP, strconv.Itoa(senderPort))
 
-	// Build Response
-	meta := ctx.GenerateMetadata(n)
-	meta["remote_ip"] = sender     // Override remote_ip dengan IP pengirim datagram
-	meta["raw_bytes"] = base64.StdEncoding.EncodeToString(buffer[:n])
-	meta["hex_bytes"] = hex.EncodeToString(buffer[:n])
-
 	if err == io.EOF {
 		return packet.ResponsePacket{Status: "WARN", Message: "EOF Read: " + err.Error()}
 	}
 
-	return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
+	return packet.ResponsePacket{
+		Status: "SUCCESS", 
+		Data: Data: map[string]interface{}{
+			"is_reused":    ctx.IsReused,
+			"rtt_ms":       time.Since(ctx.StartTime).Milliseconds(),
+			"remote_ip":    sender,
+			"raw_bytes":    base64.StdEncoding.EncodeToString(buffer[:n]),
+			"hex_bytes":    hex.EncodeToString(buffer[:n]),
+		},
+	}
 }
