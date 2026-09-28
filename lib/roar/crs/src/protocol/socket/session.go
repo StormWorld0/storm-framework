@@ -58,6 +58,7 @@ func (ctx *ExecutionContext) LoadSessionState() error {
 		ctx.IsReused = true
 	case int:
 		ctx.RawFD = v
+		ctx.IsReused = true
 	default:
 		return fmt.Errorf("corrupted session data")
 	}
