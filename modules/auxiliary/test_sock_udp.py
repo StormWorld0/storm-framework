@@ -49,33 +49,37 @@ def execute(options, net):
     sock = net.Socket()
 
     try:
+        # Create a socket
         result = sock.socket(sock.AF_INET, sock.SOCK_DGRAM, sock.IPPROTO_UDP)
-
         if not result.ok:
             smf.printd("Socket creation failed", result, level="ERROR")
             return
 
-        smf.printf("Socket created =>", result.fileno)
+        smf.printf("File Decriptor =>", result.fileno)
 
+        # Connect to server
         result = sock.connect(ip, port)
-
         if not result.ok:
             smf.printd("DNS connect failed", result, level="ERROR")
             return
 
+        # Global timeout 
+        sock.timeout(2.0)
+
+        # Build data
         query = build_dns_query("example.com")
 
-        result = sock.send(query, timeout=2.0)
-
+        # Send data
+        result = sock.send(query)
         if not result.ok:
             smf.printd("DNS query failed", result, level="ERROR")
             return
 
-        result = sock.recv(4096, timeout=2.0)
-
+        # Retrieve response Buffer
+        result = sock.recv(4096)
         if result.ok:
             smf.printf("String Response    =>", result.str_bytes)
-            smf.printf("Int Response       =>", result.read_bytes)
+            smf.printf("Int Response       =>", result.int_bytes)
             smf.printf("Raw Response       =>", result.raw_bytes)
             smf.printf("Hex Response       =>", result.hex_bytes)
 
