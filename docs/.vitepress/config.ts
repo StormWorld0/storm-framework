@@ -74,7 +74,7 @@ export default withMermaid(
           items: [
             { text: 'Flow And Arch', link: '/storm-framework.wiki/FlowAndArch.md' },
           ]
-        }
+        },
         {
           text: 'Information',
           collapsed: false,
