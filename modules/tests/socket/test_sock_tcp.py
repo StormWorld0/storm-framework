@@ -53,7 +53,7 @@ def execute(options, net):
             smf.printf("Raw response    =>", result.raw_bytes)
             smf.printf("Hex response    =>", result.hex_bytes)
             smf.printf("Int response    =>", result.int_bytes)
-    except SockTrace as e:
+    except sock.STrace as e:
         smf.printd("Socket testing failed", e, level="ERROR")
     finally:
         sock.close()
