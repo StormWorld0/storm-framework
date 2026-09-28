@@ -154,7 +154,7 @@ func handleSetsockopt(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Setsockopt failed: " + err.Error()}
 	}
 
-	ctx.SaveSession(nil) // Menjaga flag KeepSession jika KeepAlive=true
+	ctx.SaveSession(targetFD)
 
 	return packet.ResponsePacket{
 		Status: "SUCCESS",
