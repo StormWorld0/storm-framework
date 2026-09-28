@@ -178,13 +178,65 @@ class Socket(SocketState, ConstantsMix):
         **kwargs,
     ) -> SocketResponse:
         """Taking Buffer"""
-        self._ensure_open("receive")
+        self._ensure_open("recv")
         packet = IPCPayloadBuilder.build(
             state=self,
             readsize=readsize,
             timeout=timeout,
             infotls=False,
             mode="recv",
+            close_session=False,
+        )
+
+        resp = CRS.send(packet)
+        response = SocketResponse(resp)
+        response._trace()
+        return response
+
+    def sendto(
+        self,
+        data: str | bytes,
+        host: str,
+        port: str | int = None,
+        flag: str | int = None,
+        timeout: float = None,
+        **kwargs,
+    ) -> SocketResponse:
+        """Send datagram along with Host & Port"""
+        self._ensure_open("sendto")
+        packet = IPCPayloadBuilder.build(
+            state=self,
+            data=data,
+            host=host,
+            port=port,
+            flag=flag,
+            timeout=timeout,
+            infotls=False,
+            mode="sendto",
+            close_session=False,
+        )
+
+        resp = CRS.send(packet)
+        response = SocketResponse(resp)
+        response._trace()
+        return response
+
+    def recvfrom(
+        self,
+        readsize: int = None,
+        flag: str | int = None,
+        timeout: float = None,
+        **kwargs,
+    ) -> SocketResponse:
+        """Taking Buffer"""
+        self._ensure_open("recvfrom")
+        packet = IPCPayloadBuilder.build(
+            state=self,
+            readsize=readsize,
+            flag=flag,
+            timeout=timeout,
+            infotls=False,
+            mode="recvfrom",
             close_session=False,
         )
 
