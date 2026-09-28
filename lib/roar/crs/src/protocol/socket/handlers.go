@@ -205,8 +205,8 @@ func handleListen(ctx *ExecutionContext) packet.ResponsePacket {
 	}
 
 	backlog := 128
-	if ctx.Req.ReadSize > 0 {
-		backlog = int(ctx.Req.ReadSize)
+	if ctx.Req.BackLog > 0 {
+		backlog = int(ctx.Req.BackLog)
 	}
 
 	if err := unix.Listen(ctx.RawFD, backlog); err != nil {
