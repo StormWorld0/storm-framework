@@ -64,7 +64,7 @@ func ExecuteRead(conn net.Conn, readSize int, timeout time.Duration) ([]byte, in
 	return buffer, n, bufPtr, err
 }
 
-func ExecuteSendTo(fd int, data string, sa unix.Sockaddr, timeout time.Duration) error {
+func ExecuteSendTo(fd int, data string, sa unix.Sockaddr, timeout time.Duration, flag int) error {
 	if data == "" {
 		return nil
 	}
@@ -81,11 +81,11 @@ func ExecuteSendTo(fd int, data string, sa unix.Sockaddr, timeout time.Duration)
 	}
 
 	// Flag default 0. Eksekusi pengiriman datagram
-	return unix.Sendto(fd, dataDec, 0, sa)
+	return unix.Sendto(fd, dataDec, flag, sa)
 }
 
 // ExecuteReadFrom mengeksekusi blocking recvfrom dengan timeout dan buffer pooling
-func ExecuteRecvFrom(fd int, readSize int, timeout time.Duration) ([]byte, int, unix.Sockaddr, *[]byte, error) {
+func ExecuteRecvFrom(fd int, readSize int, timeout time.Duration, flag int) ([]byte, int, unix.Sockaddr, *[]byte, error) {
 	if readSize <= 0 {
 		readSize = 4096
 	}
@@ -107,6 +107,6 @@ func ExecuteRecvFrom(fd int, readSize int, timeout time.Duration) ([]byte, int, 
 	}
 
 	// Eksekusi syscall membaca dari Raw Socket / UDP
-	n, sa, err := unix.Recvfrom(fd, buffer, 0)
+	n, sa, err := unix.Recvfrom(fd, buffer, flag)
 	return buffer, n, sa, bufPtr, err
 }
