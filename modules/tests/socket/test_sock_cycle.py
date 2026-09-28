@@ -34,7 +34,6 @@ def execute(options, net):
         resp = sock.bind(host, 0)
         if resp.ok:
             smf.printf("[✓] Address & Port Local =>", resp.local_ip)
-            return
 
         # Listen to make Server Socket
         resp = sock.listen(1)
