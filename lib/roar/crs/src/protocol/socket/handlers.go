@@ -382,3 +382,75 @@ func handleRecv(ctx *ExecutionContext) packet.ResponsePacket {
 
 	return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
 }
+
+func handleSendTo(ctx *ExecutionContext) packet.ResponsePacket {
+	if ctx.RawFD == -1 {
+		return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found. Call 'socket' primitive first."}
+	}
+
+	// Resolve target IP dan Port
+	sockAddr, err := resolveSockAddr(ctx.Req)
+	if err != nil {
+		return packet.ResponsePacket{Status: "ERROR", Message: err.Error()}
+	}
+	
+	// Eksekusi menggunakan helper
+	if err := ExecuteSendTo(ctx.RawFD, ctx.Req.Data, sockAddr, ctx.Timeout); err != nil {
+		return packet.ResponsePacket{Status: "ERROR", Message: "Sendto failed: " + err.Error()}
+	}
+
+	ctx.SaveSession(ctx.RawFD)
+
+	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadata(0)}
+}
+
+
+func handleRecvFrom(ctx *ExecutionContext) packet.ResponsePacket {
+	if ctx.RawFD == -1 {
+		return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found for recvfrom."}
+	}
+
+	buffer, n, sa, bufPtr, err := ExecuteRecvFrom(ctx.RawFD, int(ctx.Req.ReadSize), ctx.Timeout)
+	defer ReleaseBuffer(bufPtr)
+	
+	if err != nil && err != unix.EAGAIN && err != unix.EWOULDBLOCK {
+		return packet.ResponsePacket{Status: "ERROR", Message: "Recvfrom failed: " + err.Error()}
+	}
+	
+	if n == 0 || err == unix.EAGAIN || err == unix.EWOULDBLOCK {
+		ctx.SaveSession(ctx.RawFD)
+		return packet.ResponsePacket{
+			Status:  "TIMEOUT",
+			Message: "Recvfrom Failed: " + err.Error(),
+			Data:    ctx.GenerateMetadata(0),
+		}
+	}
+
+	ctx.SaveSession(ctx.RawFD)
+
+	// Ekstrak IP dan Port dari Sender (Remote Address)
+	var senderIP string
+	var senderPort int
+	switch v := sa.(type) {
+	case *unix.SockaddrInet4:
+		senderIP = net.IP(v.Addr[:]).String()
+		senderPort = v.Port
+	case *unix.SockaddrInet6:
+		senderIP = net.IP(v.Addr[:]).String()
+		senderPort = v.Port
+	}
+
+	sender := net.JoinHostPort(senderIP, strconv.Itoa(senderPort))
+
+	// Build Response
+	meta := ctx.GenerateMetadata(n)
+	meta["remote_ip"] = sender     // Override remote_ip dengan IP pengirim datagram
+	meta["raw_bytes"] = base64.StdEncoding.EncodeToString(buffer[:n])
+	meta["hex_bytes"] = hex.EncodeToString(buffer[:n])
+
+	if err == io.EOF {
+		return packet.ResponsePacket{Status: "WARN", Message: "EOF Read: " + err.Error()}
+	}
+
+	return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
+}
