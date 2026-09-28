@@ -79,12 +79,14 @@ All protocols definitely have different parameters, here you can learn what para
 sock = net.Socket()
 resp = sock.socket(addrf, stype, proto)
 ```
+**Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
+
 **Inheritance:** `net.Socket()` will inherit all the functions below it, and all of those functions will only return Response.
 
 **Parameter**
-- **addrf:** Address Family such as: AF_INET, AF_INET6, AF_UNIX, AF_UNSPEC | str
-- **stype:** Sock Type like: SOCK_STREAM, SOCK_DGRAM, SOCK_RAW, SOCK_SEQPACKET | str
-- **proto:** Protocols such as: IPPROTO_IP, IPPROTO_ICMP, IPPROTO_TCP, etc. | str | Default 0 = Determined by Kernel UNIX
+- **addrf:** Address Family such as: `sock.AF_INET`, `sock.AF_INET6`, etc.
+- **stype:** Sock Type like: `sock.SOCK_STREAM`, `sock.SOCK_DGRAM`, etc.
+- **proto:** Protocols such as: `sock.IPPROTO_IP`, etc. | Default 0 = Determined by Kernel UNIX
 
 **Response**
 - **status:** SUCCESS/WARN/ERROR/TIMEOUT.
@@ -137,6 +139,8 @@ resp = sock.send(data, timeout)
 ```python
 resp = sock.sendto(data, host, port, flag, timeout)
 ```
+**Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
+
 **Parameter**
 - **data:** Can be bytes / http request / payload etc.
 - **host:** This can be IP:Port / Hostname.
@@ -180,6 +184,8 @@ raw = sock.recv(readsize, timeout)
 ```python
 raw = sock.recvfrom(readsize, flag, timeout)
 ```
+**Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
+
 **Parameter**
 - **readsize:** To determine how many bytes of buffer to take.
 - **flag:** MSG_* such as: `sock.MSG_OOB`, `sock.MSG_MORE`, etc. | str & int | Default 0.
@@ -247,6 +253,8 @@ Automatically inherits TLS connections to send/recv and send/recv usage remains 
 ```python
 resp = sock.setsockopt(level, name, value)
 ```
+**Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
+
 **Parameter**
 - **level:** OptLevel such as: `sock.SOL_SOCKET`, etc.
 - **name:** OptName such as: `sock.SO_REUSEADDR`, `sock.TCP_NODELAY`, etc.
