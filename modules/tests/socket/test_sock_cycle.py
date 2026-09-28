@@ -43,7 +43,7 @@ def execute(options, net):
         else:
             smf.printd(f"Listen failed", resp.message, level="ERROR")
 
-    except Exception as e:
+    except sock.STrace as e:
         smf.printd("Connection error", e, level="ERROR")
     finally:
         sock.close()
