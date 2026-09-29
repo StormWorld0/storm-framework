@@ -14,7 +14,7 @@ class DNState:
         self,
         domain: str = "example.com",
         type: str = "A",
-        proto: str = "tcp",
+        proto: str = "udp",
         timeout: float = 2.0,
         rlimit: int = 150,
         frate: int = 10,
