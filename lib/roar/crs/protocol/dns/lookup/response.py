@@ -83,7 +83,7 @@ class DNSResponse:
 
     def _timeout(self):
         """Melempar Exception Timeout"""
-        if sts := self.status.upper() is "TIMEOUT":
+        if (sts := self.status.upper()) == "TIMEOUT":
             raise TimeoutTrace(sts, self.message)
         return None
 
