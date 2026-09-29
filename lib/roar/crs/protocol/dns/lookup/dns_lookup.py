@@ -75,4 +75,6 @@ class DNSResolver(DNState):
         return False
 
     def __repr__(self):
-        return f"<DNSL Domain='{self.domains}' Proto='{self.protocol}' Type='{self.types}'>"
+        return (
+            f"<DNSL Domain='{self.domains}' Proto='{self.protocol}' Type='{self.types}'>"
+        )
