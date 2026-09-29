@@ -7,8 +7,9 @@ import smf
 from lib.smf.ingest import push_to_queue
 from ...transport import CRS
 
-from .state_build import DNState, IPCPayloadBuilder
 from .response import DNSResponse
+from .state_build import DNState, IPCPayloadBuilder
+from .exception import StackTrace, TimeoutTrace, NXDomain
 
 
 class DNSResolver(DNState):
