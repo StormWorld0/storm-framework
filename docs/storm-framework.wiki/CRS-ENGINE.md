@@ -390,9 +390,9 @@ resp = dns.run()
 ```python
 try:
     ...
-except req.DTrace:
-except req.Timeout:
-except req.NXDOMAIN:
+except dns.DTrace:
+except dns.Timeout:
+except dns.NXDOMAIN:
 ```
 **Description:** This is used to stop the program script when the CRS throws an ERROR/CRITICAL. Capture the ERROR message using smflogd if necessary.
 
