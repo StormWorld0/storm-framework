@@ -1,5 +1,7 @@
 import smf
 
+from apps.utility.colors import CC
+
 
 class DNState:
     """Manajemen Konfigurasi & State Sesi."""
