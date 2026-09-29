@@ -9,6 +9,7 @@ from apps.utility.colors import CC
 
 from .rawhttp import RawHttp
 
+
 class HTTPState:
     """Manajemen Konfigurasi & State Sesi."""
 
@@ -78,4 +79,3 @@ class IPCPayloadBuilder:
             "frate": state.frate,
             "timeout": state.timeout,
         }
-      
