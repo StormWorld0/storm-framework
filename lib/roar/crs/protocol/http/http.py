@@ -10,6 +10,7 @@ from lib.smf.ingest import push_to_queue
 
 from ...transport import CRS
 from .response import HTTPResponse
+from .rawhttp import RawHttp
 
 
 class HTTPState:
