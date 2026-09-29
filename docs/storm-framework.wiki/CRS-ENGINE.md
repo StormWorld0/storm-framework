@@ -356,9 +356,12 @@ except sock.STrace:
 
 **DNS Lookup**
 ```python
-def execute(options, net):
-    req = net.DNSL()
-    r = req(domain, type, proto, timeout, rl, con)
+dns = net.DNSL()
+dns.query(domain, type, proto)
+dns.timeout(value)
+dns.setlimit(ratelimit, frate)
+dns.concurrency(con)
+resp = dns.run()
 ```
 **Description:** DNSL are stateless, and you get a response immediately after each run.
 
@@ -367,14 +370,15 @@ def execute(options, net):
 - **type:** DNS query type. Example: A, AAAA, TXT, etc. | Default A | str.
 - **proto:** Can TCP/UDP | Default TCP.
 - **timeout:** To limit the open connection time. | Default 5s
-- **rl:** Blocking requests if the token runs out. | Default 150/1s | int.
+- **ratelimit:** Blocking requests if the token runs out. | Default 150/1s | int.
+- **frate:** Fixed Rate Limit untuk upgrade (ratelimit) saat terkena WAF. | Default 10/1s | int
 - **con:** Number of Goroutines for Concurrency, allows to run parallel connections. | int.
 
 **Response**
 - **status:** ERROR/SUCCESS/TIMEOUT/WARNING.
 - **message:** Messages adjust to status.
 
-- **ok:** Returns a boolean of the SUCCESS status and RCODE is NOERROR (0). Allows the syntax: if r.ok:
+- **ok:** Returns a boolean of the SUCCESS status and RCODE is NOERROR (0). Allows the syntax: if resp.ok:
 - **rcode:** DNS Response Code (example: 0 = NOERROR, 3 = NXDOMAIN).
 - **rcode_str:** String representation of RCODE.
 - **records:** List of resolution results / answers from DNS server.
@@ -387,6 +391,8 @@ def execute(options, net):
 try:
     ...
 except req.DTrace:
+except req.Timeout:
+except req.NXDOMAIN:
 ```
 **Description:** This is used to stop the program script when the CRS throws an ERROR/CRITICAL. Capture the ERROR message using smflogd if necessary.
 
