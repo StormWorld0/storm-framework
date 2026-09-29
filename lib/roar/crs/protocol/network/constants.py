@@ -2,22 +2,28 @@
 # -- License SMF
 # -- Author zxelzy
 
+
 class AddrFamily:
     """Address Family"""
+
     AF_UNSPEC = "AF_UNSPEC"
     AF_UNIX = "AF_UNIX"
     AF_INET = "AF_INET"
     AF_INET6 = "AF_INET6"
 
+
 class SockType:
     """Sock Type"""
+
     SOCK_STREAM = "SOCK_STREAM"
     SOCK_DGRAM = "SOCK_DGRAM"
     SOCK_RAW = "SOCK_RAW"
     SOCK_SEQPACKET = "SOCK_SEQPACKET"
 
+
 class IPProto:
     """Protocol"""
+
     IPPROTO_IP = "IPPROTO_IP"
     IPPROTO_IPV6 = "IPPROTO_IPV6"
     IPPROTO_ICMP = "IPPROTO_ICMP"
@@ -25,8 +31,10 @@ class IPProto:
     IPPROTO_UDP = "IPPROTO_UDP"
     IPPROTO_RAW = "IPPROTO_RAW"
 
+
 class SockOptionsSO:
     """OptLevel"""
+
     SOL_SOCKET = "SOL_SOCKET"
 
     """OptName - SOL_SOCKET (Level 1)"""
@@ -57,8 +65,10 @@ class SockOptionsSO:
     SO_TIMESTAMP = "SO_TIMESTAMP"
     SO_ACCEPTCONN = "SO_ACCEPTCONN"
 
+
 class SockOptionsTCP:
     """OptName - IPPROTO_TCP (Level 6)"""
+
     TCP_NODELAY = "TCP_NODELAY"
     TCP_MAXSEG = "TCP_MAXSEG"
     TCP_CORK = "TCP_CORK"
@@ -81,8 +91,10 @@ class SockOptionsTCP:
     TCP_TIMESTAMP = "TCP_TIMESTAMP"
     TCP_NOTSENT_LOWAT = "TCP_NOTSENT_LOWAT"
 
+
 class SockOptionsIP:
     """OptName - IPPROTO_IP (Level 0)"""
+
     IP_TOS = "IP_TOS"
     IP_TTL = "IP_TTL"
     IP_HDRINCL = "IP_HDRINCL"
@@ -93,8 +105,10 @@ class SockOptionsIP:
     IPV6_UNICAST_HOPS = "IPV6_UNICAST_HOPS"
     IPV6_V6ONLY = "IPV6_V6ONLY"
 
+
 class SockFlags:
     """Flags - (Level 0)"""
+
     MSG_DONTWAIT = "MSG_DONTWAIT"
     MSG_OOB = "MSG_OOB"
     MSG_MORE = "MSG_MORE"
@@ -103,6 +117,7 @@ class SockFlags:
     MSG_PEEK = "MSG_PEEK"
     MSG_WAITALL = "MSG_WAITALL"
     MSG_TRUNC = "MSG_TRUNC"
+
 
 class ConstantsMix(
     AddrFamily,
@@ -115,7 +130,7 @@ class ConstantsMix(
 ):
     """
     Class Pusat Integrasi Konstanta.
-    Menggabungkan seluruh sub-class konstanta via Multiple Inheritance 
+    Menggabungkan seluruh sub-class konstanta via Multiple Inheritance
     agar kompatibel dengan `class Socket(SocketState, ConstantsMix)`.
     """
 
