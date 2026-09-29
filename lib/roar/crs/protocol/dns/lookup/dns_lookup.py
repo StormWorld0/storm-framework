@@ -37,18 +37,18 @@ class DNSResolver(DNState):
             self._timeout = timeout
         return self
 
-    def concurrency(self, con: int):
+    def concurrency(self, con: int, **kwargs):
         """store Concurrency values"""
         self.goroutine = con
         return self
 
-    def setlimit(self, ratelimit: int, frate: int):
+    def setlimit(self, ratelimit: int, frate: int, **kwargs):
         """set limit options"""
         self.ratelimit = ratelimit
         self.fixed_ratelimit = frate
         return self
 
-    def run(self):
+    def run(self, **kwargs) -> DNSResponse:
         """Running DNS Lookup"""
         packet = IPCPayloadBuilder.build(state=self)
 
@@ -65,3 +65,14 @@ class DNSResolver(DNState):
             smf.printd("Failed to push DNSL payload to queue", e, level="ERROR")
 
         return res
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.domains = None
+        self.types = None
+        return False
+
+    def __repr__(self):
+        return f"<DNSL Domain='{self.domains}' Proto='{self.protocol}' Type='{self.types}'>"
