@@ -4,9 +4,7 @@
 
 import smf
 
-from typing import Dict, Any, List
-from apps.utility.colors import CC
-from lib.smf.ingest import push_to_queue, DataBuilder
+from lib.smf.ingest import push_to_queue
 from ...transport import CRS
 
 from .state_build import DNState, IPCPayloadBuilder
@@ -19,7 +17,7 @@ class DNSResolver(DNState):
     DTrace = StackTrace
     Timeout = TimeoutTrace
     NXDOMAIN = NXDomain
-    
+
     def query(
         self,
         domain: str,
@@ -38,24 +36,21 @@ class DNSResolver(DNState):
             self._timeout = timeout
         return self
 
-    
     def concurrency(self, con: int):
         """store Concurrency values"""
         self.goroutine = con
         return self
 
-    
     def setlimit(self, ratelimit: int, frate: int):
         """set limit options"""
         self.ratelimit = ratelimit
         self.fixed_ratelimit = frate
         return self
 
-    
     def run(self):
         """Running DNS Lookup"""
         packet = IPCPayloadBuilder.build(state=self)
-        
+
         raw_res = CRS.send(packet)
         res = DNSResponse(raw_res)
         res._trace()
@@ -69,5 +64,3 @@ class DNSResolver(DNState):
             smf.printd("Failed to push DNSL payload to queue", e, level="ERROR")
 
         return res
-
-    
