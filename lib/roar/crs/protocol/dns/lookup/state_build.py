@@ -34,6 +34,11 @@ class DNState:
                 f"[!] {CC.YELLOW}Unrecognized parameters dropped =>{CC.RESET}", kwargs
             )
 
+    def _reset(self):
+        """Reset state instance ini kembali ke default murni DNState"""
+        super().__init__()
+        return self
+
 
 class IPCPayloadBuilder:
     """Data Marshalling & Data Transformation."""
