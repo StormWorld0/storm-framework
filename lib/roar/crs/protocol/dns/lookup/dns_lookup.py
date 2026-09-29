@@ -30,9 +30,12 @@ class DNSResolver(DNState):
     ):
         """Saving Query values"""
         self.domains = domain
-        self.types = type if type is not None
-        self.protocol = proto if proto is not None
-        self._timeout = timeout if timeout is not None
+        if type is not None:
+            self.types = type
+        if proto is not None:
+            self.protocol = proto
+        if timeout is not None:
+            self._timeout = timeout
         return self
 
     
