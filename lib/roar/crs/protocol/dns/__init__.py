@@ -1,1 +1,1 @@
-from .dns_lookup import requests  # noqa
+from .dns_lookup import DNSResolver  # noqa
