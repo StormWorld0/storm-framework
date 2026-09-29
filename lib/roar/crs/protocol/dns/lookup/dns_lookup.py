@@ -59,7 +59,7 @@ class DNSResolver(DNState):
         res._nxdomain()
 
         try:
-            db_payload = res._to_db_payload(domain, proto)
+            db_payload = res._to_db_payload(self.domains, self.protocol)
             push_to_queue(db_payload)
         except Exception as e:
             smf.printd("Failed to push DNSL payload to queue", e, level="ERROR")
