@@ -26,29 +26,32 @@ class HTTPState:
         tls: bool = False,
         verify: bool = True,
         retry: int = 2,
+        timeout: float = 5.0,
         rlimit: int = 150,
         frate: int = 10,
-        timeout: float = 5.0,
         con: int = 50,
         **kwargs,
     ):
-        self.method = method
-        self.url = url
-        self.headers = headers
-        self.body = body
-        self.redirect = redirect
-        self.rawhttp = rawhttp
-        self.tls = tls
-        self.verify = verify
-        self.ratelimit = rlimit
-        self.fixed_ratelimit = frate
+        self._method = method.upper()
+        self._url = url
+        self._headers = headers
+        self._body = body
+        self._redirect = redirect
+        self._rawhttp = rawhttp
+        self._tls = tls
+        self._verify = verify
+        self._retry = retry
         self._timeout = timeout
+        self._ratelimit = rlimit
+        self.fixed_ratelimit = frate
         self.goroutine = con
 
         if kwargs:
             smf.printf(
                 f"[!] {CC.YELLOW}Unrecognized parameters dropped =>{CC.RESET}", kwargs
             )
+
+        self.rawhttp = RawHttp(state=self)
 
     def _reset(self):
         """Reset state instance ini kembali ke default"""
@@ -60,44 +63,56 @@ class IPCPayloadBuilder:
     """Data Marshalling & Data Transformation."""
 
     @staticmethod
-    def build(
-        self,
-        method: str,
-        url: str,
-        headers: dict = None,
-        body: str = "",
-        redirect: bool = True,
-        rawhttp: bool = False,
-        tls: bool = False,
-        verify: bool = True,
-        retry: int = 2,
-        rl: int = 150,
-        frl: int = 10,
-        timeout: float = 5.0,
-        con: int = 50,
-        **kwargs,
-    ) -> Dict:
+    def build(state: HTTPState) -> Dict:
 
         return {
             "primitive": "HTTP_SEND",
-            "goroutine": con,
-            "method": method.upper(),
-            "url": url,
-            "headers": headers or {},
-            "body": body,
-            "redirect": redirect,
-            "rawmode": rawhttp,
-            "info_tls": tls,
-            "verify": verify,
-            "retry": retry,
-            "ratelimit": rl,
-            "frate": frl,
-            "timeout": timeout,
+            "goroutine": state.goroutine,
+            "method": state.method,
+            "url": state.url,
+            "headers": state.headers or {},
+            "body": state.body,
+            "redirect": state.redirect,
+            "rawmode": state.rawhttp,
+            "info_tls": state.tls,
+            "verify": state.verify,
+            "retry": state.retry,
+            "ratelimit": state.ratelimit,
+            "frate": state.frate,
+            "timeout": state.timeout,
         }
 
 
 class HTTPClient(HTTPState):
     """Namespace OOP untuk operasi HTTP"""
+
+    def requests(self, method: str, url: str, **kwargs):
+        """"""
+        if not isinstance(url, str):
+            raise TypeError("URL must be a string")
+        
+        self._method = method
+        self._url = url
+        return self
+
+    def concurrency(self, con: int, **kwargs):
+        """"""
+        self.goroutine = con
+        return self
+
+    def setlimit(self, ratelimit: int, frate: int, **kwargs):
+        """"""
+        self.ratelimit = ratelimit
+        self.frate = frate
+        return self
+
+    def timeout(self, value: float, **kwargs):
+        """"""
+        if not isinstance(value, float):
+            raise TypeError("value must be a float")
+            
+        self._timeout = value
+        return self
 
     def run(self, **kwargs) -> HTTPResponse:
         """Running HTTP Requests"""
@@ -108,7 +123,7 @@ class HTTPClient(HTTPState):
         res._trace()
 
         try:
-            db_payload = res._to_db_payload(method, url, tls)
+            db_payload = res._to_db_payload(self._method, self._url, self._tls)
             push_to_queue(db_payload)
         except Exception as e:
             smf.printd("Failed to push HTTP payload to queue", e, level="ERROR")
