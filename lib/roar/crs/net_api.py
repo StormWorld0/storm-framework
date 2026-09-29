@@ -1,6 +1,6 @@
 from .protocol import (
     http_requests as HTTPR,
-    requests as DNSL,
+    DNSResolver as DNSL,
     ipwhois as IPWhois,
     domwhois as DWhois,
     Socket,
