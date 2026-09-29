@@ -77,20 +77,20 @@ class DNSResponse:
 
     def _trace(self):
         """Melempar Exception"""
-        if (sts := self.status.upper()) in {"ERROR", "CRITICAL"}:
-            raise StackTrace(sts, self.message)
+        if self.status.upper() in {"ERROR", "CRITICAL"}:
+            raise StackTrace(self.message)
         return None
 
     def _timeout(self):
         """Melempar Exception Timeout"""
-        if (sts := self.status.upper()) == "TIMEOUT":
-            raise TimeoutTrace(sts, self.message)
+        if self.status.upper() == "TIMEOUT":
+            raise TimeoutTrace(self.message)
         return None
 
     def _nxdomain(self):
         """Melempar Exception Timeout"""
         if self.rcode == 3:
-            raise NXDomain(self.rcode_str, self.message)
+            raise NXDomain(self.message)
         return None
 
     def __bool__(self):
