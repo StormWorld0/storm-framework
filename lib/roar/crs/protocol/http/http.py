@@ -1,15 +1,12 @@
 # -- https://github.com/StormWorld0/storm-framework
 # -- License SMF
 # -- Author zxelzy
-import json
 import smf
-import re
 
-from typing import Dict, Any, Optional, Union
+from typing import Dict
 
 from apps.utility.colors import CC
-from apps.utility.parse import parse_url, domain_to_ip
-from lib.smf.ingest import push_to_queue, DataBuilder
+from lib.smf.ingest import push_to_queue
 
 from ...transport import CRS
 from .response import HTTPResponse
@@ -58,6 +55,7 @@ class HTTPState:
         super().__init__()
         return self
 
+
 class IPCPayloadBuilder:
     """Data Marshalling & Data Transformation."""
 
@@ -98,11 +96,9 @@ class IPCPayloadBuilder:
         }
 
 
-
-
 class HTTPClient(HTTPState):
     """Namespace OOP untuk operasi HTTP"""
-    
+
     def run(self, **kwargs) -> HTTPResponse:
         """Running HTTP Requests"""
         packet = IPCPayloadBuilder.build(state=self)
@@ -117,4 +113,3 @@ class HTTPClient(HTTPState):
         except Exception as e:
             smf.printd("Failed to push HTTP payload to queue", e, level="ERROR")
         return res
-
