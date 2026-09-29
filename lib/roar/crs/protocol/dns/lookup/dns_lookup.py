@@ -65,7 +65,6 @@ class DNSResolver(DNState):
             push_to_queue(db_payload)
         except Exception as e:
             smf.printd("Failed to push DNSL payload to queue", e, level="ERROR")
-
         return res
 
     def __enter__(self):
