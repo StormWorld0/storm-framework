@@ -5,7 +5,7 @@ class StackTrace(Exception):
         super().__init__()
         self.status = status
         self.message = message
-        
+
 
 class TimeoutTrace(Exception):
     """Melempar Exception timeout dari response CRS"""
@@ -14,7 +14,7 @@ class TimeoutTrace(Exception):
         super().__init__()
         self.status = status
         self.message = message
-        
+
 
 class NXDomain(Exception):
     """Melempar Exception NXDOMAIN dari response CRS"""
