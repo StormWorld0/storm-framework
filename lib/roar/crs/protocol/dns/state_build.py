@@ -1,5 +1,6 @@
 import smf
 
+
 class DNState:
     """Manajemen Konfigurasi & State Sesi."""
 
@@ -26,6 +27,7 @@ class DNState:
             smf.printf(
                 f"[!] {CC.YELLOW}Unrecognized parameters dropped =>{CC.RESET}", kwargs
             )
+
 
 class IPCPayloadBuilder:
     """Data Marshalling & Data Transformation."""
