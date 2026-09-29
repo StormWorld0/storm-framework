@@ -90,7 +90,7 @@ class HTTPClient(HTTPState):
         """"""
         if not isinstance(url, str):
             raise TypeError("URL must be a string")
-        
+
         self._method = method
         self._url = url
         return self
@@ -110,7 +110,7 @@ class HTTPClient(HTTPState):
         """"""
         if not isinstance(value, float):
             raise TypeError("value must be a float")
-            
+
         self._timeout = value
         return self
 
