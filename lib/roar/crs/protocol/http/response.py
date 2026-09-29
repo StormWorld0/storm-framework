@@ -12,7 +12,7 @@ from apps.utility.parse import parse_url, domain_to_ip
 from lib.smf.ingest import DataBuilder
 
 from .exception import StackTrace
-
+from .metadata import HTTPTLSMetadata
 
 class HTTPResponse:
     """Wrapper DTO untuk mengelola respons HTTP"""
