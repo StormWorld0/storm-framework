@@ -14,6 +14,7 @@ from lib.smf.ingest import DataBuilder
 from .exception import StackTrace
 from .metadata import HTTPTLSMetadata
 
+
 class HTTPResponse:
     """Wrapper DTO untuk mengelola respons HTTP"""
 
