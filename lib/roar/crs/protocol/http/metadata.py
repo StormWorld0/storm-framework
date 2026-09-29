@@ -1,4 +1,5 @@
-from typing import Dict, Any, Optional, Union
+from typing import Dict, Any, Optional
+
 
 class HTTPTLSMetadata:
     """Data Transfer Object (DTO) untuk metadata TLS"""
