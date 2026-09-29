@@ -24,7 +24,6 @@ class DNSResolver(DNState):
         domain: str,
         type: str = None,
         proto: str = None,
-        timeout: float = None,
         **kwargs,
     ):
         """Saving Query values"""
@@ -33,8 +32,6 @@ class DNSResolver(DNState):
             self.types = type
         if proto is not None:
             self.protocol = proto
-        if timeout is not None:
-            self._timeout = timeout
         return self
 
     def concurrency(self, con: int, **kwargs):
@@ -46,6 +43,11 @@ class DNSResolver(DNState):
         """set limit options"""
         self.ratelimit = ratelimit
         self.fixed_ratelimit = frate
+        return self
+
+    def timeout(self, value: float, **kwargs):
+        """Stores global timeout state"""
+        self._timeout = value
         return self
 
     def run(self, **kwargs) -> DNSResponse:
@@ -72,6 +74,7 @@ class DNSResolver(DNState):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.domains = None
         self.types = None
+        smf.printd("Context failed with", exc_type, exc_val, exc_tb, level="ERROR")
         return False
 
     def __repr__(self):
