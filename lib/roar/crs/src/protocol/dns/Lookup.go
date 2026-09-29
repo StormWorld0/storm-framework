@@ -65,6 +65,9 @@ func Lookup(req packet.RequestPacket) packet.ResponsePacket {
 	// Eksekusi query DNS
 	respMsg, _, err := client.Exchange(reqMsg, targetAddr)
 	if err != nil {
+		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+		    return packet.ResponsePacket{Status: "TIMEOUT", Message: "Failed Query: " + err.Error()}
+		}
 		return packet.ResponsePacket{Status: "ERROR", Message: "DNS Exchange failed: " + err.Error()}
 	}
 
@@ -73,6 +76,9 @@ func Lookup(req packet.RequestPacket) packet.ResponsePacket {
 		client.Net = "tcp"
 		respMsg, _, err = client.Exchange(reqMsg, targetAddr)
 		if err != nil {
+			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+		        return packet.ResponsePacket{Status: "TIMEOUT", Message: "Failed Query: " + err.Error()}
+	    	}
 			return packet.ResponsePacket{Status: "ERROR", Message: "TCP Fallback Exchange failed: " + err.Error()}
 		}
 	}
