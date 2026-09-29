@@ -2,21 +2,21 @@
 # -- License SMF
 # -- Author zxelzy
 
-
-class ConstantsMix:
+class AddrFamily:
     """Address Family"""
-
     AF_UNSPEC = "AF_UNSPEC"
     AF_UNIX = "AF_UNIX"
     AF_INET = "AF_INET"
     AF_INET6 = "AF_INET6"
 
+class SockType:
     """Sock Type"""
     SOCK_STREAM = "SOCK_STREAM"
     SOCK_DGRAM = "SOCK_DGRAM"
     SOCK_RAW = "SOCK_RAW"
     SOCK_SEQPACKET = "SOCK_SEQPACKET"
 
+class IPProto:
     """Protocol"""
     IPPROTO_IP = "IPPROTO_IP"
     IPPROTO_IPV6 = "IPPROTO_IPV6"
@@ -25,6 +25,7 @@ class ConstantsMix:
     IPPROTO_UDP = "IPPROTO_UDP"
     IPPROTO_RAW = "IPPROTO_RAW"
 
+class SockOptionsSO:
     """OptLevel"""
     SOL_SOCKET = "SOL_SOCKET"
 
@@ -56,6 +57,7 @@ class ConstantsMix:
     SO_TIMESTAMP = "SO_TIMESTAMP"
     SO_ACCEPTCONN = "SO_ACCEPTCONN"
 
+class SockOptionsTCP:
     """OptName - IPPROTO_TCP (Level 6)"""
     TCP_NODELAY = "TCP_NODELAY"
     TCP_MAXSEG = "TCP_MAXSEG"
@@ -79,6 +81,7 @@ class ConstantsMix:
     TCP_TIMESTAMP = "TCP_TIMESTAMP"
     TCP_NOTSENT_LOWAT = "TCP_NOTSENT_LOWAT"
 
+class SockOptionsIP:
     """OptName - IPPROTO_IP (Level 0)"""
     IP_TOS = "IP_TOS"
     IP_TTL = "IP_TTL"
@@ -90,6 +93,7 @@ class ConstantsMix:
     IPV6_UNICAST_HOPS = "IPV6_UNICAST_HOPS"
     IPV6_V6ONLY = "IPV6_V6ONLY"
 
+class SockFlags:
     """Flags - (Level 0)"""
     MSG_DONTWAIT = "MSG_DONTWAIT"
     MSG_OOB = "MSG_OOB"
@@ -99,3 +103,31 @@ class ConstantsMix:
     MSG_PEEK = "MSG_PEEK"
     MSG_WAITALL = "MSG_WAITALL"
     MSG_TRUNC = "MSG_TRUNC"
+
+class ConstantsMix(
+    AddrFamily,
+    SockType,
+    IPProto,
+    SockOptionsSO,
+    SockOptionsTCP,
+    SockOptionsIP,
+    SockFlags,
+):
+    """
+    Class Pusat Integrasi Konstanta.
+    Menggabungkan seluruh sub-class konstanta via Multiple Inheritance 
+    agar kompatibel dengan `class Socket(SocketState, ConstantsMix)`.
+    """
+
+    # Socket Arguments
+    AF = AddrFamily
+    Type = SockType
+    IP = IPProto
+
+    # Argument Setsockopt
+    SO = SockOptionsSO
+    TCP = SockOptionsTCP
+    IP = SockOptionsIP
+
+    # Sendto & Recvfrom Arguments
+    Flag = SockFlags
