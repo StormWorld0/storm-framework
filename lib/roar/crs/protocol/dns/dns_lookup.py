@@ -9,11 +9,13 @@ from lib.smf.ingest import push_to_queue, DataBuilder
 from ...transport import CRS
 
 
-class StackTrace:
+class StackTrace(Exception):
     """Melempar stack trace dari response stderr CRS"""
 
     def __init__(self, status: str, message: str):
-        raise Exception(status, message)
+        self.status = status
+        self.message = message
+        super().__init__(message)
 
 
 class DNSResponse:
@@ -84,11 +86,10 @@ class DNSResponse:
         )
         return payload
 
-    def _trace(self) -> None:
-        """Melempar stack trace"""
-        if (sts := self.status.upper()) == "CRITICAL":
-            msg = self.message
-            return StackTrace(sts, msg)
+    def _trace(self):
+        """Melempar Exception"""
+        if (sts := self.status.upper()) in {"ERROR", "CRITICAL"}:
+            raise StackTrace(sts, self.message)
         return None
 
     def __bool__(self):
@@ -105,7 +106,8 @@ class DNSResolver:
     Menggunakan @staticmethod karena request bersifat stateless (tidak perlu menyimpan state internal).
     """
 
-    @staticmethod
+    DTrace = StackTrace
+
     def query(
         domain: str,
         type: str = "A",
@@ -149,7 +151,3 @@ class DNSResolver:
             smf.printd("Failed to push DNSL payload to queue", e, level="ERROR")
 
         return res
-
-
-# Alias untuk entry point
-requests = DNSResolver.query
