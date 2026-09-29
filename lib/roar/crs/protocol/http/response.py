@@ -9,9 +9,10 @@ import re
 from typing import Dict, Any, Optional, Union
 
 from apps.utility.parse import parse_url, domain_to_ip
-from lib.smf.ingest import push_to_queue, DataBuilder
+from lib.smf.ingest import DataBuilder
 
 from .exception import StackTrace
+
 
 class HTTPResponse:
     """Wrapper DTO untuk mengelola respons HTTP"""
@@ -139,7 +140,6 @@ class HTTPResponse:
         if not extracted_port:
             extracted_port = 443 if res["scheme"] == "https" else 80
 
-        
         info = (
             f"Status: {self.status_code} | Server: {server_header} | Proto: {self.proto}"[
                 :255
@@ -215,4 +215,3 @@ class HTTPResponse:
 
     def __repr__(self):
         return f"<HTTPTLSMetadata Version={self.version} Cipher={self.cipher} Host={self.hostname}>"
-      
