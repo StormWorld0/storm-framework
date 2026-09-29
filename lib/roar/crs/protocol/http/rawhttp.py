@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Dict, Any, Optional, Union
 if TYPE_CHECKING:
     from .state_build import HTTPState
 
+
 class RawHttp:
     """
     Sub-module RawHttp untuk membangun state HTTP request (Fluent Interface).
