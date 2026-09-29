@@ -139,10 +139,16 @@ def execute(options, net):
     except ValueError:
         pass
 
+    dns = net.DNSL()
+
     smf.printf(f"{CC.MAGENTA} DNS ENUMERATION For {target_domain}")
     try:
         for record_type in DNS_RECORDS:
-            resp = net.DNSL(target_domain, type=record_type, timeout=2.0, con=50)
+            dns.query(target_domain, type=record_type)
+            dns.timeout(2.0)
+            dns.concurrency(50)
+            dns.setlimit(150, 50)
+            resp = dns.run()
 
             valid = resp.ok
             status = resp.status
@@ -169,6 +175,8 @@ def execute(options, net):
 
     except KeyboardInterrupt:
         return
+    except Timeout as e:
+        smf.printd("Timeout query dns", e, level="ERROR")
     except Exception as e:
         smf.printf(f"{CC.RED}[!] Global ERROR =>", e, file=sys.stderr, flush=True)
         smf.printd("Global error dns lookup", e, level="ERROR")
