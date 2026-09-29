@@ -72,9 +72,8 @@ class DNSResolver(DNState):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.domains = None
-        self.types = None
         smf.printd("Context failed with", exc_type, exc_val, exc_tb, level="ERROR")
+        self._reset()
         return False
 
     def __repr__(self):
