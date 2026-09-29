@@ -3,7 +3,7 @@
 # -- Author zxelzy
 
 from typing import Dict, Any, List
-from lib.smf.ingest import push_to_queue, DataBuilder
+from lib.smf.ingest import DataBuilder
 from .exception import StackTrace, TimeoutTrace, NXDomain
 
 
@@ -83,7 +83,7 @@ class DNSResponse:
 
     def _timeout(self):
         """Melempar Exception Timeout"""
-        if (sts := self.status.upper() is "TIMEOUT"):
+        if sts := self.status.upper() is "TIMEOUT":
             raise TimeoutTrace(sts, self.message)
         return None
 
@@ -99,4 +99,3 @@ class DNSResponse:
 
     def __repr__(self):
         return f"<DNSResponse Status={self.status} RCode={self.rcode_str} Records={len(self.records)}>"
-        
