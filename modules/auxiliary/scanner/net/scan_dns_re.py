@@ -174,9 +174,11 @@ def execute(options, net):
                 smf.printf(f"{CC.RED}[!] ERROR: {record_type} => {resp.message}")
 
     except KeyboardInterrupt:
-        return
-    except Timeout as e:
-        smf.printd("Timeout query dns", e, level="ERROR")
+        pass
+    except dns.DTrace as e:
+        smf.printd("Error exception DTrace", e, level="ERROR")
+    except dns.Timeout as e:
+        smf.printd("Timeout query dns", e, level="WARN")
     except Exception as e:
         smf.printf(f"{CC.RED}[!] Global ERROR =>", e, file=sys.stderr, flush=True)
         smf.printd("Global error dns lookup", e, level="ERROR")
