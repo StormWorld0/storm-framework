@@ -1,7 +1,6 @@
 package http
 
 import (
-    "encoding/base64"
 	"net/url"
 	"time"
 
@@ -26,13 +25,8 @@ func ExecuteRaw(req packet.RequestPacket, timeout time.Duration) packet.Response
 		uriPath = "/"
 	}
 
-    dataDec, err := base64.StdEncoding.DecodeString(req.Body)
-	if err != nil {
-		return BuildErrorResponse("rawhttp", "base64 decode failed: "+err.Error())
-    }
-
 	// Otomatis konversi body (string/bytes/json) menjadi io.Reader
-	bodyReader, err := ParseBody(dataDec)
+	bodyReader, err := ParseBody(req.Body)
 	if err != nil {
 		return BuildErrorResponse("rawhttp", "Body parse error: "+err.Error())
 	}
