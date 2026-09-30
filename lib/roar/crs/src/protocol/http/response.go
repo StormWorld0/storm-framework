@@ -18,6 +18,11 @@ func BuildErrorResponse(status string, engine string, message string) packet.Res
 		    Status:  status,
 		    Message: "[" + engine + "] " + message,
 	    }
+	default:
+		return packet.ResponsePacket{
+			Status:  status,
+			Message: "[" + engine + "] " + message,
+		}
     }
 }
 
