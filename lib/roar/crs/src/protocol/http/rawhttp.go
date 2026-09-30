@@ -28,7 +28,7 @@ func ExecuteRaw(req packet.RequestPacket, timeout time.Duration) packet.Response
 	}
 
 	// Otomatis konversi body (string/bytes/json) menjadi io.Reader
-	bodyReader, err := ParseBody(req.Body)
+	bodyReader, err := ParseBody(req.Encoding, req.Body)
 	if err != nil {
 		return BuildErrorResponse("ERROR", "rawhttp", "Body parse error: "+err.Error())
 	}
