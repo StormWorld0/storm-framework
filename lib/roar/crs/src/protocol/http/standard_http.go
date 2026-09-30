@@ -39,7 +39,7 @@ func ExecuteStandard(req packet.RequestPacket, timeout time.Duration) packet.Res
 		}
 	}
 
-	bodyReader, err := ParseBody(req.Body)
+	bodyReader, err := ParseBody(req.Encoding, req.Body)
 	if err != nil {
 		return BuildErrorResponse("ERROR", "retryablehttp", "Body parse error: "+err.Error())
 	}
