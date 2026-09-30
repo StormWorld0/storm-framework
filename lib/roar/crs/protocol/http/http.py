@@ -3,13 +3,13 @@
 # -- Author zxelzy
 import smf
 
-
 from lib.smf.ingest import push_to_queue
 
-from ...transport import CRS
 from .state_build import HTTPState, IPCPayloadBuilder
 from .normal_http import HTTPMethod
 from .response import HTTPResponse
+
+from ...transport import CRS
 
 
 class HTTPClient(HTTPState, HTTPMethod):
@@ -63,3 +63,15 @@ class HTTPClient(HTTPState, HTTPMethod):
         except Exception as e:
             smf.printd("Failed to push HTTP payload to queue", e, level="ERROR")
         return res
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type is not None:
+            smf.printd("Context failed with", exc_type, exc_val, exc_tb, level="WARN")
+        self._reset()
+        return False
+
+    def __repr__(self):
+        return (f"<HTTPR URL='{self.url}' Status='{self.status}' Protocol='{self.proto}' Engine='{self.engine}'>")
