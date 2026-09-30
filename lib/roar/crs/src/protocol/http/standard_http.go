@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"errors"
 	"time"
+	"net"
 
 	"github.com/projectdiscovery/retryablehttp-go"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
@@ -52,6 +53,7 @@ func ExecuteStandard(req packet.RequestPacket, timeout time.Duration) packet.Res
 
 	resp, err := client.Do(httpReq)
 	if err != nil {
+		var netErr net.Error
 		if errors.As(err, &netErr) && netErr.Timeout() {
 			return BuildErrorResponse("TIMEOUT", "rawhttp", "Execution failed: "+err.Error())
 		}
