@@ -27,6 +27,9 @@ class RawHttp:
         if headers is None:
             headers = {}
 
+        if body is None:
+            body = ""
+
         if not isinstance(headers, dict):
             raise TypeError(f"Headers must be a Dict, got {type(headers).__name__}")
 
