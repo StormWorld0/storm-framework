@@ -28,7 +28,7 @@ def execute(options, net):
         if resp.ok:
             smf.printf("Server =>", resp.get_headers("server", "UNKNOWN"))
             smf.printf("Status =>", resp.status_code)
-            smf.printf("Body   =>", resp.body[:50])
+            smf.printf("Body   =>", resp.body[:1000])
     except http.HTrace as e:
         smf.printf("Error http requests =>", e)
     except KeyboardInterrupt:
