@@ -9,23 +9,46 @@ import (
 )
 
 // ParseBody mendukung berbagai tipe data dari (bytes, string, reader, struct/json)
-func ParseBody(rawBody interface{}) (io.Reader, error) {
+func ParseBody(encoding string, rawBody interface{}) (io.Reader, error) {
 	if rawBody == nil {
 		return nil, nil
 	}
-    
-    bodyDec, err := base64.StdEncoding.DecodeString(rawBody)
-	if err != nil {
-	    return nil, err
-    }
+	
+	var bodyFinal interface{}
+	if encoding == "string" {
+		strBody, _ := rawBody.(string)
+		if strBody == nil {
+			return nil, nil
+		}
+		bodyDec, err := base64.StdEncoding.DecodeString(strBody)
+	    if err != nil {
+	        return nil, err
+        }
+		bodyFinal = string(bodyDec)
+	} else if encoding == "bytes" {
+		strBody, _ := rawBody.(string)
+		if strBody == nil {
+			return nil, nil
+		}
+		bodyDec, err := base64.StdEncoding.DecodeString(strBody)
+	    if err != nil {
+	        return nil, err
+        }
+		bodyFinal = bodyDec
+	} else {
+		bodyFinal = rawBody
+	}
 
-	switch b := bodyDec.(type) {
+	switch b := bodyFinal(type) {
 	case string:
 		if b == "" {
 			return nil, nil
 		}
 		return strings.NewReader(b), nil
 	case []byte:
+		if len(b) == 0 {
+			return nil, nil
+		}
 		return bytes.NewReader(b), nil
 	case io.Reader:
 		return b, nil
