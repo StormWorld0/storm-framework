@@ -39,9 +39,7 @@ class HTTPMethod:
     # HTTP Method Interfaces
     # ------------------------------------------------------------------
 
-    def get(
-        self, url: str, headers: Optional[Dict[str, str]] = None, **kwargs
-    ):
+    def get(self, url: str, headers: Optional[Dict[str, str]] = None, **kwargs):
         return self._set_state("GET", url, body=None, headers=headers, **kwargs)
 
     def post(
@@ -80,23 +78,14 @@ class HTTPMethod:
     ):
         return self._set_state("DELETE", url, body=body, headers=headers, **kwargs)
 
-    def head(
-        self, url: str, headers: Optional[Dict[str, str]] = None, **kwargs
-    ):
+    def head(self, url: str, headers: Optional[Dict[str, str]] = None, **kwargs):
         return self._set_state("HEAD", url, body=None, headers=headers, **kwargs)
 
-    def options(
-        self, url: str, headers: Optional[Dict[str, str]] = None, **kwargs
-    ):
+    def options(self, url: str, headers: Optional[Dict[str, str]] = None, **kwargs):
         return self._set_state("OPTIONS", url, body=None, headers=headers, **kwargs)
 
-    def trace(
-        self, url: str, headers: Optional[Dict[str, str]] = None, **kwargs
-    ):
+    def trace(self, url: str, headers: Optional[Dict[str, str]] = None, **kwargs):
         return self._set_state("TRACE", url, body=None, headers=headers, **kwargs)
 
-    def connect(
-        self, url: str, headers: Optional[Dict[str, str]] = None, **kwargs
-    ):
+    def connect(self, url: str, headers: Optional[Dict[str, str]] = None, **kwargs):
         return self._set_state("CONNECT", url, body=None, headers=headers, **kwargs)
-        
