@@ -1,7 +1,6 @@
 # -- https://github.com/StormWorld0/storm-framework
 # -- License SMF
 # -- Author zxelzy
-from typing import Optional, Union
 import smf
 
 from lib.smf.ingest import push_to_queue
@@ -29,12 +28,16 @@ class HTTPClient(HTTPState, HTTPMethod):
         for k, v in bool_opts.items():
             if v is not None:
                 if not isinstance(v, bool):
-                    raise TypeError(f"Option '{k}' must be a boolean, got {type(v).__name__}")
+                    raise TypeError(
+                        f"Option '{k}' must be a boolean, got {type(v).__name__}"
+                    )
                 setattr(self, f"_{k}", v)
 
         if retry is not None:
             if not isinstance(retry, int) or isinstance(retry, bool):
-                raise TypeError(f"Option 'retry' must be an integer, got {type(retry).__name__}")
+                raise TypeError(
+                    f"Option 'retry' must be an integer, got {type(retry).__name__}"
+                )
             if retry < 0 or retry > 100:
                 raise ValueError("Option 'retry' must be between 0 and 100")
             self._retry = retry
@@ -45,7 +48,7 @@ class HTTPClient(HTTPState, HTTPMethod):
         """Storing Concurrency values (Strict Int & Bounds)"""
         if not isinstance(con, int) or isinstance(con, bool):
             raise TypeError(f"Concurrency must be an integer, got {type(con).__name__}")
-        
+
         if con <= 0:
             raise ValueError("Concurrency must be greater than 0")
 
@@ -58,10 +61,12 @@ class HTTPClient(HTTPState, HTTPMethod):
         for k, v in limits.items():
             if v is not None:
                 if not isinstance(v, int) or isinstance(v, bool):
-                    raise TypeError(f"Limit '{k}' must be an integer, got {type(v).__name__}")
+                    raise TypeError(
+                        f"Limit '{k}' must be an integer, got {type(v).__name__}"
+                    )
                 if v < 0:
                     raise ValueError(f"Limit '{k}' cannot be negative")
-                
+
                 setattr(self, f"_{k}", v)
         return self
 
@@ -88,17 +93,19 @@ class HTTPClient(HTTPState, HTTPMethod):
         """Running HTTP Requests with Pre-flight Guard"""
         self._validate_state()
         packet = IPCPayloadBuilder.build(state=self)
-        
+
         raw_res = CRS.send(packet)
         res = HTTPResponse(raw_res)
         res._trace()
 
         try:
-            db_payload = res._to_db_payload(self._method, self._url, getattr(self, "_tls", False))
+            db_payload = res._to_db_payload(
+                self._method, self._url, getattr(self, "_tls", False)
+            )
             push_to_queue(db_payload)
         except Exception as e:
             smf.printd("Failed to push HTTP payload to queue", e, level="ERROR")
-            
+
         return res
 
     def __enter__(self):
@@ -115,5 +122,6 @@ class HTTPClient(HTTPState, HTTPMethod):
         status = getattr(self, "status", "UNKNOWN")
         proto = getattr(self, "proto", "UNKNOWN")
         engine = getattr(self, "engine", "UNKNOWN")
-        return f"<HTTPR URL='{url}' Status='{status}' Protocol='{proto}' Engine='{engine}'>"
-    
+        return (
+            f"<HTTPR URL='{url}' Status='{status}' Protocol='{proto}' Engine='{engine}'>"
+        )
