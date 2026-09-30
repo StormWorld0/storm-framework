@@ -1,3 +1,5 @@
+import smf
+
 metadata = {
     "Name": "Testing HTTP POST",
     "Description": """
