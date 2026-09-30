@@ -3,9 +3,7 @@
 # -- Author zxelzy
 import smf
 
-from typing import Dict
 
-from apps.utility.colors import CC
 from lib.smf.ingest import push_to_queue
 
 from ...transport import CRS
@@ -14,17 +12,16 @@ from .normal_http import HTTPMethod
 from .response import HTTPResponse
 
 
-
 class HTTPClient(HTTPState, HTTPMethod):
     """Namespace OOP untuk operasi HTTP"""
 
     def setoptions(
-        self, 
-        redirect: bool = None, 
-        retry: int = None, 
-        verify: bool = None, 
-        tls: bool = None, 
-        **kwargs
+        self,
+        redirect: bool = None,
+        retry: int = None,
+        verify: bool = None,
+        tls: bool = None,
+        **kwargs,
     ):
         """Saving Options values"""
         self._redirect = redirect
