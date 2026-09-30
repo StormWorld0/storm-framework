@@ -20,7 +20,7 @@ def execute(options, net):
     http = net.HTTPR()
     try:
         http.concurrency(50)
-        http.timeout(1.0)
+        http.timeout(10.0)
         http.setoptions(retry=2, verify=False)
         http.get(url)
         resp = http.run()
