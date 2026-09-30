@@ -33,7 +33,7 @@ func ParseBody(encoding string, rawBody interface{}) (io.Reader, error) {
 		bodyFinal = rawBody
 	}
 
-	switch b := bodyFinal(type) {
+	switch b := bodyFinal.(type) {
 	case string:
 		if b == "" {
 			return nil, nil
