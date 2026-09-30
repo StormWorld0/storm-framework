@@ -74,4 +74,4 @@ class HTTPClient(HTTPState, HTTPMethod):
         return False
 
     def __repr__(self):
-        return (f"<HTTPR URL='{self.url}' Status='{self.status}' Protocol='{self.proto}' Engine='{self.engine}'>")
+        return f"<HTTPR URL='{self.url}' Status='{self.status}' Protocol='{self.proto}' Engine='{self.engine}'>"
