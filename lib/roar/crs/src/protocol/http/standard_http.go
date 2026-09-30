@@ -3,6 +3,7 @@ package http
 import (
 	"crypto/tls"
 	"net/http"
+	"errors"
 	"time"
 
 	"github.com/projectdiscovery/retryablehttp-go"
