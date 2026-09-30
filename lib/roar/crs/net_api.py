@@ -1,5 +1,5 @@
 from .protocol import (
-    http_requests as HTTPR,
+    HTTPClient as HTTPR,
     DNSResolver as DNSL,
     ipwhois as IPWhois,
     domwhois as DWhois,
