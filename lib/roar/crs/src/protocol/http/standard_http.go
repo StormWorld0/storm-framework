@@ -39,19 +39,22 @@ func ExecuteStandard(req packet.RequestPacket, timeout time.Duration) packet.Res
 
 	bodyReader, err := ParseBody(req.Body)
 	if err != nil {
-		return BuildErrorResponse("retryablehttp", "Body parse error: "+err.Error())
+		return BuildErrorResponse("ERROR", "retryablehttp", "Body parse error: "+err.Error())
 	}
 
 	httpReq, err := retryablehttp.NewRequest(req.Method, req.URL, bodyReader)
 	if err != nil {
-		return BuildErrorResponse("retryablehttp", "Request creation failed: "+err.Error())
+		return BuildErrorResponse("ERROR", "retryablehttp", "Request creation failed: "+err.Error())
 	}
 
 	httpReq.Header.Set("User-Agent", GetUserAgent(req.UA))
 
 	resp, err := client.Do(httpReq)
 	if err != nil {
-		return BuildErrorResponse("retryablehttp", "Execution failed: "+err.Error())
+		if errors.As(err, &netErr) && netErr.Timeout() {
+			return BuildErrorResponse("TIMEOUT", "rawhttp", "Execution failed: "+err.Error())
+		}
+		return BuildErrorResponse("ERROR", "retryablehttp", "Execution failed: "+err.Error())
 	}
 	defer resp.Body.Close()
 
