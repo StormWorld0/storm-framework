@@ -11,11 +11,14 @@ import (
 
 const MaxResponseBodySize = 2 << 20 // 2MB Hard Limit mencegah Memory Exhaustion/DoS
 
-func BuildErrorResponse(engine, message string) packet.ResponsePacket {
-	return packet.ResponsePacket{
-		Status:  "ERROR",
-		Message: "[" + engine + "] " + message,
-	}
+func BuildErrorResponse(status string, engine string, message string) packet.ResponsePacket {
+	switch status {
+    case "ERROR", "TIMEOUT":
+	    return packet.ResponsePacket{
+		    Status:  status,
+		    Message: "[" + engine + "] " + message,
+	    }
+    }
 }
 
 // BuildSuccessResponse menangani normalisasi output untuk kedua engine
