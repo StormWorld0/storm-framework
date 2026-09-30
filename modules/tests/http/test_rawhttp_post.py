@@ -13,6 +13,7 @@ Testing HTTPR RAW
 }
 REQUIRED_OPTIONS = {"URL": ""}
 
+
 def execute(options, net):
     url = options.get("URL")
 
@@ -21,7 +22,7 @@ def execute(options, net):
         http.concurrency(50)
         http.timeout(10.0)
         http.setoptions(retry=2, verify=False)
-        
+
         # Header & Raw Binary Body (mengandung NULL byte \x00 & non-printable bytes)
         headers = {"Content-Type": "application/octet-stream"}
         payload_bytes = b"\x00\x01\x02\xff\xfe\xfd_RAW_SOCKET_"
@@ -40,4 +41,3 @@ def execute(options, net):
         pass
     except Exception as e:
         smf.printf("Error exception =>", e)
-      
