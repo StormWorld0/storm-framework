@@ -22,21 +22,21 @@ class HTTPMethod:
             raise TypeError(f"Headers must be a Dict, got {type(headers).__name__}")
 
         # Set metadata HTTP
-        self.state._method = method.upper()
-        self.state._rawhttp = False
-        self.state._url = url
-        self.state._body = body
+        self._method = method.upper()
+        self._rawhttp = False
+        self._url = url
+        self._body = body
 
         # Merge headers
-        default_headers = getattr(self.state, "_headers", {}) or {}
+        default_headers = getattr(self, "_headers", {}) or {}
         if isinstance(default_headers, dict):
             merged_headers = default_headers.copy()
             merged_headers.update(headers)
-            self.state._headers = merged_headers
+            self._headers = merged_headers
         else:
-            self.state._headers = headers
+            self._headers = headers
 
-        return self.state
+        return self
 
     # ------------------------------------------------------------------
     # HTTP Method Interfaces
