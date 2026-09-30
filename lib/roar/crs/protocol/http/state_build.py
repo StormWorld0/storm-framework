@@ -18,7 +18,7 @@ class HTTPState:
         method: str = "GET",
         url: str = "",
         headers: dict = None,
-        body: str = "",
+        body: str | bytes = b"",
         redirect: bool = True,
         rawhttp: bool = False,
         tls: bool = False,
@@ -62,13 +62,25 @@ class IPCPayloadBuilder:
 
     @staticmethod
     def build(state: HTTPState) -> Dict:
+        body_str = ""
+        if isinstance(state._body, str):
+            body = state._body
+            body_bytes = body.encode("utf-8")
+            body_str = base64.b64encode(body_bytes).decode("utf-8")
+            encode = "string"
+            
+        if isinstance(state._body, bytes):
+            body = state._body
+            body_str = base64.b64encode(body).decode("utf-8")
+            encode = "bytes"
+            
 
         return {
             "primitive": "HTTP_SEND",
             "method": state._method,
             "url": state._url,
             "headers": state._headers or {},
-            "body": state._body if state._body is not None else "",
+            "body": body_str if state._body is not None else "",
             "redirect": state._redirect,
             "rawmode": state._rawhttp,
             "info_tls": state._tls,
@@ -78,4 +90,5 @@ class IPCPayloadBuilder:
             "ratelimit": state.ratelimit,
             "frate": state.fixed_ratelimit,
             "goroutine": state.goroutine,
+            "encoding": encode
         }
