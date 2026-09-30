@@ -69,12 +69,11 @@ class IPCPayloadBuilder:
             body_bytes = body.encode("utf-8")
             body_str = base64.b64encode(body_bytes).decode("utf-8")
             encode = "string"
-            
+
         if isinstance(state._body, bytes):
             body = state._body
             body_str = base64.b64encode(body).decode("utf-8")
             encode = "bytes"
-            
 
         return {
             "primitive": "HTTP_SEND",
@@ -91,5 +90,5 @@ class IPCPayloadBuilder:
             "ratelimit": state.ratelimit,
             "frate": state.fixed_ratelimit,
             "goroutine": state.goroutine,
-            "encoding": encode
+            "encoding": encode,
         }
