@@ -1,7 +1,6 @@
 package http
 
 import (
-    "encoding/base64"
 	"crypto/tls"
 	"net/http"
 	"time"
@@ -38,12 +37,7 @@ func ExecuteStandard(req packet.RequestPacket, timeout time.Duration) packet.Res
 		}
 	}
 
-    dataDec, err := base64.StdEncoding.DecodeString(req.Body)
-	if err != nil {
-		return BuildErrorResponse("retryablehttp", "base64 decode failed: "+err.Error())
-    }
-
-	bodyReader, err := ParseBody(dataDec)
+	bodyReader, err := ParseBody(req.Body)
 	if err != nil {
 		return BuildErrorResponse("retryablehttp", "Body parse error: "+err.Error())
 	}
