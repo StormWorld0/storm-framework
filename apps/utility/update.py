@@ -8,7 +8,7 @@ def run_update():
         http = HTTPR()
         http.get(url)
         resp = http.run()
-        latest_version = resp.json["version"]
+        latest_version = resp.json()["version"]
     except Exception as e:
         print(f"ERROR VERSION UPDATE => {e}")
 
