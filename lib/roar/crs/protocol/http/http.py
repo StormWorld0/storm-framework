@@ -24,28 +24,39 @@ class HTTPClient(HTTPState, HTTPMethod):
         **kwargs,
     ):
         """Saving Options values"""
-        self._redirect = redirect
-        self._retry = retry
-        self._verify = verify
-        self._tls = tls
+        options = {
+            "redirect": redirect,
+            "retry": retry,
+            "verify": verify,
+            "tls": tls,
+        }
+        for k, v in options.items():
+            if v is not None:
+                setattr(self, f"_{k}", v)
         return self
 
     def concurrency(self, con: int, **kwargs):
         """Storing Concurrency values"""
+        if not isinstance(con, int):
+            raise TypeError("value must be integer")
         self.goroutine = con
         return self
 
     def setlimit(self, ratelimit: int, frate: int = None, **kwargs):
         """Save ratelimiting value"""
-        self.ratelimit = ratelimit
-        self.fixed_ratelimit = frate
+        options = {
+            "ratelimit": ratelimit,
+            "fixed_ratelimit": frate,
+        }
+        for k, v in options.items():
+            if v is not None:
+                setattr(self, f"_{k}", v)
         return self
 
     def timeout(self, value: float, **kwargs):
         """Timeout value settings"""
         if not isinstance(value, float):
             raise TypeError("value must be a float")
-
         self._timeout = value
         return self
 
