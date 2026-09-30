@@ -27,8 +27,8 @@ class HTTPState:
         retry: int = 2,
         timeout: float = 5.0,
         rlimit: int = 150,
-        frate: int = 10,
-        con: int = 50,
+        frate: int = 50,
+        con: int = 0,
         **kwargs,
     ):
         self._method = method.upper()
