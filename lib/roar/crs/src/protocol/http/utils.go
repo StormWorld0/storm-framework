@@ -14,11 +14,7 @@ func ParseBody(encoding string, rawBody interface{}) (io.Reader, error) {
 		return nil, nil
 	}
 
-	strBody, _ := rawBody.(string)
-	if strBody == nil {
-		return nil, nil
-	}
-	
+	strBody, _ = rawBody.(string)
 	bodyDec, err := base64.StdEncoding.DecodeString(strBody)
 	if err != nil {
 	    return nil, err
