@@ -4,6 +4,7 @@ import (
 	"net/url"
 	"errors"
 	"time"
+	"net"
 
 	"github.com/projectdiscovery/rawhttp"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
@@ -44,6 +45,7 @@ func ExecuteRaw(req packet.RequestPacket, timeout time.Duration) packet.Response
 	// DoRaw sekarang bekerja dengan aman tanpa memaksa modul merakit raw string
 	resp, err := client.DoRaw(req.Method, req.URL, uriPath, headers, bodyReader)
 	if err != nil {
+		var netErr net.Error
 		if errors.As(err, &netErr) && netErr.Timeout() {
 			return BuildErrorResponse("TIMEOUT", "rawhttp", "Execution failed: "+err.Error())
 		}
