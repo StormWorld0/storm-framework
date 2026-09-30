@@ -333,5 +333,5 @@ class Socket(SocketState, ConstantsMix):
         self.close()
 
     def __repr__(self):
-        tls_state = "TLS" if self.is_tls else "TCP"
+        tls_state = "TLS" if self.is_tls else "TCP/UDP"
         return f"<Socket host='{self.host}:{self.port}' proto='{tls_state}' sessid='{self.sessid}' closed={self._is_closed}>"
