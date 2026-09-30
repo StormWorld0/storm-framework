@@ -13,27 +13,21 @@ func ParseBody(encoding string, rawBody interface{}) (io.Reader, error) {
 	if rawBody == nil {
 		return nil, nil
 	}
+
+	strBody, _ := rawBody.(string)
+	if strBody == nil {
+		return nil, nil
+	}
+	
+	bodyDec, err := base64.StdEncoding.DecodeString(strBody)
+	if err != nil {
+	    return nil, err
+    }
 	
 	var bodyFinal interface{}
 	if encoding == "string" {
-		strBody, _ := rawBody.(string)
-		if strBody == nil {
-			return nil, nil
-		}
-		bodyDec, err := base64.StdEncoding.DecodeString(strBody)
-	    if err != nil {
-	        return nil, err
-        }
 		bodyFinal = string(bodyDec)
 	} else if encoding == "bytes" {
-		strBody, _ := rawBody.(string)
-		if strBody == nil {
-			return nil, nil
-		}
-		bodyDec, err := base64.StdEncoding.DecodeString(strBody)
-	    if err != nil {
-	        return nil, err
-        }
 		bodyFinal = bodyDec
 	} else {
 		bodyFinal = rawBody
