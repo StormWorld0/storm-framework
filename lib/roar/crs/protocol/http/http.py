@@ -18,7 +18,7 @@ class HTTPClient(HTTPState, HTTPMethod):
 
     # To be used as an Exception
     HTrace = StackTrace
-    
+
     def setoptions(
         self,
         redirect: bool | None = None,
