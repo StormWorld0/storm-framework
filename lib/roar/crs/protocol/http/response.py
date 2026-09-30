@@ -47,14 +47,14 @@ class HTTPResponse:
         return self._message
 
     @property
-    def text(self) -> str:
+    def body(self) -> str:
         """Mengembalikan body response dalam bentuk string."""
         return self._data.get("body", "")
 
     @property
     def raw_bytes(self) -> bytes:
         """Mengembalikan body response dalam bentuk raw bytes."""
-        return self.text.encode("utf-8")
+        return self.body.encode("utf-8")
 
     @property
     def headers(self) -> Dict[str, str]:
@@ -102,10 +102,10 @@ class HTTPResponse:
         [Lazy Evaluation] Mem-parsing string body menjadi JSON dict/list.
         Mengembalikan None jika body bukan format JSON valid.
         """
-        if not self.text:
+        if not self.body:
             return None
         try:
-            return json.loads(self.text)
+            return json.loads(self.body)
         except json.JSONDecodeError:
             smf.printd("Failed to parse response body as JSON", level="WARN")
             return None
@@ -130,7 +130,7 @@ class HTTPResponse:
         content_type = self.get_headers("content-type", "unknown")
 
         MAX_BODY_LEN = 4096
-        raw_body = self.text
+        raw_body = self.body
         is_truncated = False
 
         if len(raw_body) > MAX_BODY_LEN:
@@ -152,7 +152,7 @@ class HTTPResponse:
             "body_preview": raw_body,
             "method": method,
             "content_type": content_type,
-            "original_length": len(self.text),
+            "original_length": len(self.body),
             "is_truncated": is_truncated,
         }
 
