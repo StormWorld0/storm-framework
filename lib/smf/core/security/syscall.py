@@ -9,7 +9,7 @@ import ctypes
 import fcntl
 import struct
 
-from lib.roar.crs.protocol import Socket
+from lib.roar.crs.net_api import Socket
 
 # --- Struct Definition for Syscalls ---
 
