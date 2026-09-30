@@ -13,6 +13,7 @@ Testing HTTPR
 }
 REQUIRED_OPTIONS = {"URL": ""}
 
+
 def execute(options, net):
     url = options.get("URL")
 
@@ -21,7 +22,7 @@ def execute(options, net):
         http.concurrency(50)
         http.timeout(10.0)
         http.setoptions(retry=2, verify=False)
-        
+
         # Header & Body Teks
         headers = {"Content-Type": "text/plain"}
         payload_str = "testing"
@@ -40,4 +41,3 @@ def execute(options, net):
         pass
     except Exception as e:
         smf.printf("Error exception =>", e)
-      
