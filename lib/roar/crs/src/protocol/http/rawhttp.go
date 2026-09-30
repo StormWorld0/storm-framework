@@ -2,8 +2,8 @@ package http
 
 import (
 	"net/url"
+	"errors"
 	"time"
-	"net"
 
 	"github.com/projectdiscovery/rawhttp"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
