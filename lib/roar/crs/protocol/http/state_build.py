@@ -40,7 +40,7 @@ class HTTPState:
         self._verify = verify
         self._retry = retry
         self._timeout = timeout
-        self._ratelimit = rlimit
+        self.ratelimit = rlimit
         self.fixed_ratelimit = frate
         self.goroutine = con
 
@@ -65,7 +65,6 @@ class IPCPayloadBuilder:
 
         return {
             "primitive": "HTTP_SEND",
-            "goroutine": state._goroutine,
             "method": state._method,
             "url": state._url,
             "headers": state._headers or {},
@@ -75,7 +74,8 @@ class IPCPayloadBuilder:
             "info_tls": state._tls,
             "verify": state._verify,
             "retry": state._retry,
+            "timeout": state._timeout,
             "ratelimit": state.ratelimit,
             "frate": state.fixed_ratelimit,
-            "timeout": state._timeout,
+            "goroutine": state.goroutine,
         }
