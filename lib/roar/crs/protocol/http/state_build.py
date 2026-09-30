@@ -3,6 +3,7 @@
 # -- Author zxelzy
 
 import smf
+import base64
 
 from typing import Dict
 from apps.utility.colors import CC
