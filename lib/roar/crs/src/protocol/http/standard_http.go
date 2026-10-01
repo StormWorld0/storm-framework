@@ -23,8 +23,10 @@ func ExecuteStandard(req packet.RequestPacket, timeout time.Duration) packet.Res
 	client.HTTPClient.Transport = &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		TLSClientConfig: &tls.Config{
+			RootCAs:            req.TLSCA,
 			InsecureSkipVerify: !req.Verify,
 			MinVersion:         tls.VersionTLS10,
+			MaxVersion:         tls.VersionTLS13,
 			Renegotiation:      tls.RenegotiateOnceAsClient, // Penting untuk beberapa bypass WAF
 		},
 		MaxIdleConns:          100,
