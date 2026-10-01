@@ -3,6 +3,7 @@ from .response import SocketResponse
 
 from ...transport import CRS
 
+
 class SocketIO:
     """Daftar semua socket IO"""
 
