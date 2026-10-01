@@ -9,6 +9,7 @@ from .socket_core import SocketCore
 from .socket_io import SocketIO
 from .socket_options import SocketOptions
 from .socket_tls import SocketTLS
+from .socket_resolver import SocketResolver
 
 
 class Socket(
