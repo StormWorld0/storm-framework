@@ -24,6 +24,7 @@ class HTTPState:
         rawhttp: bool = False,
         tls: bool = False,
         verify: bool = True,
+        ca: str = ""
         retry: int = 2,
         timeout: float = 5.0,
         rlimit: int = 150,
@@ -39,6 +40,7 @@ class HTTPState:
         self._rawhttp = rawhttp
         self._tls = tls
         self._verify = verify
+        self._TLSCA = ca
         self._retry = retry
         self._timeout = timeout
         self.ratelimit = rlimit
@@ -85,6 +87,7 @@ class IPCPayloadBuilder:
             "rawmode": state._rawhttp,
             "info_tls": state._tls,
             "verify": state._verify,
+            "tls-ca": state._TLSCA,
             "retry": state._retry,
             "timeout": state._timeout,
             "ratelimit": state.ratelimit,
