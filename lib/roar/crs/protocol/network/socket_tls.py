@@ -1,3 +1,5 @@
+import smf
+
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
 
