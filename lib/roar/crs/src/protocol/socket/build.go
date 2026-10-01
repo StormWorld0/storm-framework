@@ -21,15 +21,6 @@ func BuildTarget(req packet.RequestPacket) (*string, *int, error) {
 		return &cleanPath, nil, nil
 	}
 
-	if idx := strings.Index(rawHost, "://"); idx != -1 {
-		rawHost = rawHost[idx+3:] // +3 untuk melewati "://"
-	}
-
-	// Pembersihan Trailing Path untuk TCP/UDP (misal example.com:80/api -> example.com:80)
-	if idx := strings.Index(rawHost, "/"); idx != -1 {
-		rawHost = rawHost[:idx]
-	}
-
 	// Berikan dummy scheme jika tidak ada, agar url.Parse tidak gagal
 	parseTarget := rawHost
 	if !strings.Contains(parseTarget, "://") {
@@ -44,10 +35,6 @@ func BuildTarget(req packet.RequestPacket) (*string, *int, error) {
 	hostOnly := u.Hostname()
 	if hostOnly == "" {
 		return nil, nil, fmt.Errorf("failed to extract host from target")
-	}
-
-	if strings.HasPrefix(hostOnly, "[") && strings.HasSuffix(hostOnly, "]") {
-		hostOnly = hostOnly[1 : len(hostOnly)-1]
 	}
 
 	var finalPort *int
@@ -72,9 +59,20 @@ func BuildTarget(req packet.RequestPacket) (*string, *int, error) {
 }
 
 // Deref returns the value of the pointer, or defaultValue if pointer is nil.
-func Deref[T any](ptr *T, defaultValue T) T {
+func DerefString[T any](ptr *T, defaultValue string) string {
 	if ptr == nil {
 		return defaultValue
 	}
-	return *ptr
+
+	// Type switch untuk performa maksimal
+	switch v := any(*ptr).(type) {
+	case string:
+		return v
+	case int:
+		return strconv.Itoa(v)
+	case int64:
+		return strconv.FormatInt(v, 10)
+	default:
+		return defaultValue
+	}
 }
