@@ -149,11 +149,11 @@ var flagsMap = map[string]int{
 // --- PUBLIC PARSER FUNCTIONS ---
 
 func ParseAF(af any) int {
-	return parseConstant(af, afMap, unix.AF_INET)
+	return parseConstant(af, afMap, 0)
 }
 
 func ParseSockType(stype any) int {
-	return parseConstant(stype, sockTypeMap, unix.SOCK_STREAM)
+	return parseConstant(stype, sockTypeMap, 0)
 }
 
 func ParseProtocol(proto any) int {
