@@ -6,7 +6,7 @@ import smf
 
 
 from .state_build import SocketState, IPCPayloadBuilder
-from .response import SocketResponse, SockTrace
+from .response import SocketResponse
 from .constants import ConstantsMix
 
 from ...transport import CRS
@@ -18,8 +18,6 @@ class Socket(SocketState, ConstantsMix):
     Mewarisi SocketState untuk mempertahankan kompatibilitas atribut (Backward Compatibility).
     Hanya berfokus pada eksekusi instruksi jaringan ke Engine Go.
     """
-
-    STrace = SockTrace
 
     def socket(
         self,
