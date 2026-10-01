@@ -2,14 +2,12 @@ package socket
 
 import (
 	"fmt"
-	"net"
 	"net/url"
 	"strconv"
 	"strings"
 
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 )
-
 
 func BuildTarget(req packet.RequestPacket) (*string, *int, error) {
 	rawHost := strings.TrimSpace(req.Host)
@@ -19,7 +17,17 @@ func BuildTarget(req packet.RequestPacket) (*string, *int, error) {
 
 	// Tangani Unix Domain Socket secara eksplisit
 	if strings.HasPrefix(rawHost, "unix://") || strings.HasPrefix(rawHost, "/") {
-		return strings.TrimPrefix(rawHost, "unix://"), nil
+		cleanPath := strings.TrimPrefix(rawHost, "unix://")
+		return &cleanPath, nil, nil
+	}
+
+	if idx := strings.Index(rawHost, "://"); idx != -1 {
+		rawHost = rawHost[idx+3:] // +3 untuk melewati "://"
+	}
+
+	// Pembersihan Trailing Path untuk TCP/UDP (misal example.com:80/api -> example.com:80)
+	if idx := strings.Index(rawHost, "/"); idx != -1 {
+		rawHost = rawHost[:idx]
 	}
 
 	// Berikan dummy scheme jika tidak ada, agar url.Parse tidak gagal
@@ -38,24 +46,27 @@ func BuildTarget(req packet.RequestPacket) (*string, *int, error) {
 		return nil, nil, fmt.Errorf("failed to extract host from target")
 	}
 
-	finalPort := -1
+	if strings.HasPrefix(hostOnly, "[") && strings.HasSuffix(hostOnly, "]") {
+		hostOnly = hostOnly[1 : len(hostOnly)-1]
+	}
 
-	// Priority 1: Port dari parameter override
+	var finalPort *int
 	if req.Port != nil {
-		finalPort = *req.Port
+		// Priority 1: Ambil dari req.Port
+		finalPort = req.Port
 	} else if u.Port() != "" {
 		// Priority 2: Port dari string URI
 		if p, parseErr := strconv.Atoi(u.Port()); parseErr == nil {
-			finalPort = p
+			finalPort = &p
 		}
 	}
 
 	// Validasi Range Port HANYA jika port memang didefinisikan
-	if finalPort != -1 {
-		if finalPort < 0 || finalPort > 65535 {
-			return nil, nil, fmt.Errorf("port out of valid range (0-65535): %d", finalPort)
+	if finalPort != nil {
+		if *finalPort < 0 || *finalPort > 65535 {
+			return nil, nil, fmt.Errorf("port out of valid range (0-65535): %d", *finalPort)
 		}
-		return hostOnly, finalPort, nil
+		return &hostOnly, finalPort, nil
 	}
-	return hostOnly, nil, nil
+	return &hostOnly, nil, nil
 }
