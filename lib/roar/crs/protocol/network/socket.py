@@ -9,13 +9,12 @@ from .socket_core import SocketCore
 from .socket_io import SocketIO
 from .socket_options import SocketOptions
 from .socket_tls import SocketTLS
-from .socket_resolver import SockerResolver
 
 
 class Socket(
-    SocketState, 
-    SocketCore, 
-    SocketIO, 
+    SocketState,
+    SocketCore,
+    SocketIO,
     SocketOptions,
     SocketTLS,
     SocketResolver,
@@ -26,7 +25,7 @@ class Socket(
     Mewarisi SocketState untuk mempertahankan kompatibilitas atribut (Backward Compatibility).
     Hanya berfokus sebagai Register Domain Socket.
     """
-    
+
     def __enter__(self):
         return self
 
