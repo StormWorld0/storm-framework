@@ -24,7 +24,7 @@ class HTTPState:
         rawhttp: bool = False,
         tls: bool = False,
         verify: bool = True,
-        ca: str = ""
+        ca: str = "",
         retry: int = 2,
         timeout: float = 5.0,
         rlimit: int = 150,
