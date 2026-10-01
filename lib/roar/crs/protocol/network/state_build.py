@@ -18,7 +18,7 @@ class SocketState:
     def __init__(
         self,
         host: str = "",
-        port: str | int = -1,
+        port: str | int = None,
         addr_fam: str | int = "",
         stype: str | int = "",
         sproto: str | int = "",
