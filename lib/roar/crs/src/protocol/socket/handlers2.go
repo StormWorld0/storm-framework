@@ -1,88 +1,106 @@
 package socket
 
-import (
-	"net"
-	"strconv"
+/*
+// Header file C yang wajib dilampirkan untuk mengakses POSIX dan manajemen memori C.
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <stdlib.h>
+#include <string.h>
+*/
+import "C"
 
-	"golang.org/x/sys/unix"
+import (
+	"strconv"
+	"time"
+	"unsafe"
+
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 )
 
 func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
-	// Parsing Parameter Node (Host) & Service (Port)
+	// 1. Parsing Parameter dari Request
 	addr, port, err := BuildTarget(ctx.Req)
 	if err != nil {
 		return packet.ResponsePacket{
 			Status:  "ERROR",
 			Message: "Failed build host&port: " + err.Error(),
-		} 
+		}
 	}
 
-	// Cek Address & Port. Fallback kosong
 	hostFinal := DerefString(addr, "")
 	portFinal := DerefString(port, "")
 
-	var portStr *string
-	if portFinal != "" {
-		portStr = &portFinal
-	} else {
-		portStr = "" // Service bersifat opsional di POSIX getaddrinfo
-	}
-
-	// Setup Pointer Node dan Service (getaddrinfo menerima NULL jika string kosong)
-	var nodePtr *string
+	// 2. Persiapan C-String (Pointer memori C)
+	// getaddrinfo menerima NULL jika parameter tidak diisi.
+	var cHost, cService *C.char
 	if hostFinal != "" {
-		nodePtr = &hostFinal
+		cHost = C.CString(hostFinal)
+		defer C.free(unsafe.Pointer(cHost)) // Wajib: Hapus dari RAM setelah fungsi selesai
+	}
+	if portFinal != "" {
+		cService = C.CString(portFinal)
+		defer C.free(unsafe.Pointer(cService)) // Wajib: Hapus dari RAM setelah fungsi selesai
 	}
 
-	var servicePtr *string
-	if portStr != "" {
-		servicePtr = &portStr
-	}
+	// 3. Setup Struct Hints (POSIX) di memori C
+	var hints C.struct_addrinfo
+	// Wajib: Zero-value initialization untuk mencegah undefined behavior di C
+	C.memset(unsafe.Pointer(&hints), 0, C.sizeof_struct_addrinfo) 
+	
+	hints.ai_family = C.int(ParseAF(ctx.Req.AF))
+	hints.ai_socktype = C.int(ParseSockType(ctx.Req.SType))
+	hints.ai_protocol = C.int(ParseProtocol(ctx.Req.SProto))
+	hints.ai_flags = C.int(ParseOptName(ctx.Req.Flags))
 
-	// Construct POSIX Hints Structure
-	hints := unix.Addrinfo{
-		Family:   int32(ParseAF(ctx.Req.AF)),          // family (AF_INET, AF_INET6, AF_UNSPEC)
-		Socktype: int32(ParseSockType(ctx.Req.SType)),  // type (SOCK_STREAM, SOCK_DGRAM)
-		Protocol: int32(ParseProtocol(ctx.Req.SProto)),// proto (IPPROTO_TCP, IPPROTO_UDP)
-		Flags:    int32(ParseOptName(ctx.Req.Flags)),  // flags (AI_PASSIVE, AI_CANONNAME, dll)
-	}
-
-	// Eksekusi POSIX Getaddrinfo langsung ke Kernel/C-Library
-	res, err := unix.Getaddrinfo(nodePtr, servicePtr, &hints)
-	if err != nil {
+	// 4. Eksekusi POSIX getaddrinfo (Akses 6 Argumen Penuh)
+	var res *C.struct_addrinfo
+	errCode := C.getaddrinfo(cHost, cService, &hints, &res)
+	if errCode != 0 {
 		return packet.ResponsePacket{
 			Status:  "ERROR",
-			Message: "getaddrinfo failed: " + err.Error(),
+			Message: "getaddrinfo failed: " + C.GoString(C.gai_strerror(errCode)),
 		}
 	}
 
-	// Parse Linked List / Slice Result dari C/Unix
+	// WAJIB: Membebaskan linked-list dari RAM setelah parsing selesai agar tidak Memory Leak
+	defer C.freeaddrinfo(res)
+
+	// 5. Parsing Linked-List Result dari C ke Slice Map Go
 	var results []map[string]interface{}
 
-	// unix.Getaddrinfo di Go x/sys/unix mengembalikan []unix.Addrinfo atau linked list tergantung platform
-	// Berikut adalah iterasi parsing atribut dari hasil resolver OS:
-	for _, ai := range res {
+	for ptr := res; ptr != nil; ptr = ptr.ai_next {
 		var ipStr string
 		var portNum int
 
-		// Konversi Sockaddr kembali ke IP & Port String
-		if ai.Addr != nil {
-			switch sa := ai.Addr.(type) {
-			case *unix.SockaddrInet4:
-				ipStr = net.IP(sa.Addr[:]).String()
-				portNum = sa.Port
-			case *unix.SockaddrInet6:
-				ipStr = net.IP(sa.Addr[:]).String()
-				portNum = sa.Port
-			}
+		// Buffer statis untuk menyimpan string IP dan Port hasil terjemahan C
+		var hostBuf [C.NI_MAXHOST]C.char
+		var servBuf [C.NI_MAXSERV]C.char
+
+		// Gunakan getnameinfo (POSIX) untuk mengekstrak raw IP bytes menjadi String
+		// Casting C.socklen_t dan C.int ini yang memastikan CGO lolos kompilasi tanpa error
+		getnameErr := C.getnameinfo(
+			ptr.ai_addr,
+			ptr.ai_addrlen,
+			&hostBuf[0],
+			C.socklen_t(C.NI_MAXHOST), 
+			&servBuf[0],
+			C.socklen_t(C.NI_MAXSERV),
+			C.int(C.NI_NUMERICHOST|C.NI_NUMERICSERV),
+		)
+
+		// Jika berhasil di-parse, konversi C-String menjadi Go-String
+		if getnameErr == 0 {
+			ipStr = C.GoString(&hostBuf[0])
+			portStr := C.GoString(&servBuf[0])
+			portNum, _ = strconv.Atoi(portStr)
 		}
 
 		results = append(results, map[string]interface{}{
-			"family":   ai.Family,
-			"socktype": ai.Socktype,
-			"protocol": ai.Protocol,
-			"flags":    ai.Flags,
+			"family":   int(ptr.ai_family),
+			"socktype": int(ptr.ai_socktype),
+			"protocol": int(ptr.ai_protocol),
+			"flags":    int(ptr.ai_flags),
 			"ip":       ipStr,
 			"port":     portNum,
 		})
@@ -91,11 +109,11 @@ func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
 	return packet.ResponsePacket{
 		Status: "SUCCESS",
 		Data: map[string]interface{}{
-			"host":      host,
-			"service":   portStr,
-			"results":   results,
-			"count":     len(results),
-			"rtt_ms":    time.Since(ctx.StartTime).Milliseconds(),
+			"host":    hostFinal,
+			"service": portFinal,
+			"results": results,
+			"count":   len(results),
+			"rtt_ms":  time.Since(ctx.StartTime).Milliseconds(),
 		},
 	}
 }
