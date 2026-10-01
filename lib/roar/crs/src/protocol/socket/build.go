@@ -70,3 +70,11 @@ func BuildTarget(req packet.RequestPacket) (*string, *int, error) {
 	}
 	return &hostOnly, nil, nil
 }
+
+// Deref returns the value of the pointer, or defaultValue if pointer is nil.
+func Deref[T any](ptr *T, defaultValue T) T {
+	if ptr == nil {
+		return defaultValue
+	}
+	return *ptr
+}
