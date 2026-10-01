@@ -41,4 +41,3 @@ class SocketTLS:
         response = SocketResponse(resp)
         response._trace()
         return response
-        
