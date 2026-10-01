@@ -103,6 +103,7 @@ class HTTPClient(HTTPState, HTTPMethod):
         raw_res = CRS.send(packet)
         res = HTTPResponse(raw_res)
         res._trace()
+        res._timeout()
 
         try:
             db_payload = res._to_db_payload(
