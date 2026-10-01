@@ -3,51 +3,59 @@ package socket
 import (
 	"fmt"
 	"net"
+	"net/url"
 	"strconv"
 	"strings"
 
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 )
 
-// BuildTarget merakit alamat host dan port menjadi format koneksi yang valid.
-func BuildTarget(req packet.RequestPacket) (string, error) {
-	rawHost := strings.TrimSpace(req.Host)
+
+func BuildTarget(req packet.RequestPacket) (string, int, error) {
+	rawHost = strings.TrimSpace(req.Host)
 	if rawHost == "" {
-		return "", fmt.Errorf("invalid empty host")
+		return nil, nil, fmt.Errorf("target host cannot be empty")
 	}
 
-	if strings.Contains(rawHost, "://") {
-		parts := strings.SplitN(rawHost, "://", 2)
-		rawHost = parts[1]
+	// Tangani Unix Domain Socket secara eksplisit
+	if strings.HasPrefix(rawHost, "unix://") || strings.HasPrefix(rawHost, "/") {
+		return strings.TrimPrefix(rawHost, "unix://"), nil
 	}
 
-	hostOnly, portStr, err := net.SplitHostPort(rawHost)
+	// Berikan dummy scheme jika tidak ada, agar url.Parse tidak gagal
+	parseTarget := rawHost
+	if !strings.Contains(parseTarget, "://") {
+		parseTarget = "tcp://" + parseTarget
+	}
+
+	u, err := url.Parse(parseTarget)
 	if err != nil {
-		hostOnly = rawHost
-		portStr = ""
+		return nil, nil, fmt.Errorf("invalid target format: %w", err)
 	}
 
-	if idx := strings.Index(hostOnly, "/"); idx != -1 {
-		hostOnly = hostOnly[:idx]
-	}
-
-	if strings.HasPrefix(hostOnly, "[") && strings.HasSuffix(hostOnly, "]") {
-		hostOnly = hostOnly[1 : len(hostOnly)-1]
+	hostOnly := u.Hostname()
+	if hostOnly == "" {
+		return nil, nil, fmt.Errorf("failed to extract host from target")
 	}
 
 	finalPort := -1
+
+	// Priority 1: Port dari parameter override
 	if req.Port != nil {
 		finalPort = *req.Port
-	} else if portStr != "" {
-		if p, parseErr := strconv.Atoi(portStr); parseErr == nil && p >= 0 {
+	} else if u.Port() != "" {
+		// Priority 2: Port dari string URI
+		if p, parseErr := strconv.Atoi(u.Port()); parseErr == nil {
 			finalPort = p
 		}
 	}
 
-	// Validasi: Error HANYA jika port berada di luar jangkauan valid socket (0 - 65535)
-	if finalPort < 0 || finalPort > 65535 {
-		return "", fmt.Errorf("invalid or missing port: %d", finalPort)
+	// Validasi Range Port HANYA jika port memang didefinisikan
+	if finalPort != -1 {
+		if finalPort < 0 || finalPort > 65535 {
+			return nil, nil, fmt.Errorf("port out of valid range (0-65535): %d", finalPort)
+		}
+		return hostOnly, finalPort, nil
 	}
-	
-	return net.JoinHostPort(hostOnly, strconv.Itoa(finalPort)), nil
+	return hostOnly, nil, nil
 }
