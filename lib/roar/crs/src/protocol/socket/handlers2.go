@@ -22,6 +22,7 @@ func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
 	hostFinal := DerefString(addr, "")
 	portFinal := DerefString(port, "")
 
+	var portStr *string
 	if portFinal != "" {
 		portStr = portFinal
 	} else {
