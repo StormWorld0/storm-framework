@@ -19,19 +19,19 @@ func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
 	}
 
 	// Cek Address & Port. Fallback kosong
-	host := DerefString(addr, "")
-	port := DerefString(port, "")
-	
-	if port != "" {
-		portStr = port
+	hostFinal := DerefString(addr, "")
+	portFinal := DerefString(port, "")
+
+	if portFinal != "" {
+		portStr = portFinal
 	} else {
 		portStr = "" // Service bersifat opsional di POSIX getaddrinfo
 	}
 
 	// Setup Pointer Node dan Service (getaddrinfo menerima NULL jika string kosong)
 	var nodePtr *string
-	if host != "" {
-		nodePtr = host
+	if hostFinal != "" {
+		nodePtr = hostFinal
 	}
 
 	var servicePtr *string
