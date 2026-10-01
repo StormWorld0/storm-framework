@@ -22,7 +22,8 @@ func ExecuteStandard(req packet.RequestPacket, timeout time.Duration) packet.Res
 
 	var tlsCA *x509.CertPool
 	if req.TLSCA != "" {
-	    tlsCA, err := buildCaTLS(req)
+		var err error
+	    tlsCA, err = buildCaTLS(req)
 	    if err != nil {
 		    return BuildErrorResponse("ERROR", "retryablehttp", "Failed build CA: "+err.Error())
 	    }
