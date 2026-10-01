@@ -24,7 +24,7 @@ func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
 
 	var portStr *string
 	if portFinal != "" {
-		portStr = portFinal
+		portStr = &portFinal
 	} else {
 		portStr = "" // Service bersifat opsional di POSIX getaddrinfo
 	}
@@ -32,7 +32,7 @@ func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
 	// Setup Pointer Node dan Service (getaddrinfo menerima NULL jika string kosong)
 	var nodePtr *string
 	if hostFinal != "" {
-		nodePtr = hostFinal
+		nodePtr = &hostFinal
 	}
 
 	var servicePtr *string
