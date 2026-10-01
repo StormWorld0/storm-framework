@@ -19,11 +19,11 @@ func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
 	}
 
 	// Cek Address & Port. Fallback kosong
-	host := Deref(addr, "")
-	port := Deref(port, "")
+	host := DerefString(addr, "")
+	port := DerefString(port, "")
 	
 	if port != "" {
-		portStr = string(port)
+		portStr = port
 	} else {
 		portStr = "" // Service bersifat opsional di POSIX getaddrinfo
 	}
