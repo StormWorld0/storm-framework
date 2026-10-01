@@ -1,6 +1,7 @@
 package http
 
 import (
+	"crypto/x509"
 	"crypto/tls"
 	"net/http"
 	"errors"
@@ -19,6 +20,7 @@ func ExecuteStandard(req packet.RequestPacket, timeout time.Duration) packet.Res
 
 	client := retryablehttp.NewClient(retryOptions)
 
+	var tlsCA *x509.CertPool
 	if req.TLSCA != "" {
 	    tlsCA, err := buildCaTLS(req)
 	    if err != nil {
