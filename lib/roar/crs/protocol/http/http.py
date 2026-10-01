@@ -8,16 +8,12 @@ from lib.smf.ingest import push_to_queue
 from .state_build import HTTPState, IPCPayloadBuilder
 from .normal_http import HTTPMethod
 from .response import HTTPResponse
-from .exception import StackTrace
 
 from ...transport import CRS
 
 
 class HTTPClient(HTTPState, HTTPMethod):
     """Namespace OOP untuk operasi HTTP (Hardened Engine)"""
-
-    # To be used as an Exception
-    HTrace = StackTrace
 
     def setoptions(
         self,
