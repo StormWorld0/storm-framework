@@ -20,6 +20,7 @@ var handlers = map[string]CommandHandler{
 	"recv":        handleRecv,
 	"sendto":      handleSendTo,
 	"recvfrom":    handleRecvFrom,
+	"getaddrinfo": handleGetAddrInfo,
 }
 
 // Socket adalah entry point eksekusi koneksi menggunakan POSIX-like primitive operations.
