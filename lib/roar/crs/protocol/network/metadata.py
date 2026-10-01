@@ -1,5 +1,6 @@
 from typing import Dict, Any, Optional
 
+
 class TLSMetadata:
     """
     Data Transfer Object (DTO) untuk metadata TLS dari Go Engine.
