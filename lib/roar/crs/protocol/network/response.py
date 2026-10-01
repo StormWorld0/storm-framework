@@ -2,16 +2,9 @@ import smf
 import base64
 
 from typing import Dict, Any, Optional
+
 from .utils_fd import real_fd
-
-
-class SockTrace(Exception):
-    """Melempar stack trace dari response stderr CRS"""
-
-    def __init__(self, status: str, message: str):
-        self.status = status
-        self.message = message
-        super().__init__(message)
+from .exception import SockTrace
 
 
 class TLSMetadata:
@@ -66,12 +59,6 @@ class SocketResponse:
     def message(self) -> str:
         """Mengembalikan pesan ERROR/SUCCESS/TIMEOUT."""
         return self._message
-
-    def _trace(self):
-        """Melempar Exception"""
-        if (sts := self.status.upper()) in {"ERROR", "CRITICAL"}:
-            raise SockTrace(sts, self.message)
-        return None
 
     @property
     def fileno(self) -> int:
@@ -157,6 +144,12 @@ class SocketResponse:
         tls_data = self._data.get("info_tls")
         if tls_data and isinstance(tls_data, dict):
             return TLSMetadata(tls_data)
+        return None
+
+    def _trace(self):
+        """Melempar Exception"""
+        if (sts := self.status.upper()) in {"ERROR", "CRITICAL"}:
+            raise SockTrace(sts, self.message)
         return None
 
     def __bool__(self):
