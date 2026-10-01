@@ -33,7 +33,7 @@ func ExecuteStandard(req packet.RequestPacket, timeout time.Duration) packet.Res
 	client.HTTPClient.Transport = &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		TLSClientConfig: &tls.Config{
-			RootCAs:            tlsCa,
+			RootCAs:            tlsCA,
 			InsecureSkipVerify: !req.Verify,
 			MinVersion:         tls.VersionTLS10,
 			MaxVersion:         tls.VersionTLS13,
