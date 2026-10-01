@@ -400,38 +400,65 @@ except dns.NXDOMAIN:
 
 ### 🖇️ HTTP Requests
 
-**Implementation**
+**Standard HTTP**
 ```python
-def execute(options, net):
-    req = net.HTTPR()
-    r = req(method, url, header, body, redirect, rawhttp, tls, verify, retry, rl, timeout, con)
+http = net.HTTPR()
+http.get(url, headers)
+http.post(url, body, headers)
+# http methods provided: get, post, put, patch, etc.
+```
+**Parameter**
+- **url:** https://example.com | str.
+- **header:** Example: {"User-Agent": "Storm-Framework/3.0 (CRS Engine)"} | Dict.
+- **body:** Can be empty, can also be filled. | Default empty | str.
+
+
+**Raw HTTP**
+```python
+http.rawhttp.get(url, headers)
+http.rawhttp.post(url, body, headers)
+# http methods provided: get, post, put, patch, etc.
+```
+**Description:** Raw HTTP freely accepts custom or malformed headers or bodies.
+
+**Parameter**
+- **url:** https://example.com | str.
+- **header:** Example: {"User-Agent": "Storm-Framework/3.0 (CRS Engine)"} | Dict.
+- **body:** Can be empty, can also be filled. | Default empty | str or bytes.
+
+
+**HTTP Global Settings & Runing**
+```python
+http.setoptions(ca, retry, redirect, verify, tls)
+http.timeout(value)
+http.concurrency(con)
+http.setlimit(ratelimit, frate)
+
+# Only runing returns a response
+resp = http.run()
 ```
 **Description:** HTTP Requests are stateless, you can send them and get a response straight away.
 
 **Parameter**
-- **method:** GET/POST/DELETE/PUT/dll. | Default GET.
-- **url:** https://example.com | str.
-- **header:** Example: {"User-Agent": "Storm-Framework/3.0 (X11; Linux x86_64)"} | Dict.
-- **body:** Can be empty, can also be filled. | Default empty | str.
 - **redirect:** To do a page redirect. | Default True. | Boolean.
-- **rawhttp:** Can supply FULL raw HTTP string in the (body). Example: HTTP/1.1\r\nHost: target\r\nX-Injected:  space Strange\r\n\r\n | Default False. | Boolean.
 - **tls:** To display TLS information in the Response. | Default False | Boolean.
 - **verify:** True=Verifying client certificate. False=Skip verification. | Default True. | Boolean.
 - **retry:** Performs Retryable http / Retry connection if failed. | Default 2. | int.
 - **rl:** Blocking requests if the token runs out. | Default 150/1s. | int.
 - **timeout:** To limit the open connection time. | Default 5s.
 - **con:** Number of Goroutines for Concurrency, allows to run parallel connections. | int.
-
+- **ca:** Can path, can raw pem string, can base64. | Default Empty | str.
+- 
 **Response**
 - **status:** ERROR/SUCCESS/TIMEOUT/WARNING.
 - **message:** Messages adjust to status.
 
 - **status_code:** HTTP Status Code (Example: 200, 404, 500).
-- **ok:** HTTP validation shorthand: Transport success and Status Code 2xx / 3xx.
-- **text:** Returns the response body in UTF-8 string form.
+- **ok:** Returns a boolean of the SUCCESS. Allows the syntax: if resp.ok
+- **body:** Returns the body string.
 - **raw_bytes:** Returns the response body in raw bytes.
 - **headers:** The original header dictionary from the response.
-- **get_headers:** Case-insensitive lookup for HTTP Headers. Example: res.get_headers('content-type') will find 'Content-Type'.
+- **get_headers:** Case-insensitive lookup for HTTP Headers. Example: resp.get_headers("content-type", "unknown") will find 'Content-Type'.
 - **proto:** HTTP Protocol (Example: HTTP/1.1, HTTP/2.0).
 - **engine:** The connection provider engine from CRS (Example: retryablehttp).
 - **tls:** Responses that inherit TLS information.
@@ -455,7 +482,8 @@ def execute(options, net):
 ```python
 try:
     ...
-except req.HTrace:
+except http.HTrace:
+except http.Timeout:
 ```
 **Description:** This is used to stop the program script when the CRS throws an ERROR/CRITICAL. Capture the ERROR message using smflogd if necessary.
 
@@ -575,12 +603,19 @@ smf.printf(r.tls.version, r.tls.cipher, etc.)
 - **Status:** `Stateless`
 - **Response**
 ```python
-r = net.DNSL(...)
-smf.printf(r.status, r.message)
-smf.printf(r.rcode, r.records, etc.)
+dns = net.DNSL()
+dns.timeout(0.2)       # Set Timeout
+dns.concurrency(50)    # Set Concurrency
+dns.setlimit(150, 50)  # Set Ratelimit and update ratelimit
+
+resp = dns.run() # Runing DNS and return response
+
+# Show response
+smf.printf(resp.status, resp.message)
+smf.printf(resp.rcode, resp.records, etc.)
 
 # Boolean SUCCESS
-if r.ok:
+if resp.ok:
 ```
 
 **3. HTTP Requests**
@@ -588,12 +623,23 @@ if r.ok:
 - **Status:** `Stateless`
 - **Response**
 ```python
-r = net.HTTPR(...)
-smf.printf(r.status, r.message)
-smf.printf(r.status_code, r.tls.cipher, etc.)
+path_ca = "/path/path/cert.pem"
+
+http = net.HTTPR(...)
+http.setoptions(path_ca, 2, true, true, true) # Set CA, retry, redirect, verify tls, tls response
+http.timeout(5.0)      # Set Timeout
+http.concurrency(50)   # Set Concurency
+http.setlimit(150, 80) # Set Ratelimit and update ratelimit
+
+resp = http.run() # Runing HTTP and return response
+
+# Show response
+smf.printf(resp.status, resp.message)
+smf.printf(resp.status_code, resp.tls.cipher, etc.)
+smf.printf(resp.get_headers("server", "unknown"))
 
 # Boolean SUCCESS
-if r.ok:
+if resp.ok:
 ```
 
 **4. Telnet**
