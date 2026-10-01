@@ -59,7 +59,6 @@ class HTTPState:
 
         # Inheritance of rawhttp methods
         self.rawhttp = RawHttp(state=self)
-        
 
     def _reset(self):
         """Reset state instance ini kembali ke default"""
