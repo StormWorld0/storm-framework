@@ -2,7 +2,6 @@
 # --- SMF License
 # --- Author: zxelzy
 
-import requests
 import json
 import os
 import smf
@@ -21,7 +20,7 @@ def check_update():
         http.get(url)
         resp = http.run()
         latest_version = resp.json()["version"]
-        
+
         # Get local json data
         data = os.path.join(ROOT, "data", "data.json")
 
