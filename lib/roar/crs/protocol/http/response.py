@@ -11,7 +11,7 @@ from typing import Dict, Any, Optional, Union
 from apps.utility.parse import parse_url, domain_to_ip
 from lib.smf.ingest import DataBuilder
 
-from .exception import StackTrace
+from .exception import StackTrace, TimeoutTrace
 from .metadata import HTTPTLSMetadata
 
 
@@ -203,11 +203,18 @@ class HTTPResponse:
         )
         return payload
 
-    def _trace(self) -> None:
+    def _trace(self):
         """Melempar stack trace"""
         if (sts := self.status.upper()) in {"ERROR", "CRITICAL"}:
             msg = self.message
             raise StackTrace(sts, msg)
+        return None
+
+    def _timeout(self):
+        """Melempar timeout trace"""
+        if (sts := self.status.upper()) == "TIMEOUT":
+            msg = self.message
+            raise TimeoutTrace(sts, msg)
         return None
 
     def __bool__(self):
