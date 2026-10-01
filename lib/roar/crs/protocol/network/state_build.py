@@ -4,12 +4,16 @@ import base64
 
 from apps.utility.colors import CC
 
+from .exception import SockTrace
+
 
 class SocketState:
     """
     Manajemen Konfigurasi & State Sesi.
     Menyimpan properti koneksi dan memvalidasi siklus hidup soket.
     """
+
+    STrace = SockTrace
 
     def __init__(
         self,
@@ -138,8 +142,8 @@ class IPCPayloadBuilder:
             "port": int(port) if port is not None else state.port,
             "data": data_str,
             "addr-fam": addr_fam if addr_fam is not None else state.af,
-            "stype": stype,
-            "sproto": sproto,
+            "stype": stype if stype is not None else state.stype,
+            "sproto": sproto if sproto is not None else state.sproto,
             "opt-level": level,
             "opt-name": name,
             "opt-value": int(value) if value is not None else state.value,
