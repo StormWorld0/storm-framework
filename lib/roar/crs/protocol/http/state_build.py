@@ -8,11 +8,16 @@ import base64
 from typing import Dict
 from apps.utility.colors import CC
 
+from .exception import StackTrace, TimeoutTrace
 from .rawhttp import RawHttp
 
 
 class HTTPState:
-    """Manajemen Konfigurasi & State Sesi."""
+    """Configuration Management & Session State."""
+
+    # To be used as an Exception
+    HTrace = StackTrace
+    Timeout = TimeoutTrace
 
     def __init__(
         self,
@@ -52,7 +57,9 @@ class HTTPState:
                 f"[!] {CC.YELLOW}Unrecognized parameters dropped =>{CC.RESET}", kwargs
             )
 
+        # Inheritance of rawhttp methods
         self.rawhttp = RawHttp(state=self)
+        
 
     def _reset(self):
         """Reset state instance ini kembali ke default"""
