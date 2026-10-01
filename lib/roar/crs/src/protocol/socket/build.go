@@ -11,7 +11,7 @@ import (
 )
 
 
-func BuildTarget(req packet.RequestPacket) (host, port, error) {
+func BuildTarget(req packet.RequestPacket) (*string, *int, error) {
 	rawHost := strings.TrimSpace(req.Host)
 	if rawHost == "" {
 		return nil, nil, fmt.Errorf("target host cannot be empty")
