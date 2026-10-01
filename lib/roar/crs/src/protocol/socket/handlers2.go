@@ -10,21 +10,28 @@ import (
 
 func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
 	// Parsing Parameter Node (Host) & Service (Port)
-	addr, _ := BuildTarget(ctx.Req)
-	host, portStr, err := net.SplitHostPort(addr)
+	addr, port, err := BuildTarget(ctx.Req)
 	if err != nil {
-		host = addr
-		if ctx.Req.Port > 0 {
-			portStr = strconv.Itoa(ctx.Req.Port)
-		} else {
-			portStr = "" // Service bersifat opsional di POSIX getaddrinfo
-		}
+		return packet.ResponsePacket{
+			Status:  "ERROR",
+			Message: "Failed build host&port: " + err.Error(),
+		} 
+	}
+
+	// Cek Address & Port. Fallback kosong
+	host := Deref(addr, "")
+	port := Deref(port, "")
+	
+	if port != "" {
+		portStr = string(port)
+	} else {
+		portStr = "" // Service bersifat opsional di POSIX getaddrinfo
 	}
 
 	// Setup Pointer Node dan Service (getaddrinfo menerima NULL jika string kosong)
 	var nodePtr *string
 	if host != "" {
-		nodePtr = &host
+		nodePtr = host
 	}
 
 	var servicePtr *string
