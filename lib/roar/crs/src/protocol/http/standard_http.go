@@ -19,11 +19,18 @@ func ExecuteStandard(req packet.RequestPacket, timeout time.Duration) packet.Res
 
 	client := retryablehttp.NewClient(retryOptions)
 
+	if req.TLSCA != "" {
+	    tlsCA, err := buildCaTLS(req)
+	    if err != nil {
+		    return BuildErrorResponse("ERROR", "retryablehttp", "Failed build CA: "+err.Error())
+	    }
+    }
+
 	// Arsitektur Transport untuk optimalisasi resource dan penanganan TLS bypass
 	client.HTTPClient.Transport = &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		TLSClientConfig: &tls.Config{
-			RootCAs:            req.TLSCA,
+			RootCAs:            tlsCa,
 			InsecureSkipVerify: !req.Verify,
 			MinVersion:         tls.VersionTLS10,
 			MaxVersion:         tls.VersionTLS13,
