@@ -1,109 +1,128 @@
 package socket
 
-/*
-// Header file C yang wajib dilampirkan untuk mengakses POSIX dan manajemen memori C.
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <stdlib.h>
-#include <string.h>
-*/
-import "C"
-
 import (
+	"context"
+	"net"
 	"strconv"
 	"time"
-	"unsafe"
 
+	"golang.org/x/sys/unix"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 )
 
 func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
-	// 1. Parsing Parameter dari Request
+	// BuildTarget bisa mereturn (host, nil, nil)
 	addr, port, err := BuildTarget(ctx.Req)
 	if err != nil {
 		return packet.ResponsePacket{
 			Status:  "ERROR",
-			Message: "Failed build host&port: " + err.Error(),
+			Message: "Failed build target: " + err.Error(),
 		}
 	}
 
+	// Aman: fallback ke string kosong ("") jika nil
 	hostFinal := DerefString(addr, "")
 	portFinal := DerefString(port, "")
 
-	// 2. Persiapan C-String (Pointer memori C)
-	// getaddrinfo menerima NULL jika parameter tidak diisi.
-	var cHost, cService *C.char
-	if hostFinal != "" {
-		cHost = C.CString(hostFinal)
-		defer C.free(unsafe.Pointer(cHost)) // Wajib: Hapus dari RAM setelah fungsi selesai
-	}
+	// 4 argumen ini langsung diekstrak.
+	// Jika kosong, Parse* otomatis me-return 0. Kita percaya penuh pada parser.
+	family := ParseAF(ctx.Req.AF)
+	sockType := ParseSockType(ctx.Req.SType)
+	protocol := ParseProtocol(ctx.Req.SProto)
+	flags := ParseOptName(ctx.Req.Flags)
+
+	var results []map[string]interface{}
+	var targetPort int
+
+	// 1. Resolusi Port (Service)
+	// Hanya diproses jika portFinal ada isinya. Jika tidak, targetPort tetap 0.
 	if portFinal != "" {
-		cService = C.CString(portFinal)
-		defer C.free(unsafe.Pointer(cService)) // Wajib: Hapus dari RAM setelah fungsi selesai
-	}
-
-	// 3. Setup Struct Hints (POSIX) di memori C
-	var hints C.struct_addrinfo
-	// Wajib: Zero-value initialization untuk mencegah undefined behavior di C
-	C.memset(unsafe.Pointer(&hints), 0, C.sizeof_struct_addrinfo) 
-	
-	hints.ai_family = C.int(ParseAF(ctx.Req.AF))
-	hints.ai_socktype = C.int(ParseSockType(ctx.Req.SType))
-	hints.ai_protocol = C.int(ParseProtocol(ctx.Req.SProto))
-	hints.ai_flags = C.int(ParseOptName(ctx.Req.Flags))
-
-	// 4. Eksekusi POSIX getaddrinfo (Akses 6 Argumen Penuh)
-	var res *C.struct_addrinfo
-	errCode := C.getaddrinfo(cHost, cService, &hints, &res)
-	if errCode != 0 {
-		return packet.ResponsePacket{
-			Status:  "ERROR",
-			Message: "getaddrinfo failed: " + C.GoString(C.gai_strerror(errCode)),
+		// Coba ubah string angka (cth: "8080") langsung ke integer
+		if p, err := strconv.Atoi(portFinal); err == nil {
+			targetPort = p
+		} else {
+			// Fallback: Jika input berupa nama service (cth: "http" atau "ssh")
+			// Kita gunakan "tcp" sebagai standar lookup ke /etc/services
+			if p, err := net.LookupPort("tcp", portFinal); err == nil {
+				targetPort = p
+			} else {
+				return packet.ResponsePacket{
+					Status:  "ERROR",
+					Message: "Servname not supported",
+				}
+			}
 		}
 	}
 
-	// WAJIB: Membebaskan linked-list dari RAM setelah parsing selesai agar tidak Memory Leak
-	defer C.freeaddrinfo(res)
+	// 2. Resolusi Host (Node)
+	var ips []net.IP
 
-	// 5. Parsing Linked-List Result dari C ke Slice Map Go
-	var results []map[string]interface{}
+	if hostFinal == "" {
+		// Evaluasi flag AI_PASSIVE (0x1) jika node kosong
+		if (flags & unix.AI_PASSIVE) != 0 {
+			ips = append(ips, net.ParseIP("0.0.0.0"), net.ParseIP("::"))
+		} else {
+			ips = append(ips, net.ParseIP("127.0.0.1"), net.ParseIP("::1"))
+		}
+	} else {
+		parsedIP := net.ParseIP(hostFinal)
+		if parsedIP != nil {
+			// Input adalah Raw IP Address (IPv4/IPv6)
+			ips = append(ips, parsedIP)
+		} else {
+			// Evaluasi flag AI_NUMERICHOST (0x4)
+			// Jika flag ini di-set tapi input berupa domain, fungsi harus abort
+			// untuk mencegah DNS leakage pada agen Red Team
+			if (flags & unix.AI_NUMERICHOST) != 0 {
+				return packet.ResponsePacket{
+					Status:  "ERROR",
+					Message: "getaddrinfo: Name or service not known (AI_NUMERICHOST enforced)",
+				}
+			}
 
-	for ptr := res; ptr != nil; ptr = ptr.ai_next {
-		var ipStr string
-		var portNum int
+			// Jalankan DNS Lookup
+			resolvedIPs, err := net.DefaultResolver.LookupIP(context.Background(), "ip", hostFinal)
+			if err != nil {
+				return packet.ResponsePacket{
+					Status:  "ERROR",
+					Message: "getaddrinfo failed: " + err.Error(),
+				}
+			}
+			ips = resolvedIPs
+		}
+	}
 
-		// Buffer statis untuk menyimpan string IP dan Port hasil terjemahan C
-		var hostBuf [C.NI_MAXHOST]C.char
-		var servBuf [C.NI_MAXSERV]C.char
+	// 3. Construct Results (Mem-filter berdasarkan AF_INET / AF_INET6 jika diminta)
+	for _, ip := range ips {
+		isIPv4 := ip.To4() != nil
 
-		// Gunakan getnameinfo (POSIX) untuk mengekstrak raw IP bytes menjadi String
-		// Casting C.socklen_t dan C.int ini yang memastikan CGO lolos kompilasi tanpa error
-		getnameErr := C.getnameinfo(
-			ptr.ai_addr,
-			ptr.ai_addrlen,
-			&hostBuf[0],
-			C.socklen_t(C.NI_MAXHOST), 
-			&servBuf[0],
-			C.socklen_t(C.NI_MAXSERV),
-			C.int(C.NI_NUMERICHOST|C.NI_NUMERICSERV),
-		)
+		if family == unix.AF_INET && !isIPv4 {
+			continue
+		}
+		if family == unix.AF_INET6 && isIPv4 {
+			continue
+		}
 
-		// Jika berhasil di-parse, konversi C-String menjadi Go-String
-		if getnameErr == 0 {
-			ipStr = C.GoString(&hostBuf[0])
-			portStr := C.GoString(&servBuf[0])
-			portNum, _ = strconv.Atoi(portStr)
+		resFamily := unix.AF_INET
+		if !isIPv4 {
+			resFamily = unix.AF_INET6
 		}
 
 		results = append(results, map[string]interface{}{
-			"family":   int(ptr.ai_family),
-			"socktype": int(ptr.ai_socktype),
-			"protocol": int(ptr.ai_protocol),
-			"flags":    int(ptr.ai_flags),
-			"ip":       ipStr,
-			"port":     portNum,
+			"family":   int(resFamily),
+			"socktype": int(sockType),
+			"protocol": int(protocol),
+			"flags":    int(flags),
+			"ip":       ip.String(),
+			"port":     targetPort,
 		})
+	}
+
+	if len(results) == 0 && hostFinal != "" {
+		return packet.ResponsePacket{
+			Status:  "ERROR",
+			Message: "getaddrinfo: No address associated with hostname",
+		}
 	}
 
 	return packet.ResponsePacket{
