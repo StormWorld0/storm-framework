@@ -34,7 +34,7 @@ func resolveSockAddr(req packet.RequestPacket) (unix.Sockaddr, error) {
 		portStr = "0"
 	}
 
-	ports, _ := strconv.Atoi(portStr)
+	Ports, _ := strconv.Atoi(portStr)
 	ips, err := net.LookupIP(host)
 	if err != nil || len(ips) == 0 {
 		return nil, fmt.Errorf("DNS Resolution failed: %s", host)
