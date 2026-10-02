@@ -160,7 +160,7 @@ class SocketResponse:
 
     def __iter__(self):
         return iter(self.addrinfo)
-        
+
     def __bool__(self):
         """Allows syntax: if r.ok:"""
         return self.ok
