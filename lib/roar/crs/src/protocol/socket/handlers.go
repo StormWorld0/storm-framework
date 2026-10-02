@@ -27,8 +27,8 @@ func resolveSockAddr(req packet.RequestPacket) (unix.Sockaddr, error) {
 		return nil, fmt.Errorf("Build target failed: %w", err)
 	}
 
-	host := DerifString(addr, "")
-	portStr := DerifString(port, "")
+	host := DerefString(addr, "")
+	portStr := DerefString(port, "")
 	
 	if portStr == "" {
 		portStr = "0"
@@ -306,8 +306,8 @@ func handleCreate(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Build target failed: " + err.Error()}
 	}
 
-	addrStr := DerifString(addr, "")
-	portStr := DerifStting(port, "")
+	addrStr := DerefString(addr, "")
+	portStr := DerefStting(port, "")
 
 	host := net.JoinHostPort(addrStr, portStr)
 
@@ -344,8 +344,8 @@ func handleUpgradeTLS(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Failed build host & port: " + err.Error()}
 	}
 
-	addrStr := DerifString(addr, "")
-	portStr := DerifStting(port, "")
+	addrStr := DerefString(addr, "")
+	portStr := DerefStting(port, "")
 
 	host := net.JoinHostPort(addrStr, portStr) 
 	
