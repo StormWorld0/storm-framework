@@ -158,6 +158,9 @@ class SocketResponse:
             raise SockTrace(sts, self.message)
         return None
 
+    def __iter__(self):
+        return iter(self.addrinfo)
+        
     def __bool__(self):
         """Allows syntax: if r.ok:"""
         return self.ok
