@@ -11,12 +11,18 @@ import (
 )
 
 const (
-	aiPassive     = 0x01 // AI_PASSIVE: bind to 0.0.0.0 / ::
-	aiNumericHost = 0x04 // AI_NUMERICHOST: prevent DNS lookup if domain
+	aiPassive     = 0x01 // AI_PASSIVE
+	aiCanonName   = 0x02 // AI_CANONNAME
+	aiNumericHost = 0x04 // AI_NUMERICHOST
+	aiNumericServ = 0x08 // AI_NUMERICSERV
 )
 
+type addrResult struct {
+	SockType int
+	Protocol int
+}
+
 func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
-	// BuildTarget bisa mereturn (host, nil, nil)
 	addr, port, err := BuildTarget(ctx.Req)
 	if err != nil {
 		return packet.ResponsePacket{
@@ -25,45 +31,51 @@ func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
 		}
 	}
 
-	// Aman: fallback ke string kosong ("") jika nil
 	hostFinal := DerefString(addr, "")
 	portFinal := DerefString(port, "")
 
-	// 4 argumen ini langsung diekstrak.
-	// Jika kosong, Parse* otomatis me-return 0. Kita percaya penuh pada parser.
 	family := ParseAF(ctx.Req.AF)
 	sockType := ParseSockType(ctx.Req.SType)
 	protocol := ParseProtocol(ctx.Req.SProto)
 	flags := ParseOptName(ctx.Req.Flags)
 
-	var results []map[string]interface{}
 	var targetPort int
 
-	// 1. Resolusi Port (Service)
-	// Hanya diproses jika portFinal ada isinya. Jika tidak, targetPort tetap 0.
+	// 1. Resolusi Port (Service) dengan AI_NUMERICSERV & Dynamic Transport Protocol
 	if portFinal != "" {
-		// Coba ubah string angka (cth: "8080") langsung ke integer
 		if p, err := strconv.Atoi(portFinal); err == nil {
 			targetPort = p
 		} else {
-			// Fallback: Jika input berupa nama service (cth: "http" atau "ssh")
-			// Kita gunakan "tcp" sebagai standar lookup ke /etc/services
-			if p, err := net.LookupPort("tcp", portFinal); err == nil {
+			// Evaluasi AI_NUMERICSERV: Abort jika input bukan angka
+			if (flags & aiNumericServ) != 0 {
+				return packet.ResponsePacket{
+					Status:  "ERROR",
+					Message: "getaddrinfo: Servname not supported for ai_flags",
+				}
+			}
+
+			// Tentukan proto lookup berdasarkan hint sockType / protocol
+			lookupProto := "tcp"
+			if sockType == unix.SOCK_DGRAM || protocol == unix.IPPROTO_UDP {
+				lookupProto = "udp"
+			}
+
+			if p, err := net.LookupPort(lookupProto, portFinal); err == nil {
 				targetPort = p
 			} else {
 				return packet.ResponsePacket{
 					Status:  "ERROR",
-					Message: "Servname not supported",
+					Message: "Servname not supported for ai_socktype",
 				}
 			}
 		}
 	}
 
-	// 2. Resolusi Host (Node)
+	// 2. Resolusi Host dengan Optimasi Network Query (Mencegah Unnecessary DNS Noise)
 	var ips []net.IP
+	var canonName string
 
 	if hostFinal == "" {
-		// Evaluasi flag AI_PASSIVE (0x1) jika node kosong
 		if (flags & aiPassive) != 0 {
 			ips = append(ips, net.ParseIP("0.0.0.0"), net.ParseIP("::"))
 		} else {
@@ -72,12 +84,8 @@ func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
 	} else {
 		parsedIP := net.ParseIP(hostFinal)
 		if parsedIP != nil {
-			// Input adalah Raw IP Address (IPv4/IPv6)
 			ips = append(ips, parsedIP)
 		} else {
-			// Evaluasi flag AI_NUMERICHOST (0x4)
-			// Jika flag ini di-set tapi input berupa domain, fungsi harus abort
-			// untuk mencegah DNS leakage pada agen Red Team
 			if (flags & aiNumericHost) != 0 {
 				return packet.ResponsePacket{
 					Status:  "ERROR",
@@ -85,8 +93,17 @@ func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
 				}
 			}
 
-			// Jalankan DNS Lookup
-			resolvedIPs, err := net.DefaultResolver.LookupIP(context.Background(), "ip", hostFinal)
+			// Tentukan scope network resolver berdasarkan AF hint
+			// Menghindari DNS AAAA query jika caller hanya butuh IPv4 (AF_INET)
+			lookupNetwork := "ip"
+			switch family {
+			case unix.AF_INET:
+				lookupNetwork = "ip4"
+			case unix.AF_INET6:
+				lookupNetwork = "ip6"
+			}
+
+			resolvedIPs, err := net.DefaultResolver.LookupIP(context.Background(), lookupNetwork, hostFinal)
 			if err != nil {
 				return packet.ResponsePacket{
 					Status:  "ERROR",
@@ -94,10 +111,41 @@ func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
 				}
 			}
 			ips = resolvedIPs
+
+			// Evaluasi AI_CANONNAME
+			if (flags & aiCanonName) != 0 {
+				if cname, err := net.DefaultResolver.LookupCNAME(context.Background(), hostFinal); err == nil {
+					canonName = cname
+				}
+			}
 		}
 	}
 
-	// 3. Construct Results (Mem-filter berdasarkan AF_INET / AF_INET6 jika diminta)
+	// 3. Matriks Inferensi SockType & Protocol
+	// POSIX getaddrinfo mengisi concreted socktype & protocol jika hints bernilai 0
+	var combinations []addrResult
+
+	switch {
+	case sockType == 0 && protocol == 0:
+		combinations = append(combinations,
+			addrResult{SockType: unix.SOCK_STREAM, Protocol: unix.IPPROTO_TCP},
+			addrResult{SockType: unix.SOCK_DGRAM, Protocol: unix.IPPROTO_UDP},
+		)
+	case sockType == unix.SOCK_STREAM && protocol == 0:
+		combinations = append(combinations, addrResult{SockType: unix.SOCK_STREAM, Protocol: unix.IPPROTO_TCP})
+	case sockType == unix.SOCK_DGRAM && protocol == 0:
+		combinations = append(combinations, addrResult{SockType: unix.SOCK_DGRAM, Protocol: unix.IPPROTO_UDP})
+	case sockType == 0 && protocol == unix.IPPROTO_TCP:
+		combinations = append(combinations, addrResult{SockType: unix.SOCK_STREAM, Protocol: unix.IPPROTO_TCP})
+	case sockType == 0 && protocol == unix.IPPROTO_UDP:
+		combinations = append(combinations, addrResult{SockType: unix.SOCK_DGRAM, Protocol: unix.IPPROTO_UDP})
+	default:
+		combinations = append(combinations, addrResult{SockType: int(sockType), Protocol: int(protocol)})
+	}
+
+	// 4. Construct Multi-tuple Results
+	var results []map[string]interface{}
+
 	for _, ip := range ips {
 		isIPv4 := ip.To4() != nil
 
@@ -113,14 +161,20 @@ func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
 			resFamily = unix.AF_INET6
 		}
 
-		results = append(results, map[string]interface{}{
-			"family":   int(resFamily),
-			"socktype": int(sockType),
-			"protocol": int(protocol),
-			"flags":    int(flags),
-			"ip":       ip.String(),
-			"port":     targetPort,
-		})
+		for _, combo := range combinations {
+			resItem := map[string]interface{}{
+				"family":   int(resFamily),
+				"socktype": combo.SockType,
+				"protocol": combo.Protocol,
+				"flags":    int(flags),
+				"ip":       ip.String(),
+				"port":     targetPort,
+			}
+			if canonName != "" {
+				resItem["canonname"] = canonName
+			}
+			results = append(results, resItem)
+		}
 	}
 
 	if len(results) == 0 && hostFinal != "" {
