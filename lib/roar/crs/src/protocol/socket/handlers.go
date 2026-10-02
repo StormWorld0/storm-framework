@@ -22,14 +22,15 @@ import (
 
 // Helper internal untuk resolving host/IP ke unix.Sockaddr (menghindari duplikasi)
 func resolveSockAddr(req packet.RequestPacket) (unix.Sockaddr, error) {
-	addr, err := BuildTarget(req)
+	addr, port, err := BuildTarget(req)
 	if err != nil {
 		return nil, fmt.Errorf("Build target failed: %w", err)
 	}
 
-	host, portStr, err := net.SplitHostPort(addr)
-	if err != nil {
-		host = addr
+	host := DerifString(addr, "")
+	portStr := DerifString(port, "")
+	
+	if portStr == "" {
 		portStr = "0"
 	}
 
@@ -300,10 +301,15 @@ func handleConnect(ctx *ExecutionContext) packet.ResponsePacket {
 }
 
 func handleCreate(ctx *ExecutionContext) packet.ResponsePacket {
-	addr, err := BuildTarget(ctx.Req)
+	addr, port, err := BuildTarget(ctx.Req)
 	if err != nil {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Build target failed: " + err.Error()}
 	}
+
+	addrStr := DerifString(addr, "")
+	portStr := DerifStting(port, "")
+
+	host := net.JoinHostPort(addrStr, portStr)
 
 	fd := utils.GetDialer()
 	if fd == nil {
@@ -313,7 +319,7 @@ func handleCreate(ctx *ExecutionContext) packet.ResponsePacket {
 	tCtx, cancel := context.WithTimeout(context.Background(), ctx.Timeout)
 	defer cancel()
 
-	rawConn, err := fd.Dial(tCtx, "tcp", addr)
+	rawConn, err := fd.Dial(tCtx, "tcp", host)
 	if err != nil {
 		return packet.ResponsePacket{Status: "ERROR", Message: "TCP Dial failed: " + err.Error()}
 	}
@@ -333,8 +339,17 @@ func handleUpgradeTLS(ctx *ExecutionContext) packet.ResponsePacket {
 	tCtx, cancel := context.WithTimeout(context.Background(), ctx.Timeout)
 	defer cancel()
 
-	addr, _ := BuildTarget(ctx.Req)
-	tlsConn, err := performTLSHandshake(tCtx, ctx.Conn, addr, ctx.Req)
+	addr, port, err := BuildTarget(ctx.Req)
+	if err != nil {
+		return packet.ResponsePacket{Status: "ERROR", Message: "Failed build host & port: " + err.Error()}
+	}
+
+	addrStr := DerifString(addr, "")
+	portStr := DerifStting(port, "")
+
+	host := net.JoinHostPort(addrStr, portStr) 
+	
+	tlsConn, err := performTLSHandshake(tCtx, ctx.Conn, host, ctx.Req)
 	if err != nil {
 		return packet.ResponsePacket{Status: "ERROR", Message: "TLS Upgrade failed: " + err.Error()}
 	}
