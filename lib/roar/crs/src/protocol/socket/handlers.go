@@ -34,7 +34,7 @@ func resolveSockAddr(req packet.RequestPacket) (unix.Sockaddr, error) {
 		portStr = "0"
 	}
 
-	port, _ := strconv.Atoi(portStr)
+	ports, _ := strconv.Atoi(portStr)
 	ips, err := net.LookupIP(host)
 	if err != nil || len(ips) == 0 {
 		return nil, fmt.Errorf("DNS Resolution failed: %s", host)
@@ -44,12 +44,12 @@ func resolveSockAddr(req packet.RequestPacket) (unix.Sockaddr, error) {
 	if afInt == unix.AF_INET6 {
 		var addr16 [16]byte
 		copy(addr16[:], ips[0].To16())
-		return &unix.SockaddrInet6{Port: port, Addr: addr16}, nil
+		return &unix.SockaddrInet6{Port: Ports, Addr: addr16}, nil
 	}
 
 	var addr4 [4]byte
 	copy(addr4[:], ips[0].To4())
-	return &unix.SockaddrInet4{Port: port, Addr: addr4}, nil
+	return &unix.SockaddrInet4{Port: Ports, Addr: addr4}, nil
 }
 
 // performTLSHandshake membungkus logika upgrade TLS
@@ -307,7 +307,7 @@ func handleCreate(ctx *ExecutionContext) packet.ResponsePacket {
 	}
 
 	addrStr := DerefString(addr, "")
-	portStr := DerefStting(port, "")
+	portStr := DerefString(port, "")
 
 	host := net.JoinHostPort(addrStr, portStr)
 
@@ -345,7 +345,7 @@ func handleUpgradeTLS(ctx *ExecutionContext) packet.ResponsePacket {
 	}
 
 	addrStr := DerefString(addr, "")
-	portStr := DerefStting(port, "")
+	portStr := DerefString(port, "")
 
 	host := net.JoinHostPort(addrStr, portStr) 
 	
