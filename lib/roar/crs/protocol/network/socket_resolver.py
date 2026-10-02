@@ -3,6 +3,7 @@ from .response import SocketResponse
 
 from ...transport import CRS
 
+
 class SocketResolver:
     """Daftar semua socket resolver"""
 
@@ -29,7 +30,7 @@ class SocketResolver:
             mode="getaddrinfo",
             close_session=False,
         )
-        
+
         resp = CRS.send(packet)
         response = SocketResponse(resp)
         response._trace()
