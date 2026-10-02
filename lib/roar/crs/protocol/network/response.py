@@ -1,5 +1,6 @@
 import smf
 import base64
+import socket
 
 from typing import Dict, Any, Optional
 
@@ -93,6 +94,34 @@ class SocketResponse:
             if addr is not None and port is not None:
                 return f"{'.'.join(map(str, addr))}:{port}"
         return value
+
+    @property
+    def addrinfo(self) -> list[tuple]:
+        """Mengonversi data 'results' dari getaddrinfo ke daftar tuple standar"""
+        if self.status != "SUCCESS":
+            return []
+
+        results = self._data.get("results", [])
+        parsed = []
+        for item in results:
+            family = item.get("family", 0)
+            socktype = item.get("socktype", 0)
+            protocol = item.get("protocol", 0)
+            canonname = item.get("canonname", "")
+            ip = item.get("ip", "")
+            port = item.get("port", 0)
+
+            # Format sockaddr tuple
+            if family == socket.AF_INET:  # AF_INET
+                sockaddr = (ip, port)
+            elif family == socket.AF_INET6:  # AF_INET6
+                flowinfo = item.get("flowinfo", 0)
+                scope_id = item.get("scope_id", 0)
+                sockaddr = (ip, port, flowinfo, scope_id)
+            else:
+                sockaddr = (ip, port)
+            parsed.append((family, socktype, protocol, canonname, sockaddr))
+        return parsed
 
     @property
     def rtt_ms(self) -> int:
