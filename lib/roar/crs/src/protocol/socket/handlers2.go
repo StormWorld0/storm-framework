@@ -10,6 +10,11 @@ import (
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 )
 
+const (
+	aiPassive     = 0x01 // AI_PASSIVE: bind to 0.0.0.0 / ::
+	aiNumericHost = 0x04 // AI_NUMERICHOST: prevent DNS lookup if domain
+)
+
 func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
 	// BuildTarget bisa mereturn (host, nil, nil)
 	addr, port, err := BuildTarget(ctx.Req)
@@ -59,7 +64,7 @@ func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
 
 	if hostFinal == "" {
 		// Evaluasi flag AI_PASSIVE (0x1) jika node kosong
-		if (flags & unix.AI_PASSIVE) != 0 {
+		if (flags & aiPassive) != 0 {
 			ips = append(ips, net.ParseIP("0.0.0.0"), net.ParseIP("::"))
 		} else {
 			ips = append(ips, net.ParseIP("127.0.0.1"), net.ParseIP("::1"))
@@ -73,7 +78,7 @@ func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
 			// Evaluasi flag AI_NUMERICHOST (0x4)
 			// Jika flag ini di-set tapi input berupa domain, fungsi harus abort
 			// untuk mencegah DNS leakage pada agen Red Team
-			if (flags & unix.AI_NUMERICHOST) != 0 {
+			if (flags & aiNumericHost) != 0 {
 				return packet.ResponsePacket{
 					Status:  "ERROR",
 					Message: "getaddrinfo: Name or service not known (AI_NUMERICHOST enforced)",
