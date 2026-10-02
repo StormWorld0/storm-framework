@@ -42,7 +42,7 @@ class SocketState:
         **kwargs,
     ):
         self.host = host
-        self.port = int(port)
+        self.port = int(port) if port is not None else None
         self._timeout = float(timeout)
         self.readsize = int(readsize)
         self.ratelimit = int(ratelimit)
