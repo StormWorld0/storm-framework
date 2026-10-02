@@ -1,0 +1,138 @@
+package socket
+
+import (
+    "io"
+    "net"
+    "time"
+    "strconv"
+    "encoding/hex"
+    "encoding/base64"
+    "golang.org/x/sys/unix"
+    "github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
+)
+
+
+func handleSend(ctx *ExecutionContext) packet.ResponsePacket {
+	if err := ExecuteWrite(ctx.Conn, ctx.Req.Data, ctx.Timeout); err != nil {
+		return packet.ResponsePacket{Status: "ERROR", Message: "Write failed: " + err.Error()}
+	}
+
+	ctx.SaveSession(ctx.Conn)
+
+	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadata(0)}
+}
+
+
+func handleRecv(ctx *ExecutionContext) packet.ResponsePacket {
+	buffer, n, bufPtr, err := ExecuteRead(ctx.Conn, ctx.Req.ReadSize, ctx.Timeout)
+	defer ReleaseBuffer(bufPtr)
+
+	if err != nil && err != io.EOF {
+		if n == 0 {
+			ctx.SaveSession(ctx.Conn)
+			return packet.ResponsePacket{
+				Status:  "TIMEOUT",
+				Message: "Read failed: " + err.Error(),
+				Data:    ctx.GenerateMetadata(0),
+			}
+		}
+	}
+
+	ctx.SaveSession(ctx.Conn)
+
+	meta := ctx.GenerateMetadata(n)
+	meta["raw_bytes"] = base64.StdEncoding.EncodeToString(buffer[:n])
+	meta["hex_bytes"] = hex.EncodeToString(buffer[:n])
+
+	if err == io.EOF {
+		return packet.ResponsePacket{Status: "WARN", Message: "EOF Read: " + err.Error()}
+	}
+
+	return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
+}
+
+
+func handleSendTo(ctx *ExecutionContext) packet.ResponsePacket {
+	if ctx.RawFD == -1 {
+		return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found. Call 'socket' primitive first."}
+	}
+
+	// Resolve target IP dan Port
+	sockAddr, err := resolveSockAddr(ctx.Req)
+	if err != nil {
+		return packet.ResponsePacket{Status: "ERROR", Message: err.Error()}
+	}
+
+	flag := ParseFlags(ctx.Req.Flags)
+	
+	// Eksekusi menggunakan helper
+	if err := ExecuteSendTo(ctx.RawFD, ctx.Req.Data, sockAddr, ctx.Timeout, flag); err != nil {
+		return packet.ResponsePacket{Status: "ERROR", Message: "Sendto failed: " + err.Error()}
+	}
+
+	ctx.SaveSession(ctx.RawFD)
+
+	return packet.ResponsePacket{
+		Status: "SUCCESS", 
+		Data: map[string]interface{}{
+			"is_reused":    ctx.IsReused,
+			"rtt_ms":       time.Since(ctx.StartTime).Milliseconds(),
+		},
+	}
+}
+
+
+func handleRecvFrom(ctx *ExecutionContext) packet.ResponsePacket {
+	if ctx.RawFD == -1 {
+		return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found for recvfrom."}
+	}
+
+	flag := ParseFlags(ctx.Req.Flags)
+
+	buffer, n, sa, bufPtr, err := ExecuteRecvFrom(ctx.RawFD, int(ctx.Req.ReadSize), ctx.Timeout, flag)
+	defer ReleaseBuffer(bufPtr)
+	
+	if err != nil && err != unix.EAGAIN && err != unix.EWOULDBLOCK {
+		return packet.ResponsePacket{Status: "ERROR", Message: "Recvfrom failed: " + err.Error()}
+	}
+	
+	if n == 0 || err == unix.EAGAIN || err == unix.EWOULDBLOCK {
+		ctx.SaveSession(ctx.RawFD)
+		return packet.ResponsePacket{
+			Status:  "TIMEOUT",
+			Message: "Recvfrom Failed: " + err.Error(),
+		}
+	}
+
+	ctx.SaveSession(ctx.RawFD)
+
+	// Ekstrak IP dan Port dari Sender (Remote Address)
+	var senderIP string
+	var senderPort int
+	switch v := sa.(type) {
+	case *unix.SockaddrInet4:
+		senderIP = net.IP(v.Addr[:]).String()
+		senderPort = v.Port
+	case *unix.SockaddrInet6:
+		senderIP = net.IP(v.Addr[:]).String()
+		senderPort = v.Port
+	}
+
+	sender := net.JoinHostPort(senderIP, strconv.Itoa(senderPort))
+
+	if err == io.EOF {
+		return packet.ResponsePacket{Status: "WARN", Message: "EOF Read: " + err.Error()}
+	}
+
+	return packet.ResponsePacket{
+		Status: "SUCCESS", 
+		Data: map[string]interface{}{
+			"is_reused":    ctx.IsReused,
+			"rtt_ms":       time.Since(ctx.StartTime).Milliseconds(),
+			"remote_ip":    sender,
+			"raw_bytes":    base64.StdEncoding.EncodeToString(buffer[:n]),
+			"hex_bytes":    hex.EncodeToString(buffer[:n]),
+			"read_bytes":   n,
+		},
+	}
+}
