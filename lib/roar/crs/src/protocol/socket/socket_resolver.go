@@ -1,11 +1,11 @@
 package socket
 
 import (
-	"context"
 	"net"
-	"strconv"
+	"fmt"
 	"time"
-
+	"context"
+	"strconv"
 	"golang.org/x/sys/unix"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 )
@@ -21,6 +21,63 @@ type addrResult struct {
 	SockType int
 	Protocol int
 }
+
+
+func resolveCanonicalName(ctx context.Context, host string, flags int) string {
+	if flags&aiCanonName == 0 {
+		return ""
+	}
+	cname, err := net.DefaultResolver.LookupCNAME(ctx, host)
+	if err != nil {
+		return ""
+	}
+	return cname
+}
+
+
+func resolveAddrCombination(sockType, protocol int) ([]addrResult, error) {
+	switch {
+	case sockType == 0 && protocol == 0:
+		return []addrResult{
+			{SockType: unix.SOCK_STREAM, Protocol: unix.IPPROTO_TCP},
+			{SockType: unix.SOCK_DGRAM, Protocol: unix.IPPROTO_UDP},
+		}, nil
+
+	case sockType == unix.SOCK_STREAM && protocol == 0:
+		return []addrResult{
+			{SockType: unix.SOCK_STREAM, Protocol: unix.IPPROTO_TCP},
+		}, nil
+
+	case sockType == unix.SOCK_DGRAM && protocol == 0:
+		return []addrResult{
+			{SockType: unix.SOCK_DGRAM, Protocol: unix.IPPROTO_UDP},
+		}, nil
+
+	case sockType == 0 && protocol == unix.IPPROTO_TCP:
+		return []addrResult{
+			{SockType: unix.SOCK_STREAM, Protocol: unix.IPPROTO_TCP},
+		}, nil
+
+	case sockType == 0 && protocol == unix.IPPROTO_UDP:
+		return []addrResult{
+			{SockType: unix.SOCK_DGRAM, Protocol: unix.IPPROTO_UDP},
+		}, nil
+
+	case sockType == unix.SOCK_STREAM && protocol == unix.IPPROTO_TCP:
+		return []addrResult{
+			{SockType: unix.SOCK_STREAM, Protocol: unix.IPPROTO_TCP},
+		}, nil
+
+	case sockType == unix.SOCK_DGRAM && protocol == unix.IPPROTO_UDP:
+		return []addrResult{
+			{SockType: unix.SOCK_DGRAM, Protocol: unix.IPPROTO_UDP},
+		}, nil
+
+	default:
+		return nil, fmt.Errorf("incompatible type & proto: socktype=%d protocol=%d", sockType, protocol)
+	}
+}
+
 
 func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
 	addr, port, err := BuildTarget(ctx.Req)
@@ -113,35 +170,18 @@ func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
 			ips = resolvedIPs
 
 			// Evaluasi AI_CANONNAME
-			if (flags & aiCanonName) != 0 {
-				if cname, err := net.DefaultResolver.LookupCNAME(context.Background(), hostFinal); err == nil {
-					canonName = cname
-				}
-			}
+			if hostFinal != "" && flags&aiCanonName != 0 {
+				canonName = resolveCanonicalName(context.Background(), hostFinal, int(flags))
+            }
 		}
 	}
 
 	// 3. Matriks Inferensi SockType & Protocol
 	// POSIX getaddrinfo mengisi concreted socktype & protocol jika hints bernilai 0
-	var combinations []addrResult
-
-	switch {
-	case sockType == 0 && protocol == 0:
-		combinations = append(combinations,
-			addrResult{SockType: unix.SOCK_STREAM, Protocol: unix.IPPROTO_TCP},
-			addrResult{SockType: unix.SOCK_DGRAM, Protocol: unix.IPPROTO_UDP},
-		)
-	case sockType == unix.SOCK_STREAM && protocol == 0:
-		combinations = append(combinations, addrResult{SockType: unix.SOCK_STREAM, Protocol: unix.IPPROTO_TCP})
-	case sockType == unix.SOCK_DGRAM && protocol == 0:
-		combinations = append(combinations, addrResult{SockType: unix.SOCK_DGRAM, Protocol: unix.IPPROTO_UDP})
-	case sockType == 0 && protocol == unix.IPPROTO_TCP:
-		combinations = append(combinations, addrResult{SockType: unix.SOCK_STREAM, Protocol: unix.IPPROTO_TCP})
-	case sockType == 0 && protocol == unix.IPPROTO_UDP:
-		combinations = append(combinations, addrResult{SockType: unix.SOCK_DGRAM, Protocol: unix.IPPROTO_UDP})
-	default:
-		combinations = append(combinations, addrResult{SockType: int(sockType), Protocol: int(protocol)})
-	}
+	combinations, err := resolveAddrCombination(int(sockType), int(protocol))
+    if err != nil {
+	    return packet.ResponsePacket{Status:  "ERROR", Message: "getaddrinfo: " + err.Error()}
+    }
 
 	// 4. Construct Multi-tuple Results
 	var results []map[string]interface{}
