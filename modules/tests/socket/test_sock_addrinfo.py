@@ -19,6 +19,6 @@ def execute(options, net):
 
     sock = net.Socket()
     try:
-        sock.getaddrinfo(host, None, sock.IPPROTO_TCP)
+        sock.getaddrinfo(host, None, sproto=sock.IPPROTO_TCP)
     except sock.STrace as e:
         smf.printf("Error =>", e)
