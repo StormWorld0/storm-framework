@@ -1,6 +1,6 @@
 import ipaddress
+import socket
 
-from lib.roar.crs.net_api import Socket
 from urllib.parse import urlparse
 
 
@@ -24,14 +24,13 @@ def parse_url(url):
 
 def domain_to_ip(domain):
     """Returning IPV4 and IPV6"""
-    sock = Socket()
     try:
-        resp = sock.getaddrinfo(domain, None, proto=sock.IPPROTO_TCP)
+        resp = socket.getaddrinfo(domain, None, proto=socket.IPPROTO_TCP)
 
         ipv4 = set()
         ipv6 = set()
 
-        for result in resp.addrinfo:
+        for result in resp:
             ip = result[4][0]
             try:
                 addr = ipaddress.ip_address(ip)
