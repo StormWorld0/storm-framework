@@ -35,7 +35,7 @@ func handleRecv(ctx *ExecutionContext) packet.ResponsePacket {
     if ctx.RawFD != -1 {
 		flag := ParseFlags(ctx.Req.Flags)
 		fd := ctx.RawFD
-		buffer, n, bufPtr, err := ExecuteFDRead(fd, ctx.Req.ReadSize, ctx.Timeout, flag)
+		buffer, n, _, bufPtr, err := ExecuteRecvFrom(fd, ctx.Req.ReadSize, ctx.Timeout, flag)
 	    defer ReleaseBuffer(bufPtr)
 
 		if err != nil {
