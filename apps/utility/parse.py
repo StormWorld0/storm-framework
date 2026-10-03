@@ -1,6 +1,6 @@
 import ipaddress
 
-from lib.roar.crs import Socket
+from lib.roar.crs.net_api import Socket
 from urllib.parse import urlparse
 
 
