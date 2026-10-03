@@ -13,20 +13,56 @@ import (
 
 
 func handleSend(ctx *ExecutionContext) packet.ResponsePacket {
+	if ctx.RawFD != -1 {
+		flag := ParseFlags(ctx.Req.Flags)
+		fd := ctx.RawFD
+		if err := ExecuteFDWrite(fd, ctx.Req.Data, ctx.Timeout, flag); err != nil {
+			return packet.ResponsePacket{Status: "ERROR", Message: "Write failed: " + err.Error()}
+		}
+		ctx.SaveSession(ctx.RawFD)
+		return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(fd, 0)}
+    }
+	
 	if err := ExecuteWrite(ctx.Conn, ctx.Req.Data, ctx.Timeout); err != nil {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Write failed: " + err.Error()}
 	}
-
 	ctx.SaveSession(ctx.Conn)
-
-	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadata(0)}
+    return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadata(0)}	
 }
 
 
 func handleRecv(ctx *ExecutionContext) packet.ResponsePacket {
+    if ctx.RawFD != -1 {
+		flag := ParseFlags(ctx.Req.Flags)
+		fd := ctx.RawFD
+		buffer, n, bufPtr, err := ExecuteFDRead(fd, ctx.Req.ReadSize, ctx.Timeout, flag)
+	    defer ReleaseBuffer(bufPtr)
+
+		if err != nil {
+		    // Tangani error timeout dari kernel (EAGAIN / EWOULDBLOCK)
+		    if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
+			    return packet.ResponsePacket{
+				    Status:  "TIMEOUT",
+				    Message: "Read failed: " + err.Error(),
+				    Data:    ctx.GenerateMetadataFD(fd, 0),
+			    } 
+		    }
+		}
+		
+	    ctx.SaveSession(fd)
+	    meta := ctx.GenerateMetadataFD(fd, n)
+	    meta["raw_bytes"] = base64.StdEncoding.EncodeToString(buffer[:n])
+	    meta["hex_bytes"] = hex.EncodeToString(buffer[:n])
+		
+	    if n == 0 || err == io.EOF {
+		    return packet.ResponsePacket{Status: "WARN", Message: "EOF Read: " + err.Error()}
+	    }
+    	return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
+	}
+	
 	buffer, n, bufPtr, err := ExecuteRead(ctx.Conn, ctx.Req.ReadSize, ctx.Timeout)
 	defer ReleaseBuffer(bufPtr)
-
+	
 	if err != nil && err != io.EOF {
 		if n == 0 {
 			ctx.SaveSession(ctx.Conn)
@@ -37,17 +73,15 @@ func handleRecv(ctx *ExecutionContext) packet.ResponsePacket {
 			}
 		}
 	}
-
+	
 	ctx.SaveSession(ctx.Conn)
-
 	meta := ctx.GenerateMetadata(n)
 	meta["raw_bytes"] = base64.StdEncoding.EncodeToString(buffer[:n])
 	meta["hex_bytes"] = hex.EncodeToString(buffer[:n])
-
+	
 	if err == io.EOF {
 		return packet.ResponsePacket{Status: "WARN", Message: "EOF Read: " + err.Error()}
 	}
-
 	return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
 }
 
