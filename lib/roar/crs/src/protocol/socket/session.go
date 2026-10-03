@@ -74,12 +74,12 @@ func (ctx *ExecutionContext) SaveSession(val interface{}) {
 
 func (ctx *ExecutionContext) CloseSession() packet.ResponsePacket {
 	if ctx.Req.SessionID != "" && ctx.Req.CloseSess {
-		if _, ok := utils.ActiveSessions.LoadAndDelete(ctx.Req.SessionID); ok {
-			if ctx.Conn != nil {
-				ctx.Conn.Close()
-			}
-			if ctx.RawFD != -1 {
-				unix.Close(ctx.RawFD)
+		if val, ok := utils.ActiveSessions.LoadAndDelete(ctx.Req.SessionID); ok {
+			switch v := val.(type) {
+			case net.Conn:
+				v.Close() // Tutup jika tipe data net.Conn
+			case int:
+				unix.Close(v) // Tutup jika tipe data raw FD
 			}
 			return packet.ResponsePacket{Status: "SUCCESS", Message: "Session closed"}
 		}
