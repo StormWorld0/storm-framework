@@ -31,8 +31,5 @@ def check_update():
             smf.printf(f"{CC.GREEN}[!] Latest Version  => v{latest_version}")
             smf.printf(f"{CC.GREEN}[-] Type => storm update")
             smf.printf()
-
-    except http.HTrace:
-        pass
     except Exception:
         pass
