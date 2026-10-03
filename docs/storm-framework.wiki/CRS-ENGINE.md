@@ -60,11 +60,12 @@ sequenceDiagram
 
 **Modules:** Just need to call the required **API** and send the data to **CRS**. The module does not need to know or implement any connection or communication mechanisms with the **CRS**.
 
-**Wrapper:** Tasked with compiling `data` received from `module` before forwarding it to **IPC**. The wrapper also handles the response `data` received from **IPC**, then transforms it into a form that is easier for the `module` to use.
+**API:** Tasked with compiling `data` received from `module` before forwarding it to **IPC**. The wrapper also handles the response `data` received from **IPC**, then transforms it into a form that is easier for the `module` to use.
 
 **IPC:**  Responsible for managing communications between **Storm** and **CRS**. Upon receiving the first request, **IPC** will start the **CRS** process as a `daemon` if it is not already running. Next `data` is sent to **CRS** via `stdin`, while the response is received by listening to `stdout`.
 
-**CRS:** Runs in a separate process from **Storm** and continues to listen to `stdin` as long as the process is active. When the **Storm** process is terminated, `stdin` will be closed so that **CRS** will detect this condition and terminate itself automatically.
+**CRS:** It will read the data from `stdin` and perform certain execution then it will return the response to `stdout`. 
+**CRS** Runs in a separate process from **Storm** and continues to listen to `stdin` as long as the process is active. When the **Storm** process is stopped, **Storm** send signal-15 to PID right **CRS** running, until a certain time if **CRS** is still active then **Storm** sends this signal-9 just before it exits completely.
 
 ---
 
