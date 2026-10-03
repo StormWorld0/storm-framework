@@ -3,4 +3,4 @@ from .protocol import (
     HTTPClient as HTTPR,
     DNSResolver as DNSL,
     Socket,
-) # noqa
+)  # noqa
