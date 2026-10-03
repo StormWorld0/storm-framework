@@ -14,11 +14,8 @@ from rootmap import ROOT
 def check_update():
     # Url to github data json
     url = "https://raw.githubusercontent.com/StormWorld0/storm-framework/main/data/data.json"
-    http = HTTPR()
     try:
-        http.timeout(0.8)
-        http.get(url)
-        resp = http.run()
+        resp = HTTPR().timeout(0.8).concurrency(50).get(url).run()
         latest_version = resp.json()["version"]
 
         # Get local json data
