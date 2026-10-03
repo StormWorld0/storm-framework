@@ -27,7 +27,7 @@ class SocketState:
         value: int = 1,
         flag: str | int = 0,
         backlog: int = 0,
-        timeout: float = 10.0,
+        timeout: float = 5.0,
         readsize: int = 0,
         ratelimit: int = 0,
         sessid: str = "",
