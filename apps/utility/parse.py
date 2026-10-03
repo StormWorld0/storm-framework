@@ -45,7 +45,7 @@ def domain_to_ip(domain):
             "ipv4": sorted(ipv4),
             "ipv6": sorted(ipv6),
         }
-    except sock.STrace:
+    except Exception:
         return {
             "ipv4": [],
             "ipv6": [],
