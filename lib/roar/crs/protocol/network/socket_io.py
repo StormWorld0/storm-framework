@@ -10,6 +10,7 @@ class SocketIO:
     def send(
         self,
         data: str | bytes,
+        flag: str | int = None,
         timeout: float = None,
         **kwargs,
     ) -> SocketResponse:
@@ -18,6 +19,7 @@ class SocketIO:
         packet = IPCPayloadBuilder.build(
             state=self,
             data=data,
+            flag=flag,
             timeout=timeout,
             infotls=False,
             mode="send",
@@ -32,6 +34,7 @@ class SocketIO:
     def recv(
         self,
         readsize: int = None,
+        flag: str | int = None,
         timeout: float = None,
         **kwargs,
     ) -> SocketResponse:
@@ -40,6 +43,7 @@ class SocketIO:
         packet = IPCPayloadBuilder.build(
             state=self,
             readsize=readsize,
+            flag=flag,
             timeout=timeout,
             infotls=False,
             mode="recv",
