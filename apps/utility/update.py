@@ -1,13 +1,11 @@
 import subprocess
-from lib.roar.crs.net_api import HTTPR
+from lib.roar.crs import HTTPR
 
 
 def run_update():
     url = "https://raw.githubusercontent.com/StormWorld0/storm-framework/main/data/data.json"
     try:
-        http = HTTPR()
-        http.get(url)
-        resp = http.run()
+        resp = HTTPR().get(url).run()
         latest_version = resp.json()["version"]
     except Exception as e:
         print(f"ERROR VERSION UPDATE => {e}")
