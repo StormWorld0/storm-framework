@@ -90,35 +90,6 @@ func ExecuteRead(conn net.Conn, readSize int, timeout time.Duration) ([]byte, in
 	return buffer, n, bufPtr, err
 }
 
-func ExecuteFDRead(fd int, bufferSize int, timeout time.Duration, flags int) ([]byte, int, *[]byte, error) {
-	if bufferSize <= 0 {
-		bufferSize = 4096
-	}
-
-	if timeout > 0 {
-		tv := unix.NsecToTimeval(timeout.Nanoseconds())
-		unix.SetsockoptTimeval(fd, unix.SOL_SOCKET, unix.SO_RCVTIMEO, &tv)
-
-		defer func() {
-			zeroTv := unix.Timeval{Sec: 0, Usec: 0}
-		    unix.SetsockoptTimeval(fd, unix.SOL_SOCKET, unix.SO_RCVTIMEO, &zeroTv)
-		}()
-	}
-
-	var buffer []byte
-	var bufPtr *[]byte
-
-	if bufferSize == 4096 {
-		bufPtr = bufferPool.Get().(*[]byte)
-		buffer = *bufPtr
-	} else {
-		buffer = make([]byte, bufferSize)
-	}
-	
-	n, err := unix.Recv(fd, buf, flags)
-	return buffer, n, bufPtr, err
-}
-
 
 func ExecuteSendTo(fd int, data string, sa unix.Sockaddr, timeout time.Duration, flag int) error {
 	if data == "" {
@@ -160,8 +131,7 @@ func ExecuteRecvFrom(fd int, readSize int, timeout time.Duration, flag int) ([]b
 	} else {
 		buffer = make([]byte, readSize)
 	}
-
-	// Terapkan Timeout hanya jika > 0 untuk menghindari reset RCVTIMEO yang tidak perlu
+	
 	if timeout > 0 {
 		tv := unix.NsecToTimeval(timeout.Nanoseconds())
 		unix.SetsockoptTimeval(fd, unix.SOL_SOCKET, unix.SO_RCVTIMEO, &tv)
@@ -172,7 +142,6 @@ func ExecuteRecvFrom(fd int, readSize int, timeout time.Duration, flag int) ([]b
 		}()
 	}
 
-	// Eksekusi syscall membaca dari Raw Socket / UDP
 	n, sa, err := unix.Recvfrom(fd, buffer, flag)
 	return buffer, n, sa, bufPtr, err
 }
