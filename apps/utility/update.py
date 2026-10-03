@@ -1,5 +1,5 @@
 import subprocess
-from lib.roar.crs import HTTPR
+from lib.roar.crs.net_api import HTTPR
 
 
 def run_update():
