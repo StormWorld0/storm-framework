@@ -1,6 +1,7 @@
-from urllib.parse import urlparse
-import socket
 import ipaddress
+
+from lib.roar.crs import Socket
+from urllib.parse import urlparse
 
 
 def parse_url(url):
@@ -23,13 +24,14 @@ def parse_url(url):
 
 def domain_to_ip(domain):
     """Returning IPV4 and IPV6"""
+    sock = Socket()
     try:
-        results = socket.getaddrinfo(domain, None, proto=socket.IPPROTO_TCP)
+        resp = sock.getaddrinfo(domain, None, proto=sock.IPPROTO_TCP)
 
         ipv4 = set()
         ipv6 = set()
 
-        for result in results:
+        for result in resp.addrinfo:
             ip = result[4][0]
             try:
                 addr = ipaddress.ip_address(ip)
@@ -44,7 +46,7 @@ def domain_to_ip(domain):
             "ipv4": sorted(ipv4),
             "ipv6": sorted(ipv6),
         }
-    except socket.gaierror:
+    except sock.STrace:
         return {
             "ipv4": [],
             "ipv6": [],
