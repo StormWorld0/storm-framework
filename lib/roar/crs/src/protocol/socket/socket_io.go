@@ -39,7 +39,8 @@ func handleRecv(ctx *ExecutionContext) packet.ResponsePacket {
 	    defer ReleaseBuffer(bufPtr)
 
 		if err != nil {
-		    // Tangani error timeout dari kernel (EAGAIN / EWOULDBLOCK)
+			ctx.SaveSession(fd)
+		    // Error timeout (EAGAIN / EWOULDBLOCK)
 		    if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
 			    return packet.ResponsePacket{
 				    Status:  "TIMEOUT",
@@ -47,15 +48,15 @@ func handleRecv(ctx *ExecutionContext) packet.ResponsePacket {
 				    Data:    ctx.GenerateMetadataFD(fd, 0),
 			    } 
 		    }
+			return packet.ResponsePacket{Status: "ERROR", Message: err.Error()}
 		}
-		
-	    ctx.SaveSession(fd)
+		ctx.SaveSession(fd)
 	    meta := ctx.GenerateMetadataFD(fd, n)
 	    meta["raw_bytes"] = base64.StdEncoding.EncodeToString(buffer[:n])
 	    meta["hex_bytes"] = hex.EncodeToString(buffer[:n])
-		
-	    if n == 0 || err == io.EOF {
-		    return packet.ResponsePacket{Status: "WARN", Message: "EOF Read: " + err.Error()}
+
+		if n == 0 {
+		    return packet.ResponsePacket{Status: "ERROR", Message: "EOF Read: " + err.Error()}
 	    }
     	return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
 	}
@@ -68,19 +69,18 @@ func handleRecv(ctx *ExecutionContext) packet.ResponsePacket {
 			ctx.SaveSession(ctx.Conn)
 			return packet.ResponsePacket{
 				Status:  "TIMEOUT",
-				Message: "Read failed: " + err.Error(),
+				Message: "Recv failed: " + err.Error(),
 				Data:    ctx.GenerateMetadata(0),
 			}
 		}
 	}
-	
 	ctx.SaveSession(ctx.Conn)
 	meta := ctx.GenerateMetadata(n)
 	meta["raw_bytes"] = base64.StdEncoding.EncodeToString(buffer[:n])
 	meta["hex_bytes"] = hex.EncodeToString(buffer[:n])
-	
+
 	if err == io.EOF {
-		return packet.ResponsePacket{Status: "WARN", Message: "EOF Read: " + err.Error()}
+		return packet.ResponsePacket{Status: "ERROR", Message: "EOF Read: " + err.Error()}
 	}
 	return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
 }
@@ -130,7 +130,7 @@ func handleRecvFrom(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Recvfrom failed: " + err.Error()}
 	}
 	
-	if n == 0 || err == unix.EAGAIN || err == unix.EWOULDBLOCK {
+	if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
 		ctx.SaveSession(ctx.RawFD)
 		return packet.ResponsePacket{
 			Status:  "TIMEOUT",
@@ -154,8 +154,8 @@ func handleRecvFrom(ctx *ExecutionContext) packet.ResponsePacket {
 
 	sender := net.JoinHostPort(senderIP, strconv.Itoa(senderPort))
 
-	if err == io.EOF {
-		return packet.ResponsePacket{Status: "WARN", Message: "EOF Read: " + err.Error()}
+	if n == 0 {
+		return packet.ResponsePacket{Status: "ERROR", Message: "EOF Read: " + err.Error()}
 	}
 
 	return packet.ResponsePacket{
