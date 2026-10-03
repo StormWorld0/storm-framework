@@ -6,4 +6,4 @@ from .protocol import (
     domwhois as DWhois,
     Socket,
     TelnetClient as Telnet,
-) # noqa
+)  # noqa
