@@ -67,7 +67,7 @@ func ExecuteStandard(req packet.RequestPacket, timeout time.Duration) packet.Res
 	if err != nil {
 		var netErr net.Error
 		if errors.As(err, &netErr) && netErr.Timeout() {
-			return BuildErrorResponse("TIMEOUT", "rawhttp", "Execution failed: "+err.Error())
+			return BuildErrorResponse("TIMEOUT", "retryablehttp", "Execution failed: "+err.Error())
 		}
 		return BuildErrorResponse("ERROR", "retryablehttp", "Execution failed: "+err.Error())
 	}
