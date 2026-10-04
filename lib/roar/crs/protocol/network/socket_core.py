@@ -136,7 +136,7 @@ class SocketCore:
         return response
 
     def close(
-        self, 
+        self,
         **kwargs,
     ) -> SocketResponse:
         """Disconnecting"""
