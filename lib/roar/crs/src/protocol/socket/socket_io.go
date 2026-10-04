@@ -183,7 +183,7 @@ func handleRecvFrom(ctx *ExecutionContext) packet.ResponsePacket {
 		    "is_reused":    ctx.IsReused,
 		    "rtt_ms":       time.Since(ctx.StartTime).Milliseconds(),
 		    "Cheked":       "RawSocket",
-		    "read_bytes":   readBytes,
+		    "read_bytes":   n,
 		},
 	}
 }
