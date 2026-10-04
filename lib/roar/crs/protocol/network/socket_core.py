@@ -117,7 +117,6 @@ class SocketCore:
         self,
         host: str,
         port: str | int = None,
-        timeout: float = None,
         **kwargs,
     ) -> SocketResponse:
         """Creating a TCP Stream connection"""
@@ -126,7 +125,6 @@ class SocketCore:
             state=self,
             host=host,
             port=port,
-            timeout=timeout,
             mode="create",
             infotls=False,
             close_session=False,
@@ -137,7 +135,10 @@ class SocketCore:
         response._trace()
         return response
 
-    def close(self) -> SocketResponse:
+    def close(
+        self, 
+        **kwargs,
+    ) -> SocketResponse:
         """Disconnecting"""
         if self._is_closed:
             return SocketResponse(
