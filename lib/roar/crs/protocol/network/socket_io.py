@@ -11,7 +11,6 @@ class SocketIO:
         self,
         data: str | bytes,
         flag: str | int = None,
-        timeout: float = None,
         **kwargs,
     ) -> SocketResponse:
         """Sending data"""
@@ -20,7 +19,6 @@ class SocketIO:
             state=self,
             data=data,
             flag=flag,
-            timeout=timeout,
             infotls=False,
             mode="send",
             close_session=False,
@@ -35,7 +33,6 @@ class SocketIO:
         self,
         readsize: int = None,
         flag: str | int = None,
-        timeout: float = None,
         **kwargs,
     ) -> SocketResponse:
         """Taking Buffer"""
@@ -44,7 +41,6 @@ class SocketIO:
             state=self,
             readsize=readsize,
             flag=flag,
-            timeout=timeout,
             infotls=False,
             mode="recv",
             close_session=False,
@@ -61,7 +57,6 @@ class SocketIO:
         host: str,
         port: str | int = None,
         flag: str | int = None,
-        timeout: float = None,
         **kwargs,
     ) -> SocketResponse:
         """Send datagram along with Host & Port"""
@@ -72,7 +67,6 @@ class SocketIO:
             host=host,
             port=port,
             flag=flag,
-            timeout=timeout,
             infotls=False,
             mode="sendto",
             close_session=False,
@@ -87,7 +81,6 @@ class SocketIO:
         self,
         readsize: int = None,
         flag: str | int = None,
-        timeout: float = None,
         **kwargs,
     ) -> SocketResponse:
         """Taking Buffer"""
@@ -96,7 +89,6 @@ class SocketIO:
             state=self,
             readsize=readsize,
             flag=flag,
-            timeout=timeout,
             infotls=False,
             mode="recvfrom",
             close_session=False,
