@@ -39,7 +39,7 @@ func (ctx *ExecutionContext) GenerateMetadataFD(fd int, readBytes int) map[strin
 	meta := map[string]interface{}{
 		"is_reused":    ctx.IsReused,
 		"rtt_ms":       time.Since(ctx.StartTime).Milliseconds(),
-		"Cheked":       "RawFileDescriptor",
+		"Cheked":       "RawSocket",
 		"read_bytes":   readBytes,
 	}
 
