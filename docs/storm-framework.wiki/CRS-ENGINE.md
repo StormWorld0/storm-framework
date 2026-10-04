@@ -99,12 +99,11 @@ resp = sock.socket(addrf, stype, proto)
 
 **2. Connect to Socket**
 ```python
-resp = sock.connect(host, port, timeout)
+resp = sock.connect(host, port)
 ```
 **Parameter**
 - **host:** This can be IP:Port / Hostname.
 - **port:** This is a typical Port.
-- **timeout:** To limit the open connection time.
 
 **Response**
 - **status:** SUCCESS/WARN/ERROR/TIMEOUT.
@@ -121,11 +120,13 @@ resp = sock.connect(host, port, timeout)
 
 **3. Send Data**
 ```python
-resp = sock.send(data, timeout)
+resp = sock.send(data, flag)
 ```
+**Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
+
 **Parameter**
 - **data:** Can be bytes / http request / payload etc.
-- **timeout:** To limit the open connection time.
+- **flag:** (Optional) | Default 0
 
 **Response**
 - **status:** SUCCESS/WARN/ERROR/TIMEOUT.
@@ -138,7 +139,7 @@ resp = sock.send(data, timeout)
 - **status_tls:** Returns a Boolean. If True=TLS is enabled. False=TLS is disabled.
 
 ```python
-resp = sock.sendto(data, host, port, flag, timeout)
+resp = sock.sendto(data, host, port, flag)
 ```
 **Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
 
@@ -147,7 +148,6 @@ resp = sock.sendto(data, host, port, flag, timeout)
 - **host:** This can be IP:Port / Hostname.
 - **port:** This is a typical Port.
 - **flag:** MSG_* such as: `sock.MSG_OOB`, `sock.MSG_MORE`, etc. | str & int | Default 0.
-- **timeout:** To limit the open connection time.
 
 **Response**
 - **status:** SUCCESS/WARN/ERROR/TIMEOUT.
@@ -160,11 +160,13 @@ resp = sock.sendto(data, host, port, flag, timeout)
 
 **4. Viewing the buffer**
 ```python
-raw = sock.recv(readsize, timeout)
+raw = sock.recv(readsize, flag)
 ```
+**Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
+
 **Parameter**
 - **readsize:** To determine how many bytes of buffer to take.
-- **timeout:** To limit the open connection time.
+- **flag:** (Optional) | Default 0
 
 **Response**
 - **status:** SUCCESS/WARN/ERROR/TIMEOUT.
@@ -183,14 +185,13 @@ raw = sock.recv(readsize, timeout)
 - **status_tls:** Returns a Boolean. If True=TLS is active. False=TLS is disabled.
 
 ```python
-raw = sock.recvfrom(readsize, flag, timeout)
+raw = sock.recvfrom(readsize, flag)
 ```
 **Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
 
 **Parameter**
 - **readsize:** To determine how many bytes of buffer to take.
 - **flag:** MSG_* such as: `sock.MSG_OOB`, `sock.MSG_MORE`, etc. | str & int | Default 0.
-- **timeout:** To limit the open connection time.
 
 **Response**
 - **status:** SUCCESS/WARN/ERROR/TIMEOUT.
@@ -315,14 +316,14 @@ resp = sock.accept()
 ```python
 sock.timeout(value)
 ```
-**Description:** The timeout function is created to set a default timeout for all functions that are executed after it, so that there is no need to implement timeouts repeatedly in each function.
+**Description:** The timeout function is created to set a default timeout for all functions executed after it, eliminating the need to apply timeouts repeatedly in each function.
 
 **Value:** In this parameter, the input must be in the form of a float such as: 1.0, 10.5, etc.
 
 
 **11. Creating Connection**
 ```python
-resp = sock.create_connection(host, port, timeout)
+resp = sock.create_connection(host, port)
 ```
 **Description:** This function is used to immediately open a connection quickly without having to perform socket() and connect() literacy because this is done automatically by the binary CRS. This makes it faster and requires less code. Send, receive, and uptls still require manual processing afterward.
 
@@ -332,7 +333,27 @@ resp = sock.create_connection(host, port, timeout)
 - **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
 
 
-**12. Closing the connection**
+**12. Get Address Information**
+```python
+resp = sock.getaddrinfo(host, port, addrf, stype, sproto, flag)
+```
+**Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
+
+**Parameter**
+- **addrf:** Address Family such as: `sock.AF_INET`, `sock.AF_INET6`, etc.
+- **stype:** Sock Type like: `sock.SOCK_STREAM`, `sock.SOCK_DGRAM`, etc.
+- **sproto:** Protocols such as: `sock.IPPROTO_IP`, etc. | Default 0 = Determined by Kernel UNIX
+- **flag:** MSG_* such as: `sock.MSG_OOB`, `sock.MSG_MORE`, etc. | Default 0.
+
+**Response**
+- **status:** SUCCESS/WARN/ERROR/TIMEOUT.
+- **message:** Messages adjust to status.
+
+- **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
+- **addrinfo:** Converts 'results' data from getaddrinfo to a standard tuple list.
+
+
+**13. Closing the connection**
 ```python
 resp = sock.close()
 ```
@@ -343,7 +364,7 @@ resp = sock.close()
 - **message:** Messages adjust to status.
 
 
-**13. Exception Socket**
+**14. Exception Socket**
 ```python
 try:
     ...
@@ -542,6 +563,8 @@ res, var = r.read(expected, timeout, raw)
 
 **1. Socket**
 
+- **Description:** This socket implementation adheres to POSIX standards. While some functions may be implemented differently or bear different names, the core logic remains the same; furthermore, certain features or functions may be missing either because we intentionally chose not to implement them or simply because they have not yet been implemented.
+
 - **Status:** `Stateful`
 - **Inheritance**
 ```python
@@ -551,18 +574,20 @@ sock = net.Socket()
 sock.socket(addrf, stype, proto)
 
 # Open connection to Socket
-sock.connect(host, port, timeout)
+sock.connect(host, port)
 
 # Send Data
-sock.send(data, timeout)
+sock.send(data, flag)
+sock.sendto(data, host, port, flag)
 
 # Buffer Fetching
-sock.recv(readsize, timeout)
+sock.recv(readsize, flag)
+sock.recvfrom(readsize, flag)
 
 # TLS Upgrade has legacy
 sock.uptls(cert, key, ca, verify)
 
-# Automatically be on a TLS encrypted connection
+# Automatically be on a TLS encrypted connection. Except: sendto and recvfrom.
 sock.send()
 sock.recv()
 
@@ -573,12 +598,24 @@ sock.close()
 sock.timeout(value)
 
 # Create a tcp stream connection
-sock.create_connection(host, port, timeout)
+sock.create_connection(host, port)
 
 # socket argument function
 sock.AF_*
 sock.SOCK_*
 sock.IPPROTO_*
+```
+```python
+# Simple call to getaddrinfo
+resp = net.Socket().getaddrinfo(...)
+
+# Explicit
+sock = net.Socket()
+resp = sock.getaddrinfo(...)
+
+# The response from getaddrinfo returns a tuple with 5 elements
+# that is: [0]family, [1]socktype, [2]protocol, [3]canonname, [4]sockaddr
+for x in resp: # or (for x in resp.addrinfo:)
 ```
 
 - **Response**
