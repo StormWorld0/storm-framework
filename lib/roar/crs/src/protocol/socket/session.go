@@ -23,7 +23,7 @@ type ExecutionContext struct {
 }
 
 func NewExecutionContext(req packet.RequestPacket) *ExecutionContext {
-	timeout := 5 * time.Second
+	timeout := 0 * time.Second
 	if req.Timeout > 0 {
 		timeout = time.Duration(req.Timeout * float64(time.Second))
 	}
