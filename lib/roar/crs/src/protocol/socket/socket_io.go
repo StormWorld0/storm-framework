@@ -173,9 +173,17 @@ func handleRecvFrom(ctx *ExecutionContext) packet.ResponsePacket {
 	if n == 0 {
 		return packet.ResponsePacket{Status: "ERROR", Message: "EOF Recvfrom: " + err.Error()}
 	}
-	meta := ctx.GenerateMetadataFD(fd, n)
-	meta["raw_bytes"] = base64.StdEncoding.EncodeToString(buffer[:n])
-	meta["hex_bytes"] = hex.EncodeToString(buffer[:n])
 
-	return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
+	return packet.ResponsePacket{
+		Status: "SUCCESS", 
+		Data: map[string]interface{}{
+			"raw_bytes":    base64.StdEncoding.EncodeToString(buffer[:n]),
+			"hex_bytes":    hex.EncodeToString(buffer[:n]),
+		    "remote_ip":    sender,
+		    "is_reused":    ctx.IsReused,
+		    "rtt_ms":       time.Since(ctx.StartTime).Milliseconds(),
+		    "Cheked":       "RawSocket",
+		    "read_bytes":   readBytes,
+		},
+	}
 }
