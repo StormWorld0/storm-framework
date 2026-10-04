@@ -17,14 +17,23 @@ func handleSend(ctx *ExecutionContext) packet.ResponsePacket {
 		flag := ParseFlags(ctx.Req.Flags)
 		fd := ctx.RawFD
 		if err := ExecuteFDWrite(fd, ctx.Req.Data, ctx.Timeout, flag); err != nil {
-			return packet.ResponsePacket{Status: "ERROR", Message: "Write failed: " + err.Error()}
+			ctx.SaveSession(fd)
+		    // Error timeout (EAGAIN / EWOULDBLOCK)
+		    if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
+			    return packet.ResponsePacket{
+				    Status:  "TIMEOUT",
+				    Message: "Send failed: " + err.Error(),
+				    Data:    ctx.GenerateMetadataFD(fd, 0),
+			    } 
+		    }
+			return packet.ResponsePacket{Status: "ERROR", Message: "Send failed: " + err.Error()}
 		}
 		ctx.SaveSession(ctx.RawFD)
 		return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(fd, 0)}
     }
 	
 	if err := ExecuteWrite(ctx.Conn, ctx.Req.Data, ctx.Timeout); err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: "Write failed: " + err.Error()}
+		return packet.ResponsePacket{Status: "ERROR", Message: "Send failed: " + err.Error()}
 	}
 	ctx.SaveSession(ctx.Conn)
     return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadata(0)}	
@@ -44,11 +53,11 @@ func handleRecv(ctx *ExecutionContext) packet.ResponsePacket {
 		    if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
 			    return packet.ResponsePacket{
 				    Status:  "TIMEOUT",
-				    Message: "Read failed: " + err.Error(),
+				    Message: "Recv failed: " + err.Error(),
 				    Data:    ctx.GenerateMetadataFD(fd, 0),
 			    } 
 		    }
-			return packet.ResponsePacket{Status: "ERROR", Message: err.Error()}
+			return packet.ResponsePacket{Status: "ERROR", Message: "Recv failed: " + err.Error()}
 		}
 		ctx.SaveSession(fd)
 	    meta := ctx.GenerateMetadataFD(fd, n)
@@ -56,7 +65,7 @@ func handleRecv(ctx *ExecutionContext) packet.ResponsePacket {
 	    meta["hex_bytes"] = hex.EncodeToString(buffer[:n])
 
 		if n == 0 {
-		    return packet.ResponsePacket{Status: "ERROR", Message: "EOF Read: " + err.Error()}
+		    return packet.ResponsePacket{Status: "ERROR", Message: "EOF Recv: " + err.Error()}
 	    }
     	return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
 	}
@@ -80,7 +89,7 @@ func handleRecv(ctx *ExecutionContext) packet.ResponsePacket {
 	meta["hex_bytes"] = hex.EncodeToString(buffer[:n])
 
 	if err == io.EOF {
-		return packet.ResponsePacket{Status: "ERROR", Message: "EOF Read: " + err.Error()}
+		return packet.ResponsePacket{Status: "ERROR", Message: "EOF Recv: " + err.Error()}
 	}
 	return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
 }
@@ -94,24 +103,29 @@ func handleSendTo(ctx *ExecutionContext) packet.ResponsePacket {
 	// Resolve target IP dan Port
 	sockAddr, err := resolveSockAddr(ctx.Req)
 	if err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: err.Error()}
+		return packet.ResponsePacket{Status: "ERROR", Message: "ResolveSockAddr: " + err.Error()}
 	}
 
 	flag := ParseFlags(ctx.Req.Flags)
+	fd := ctx.RawFD
 	
 	// Eksekusi menggunakan helper
-	if err := ExecuteSendTo(ctx.RawFD, ctx.Req.Data, sockAddr, ctx.Timeout, flag); err != nil {
+	if err := ExecuteSendTo(fd, ctx.Req.Data, sockAddr, ctx.Timeout, flag); err != nil {
+		ctx.SaveSession(fd)
+		// Error timeout (EAGAIN / EWOULDBLOCK)
+		if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
+			return packet.ResponsePacket{
+				Status:  "TIMEOUT",
+				Message: "Sendto failed: " + err.Error(),
+				Data:    ctx.GenerateMetadataFD(fd, 0),
+			} 
+		}
 		return packet.ResponsePacket{Status: "ERROR", Message: "Sendto failed: " + err.Error()}
 	}
-
 	ctx.SaveSession(ctx.RawFD)
-
 	return packet.ResponsePacket{
 		Status: "SUCCESS", 
-		Data: map[string]interface{}{
-			"is_reused":    ctx.IsReused,
-			"rtt_ms":       time.Since(ctx.StartTime).Milliseconds(),
-		},
+		Data: ctx.GenerateMetadataFD(fd, 0),
 	}
 }
 
@@ -122,8 +136,9 @@ func handleRecvFrom(ctx *ExecutionContext) packet.ResponsePacket {
 	}
 
 	flag := ParseFlags(ctx.Req.Flags)
-
-	buffer, n, sa, bufPtr, err := ExecuteRecvFrom(ctx.RawFD, int(ctx.Req.ReadSize), ctx.Timeout, flag)
+    fd := ctx.RawFD
+	
+	buffer, n, sa, bufPtr, err := ExecuteRecvFrom(fd, int(ctx.Req.ReadSize), ctx.Timeout, flag)
 	defer ReleaseBuffer(bufPtr)
 	
 	if err != nil && err != unix.EAGAIN && err != unix.EWOULDBLOCK {
@@ -131,10 +146,11 @@ func handleRecvFrom(ctx *ExecutionContext) packet.ResponsePacket {
 	}
 	
 	if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
-		ctx.SaveSession(ctx.RawFD)
+		ctx.SaveSession(fd)
 		return packet.ResponsePacket{
 			Status:  "TIMEOUT",
 			Message: "Recvfrom Failed: " + err.Error(),
+			Data:    ctx.GenerateMetadataFD(fd, 0),
 		}
 	}
 
@@ -155,18 +171,11 @@ func handleRecvFrom(ctx *ExecutionContext) packet.ResponsePacket {
 	sender := net.JoinHostPort(senderIP, strconv.Itoa(senderPort))
 
 	if n == 0 {
-		return packet.ResponsePacket{Status: "ERROR", Message: "EOF Read: " + err.Error()}
+		return packet.ResponsePacket{Status: "ERROR", Message: "EOF Recvfrom: " + err.Error()}
 	}
+	meta := ctx.GenerateMetadataFD(fd, n)
+	meta["raw_bytes"] = base64.StdEncoding.EncodeToString(buffer[:n])
+	meta["hex_bytes"] = hex.EncodeToString(buffer[:n])
 
-	return packet.ResponsePacket{
-		Status: "SUCCESS", 
-		Data: map[string]interface{}{
-			"is_reused":    ctx.IsReused,
-			"rtt_ms":       time.Since(ctx.StartTime).Milliseconds(),
-			"remote_ip":    sender,
-			"raw_bytes":    base64.StdEncoding.EncodeToString(buffer[:n]),
-			"hex_bytes":    hex.EncodeToString(buffer[:n]),
-			"read_bytes":   n,
-		},
-	}
+	return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
 }
