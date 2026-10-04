@@ -33,9 +33,11 @@ func ExecuteWrite(conn net.Conn, data string, timeout time.Duration) error {
 	if err != nil {
 		return fmt.Errorf("base64 decode failed: %w", err)
 	}
-	
-	conn.SetWriteDeadline(time.Now().Add(timeout))
-	defer conn.SetWriteDeadline(time.Time{})
+
+	if timeout > 0 {
+	    conn.SetWriteDeadline(time.Now().Add(timeout))
+	    defer conn.SetWriteDeadline(time.Time{})
+	}
 	
 	_, err = conn.Write(dataDec)
 	return err
@@ -82,10 +84,12 @@ func ExecuteRead(conn net.Conn, readSize int, timeout time.Duration) ([]byte, in
 	} else {
 		buffer = make([]byte, readSize)
 	}
-	
-	conn.SetReadDeadline(time.Now().Add(timeout))
-	defer conn.SetReadDeadline(time.Time{})
 
+	if timeout > 0 {
+	    conn.SetReadDeadline(time.Now().Add(timeout))
+	    defer conn.SetReadDeadline(time.Time{})
+    }
+	
 	n, err := conn.Read(buffer)
 	return buffer, n, bufPtr, err
 }
