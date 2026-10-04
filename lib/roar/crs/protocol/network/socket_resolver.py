@@ -16,7 +16,7 @@ class SocketResolver:
         sproto: str | int = None,
         flag: str | int = None,
     ) -> SocketResponse:
-        """"""
+        """Dapatkan informasi alamat"""
         self._ensure_open("getaddrinfo")
         packet = IPCPayloadBuilder.build(
             state=self,
