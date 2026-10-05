@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -e
 
 # --- CONFIGURATION ---
 TOOL_NAME="storm"
@@ -30,7 +29,7 @@ case "${OS}" in
 esac
 
 # --- INSTALL LIBRARY ---
-sudo apt-get install -y bash jq docker.io
+sudo apt-get install -y jq docker.io
 
 # --- PULL DOCKER IMAGE ---
 docker pull "$DOCKER_IMAGE"
