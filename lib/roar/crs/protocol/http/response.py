@@ -38,7 +38,7 @@ class HTTPResponse:
 
     @property
     def ok(self) -> bool:
-        """Shorthand validasi HTTP: Transport sukses dan Status Code 2xx / 3xx."""
+        """Mengembalikan True jika response berhasil."""
         return self.status.upper() == "SUCCESS"
 
     @property
