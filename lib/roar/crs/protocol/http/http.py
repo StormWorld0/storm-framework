@@ -35,7 +35,7 @@ class HTTPClient(HTTPState, HTTPMethod):
                 setattr(self, f"_{k}", v)
 
         if retry is not None:
-            if not isinstance(retry, int) or isinstance(retry, bool):
+            if not isinstance(retry, int):
                 raise TypeError(
                     f"Option 'retry' must be an integer, got {type(retry).__name__}"
                 )
@@ -44,15 +44,15 @@ class HTTPClient(HTTPState, HTTPMethod):
             self._retry = retry
 
         if ca is not None:
-            if not isinstance(ca, str) or isinstance(ca, bool):
+            if not isinstance(ca, str):
                 raise TypeError(f"Option 'ca' must be string, got {type(ca).__name__}")
             self._TLSCA = ca
-
+            
         return self
 
     def concurrency(self, con: int, **kwargs):
         """Storing Concurrency values (Strict Int & Bounds)"""
-        if not isinstance(con, int) or isinstance(con, bool):
+        if not isinstance(con, int):
             raise TypeError(f"Concurrency must be an integer, got {type(con).__name__}")
 
         if con <= 0:
@@ -66,7 +66,7 @@ class HTTPClient(HTTPState, HTTPMethod):
         limits = {"ratelimit": ratelimit, "fixed_ratelimit": frate}
         for k, v in limits.items():
             if v is not None:
-                if not isinstance(v, int) or isinstance(v, bool):
+                if not isinstance(v, int):
                     raise TypeError(
                         f"Limit '{k}' must be an integer, got {type(v).__name__}"
                     )
@@ -78,7 +78,7 @@ class HTTPClient(HTTPState, HTTPMethod):
 
     def timeout(self, value: float, **kwargs):
         """Timeout value settings (Coerces int to float safely)"""
-        if isinstance(value, bool) or not isinstance(value, float):
+        if not isinstance(value, int) or not isinstance(value, float):
             raise TypeError(f"Timeout must be a float or int, got {type(value).__name__}")
 
         v = float(value)
