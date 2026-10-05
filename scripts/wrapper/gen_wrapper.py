@@ -3,7 +3,7 @@ import os
 import sys
 import ssl
 
-
+from pathlib import Path
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
@@ -42,7 +42,9 @@ def Termux():
 # Update wrapper Linux
 def Linux():
     url = "https://raw.githubusercontent.com/StormWorld0/storm-framework/main/scripts/wrapper/linux/storm"
-    path = os.path.join(os.sep, "usr", "local", "bin", "storm")
+    sudo_user = os.environ.get("SUDO_USER")
+    home_dir = Path(os.path.expanduser(f"~{sudo_user}")) if sudo_user else Path.home()
+    path = str(home_dir / ".local" / "bin" / "storm")
     if not path:
         sys.exit(1)
 
@@ -71,7 +73,9 @@ def Linux():
 # Update wrapper Venv
 def Venv():
     url = "https://raw.githubusercontent.com/StormWorld0/storm-framework/main/scripts/wrapper/venv/storm"
-    path = os.path.join(os.sep, "usr", "local", "bin", "storm")
+    sudo_user = os.environ.get("SUDO_USER")
+    home_dir = Path(os.path.expanduser(f"~{sudo_user}")) if sudo_user else Path.home()
+    path = str(home_dir / ".local" / "bin" / "storm")
     if not path:
         sys.exit(1)
 
