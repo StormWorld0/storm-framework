@@ -5,19 +5,18 @@ set -euo pipefail
 APP_HOME="/opt/storm-framework"
 DOCKER_NAME="stormworld0/storm-framework:latest"
 
-# Interception of Copy CA Certificate Command
-if [ "$1" = "-c" ] && [ "$2" = "--crt" ] && [ $# -eq 2 ]; then
+# Check argument length (Short-circuit logic)
+if [ $# -ge 2 ] && [ "${1:-}" = "-c" ] && [ "${2:-}" = "--crt" ]; then
 
-    # Safe $HOME path resolution for Linux & macOS
-    if [ -n "$SUDO_USER" ]; then
+    # Bypass unbound variables in SUDO_USER if not declared
+    if [ -n "${SUDO_USER:-}" ]; then
         TARGET_HOME=$(eval echo "~$SUDO_USER")
     else
         TARGET_HOME="$HOME"
     fi
 
     if docker run --rm -v storm_data:"$APP_HOME/data" "$DOCKER_NAME" cat "$APP_HOME/data/smf_ca.crt" > "$TARGET_HOME/smf_ca.crt" 2>/dev/null; then
-        if [ -n "$SUDO_USER" ]; then
-            # Hapus argumen group, cukup gunakan user agar OS menyesuaikan (Linux: user, macOS: staff)
+        if [ -n "${SUDO_USER:-}" ]; then
             chown "$SUDO_USER" "$TARGET_HOME/smf_ca.crt"
         fi
         echo -e "[*] Certificate successfully copied to: $TARGET_HOME/smf_ca.crt"
@@ -28,31 +27,31 @@ if [ "$1" = "-c" ] && [ "$2" = "--crt" ] && [ $# -eq 2 ]; then
     fi
 fi
 
-# TTY detection for interactive stdin allocation
-if [ -t 1 ]; then
+# TTY DETECTION
+if [ -t 0 ] && [ -t 1 ]; then
     TTY_FLAG="-it"
 else
     TTY_FLAG=""
 fi
 
-# Privilege escalation detection (sudo)
-PRIV_FLAGS=""
+# PRIVILEGE DETECTION (ARRAY BASED)
+PRIV_FLAGS=()
 if [ "$EUID" -eq 0 ]; then
-    PRIV_FLAGS="--cap-add=NET_ADMIN --cap-add=NET_RAW --cap-add=SYS_ADMIN"
+    PRIV_FLAGS=("--cap-add=NET_ADMIN" "--cap-add=NET_RAW" "--cap-add=SYS_ADMIN")
 fi
 
-# Parsing Main Arguments
+# PARSING ARGUMEN (BASH ARRAY)
 if [ $# -eq 0 ]; then
-    CMD_ARGS="./smfstart"
+    CMD_ARGS=("./smfstart")
 else
-    CMD_ARGS="$@"
+    CMD_ARGS=("$@")
 fi
 
-# Docker Execution (CA Persistence returned)
+# Eksekusi Docker (Ekspansi Array)
 exec docker run $TTY_FLAG --init --rm \
     --network host \
-    $PRIV_FLAGS \
+    "${PRIV_FLAGS[@]:-}" \
     -v storm_data:"$APP_HOME/data" \
     -v "$PWD:/workspace" \
     -w /workspace \
-    "$DOCKER_NAME" $CMD_ARGS
+    "$DOCKER_NAME" "${CMD_ARGS[@]}"
