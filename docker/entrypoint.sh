@@ -44,12 +44,19 @@ if [ ! -f config/smf_ca.key ] || [ ! -f config/smf_ca.crt ]; then
     openssl genrsa -out smf_ca.key 2048 >/dev/null 2>&1
     chmod 600 smf_ca.key
 
-    # Redirect stderr ke /dev/null untuk mematikan log subject & issuer
+    # Redirect stderr to /dev/null to disable subject & issuer logging
     openssl req -x509 -new -nodes -key smf_ca.key -sha256 -days 3650 -out smf_ca.crt \
         -subj "/CN=Storm Trusted Root CA/O=StormWorld0/OU=Network-Security-Storm" \
         -extensions v3_ca -config openssl-ca.conf >/dev/null 2>&1
 
     cd "$APP_ROOT"
+fi
+
+# --- DYNAMIC CAPABILITY DETECTION ---
+# Using capsh to read the Bounding Set of the current container
+if command -v capsh >/dev/null && capsh --print | grep -q "cap_net_raw"; then
+    setcap cap_net_raw,cap_net_admin=eip /usr/local/bin/python3.13
+    setcap cap_net_raw,cap_net_bind_service=eip /usr/bin/nmap
 fi
 
 exec "$@"
