@@ -218,8 +218,8 @@ class HTTPResponse:
         return None
 
     def __bool__(self):
-        """Shorthand: if r.ok: ... (True jika request HTTP bernilai OK/Sukses)."""
+        """Membuka syntax: if r.ok:"""
         return self.ok
 
     def __repr__(self):
-        return f"<HTTPTLSMetadata Version={self.version} Cipher={self.cipher} Host={self.hostname}>"
+        return f"<HTTPTLSMetadata Version={self.tls.version} Cipher={self.tls.cipher} Host={self.tls.hostname}>"
