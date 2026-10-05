@@ -31,10 +31,10 @@ write_to_file() {
 XDG_SHARE_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 XDG_BIN_HOME="$HOME/.local/bin"
 
-BIN_DIR="XDG_BIN_HOME"
+BIN_DIR="$XDG_BIN_HOME"
 SHEBANG_PATH="#!/usr/bin/env bash"
 PYTHON_CMD="python3"
-INSTALL_DIR="XDG_SHARE_HOME/$REPO_NAME"
+INSTALL_DIR="$XDG_SHARE_HOME/$REPO_NAME"
 
 # Create a folder if it doesn't exist
 mkdir -p "$INSTALL_DIR" "$BIN_DIR"
