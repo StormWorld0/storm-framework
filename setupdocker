@@ -36,6 +36,10 @@ docker pull "$DOCKER_IMAGE"
 XDG_BIN_HOME="$HOME/.local/bin"
 TARGET_PATH="$XDG_BIN_HOME/$TOOL_NAME"
 
+# Create a folder if it doesn't exist
+mkdir -p "$XDG_BIN_HOME"
+
+# Download wrapper
 curl -sL "$WRAPPER_URL" -o "$TARGET_PATH"
 chmod +x "$TARGET_PATH"
 
