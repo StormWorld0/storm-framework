@@ -29,6 +29,9 @@ case "${OS}" in
         ;;
 esac
 
+# --- INSTALL LIBRARY ---
+apt-get install -y curl sudo bash jq docker.io
+
 # --- PULL DOCKER IMAGE ---
 docker pull "$DOCKER_IMAGE"
 
