@@ -78,7 +78,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /var/lib/dpkg/status-old \
+    && rm -rf "${APP_HOME}/docs" \
     && rm -rf "${APP_HOME}/external/source/dep" \
+    && rm -rf "${APP_HOME}/lib/smf/core/sf/cache" \
     && mkdir -p /go/bin /go/pkg /go/src
 
 # Copy the build wheels results
@@ -99,10 +101,6 @@ RUN echo "smf" > ${APP_HOME}/.docker
 # which has been copied to ${APP_HOME} from the builder.
 RUN chmod +x ${APP_HOME}/docker/entrypoint.sh \
     && ln -s ${APP_HOME}/docker/entrypoint.sh /usr/local/bin/entrypoint.sh
-
-# To perform packet sniffing (libpcap) without full root privileges.
-RUN setcap cap_net_raw,cap_net_admin=eip /usr/local/bin/python3.13 && \
-    setcap cap_net_raw,cap_net_bind_service=eip /usr/bin/nmap
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["./smfstart"]
