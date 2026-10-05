@@ -40,8 +40,8 @@ INSTALL_DIR="$XDG_SHARE_HOME/$REPO_NAME"
 mkdir -p "$INSTALL_DIR" "$BIN_DIR"
 
 # Update and install the required libraries
-apt update
-apt install -y --no-install-recommends \
+sudo apt-get update
+sudo apt-get install -y --no-install-recommends \
 curl jq python3-full python3-venv python3-pip git \
 golang build-essential cmake libpcap-dev clang \
 ffmpeg openssl pkg-config libssl-dev
