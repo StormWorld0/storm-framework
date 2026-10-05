@@ -20,12 +20,13 @@ jobs:
 
     container:
       image: ${{ matrix.os }}
+      # Tetap privileged untuk akses Dind (Docker in Docker) socket
       options: --privileged -v /var/run/docker.sock:/var/run/docker.sock
 
     steps:          
-      - name: Prepare Environment
+      - name: Prepare Root Environment & Dependencies
         env:
-          DEBIAN_FRONTEND:
+          DEBIAN_FRONTEND: noninteractive
         run: |
           rm -rf /var/lib/apt/lists/*
           apt-get clean
@@ -54,24 +55,38 @@ jobs:
             apt-get update -y
           fi
           
+          apt-get install -y curl sudo bash jq ${ { matrix.setup_type == 'docker' && 'docker.io' || '' } }
+
+      - name: Configure Unprivileged Test User (Privilege Drop)
+        run: |
+          # Buat standard user 'stormdev' untuk memvalidasi user-space script
+          useradd -m -s /bin/bash stormdev
+          
+          # Berikan akses sudo tanpa password (simulasi environment user lokal)
+          usermod -aG sudo stormdev
+          echo "stormdev ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+          
+          # Dynamic Docker GID Mapping
+          # Jika setup docker, user butuh akses ke /var/run/docker.sock dari host
           if [ "${{ matrix.setup_type }}" = "docker" ]; then
-            apt-get install -y curl sudo bash jq docker.io
-          else
-            apt-get install -y curl sudo bash jq
+            DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)
+            groupadd -g $DOCKER_GID docker_host || true
+            usermod -aG docker_host stormdev
           fi
 
       - name: Checkout Code
         uses: actions/checkout@v4
         
+      - name: Fix Workspace Permissions
+        run: |
+          # Git checkout dilakukan oleh root, kita harus serahkan ownership ke test user
+          # Mencegah error "fatal: detected dubious ownership in repository"
+          chown -R stormdev:stormdev $GITHUB_WORKSPACE
+
       - name: Execute Storm Installation (${{ matrix.setup_type }})
         shell: bash
-        env:
-          HOME: /root
         run: |
-          if [ "${{ matrix.setup_type }}" == "linux" ]; then
-            bash ./setuplinux
-          elif [ "${{ matrix.setup_type }}" == "venv" ]; then
-            bash ./setupvenv
-          elif [ "${{ matrix.setup_type }}" == "docker" ]; then
-            bash ./setupdocker
-          fi
+          # Eksekusi skrip menggunakan 'su' untuk transisi dari root ke user biasa.
+          # Logika if/elif diganti dengan string interpolation yang lebih efisien (DRY).
+          su - stormdev -c "cd $GITHUB_WORKSPACE && bash ./setup${{ matrix.setup_type }}"
+          
