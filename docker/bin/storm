@@ -50,7 +50,7 @@ fi
 # Eksekusi Docker (Ekspansi Array)
 exec docker run $TTY_FLAG --init --rm \
     --network host \
-    "${PRIV_FLAGS[@]:-}" \
+    "${PRIV_FLAGS[@]}" \
     -v storm_data:"$APP_HOME/data" \
     -v "$PWD:/workspace" \
     -w /workspace \
