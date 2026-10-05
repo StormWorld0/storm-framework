@@ -222,4 +222,4 @@ class HTTPResponse:
         return self.ok
 
     def __repr__(self):
-        return f"<HTTPTLSMetadata Version={self.tls.version} Cipher={self.tls.cipher} Host={self.tls.hostname}>"
+        return f"<HTTPResponse Status={self.status} Code={self.status_code} Engine={self.engine}>"
