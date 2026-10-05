@@ -7,59 +7,33 @@ This installation follows the standard recommended by Python. Since Storm is Pyt
 ### 1. Repository Clone & Automated Installation
 
 This URL will run the installation automatically, including creating Venv and so on, you just have to wait for it to finish.
-
 ```bash
-curl -fsSL https://raw.githubusercontent.com/StormWorld0/storm-framework/main/setupvenv | sudo bash
+curl -fsSL https://raw.githubusercontent.com/StormWorld0/storm-framework/main/setupvenv | bash
 ```
 
 ### 2. Execute Command
 
-This is the command to run Storm.
-
+This is the command to run Storm. Run with `sudo` if you need an underground connection.
 ```bash
-sudo storm
+storm
 ```
 
 ### 3. External Update Command
 
 Allows updates outside the Storm interface without having to startup.
-
 ```bash
-sudo storm --update
+storm --update
 ```
 
-### 4. Copy Storm Trusted Root CA
-
-This Root CA can be copied from internal to `$HOME` and is usually used when you want to run a module `https_proxy`, the command is as below:
-
-```bash
-sudo storm -c --crt
-```
-
-After finishing copying CA to `$HOME` use the following command to insert into the trust store certificate:
-
-```bash
-sudo cp smf_ca.crt /usr/local/share/ca-certificates/smf_ca.crt
-```
-
-Then confirm with the command:
-
-```bash
-sudo update-ca-certificates
-```
-
-You can also install Storm Trust Root CA to Firefox Browser and so on.
-
-### 5. Help
+### 4. Help
 
 Use this argument to display all valid arguments.
-
 ```bash
-sudo storm -h
+storm -h
 ```
 or
 ```bash
-sudo storm --help
+storm --help
 ```
 
 ---
@@ -75,9 +49,7 @@ To ensure the compiler script recognizes the Rust Toolchain, you need to modify 
 ```bash
 Defaults secure_path=
 ```
-
 And change it to something like this;
-
 ```bash
 Defaults secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 ```
