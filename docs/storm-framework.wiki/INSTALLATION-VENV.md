@@ -54,6 +54,6 @@ And change it to something like this;
 Defaults secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 ```
 
-After that you can call the command `sudo storm --update` to update the storm-framework and recompile anything that was not compiled during the initial installation. If it still fails I suggest running **setupdocker** which should be more stable in a bad environment like this.
+After that you can call the command `storm --update` to update the storm-framework and recompile anything that was not compiled during the initial installation. If it still fails I suggest running **setupdocker** which should be more stable in a bad environment like this.
 
 If you feel that everything has been done but the same error still appears during the compilation process, you can open **Issue** by explaining everything in detail, we will be happy to help😁.
