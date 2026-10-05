@@ -9,15 +9,15 @@ We provide a dedicated installation method for Docker to accommodate users who p
 This is a special URL for Storm installation and creating Docker Containers and so on automatically.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/StormWorld0/storm-framework/main/setupdocker | sudo bash
+curl -fsSL https://raw.githubusercontent.com/StormWorld0/storm-framework/main/setupdocker | bash
 ```
 
 ### 2. Execute Commands
 
-This is the command to run Storm after the installation is complete.
-
+This is the command to run Storm after the installation is complete.  
+Run with `sudo` if you need an underground connection.
 ```bash
-sudo storm
+storm
 ```
 
 ---
@@ -41,19 +41,3 @@ storm
 ```
 
 ---
-
-## 📝 Performing CA Copy
-
-To copy **smf_ca.crt** on Linux / MacOS / Windows. Use the command below.
-
-### Linux / MacOS / Windows
-
-Just adjust it to the OS you are using, for **Windows** use **PowerShell** to run the command, if you can't activate the Administrator.
-
-```bash
-storm -cp -crt
-```
-or
-```bash
-sudo storm -cp -crt
-```
