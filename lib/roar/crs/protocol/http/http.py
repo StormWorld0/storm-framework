@@ -47,7 +47,7 @@ class HTTPClient(HTTPState, HTTPMethod):
             if not isinstance(ca, str):
                 raise TypeError(f"Option 'ca' must be string, got {type(ca).__name__}")
             self._TLSCA = ca
-            
+
         return self
 
     def concurrency(self, con: int, **kwargs):
