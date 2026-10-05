@@ -55,7 +55,11 @@ jobs:
             apt-get update -y
           fi
           
-          apt-get install -y curl sudo bash jq ${ { matrix.setup_type == 'docker' && 'docker.io' || '' } }
+          if [ "${{ matrix.setup_type }}" = "docker" ]; then
+            apt-get install -y curl sudo bash jq docker.io
+          else
+            apt-get install -y curl sudo bash jq
+          fi
 
       - name: Configure Unprivileged Test User (Privilege Drop)
         run: |
