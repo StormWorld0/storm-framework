@@ -7,6 +7,28 @@ from ...transport import CRS
 class SocketIO:
     """Daftar semua socket IO"""
 
+    def sendall(
+        self,
+        data: str | bytes,
+        flag: str | int = None,
+        **kwargs,
+    ) -> SocketResponse:
+        """Sending all data"""
+        self._ensure_open("sendall")
+        packet = IPCPayloadBuilder.build(
+            state=self,
+            data=data,
+            flag=flag,
+            infotls=False,
+            mode="sendall",
+            close_session=False,
+        )
+
+        resp = CRS.send(packet)
+        response = SocketResponse(resp)
+        response._trace()
+        return response
+        
     def send(
         self,
         data: str | bytes,
