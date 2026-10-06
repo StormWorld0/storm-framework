@@ -18,14 +18,17 @@ def execute(options, net):
     host = options.get("HOST")
     port = options.get("PORT")
 
-    data = b"""POST /post HTTP/1.1
-    Host: httpbin.org
-    User-Agent: RawFdTester/1.0
-    Content-Type: text/plain
-    Content-Length: 32
-    Connection: close
+    data = (
+        b"POST /post HTTP/1.1\r\n"
+        b"Host: httpbin.org\r\n"
+        b"User-Agent: RawFdTester/1.0\r\n"
+        b"Content-Type: text/plain\r\n"
+        b"Content-Length: 32\r\n"
+        b"Connection: close\r\n"
+        b"\r\n"
+        b"HEX_BYTES_TEST_1234567890_ABCDEF"
+    )
 
-    HEX_BYTES_TEST_1234567890_ABCDEF"""
 
     sock = net.Socket()
     try:
