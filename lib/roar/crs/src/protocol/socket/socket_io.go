@@ -12,6 +12,31 @@ import (
 )
 
 
+func handleSendAll(ctx *ExecutionContext) packet.ResponsePacket {
+	if ctx.RawFD == -1 {
+		return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found for sendall."}
+	}
+
+	flag := ParseFlags(ctx.Req.Flags)
+	fd := ctx.RawFD
+	
+	if err := ExecuteFDWriteAll(fd, ctx.Req.Data, ctx.Timeout, flag); err != nil {
+		ctx.SaveSession(fd)
+		// Error timeout (EAGAIN / EWOULDBLOCK)
+		if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
+			return packet.ResponsePacket{
+				Status:  "TIMEOUT",
+				Message: "SendAll failed: " + err.Error(),
+				Data:    ctx.GenerateMetadataFD(fd, 0),
+			} 
+		}
+		return packet.ResponsePacket{Status: "ERROR", Message: "SendAll failed: " + err.Error()}
+	}
+	ctx.SaveSession(fd)
+	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(fd, 0)}
+}
+
+
 func handleSend(ctx *ExecutionContext) packet.ResponsePacket {
 	if ctx.RawFD != -1 {
 		flag := ParseFlags(ctx.Req.Flags)
@@ -28,7 +53,7 @@ func handleSend(ctx *ExecutionContext) packet.ResponsePacket {
 		    }
 			return packet.ResponsePacket{Status: "ERROR", Message: "Send failed: " + err.Error()}
 		}
-		ctx.SaveSession(ctx.RawFD)
+		ctx.SaveSession(fd)
 		return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(fd, 0)}
     }
 	
@@ -97,7 +122,7 @@ func handleRecv(ctx *ExecutionContext) packet.ResponsePacket {
 
 func handleSendTo(ctx *ExecutionContext) packet.ResponsePacket {
 	if ctx.RawFD == -1 {
-		return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found. Call 'socket' primitive first."}
+		return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found for sendto."}
 	}
 
 	// Resolve target IP dan Port
