@@ -20,6 +20,7 @@ Testing Socket
 }
 REQUIRED_OPTIONS = {"HOST": "", "PORT": ""}
 
+
 def generate_temp_tls_files(target_dir, common_name="localhost"):
     cert_path = os.path.join(target_dir, "temp_server.crt")
     key_path = os.path.join(target_dir, "temp_server.key")
@@ -31,9 +32,11 @@ def generate_temp_tls_files(target_dir, common_name="localhost"):
     )
 
     # 2. Build Certificate
-    subject = issuer = x509.Name([
-        x509.NameAttribute(NameOID.COMMON_NAME, common_name),
-    ])
+    subject = issuer = x509.Name(
+        [
+            x509.NameAttribute(NameOID.COMMON_NAME, common_name),
+        ]
+    )
     now = datetime.now(timezone.utc)
     cert = (
         x509.CertificateBuilder()
@@ -64,7 +67,7 @@ def generate_temp_tls_files(target_dir, common_name="localhost"):
         f.write(cert.public_bytes(serialization.Encoding.PEM))
 
     return cert_path, key_path
-    
+
 
 def execute(options, net):
     host = options.get("HOST")
@@ -85,7 +88,7 @@ def execute(options, net):
         resp = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
         if resp.ok:
             smf.printf("[✓] File Decriptor =>", resp.fileno)
-            
+
         resp = sock.connect(host, port)
         if not resp.ok:
             smf.printf("[!] Failed connect =>", resp.message)
@@ -109,7 +112,7 @@ def execute(options, net):
             if not resp.ok:
                 smf.printf("[!] Failed Send TLS =>", resp.message)
                 return
-            
+
             resp = sock.recv(1024)
             if not resp.ok:
                 smf.printf("[!] Failed Recv TLS =>", resp.message)
@@ -117,4 +120,3 @@ def execute(options, net):
         smf.printf("[*] Error Socket =>", e)
     finally:
         sock.close()
-
