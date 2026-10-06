@@ -1,3 +1,4 @@
+import os
 import smf
 import tempfile
 
