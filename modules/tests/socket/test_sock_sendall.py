@@ -13,6 +13,7 @@ Testing Socket
 }
 REQUIRED_OPTIONS = {"HOST": "", "PORT": ""}
 
+
 def execute(options, net):
     host = options.get("HOST")
     port = options.get("PORT")
@@ -46,4 +47,3 @@ def execute(options, net):
             smf.printf("[✓] Int bytes =>", resp.int_bytes)
     except sock.STrace as e:
         smf.printf("[*] Error Socket =>", e)
-
