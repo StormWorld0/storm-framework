@@ -39,10 +39,12 @@ def execute(options, net):
         resp = sock.connect(host, port)
         if not resp.ok:
             smf.printf("[!] Failed connect =>", resp.message)
+            return
 
         resp = sock.sendall(data)
         if not resp.ok:
             smf.printf("[!] Failed sendall =>", resp.message)
+            return
 
         resp = sock.recv(4096)
         if resp.ok:
