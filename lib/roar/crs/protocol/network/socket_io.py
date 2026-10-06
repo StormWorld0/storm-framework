@@ -28,7 +28,7 @@ class SocketIO:
         response = SocketResponse(resp)
         response._trace()
         return response
-        
+
     def send(
         self,
         data: str | bytes,
