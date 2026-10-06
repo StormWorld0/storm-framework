@@ -167,7 +167,7 @@ func handleConnect(ctx *ExecutionContext) packet.ResponsePacket {
 
 	ctx.SaveSession(ctx.RawFD)
 
-	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadata(0)}
+	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(ctx.RawFD, 0)}
 }
 
 
