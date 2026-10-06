@@ -16,7 +16,7 @@ var handlers = map[string]CommandHandler{
 	"connect":     handleConnect,
 	"create":      handleCreate,
 	"upgrade_tls": handleUpgradeTLS,
-	"sendall"      handleSendAll,
+	"sendall":     handleSendAll,
 	"send":        handleSend,
 	"recv":        handleRecv,
 	"sendto":      handleSendTo,
