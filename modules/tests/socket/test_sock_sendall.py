@@ -29,7 +29,6 @@ def execute(options, net):
         b"HEX_BYTES_TEST_1234567890_ABCDEF"
     )
 
-
     sock = net.Socket()
     try:
         sock.timeout(5.0)
