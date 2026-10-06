@@ -176,21 +176,11 @@ func handleConnect(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Connect timeout expired. Socket aborted."}
 	}
 
-	// Perbaikan Bug: Memakai ctx.RawFD (sebelumnya nFD yang undefined)
 	if err := unix.SetNonblock(ctx.RawFD, true); err != nil {
 		unix.Close(ctx.RawFD)
 		return packet.ResponsePacket{Status: "ERROR", Message: "Failed to set non-blocking: " + err.Error()}
 	}
-
-	file := os.NewFile(uintptr(ctx.RawFD), fmt.Sprintf("socket_connect_%d", ctx.RawFD))
-	rawConn, err := net.FileConn(file)
-	file.Close()
-	if err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: "Failed to wrap net.Conn: " + err.Error()}
-	}
-
-	ctx.Conn = rawConn
-	ctx.SaveSession(ctx.Conn)
+	ctx.SaveSession(ctx.RawFD)
 
 	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadata(0)}
 }
