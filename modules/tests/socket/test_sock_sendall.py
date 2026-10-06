@@ -49,6 +49,7 @@ def execute(options, net):
             smf.printf("[✓] Raw bytes =>", resp.raw_bytes)
             smf.printf("[✓] Hex Bytes =>", resp.hex_bytes)
             smf.printf("[✓] Int bytes =>", resp.int_bytes)
+            smf.printf("[✓] Str bytes =>", resp.str_bytes)
     except sock.STrace as e:
         smf.printf("[*] Error Socket =>", e)
     finally:
