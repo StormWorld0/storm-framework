@@ -30,11 +30,13 @@ def execute(options, net):
     sock = net.Socket()
     try:
         sock.timeout(5.0)
+        resp = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
+        if resp.ok:
+            smf.printf("[✓] File Decriptor =>", resp.fileno)
+            
         resp = sock.connect(host, port)
         if not resp.ok:
             smf.printf("[!] Failed connect =>", resp.message)
-        if resp.ok:
-            smf.printf("[✓] File Decriptor =>", resp.fileno)
 
         resp = sock.sendall(data)
         if not resp.ok:
