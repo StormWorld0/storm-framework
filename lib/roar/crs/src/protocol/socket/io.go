@@ -67,6 +67,46 @@ func ExecuteFDWrite(fd int, data string, timeout time.Duration, flags int) error
 	return err
 }
 
+func ExecuteFDWriteAll(fd int, data string, timeout time.Duration, flags int) error {
+	if data == "" {
+		return nil
+	}
+
+	buf, err := base64.StdEncoding.DecodeString(data)
+	if err != nil {
+		return fmt.Errorf("base64 decode failed: %w", err)
+	}
+
+	if timeout > 0 {
+		tv := unix.NsecToTimeval(timeout.Nanoseconds())
+		unix.SetsockoptTimeval(fd, unix.SOL_SOCKET, unix.SO_SNDTIMEO, &tv)
+
+		defer func() {
+			zeroTv := unix.Timeval{Sec: 0, Usec: 0}
+		    unix.SetsockoptTimeval(fd, unix.SOL_SOCKET, unix.SO_SNDTIMEO, &zeroTv)
+		}()
+	}
+
+	total := 0
+	for total < len(buf) {
+		var p0 unsafe.Pointer
+		if len(buf[total:]) > 0 {
+			p0 = unsafe.Pointer(&buf[total:][0])
+		}
+	    r1, _, e1 := unix.Syscall6(unix.SYS_SENDTO, uintptr(fd), uintptr(p0), 
+								   uintptr(len(buf[total:])), uintptr(flags), 0, 0)
+		if e1 != nil {
+			if e1 == unix.EINTR {
+				continue
+			}
+			return e1
+		}
+		n := int(r1)
+		total += n
+	}
+	return nil
+}
+
 
 
 // ExecuteRead menangani alokasi buffer efisien dan timeout untuk operasi baca.
