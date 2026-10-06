@@ -32,21 +32,18 @@ func performTLSHandshake(ctx context.Context, conn net.Conn, addr string, req pa
 
 
 func handleUpgradeTLS(ctx *ExecutionContext) packet.ResponsePacket {
-	var ctx.Conn net.Conn
-	if ctx.RawFD != -1 {
-		file := os.NewFile(uintptr(ctx.RawFD), fmt.Sprintf("socket_tls_%d", ctx.RawFD))
-	    rawConn, err := net.FileConn(file)
-	    file.Close()
-	    if err != nil {
-		    return packet.ResponsePacket{Status: "ERROR", Message: "Failed to wrap net.Conn: " + err.Error()}
-	    }
-		ctx.Conn = rawConn
-	}
-	
 	if ctls.IsTLSConn(ctx.Conn) {
 		ctx.SaveSession(ctx.Conn)
 		return packet.ResponsePacket{Status: "ERROR", Message: "Connection is already TLS"}
 	}
+	
+	file := os.NewFile(uintptr(ctx.RawFD), fmt.Sprintf("socket_tls_%d", ctx.RawFD))
+	rawConn, err := net.FileConn(file)
+	file.Close()
+	if err != nil {
+		return packet.ResponsePacket{Status: "ERROR", Message: "Failed to wrap net.Conn: " + err.Error()}
+	}
+	ctx.Conn = rawConn
 
 	tCtx, cancel := context.WithTimeout(context.Background(), ctx.Timeout)
 	defer cancel()
