@@ -176,10 +176,6 @@ func handleConnect(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Connect timeout expired. Socket aborted."}
 	}
 
-	if err := unix.SetNonblock(ctx.RawFD, true); err != nil {
-		unix.Close(ctx.RawFD)
-		return packet.ResponsePacket{Status: "ERROR", Message: "Failed to set non-blocking: " + err.Error()}
-	}
 	ctx.SaveSession(ctx.RawFD)
 
 	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadata(0)}
