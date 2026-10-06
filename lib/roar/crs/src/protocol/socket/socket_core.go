@@ -1,7 +1,6 @@
 package socket
 
 import (
-    "os"
     "net"
     "fmt"
     "time"
