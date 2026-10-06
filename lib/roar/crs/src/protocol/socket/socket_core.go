@@ -129,20 +129,10 @@ func handleAccept(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Accept failed: " + err.Error()}
 	}
 
-	if err := unix.SetNonblock(nFD, true); err != nil {
-		unix.Close(nFD)
-		return packet.ResponsePacket{Status: "ERROR", Message: "Failed to set non-blocking on accepted socket: " + err.Error()}
-	}
-
-	file := os.NewFile(uintptr(nFD), fmt.Sprintf("socket_accepted_%d", nFD))
-	rawConn, err := net.FileConn(file)
-	file.Close()
-	if err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: "Failed to wrap accepted net.Conn: " + err.Error()}
-	}
-
-	ctx.Conn = rawConn
-	ctx.SaveSession(ctx.Conn)
+	// TODO(refactor): nFD seharusnya disimpan terpisah dari listener fd.
+    // Saat ini kita menimpa fd lama karena keterbatasan struktur.
+    // Dampak: hanya bisa menangani satu koneksi pada satu waktu.
+	ctx.SaveSession(nFD)
 
 	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadata(0)}
 }
