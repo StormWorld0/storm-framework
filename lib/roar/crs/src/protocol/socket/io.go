@@ -1,12 +1,12 @@
 package socket
 
 import (
-	"encoding/base64"
 	"fmt"
 	"net"
 	"sync"
 	"time"
-
+	"unsafe"
+	"encoding/base64"
 	"golang.org/x/sys/unix"
 )
 
@@ -95,7 +95,7 @@ func ExecuteFDWriteAll(fd int, data string, timeout time.Duration, flags int) er
 		}
 	    r1, _, e1 := unix.Syscall6(unix.SYS_SENDTO, uintptr(fd), uintptr(p0), 
 								   uintptr(len(buf[total:])), uintptr(flags), 0, 0)
-		if e1 != nil {
+		if e1 != 0 {
 			if e1 == unix.EINTR {
 				continue
 			}
