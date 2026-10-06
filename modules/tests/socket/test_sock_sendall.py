@@ -33,7 +33,7 @@ def execute(options, net):
         resp = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
         if resp.ok:
             smf.printf("[✓] File Decriptor =>", resp.fileno)
-            
+
         resp = sock.connect(host, port)
         if not resp.ok:
             smf.printf("[!] Failed connect =>", resp.message)
