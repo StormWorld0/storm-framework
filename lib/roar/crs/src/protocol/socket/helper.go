@@ -10,7 +10,7 @@ import (
 
 // Helper internal untuk resolving host/IP ke unix.Sockaddr (menghindari duplikasi)
 func resolveSockAddr(req packet.RequestPacket) (unix.Sockaddr, error) {
-	addr, port, err := BuildTarget(req)
+	addr, port, err := BuildTarget(req.Host, req.Port)
 	if err != nil {
 		return nil, fmt.Errorf("Build target failed: %w", err)
 	}
