@@ -48,7 +48,7 @@ func handleUpgradeTLS(ctx *ExecutionContext) packet.ResponsePacket {
 	tCtx, cancel := context.WithTimeout(context.Background(), ctx.Timeout)
 	defer cancel()
 
-	addr, port, err := BuildTarget(ctx.Req)
+	addr, port, err := BuildTarget(ctx.Host, ctx.Req.Port)
 	if err != nil {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Failed build host & port: " + err.Error()}
 	}
