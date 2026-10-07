@@ -5,8 +5,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-
-	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 )
 
 func BuildTarget(host string, port *int) (*string, *int, error) {
