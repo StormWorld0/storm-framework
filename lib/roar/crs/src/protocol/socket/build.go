@@ -9,8 +9,8 @@ import (
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 )
 
-func BuildTarget(req packet.RequestPacket) (*string, *int, error) {
-	rawHost := strings.TrimSpace(req.Host)
+func BuildTarget(host string, port *int) (*string, *int, error) {
+	rawHost := strings.TrimSpace(host)
 	if rawHost == "" {
 		return nil, nil, fmt.Errorf("target host cannot be empty")
 	}
@@ -38,9 +38,9 @@ func BuildTarget(req packet.RequestPacket) (*string, *int, error) {
 	}
 
 	var finalPort *int
-	if req.Port != nil {
+	if port != nil {
 		// Priority 1: Ambil dari req.Port
-		finalPort = req.Port
+		finalPort = port
 	} else if u.Port() != "" {
 		// Priority 2: Port dari string URI
 		if p, parseErr := strconv.Atoi(u.Port()); parseErr == nil {
