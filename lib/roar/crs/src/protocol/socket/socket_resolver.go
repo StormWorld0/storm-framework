@@ -80,7 +80,7 @@ func resolveAddrCombination(sockType, protocol int) ([]addrResult, error) {
 
 
 func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
-	addr, port, err := BuildTarget(ctx.Req)
+	addr, port, err := BuildTarget(ctx.Req.Host, ctx.Req.Port)
 	if err != nil {
 		return packet.ResponsePacket{
 			Status:  "ERROR",
