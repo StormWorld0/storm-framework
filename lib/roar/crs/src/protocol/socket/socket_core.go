@@ -165,6 +165,7 @@ func handleConnect(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Connect timeout expired. Socket aborted."}
 	}
 
+	ctx.SaveSessionHost(sockAddr)
 	ctx.SaveSession(ctx.RawFD)
 
 	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(ctx.RawFD, 0)}
