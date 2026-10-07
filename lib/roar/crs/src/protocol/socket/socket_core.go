@@ -145,6 +145,8 @@ func handleConnect(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found for this session. Call 'socket' primitive first."}
 	}
 
+	ctx.SaveSessionHost(ctx.Req.Host)
+
 	sockAddr, err := resolveSockAddr(ctx.Req)
 	if err != nil {
 		return packet.ResponsePacket{Status: "ERROR", Message: err.Error()}
@@ -165,7 +167,6 @@ func handleConnect(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Connect timeout expired. Socket aborted."}
 	}
 
-	ctx.SaveSessionHost(sockAddr)
 	ctx.SaveSession(ctx.RawFD)
 
 	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(ctx.RawFD, 0)}
@@ -173,7 +174,7 @@ func handleConnect(ctx *ExecutionContext) packet.ResponsePacket {
 
 
 func handleCreate(ctx *ExecutionContext) packet.ResponsePacket {
-	addr, port, err := BuildTarget(ctx.Req)
+	addr, port, err := BuildTarget(ctx.Req.Host, ctx.Req.Port)
 	if err != nil {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Build target failed: " + err.Error()}
 	}
