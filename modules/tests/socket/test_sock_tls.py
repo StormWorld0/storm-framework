@@ -75,7 +75,7 @@ def execute(options, net):
     port = options.get("PORT")
 
     data = (
-        f"GET /get HTTP/1.1\r\n"
+        f"POST /post HTTP/1.1\r\n"
         f"Host: {host}\r\n"
         f"User-Agent: Storm-Framework/3.0\r\n"
         f"Connection: close\r\n"
@@ -95,6 +95,10 @@ def execute(options, net):
             smf.printf("[!] Failed connect =>", resp.message)
             return
 
+        smf.printf("[✓] Checked Type =>", resp.checked_type)
+        smf.printf("[✓] Status TLS   =>", resp.status_tls)
+        smf.printf()
+
         with tempfile.TemporaryDirectory() as tmp_dir:
             cert_file, key_file = generate_temp_tls_files(tmp_dir, common_name=host)
 
@@ -107,6 +111,14 @@ def execute(options, net):
             smf.printf("[✓] Version    =>", resp.tls.version)
             smf.printf("[✓] Protocol   =>", resp.tls.protocol)
             smf.printf("[✓] Handshake  =>", resp.tls.handshake)
+            smf.printf("[✓] Hostname   =>", resp.tls.hostname)
+            smf.printf("[✓] Subject    =>", resp.tls.subject)
+            smf.printf("[✓] Issuer     =>", resp.tls.issuer)
+            smf.printf("[✓] DNS Name   =>", resp.tls.dns_name)
+            smf.printf("[✓] Expires    =>", resp.tls.expires)
+            smf.printf("[✓] Cert Chain =>", resp.tls.cert_chain)
+            smf.printf("[✓] Checked Type =>", resp.checked_type)
+            smf.printf("[✓] Status TLS   =>", resp.status_tls)
             smf.printf()
 
             resp = sock.send(data)
@@ -117,6 +129,14 @@ def execute(options, net):
             resp = sock.recv(1024)
             if not resp.ok:
                 smf.printf("[!] Failed Recv TLS =>", resp.message)
+                return
+
+            smf.printf("[✓] Checked Type =>", resp.checked_type)
+            smf.printf("[✓] Status TLS   =>", resp.status_tls)
+            smf.printf("[✓] Raw bytes =>", resp.raw_bytes)
+            smf.printf("[✓] Hex bytes =>", resp.hex_bytes)
+            smf.printf("[✓] Int bytes =>", resp.int_bytes)
+            smf.printf("[✓] Str bytes =>", resp.str_bytes)
     except sock.STrace as e:
         smf.printf("[*] Error Socket =>", e)
     finally:
