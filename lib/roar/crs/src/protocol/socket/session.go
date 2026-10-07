@@ -13,6 +13,7 @@ import (
 
 type ExecutionContext struct {
 	Req         packet.RequestPacket
+	Host        string
 	Mode        string
 	Timeout     time.Duration
 	StartTime   time.Time
@@ -47,6 +48,10 @@ func (ctx *ExecutionContext) LoadSessionState() error {
 		return nil
 	}
 
+	if hostVal, ok := utils.SessionHosts.Load(ctx.Req.SessionID); ok {
+		ctx.Host = hostVal.(string) // Aman karena map ini isinya pasti string
+	}
+
 	val, ok := utils.ActiveSessions.Load(ctx.Req.SessionID)
 	if !ok {
 		return nil
@@ -62,7 +67,15 @@ func (ctx *ExecutionContext) LoadSessionState() error {
 	default:
 		return fmt.Errorf("corrupted session data")
 	}
+	
 	return nil
+}
+
+func (ctx *ExecutionContext) SaveSessionHost(host string) {
+	if ctx.Req.SessionID != "" && ctx.Req.KeepAlive {
+		utils.SessionHosts.Store(ctx.Req.SessionID, host)
+		ctx.Host = host // Update state di context saat ini
+	}
 }
 
 func (ctx *ExecutionContext) SaveSession(val interface{}) {
@@ -74,6 +87,7 @@ func (ctx *ExecutionContext) SaveSession(val interface{}) {
 
 func (ctx *ExecutionContext) CloseSession() packet.ResponsePacket {
 	if ctx.Req.SessionID != "" && ctx.Req.CloseSess {
+		utils.SessionHosts.Delete(ctx.Req.SessionID) // Delete host
 		if val, ok := utils.ActiveSessions.LoadAndDelete(ctx.Req.SessionID); ok {
 			switch v := val.(type) {
 			case net.Conn:
@@ -97,6 +111,7 @@ func (ctx *ExecutionContext) Cleanup() {
 		}
 		if ctx.Req.SessionID != "" {
 			utils.ActiveSessions.Delete(ctx.Req.SessionID)
+			utils.SessionHosts.Delete(ctx.Req.SessionID)
 		}
 	}
 }
