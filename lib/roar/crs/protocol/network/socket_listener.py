@@ -7,7 +7,7 @@ from ...transport import CRS
 class ClientListener:
     """Class Khusus menangani IO/Close Listener"""
     
-    def __init__(self, cfd int = None):
+    def __init__(self, cfd: int = None):
         self._cfd = cfd
 
     def sendall(
