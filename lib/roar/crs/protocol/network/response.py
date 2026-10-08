@@ -158,6 +158,14 @@ class SocketResponse:
             raise SockTrace(sts, self.message)
         return None
 
+    def _client_fd(self):
+        """Mengembalikan ListenerFD"""
+        if not (uds := self._data.get("client_uds")):
+            return -1
+
+        fd = real_fd(uds)
+        return fd
+
     def __iter__(self):
         return iter(self.addrinfo)
 
