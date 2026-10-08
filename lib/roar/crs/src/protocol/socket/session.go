@@ -104,14 +104,17 @@ func (ctx *ExecutionContext) SaveSession(val interface{}) {
 // Close Session Mode Close milik socket
 func (ctx *ExecutionContext) CloseSession() packet.ResponsePacket {
 	if ctx.Req.SessionID != "" && ctx.Req.CloseSess {
-		utils.ClientFD.Delete(ctx.Req.SessionID)     // Delete Client's Descriptor File
 		utils.SessionHosts.Delete(ctx.Req.SessionID) // Delete host
-		
+
+		// Delete Client's Descriptor File
+		if val, ok := utils.ClientFD.LoadAndDelete(ctx.Req.SessionID); ok {
+			unix.Close(val.(int))
+		}
 		if val, ok := utils.ActiveSessions.LoadAndDelete(ctx.Req.SessionID); ok {
 			switch v := val.(type) {
 			case net.Conn:
-				v.Close() // Tutup jika tipe data net.Conn
-			case int:
+				v.Close()     // Tutup jika tipe data net.Conn
+			case int:         //
 				unix.Close(v) // Tutup jika tipe data raw FD
 			}
 			return packet.ResponsePacket{Status: "SUCCESS", Message: "Session closed"}
@@ -125,7 +128,7 @@ func (ctx *ExecutionContext) CloseSession() packet.ResponsePacket {
 func (ctx *ExecutionContext) CloseCFD() packet.ResponsePacket {
 	if ctx.Req.SessionID != "" {
 		if val, ok := utils.ClientFD.LoadAndDelete(ctx.Req.SessionID); ok {
-			unix.Close(val)
+			unix.Close(val.(int))
 			return packet.ResponsePacket{Status: "SUCCESS", Message: "ClienFD closed"}
 		}
 		return packet.ResponsePacket{Status: "WARN", Message: "No active ClientFD found to close"}
