@@ -30,6 +30,7 @@ class SocketState:
         timeout: float = 0.0,
         readsize: int = 0,
         ratelimit: int = 0,
+        cfd: int = -1,
         sessid: str = "",
         keepalive: bool = True,
         mode: str = "open",
@@ -63,6 +64,7 @@ class SocketState:
 
         # Used by listen
         self.backlog = backlog
+        self.cfd = cfd
 
         # CRS session isolation
         self.sessid = sessid if sessid else f"smf_sess_{uuid.uuid4().hex[:12]}"
@@ -120,6 +122,7 @@ class IPCPayloadBuilder:
         readsize: int = None,
         timeout: float = None,
         ratelimit: int = None,
+        cfd: int = None,
         mode: str = None,
         close_session: bool = False,
     ) -> dict:
@@ -152,6 +155,7 @@ class IPCPayloadBuilder:
             "timeout": float(timeout) if timeout is not None else state._timeout,
             "readsize": readsize if readsize is not None else state.readsize,
             "ratelimit": ratelimit if ratelimit is not None else state.ratelimit,
+            "client-fd": cfd if cfd is not None else state.cfd,
             "session_id": state.sessid,
             "keep-alive": state.keepalive,
             "close-session": close_session,
