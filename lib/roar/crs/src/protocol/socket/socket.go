@@ -38,9 +38,14 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 		defer mu.Unlock()
 	}
 
-	// Eksekusi Pembersihan Sesi
+	// Eksekusi Pembersihan Sessions
 	if ctx.Mode == "close" {
 		return ctx.CloseSession()
+	}
+
+	// Eksekusi Pembersihan clienFD
+	if ctx.Mode == "close-cfd" {
+		return ctx.CloseCFD()
 	}
 
 	// Load Active Session Data
