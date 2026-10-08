@@ -115,12 +115,14 @@ func handleAccept(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Accept failed: " + err.Error()}
 	}
 
+	ctx.SaveSessionCFD(nFD)
+
 	name := fmt.Sprintf("@client_fd_%s", ctx.Req.MsgID)
 	udsPath, err := BuildUdsPath(nFD, name)
 	if err != nil {
 		return packet.ResponsePacket{Status: "ERROR", Message: err.Error()}
 	}
-	
+
 	ctx.SaveSession(ctx.RawFD)
 	
 	return packet.ResponsePacket{
