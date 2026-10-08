@@ -5,7 +5,6 @@ import (
     "fmt"
     "time"
     "context"
-	"strings"
     "golang.org/x/sys/unix"
     "github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
     "github.com/StormWorld0/storm-framework/lib/roar/crs/src/utils"
@@ -97,7 +96,7 @@ func handleAccept(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: "No raw listener socket (FD) found."}
 	}
 
-	if timeout > 0 {
+	if ctx.Timeout > 0 {
 	    tv := unix.NsecToTimeval(ctx.Timeout.Nanoseconds())
 	    unix.SetsockoptTimeval(ctx.RawFD, unix.SOL_SOCKET, unix.SO_RCVTIMEO, &tv)
 
