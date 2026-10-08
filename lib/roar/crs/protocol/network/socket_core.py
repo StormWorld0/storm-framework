@@ -1,3 +1,4 @@
+from .socket_listener import ClientListener
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
 
@@ -89,7 +90,11 @@ class SocketCore:
         resp = CRS.send(packet)
         response = SocketResponse(resp)
         response._trace()
-        return response
+        
+        cfd = response._client_fd()
+        if cfd < 0:
+            return None, response
+        return ClientListener(self, cfd), response
 
     def connect(
         self,
