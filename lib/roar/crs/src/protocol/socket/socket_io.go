@@ -13,15 +13,19 @@ import (
 
 
 func handleSendAll(ctx *ExecutionContext) packet.ResponsePacket {
-	if ctx.RawFD == -1 {
+	fd := ctx.RawFD
+	if ctx.Req.CltFD != -1 {
+		fd = ctx.Req.CltFD
+	}
+	
+	if fd == -1 {
 		return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found for sendall."}
 	}
 
 	flag := ParseFlags(ctx.Req.Flags)
-	fd := ctx.RawFD
 	
 	if err := ExecuteFDWriteAll(fd, ctx.Req.Data, ctx.Timeout, flag); err != nil {
-		ctx.SaveSession(fd)
+		ctx.SaveSession(ctx.RawFD)
 		// Error timeout (EAGAIN / EWOULDBLOCK)
 		if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
 			return packet.ResponsePacket{
@@ -32,17 +36,21 @@ func handleSendAll(ctx *ExecutionContext) packet.ResponsePacket {
 		}
 		return packet.ResponsePacket{Status: "ERROR", Message: "SendAll failed: " + err.Error()}
 	}
-	ctx.SaveSession(fd)
+	ctx.SaveSession(ctx.RawFD)
 	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(fd, 0)}
 }
 
 
 func handleSend(ctx *ExecutionContext) packet.ResponsePacket {
-	if ctx.RawFD != -1 {
+	fd := ctx.RawFD
+	if ctx.Req.CltFD != -1 {
+		fd = ctx.Req.CltFD
+	}
+	
+	if fd != -1 {
 		flag := ParseFlags(ctx.Req.Flags)
-		fd := ctx.RawFD
 		if err := ExecuteFDWrite(fd, ctx.Req.Data, ctx.Timeout, flag); err != nil {
-			ctx.SaveSession(fd)
+			ctx.SaveSession(ctx.RawFD)
 		    // Error timeout (EAGAIN / EWOULDBLOCK)
 		    if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
 			    return packet.ResponsePacket{
@@ -53,7 +61,7 @@ func handleSend(ctx *ExecutionContext) packet.ResponsePacket {
 		    }
 			return packet.ResponsePacket{Status: "ERROR", Message: "Send failed: " + err.Error()}
 		}
-		ctx.SaveSession(fd)
+		ctx.SaveSession(ctx.RawFD)
 		return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(fd, 0)}
     }
 	
@@ -66,14 +74,18 @@ func handleSend(ctx *ExecutionContext) packet.ResponsePacket {
 
 
 func handleRecv(ctx *ExecutionContext) packet.ResponsePacket {
-    if ctx.RawFD != -1 {
+	fd := ctx.RawFD
+	if ctx.Req.CltFD != -1 {
+		fd = ctx.Req.CltFD
+	}
+	
+    if fd != -1 {
 		flag := ParseFlags(ctx.Req.Flags)
-		fd := ctx.RawFD
 		buffer, n, _, bufPtr, err := ExecuteRecvFrom(fd, ctx.Req.ReadSize, ctx.Timeout, flag)
 	    defer ReleaseBuffer(bufPtr)
 
 		if err != nil {
-			ctx.SaveSession(fd)
+			ctx.SaveSession(ctx.RawFD)
 		    // Error timeout (EAGAIN / EWOULDBLOCK)
 		    if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
 			    return packet.ResponsePacket{
@@ -84,7 +96,8 @@ func handleRecv(ctx *ExecutionContext) packet.ResponsePacket {
 		    }
 			return packet.ResponsePacket{Status: "ERROR", Message: "Recv failed: " + err.Error()}
 		}
-		ctx.SaveSession(fd)
+		
+		ctx.SaveSession(ctx.RawFD)
 	    meta := ctx.GenerateMetadataFD(fd, n)
 	    meta["raw_bytes"] = base64.StdEncoding.EncodeToString(buffer[:n])
 	    meta["hex_bytes"] = hex.EncodeToString(buffer[:n])
@@ -108,6 +121,7 @@ func handleRecv(ctx *ExecutionContext) packet.ResponsePacket {
 			}
 		}
 	}
+	
 	ctx.SaveSession(ctx.Conn)
 	meta := ctx.GenerateMetadata(n)
 	meta["raw_bytes"] = base64.StdEncoding.EncodeToString(buffer[:n])
@@ -121,7 +135,12 @@ func handleRecv(ctx *ExecutionContext) packet.ResponsePacket {
 
 
 func handleSendTo(ctx *ExecutionContext) packet.ResponsePacket {
-	if ctx.RawFD == -1 {
+	fd := ctx.RawFD
+	if ctx.Req.CltFD != -1 {
+		fd = ctx.Req.CltFD
+	}
+	
+	if fd == -1 {
 		return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found for sendto."}
 	}
 
@@ -132,11 +151,10 @@ func handleSendTo(ctx *ExecutionContext) packet.ResponsePacket {
 	}
 
 	flag := ParseFlags(ctx.Req.Flags)
-	fd := ctx.RawFD
 	
 	// Eksekusi menggunakan helper
 	if err := ExecuteSendTo(fd, ctx.Req.Data, sockAddr, ctx.Timeout, flag); err != nil {
-		ctx.SaveSession(fd)
+		ctx.SaveSession(ctx.RawFD)
 		// Error timeout (EAGAIN / EWOULDBLOCK)
 		if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
 			return packet.ResponsePacket{
@@ -148,6 +166,7 @@ func handleSendTo(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Sendto failed: " + err.Error()}
 	}
 	ctx.SaveSession(ctx.RawFD)
+	
 	return packet.ResponsePacket{
 		Status: "SUCCESS", 
 		Data: ctx.GenerateMetadataFD(fd, 0),
@@ -156,12 +175,16 @@ func handleSendTo(ctx *ExecutionContext) packet.ResponsePacket {
 
 
 func handleRecvFrom(ctx *ExecutionContext) packet.ResponsePacket {
-	if ctx.RawFD == -1 {
+	fd := ctx.RawFD
+	if ctx.Req.CltFD != -1 {
+		fd = ctx.Req.CltFD
+	}
+	
+	if fd == -1 {
 		return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found for recvfrom."}
 	}
 
 	flag := ParseFlags(ctx.Req.Flags)
-    fd := ctx.RawFD
 	
 	buffer, n, sa, bufPtr, err := ExecuteRecvFrom(fd, int(ctx.Req.ReadSize), ctx.Timeout, flag)
 	defer ReleaseBuffer(bufPtr)
@@ -171,7 +194,7 @@ func handleRecvFrom(ctx *ExecutionContext) packet.ResponsePacket {
 	}
 	
 	if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
-		ctx.SaveSession(fd)
+		ctx.SaveSession(ctx.RawFD)
 		return packet.ResponsePacket{
 			Status:  "TIMEOUT",
 			Message: "Recvfrom Failed: " + err.Error(),
