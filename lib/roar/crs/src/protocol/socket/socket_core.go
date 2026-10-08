@@ -134,13 +134,15 @@ func handleAccept(ctx *ExecutionContext) packet.ResponsePacket {
 		}
 		return packet.ResponsePacket{Status: "ERROR", Message: "Accept failed: " + err.Error()}
 	}
-
-	// TODO(refactor): nFD seharusnya disimpan terpisah dari listener fd.
-    // Saat ini kita menimpa fd lama karena keterbatasan struktur.
-    // Dampak: hanya bisa menangani satu koneksi pada satu waktu.
-	ctx.SaveSession(nFD)
-
-	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadata(0)}
+	
+	ctx.SaveSession(ctx.RawFD)
+	
+	return packet.ResponsePacket{
+		Status: "SUCCESS", 
+		Data: map[string]interface{}{
+			"client_fd": nFD,
+		},
+	}
 }
 
 
