@@ -90,7 +90,7 @@ class SocketCore:
         resp = CRS.send(packet)
         response = SocketResponse(resp)
         response._trace()
-        
+
         cfd = response._client_fd()
         if cfd < 0:
             return None, response
