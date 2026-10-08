@@ -117,8 +117,15 @@ func handleAccept(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: "No raw listener socket (FD) found."}
 	}
 
-	tv := unix.NsecToTimeval(ctx.Timeout.Nanoseconds())
-	unix.SetsockoptTimeval(ctx.RawFD, unix.SOL_SOCKET, unix.SO_RCVTIMEO, &tv)
+	if timeout > 0 {
+	    tv := unix.NsecToTimeval(ctx.Timeout.Nanoseconds())
+	    unix.SetsockoptTimeval(ctx.RawFD, unix.SOL_SOCKET, unix.SO_RCVTIMEO, &tv)
+
+		defer func() {
+			zeroTv := unix.Timeval{Sec: 0, Usec: 0}
+		    unix.SetsockoptTimeval(fd, unix.SOL_SOCKET, unix.SO_SNDTIMEO, &zeroTv)
+		}()
+	}
 
 	nFD, _, err := unix.Accept(ctx.RawFD)
 	if err != nil {
