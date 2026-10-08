@@ -14,11 +14,11 @@ import (
 
 func handleSendAll(ctx *ExecutionContext) packet.ResponsePacket {
 	fd := ctx.RawFD
-	if ctx.Req.CltFD != -1 {
+	if ctx.Req.CltFD >= 0 {
 		fd = ctx.Req.CltFD
 	}
 	
-	if fd == -1 {
+	if fd < 0 {
 		return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found for sendall."}
 	}
 
@@ -43,11 +43,11 @@ func handleSendAll(ctx *ExecutionContext) packet.ResponsePacket {
 
 func handleSend(ctx *ExecutionContext) packet.ResponsePacket {
 	fd := ctx.RawFD
-	if ctx.Req.CltFD != -1 {
+	if ctx.Req.CltFD >= 0 {
 		fd = ctx.Req.CltFD
 	}
 	
-	if fd != -1 {
+	if fd < 0 {
 		flag := ParseFlags(ctx.Req.Flags)
 		if err := ExecuteFDWrite(fd, ctx.Req.Data, ctx.Timeout, flag); err != nil {
 			ctx.SaveSession(ctx.RawFD)
@@ -75,11 +75,11 @@ func handleSend(ctx *ExecutionContext) packet.ResponsePacket {
 
 func handleRecv(ctx *ExecutionContext) packet.ResponsePacket {
 	fd := ctx.RawFD
-	if ctx.Req.CltFD != -1 {
+	if ctx.Req.CltFD >= 0 {
 		fd = ctx.Req.CltFD
 	}
 	
-    if fd != -1 {
+    if fd < 0 {
 		flag := ParseFlags(ctx.Req.Flags)
 		buffer, n, _, bufPtr, err := ExecuteRecvFrom(fd, ctx.Req.ReadSize, ctx.Timeout, flag)
 	    defer ReleaseBuffer(bufPtr)
@@ -136,11 +136,11 @@ func handleRecv(ctx *ExecutionContext) packet.ResponsePacket {
 
 func handleSendTo(ctx *ExecutionContext) packet.ResponsePacket {
 	fd := ctx.RawFD
-	if ctx.Req.CltFD != -1 {
+	if ctx.Req.CltFD >= 0 {
 		fd = ctx.Req.CltFD
 	}
 	
-	if fd == -1 {
+	if fd < 0 {
 		return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found for sendto."}
 	}
 
@@ -176,11 +176,11 @@ func handleSendTo(ctx *ExecutionContext) packet.ResponsePacket {
 
 func handleRecvFrom(ctx *ExecutionContext) packet.ResponsePacket {
 	fd := ctx.RawFD
-	if ctx.Req.CltFD != -1 {
+	if ctx.Req.CltFD >= 0 {
 		fd = ctx.Req.CltFD
 	}
 	
-	if fd == -1 {
+	if fd < 0 {
 		return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found for recvfrom."}
 	}
 
