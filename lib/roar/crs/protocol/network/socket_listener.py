@@ -7,7 +7,8 @@ from ...transport import CRS
 class ClientListener:
     """Class Khusus menangani IO/Close Listener"""
 
-    def __init__(self, cfd: int = None):
+    def __init__(self, state, cfd: int = None):
+        self.state = state
         self._cfd = cfd
 
     def sendall(
@@ -17,9 +18,9 @@ class ClientListener:
         **kwargs,
     ) -> SocketResponse:
         """Sending all data"""
-        self._ensure_open("sendall")
+        self.state._ensure_open("sendall")
         packet = IPCPayloadBuilder.build(
-            state=self,
+            state=self.state,
             data=data,
             flag=flag,
             infotls=False,
@@ -40,9 +41,9 @@ class ClientListener:
         **kwargs,
     ) -> SocketResponse:
         """Sending data"""
-        self._ensure_open("send")
+        self.state._ensure_open("send")
         packet = IPCPayloadBuilder.build(
-            state=self,
+            state=self.state,
             data=data,
             flag=flag,
             infotls=False,
@@ -63,9 +64,9 @@ class ClientListener:
         **kwargs,
     ) -> SocketResponse:
         """Taking Buffer"""
-        self._ensure_open("recv")
+        self.state._ensure_open("recv")
         packet = IPCPayloadBuilder.build(
-            state=self,
+            state=self.state,
             readsize=readsize,
             flag=flag,
             infotls=False,
@@ -88,9 +89,9 @@ class ClientListener:
         **kwargs,
     ) -> SocketResponse:
         """Send datagram along with Host & Port"""
-        self._ensure_open("sendto")
+        self.state._ensure_open("sendto")
         packet = IPCPayloadBuilder.build(
-            state=self,
+            state=self.state,
             data=data,
             host=host,
             port=port,
@@ -113,9 +114,9 @@ class ClientListener:
         **kwargs,
     ) -> SocketResponse:
         """Taking Buffer"""
-        self._ensure_open("recvfrom")
+        self.state._ensure_open("recvfrom")
         packet = IPCPayloadBuilder.build(
-            state=self,
+            state=self.state,
             readsize=readsize,
             flag=flag,
             infotls=False,
@@ -140,7 +141,7 @@ class ClientListener:
             )
 
         packet = IPCPayloadBuilder.build(
-            state=self,
+            state=self.state,
             mode="close-cfd",
             close_session=False,
         )
