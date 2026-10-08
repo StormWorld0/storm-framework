@@ -10,6 +10,7 @@ class ClientListener:
     def __init__(self, state, cfd: int = None):
         self.state = state
         self._cfd = cfd
+        self._is_closed_cfd = False
 
     def sendall(
         self,
