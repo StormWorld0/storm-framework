@@ -22,32 +22,12 @@ func handleSocket(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Failed to create socket: " + err.Error()}
 	}
 
-	udsPath := fmt.Sprintf("@storm_fd_%s", ctx.Req.MsgID)
-
-	go func(fdInt int, path string) {
-		realPath := strings.Replace(path, "@", "\x00", 1)
-		addr, _ := net.ResolveUnixAddr("unix", realPath)
-
-		l, err := net.ListenUnix("unix", addr)
-		if err != nil {
-			return
-		}
-		defer l.Close()
-
-		l.SetDeadline(time.Now().Add(3 * time.Second))
-		unxConn, err := l.AcceptUnix()
-		if err != nil {
-			return
-		}
-		defer unxConn.Close()
-
-		rawConn, _ := unxConn.SyscallConn()
-		rawConn.Control(func(sysFd uintptr) {
-			rights := unix.UnixRights(fdInt)
-			unix.Sendmsg(int(sysFd), []byte("F"), rights, nil, 0)
-		})
-	}(fd, udsPath)
-
+	name := fmt.Sprintf("@storm_fd_%s", ctx.Req.MsgID)
+	udsPath, err := BuildUdsPath(fd, name)
+	if err != nil {
+		return packet.ResponsePacket{Status: "ERROR", Message: err.Error()}
+	}
+	
 	ctx.SaveSession(fd)
 
 	return packet.ResponsePacket{
@@ -134,13 +114,19 @@ func handleAccept(ctx *ExecutionContext) packet.ResponsePacket {
 		}
 		return packet.ResponsePacket{Status: "ERROR", Message: "Accept failed: " + err.Error()}
 	}
+
+	name := fmt.Sprintf("@client_fd_%s", ctx.Req.MsgID)
+	udsPath, err := BuildUdsPath(nFD, name)
+	if err != nil {
+		return packet.ResponsePacket{Status: "ERROR", Message: err.Error()}
+	}
 	
 	ctx.SaveSession(ctx.RawFD)
 	
 	return packet.ResponsePacket{
 		Status: "SUCCESS", 
 		Data: map[string]interface{}{
-			"client_fd": nFD,
+			"client_fd": udsPath,
 		},
 	}
 }
