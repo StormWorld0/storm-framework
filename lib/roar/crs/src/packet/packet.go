@@ -27,6 +27,8 @@ type RequestPacket struct {
 	OptVal        int               `json:"opt-value,omitempty"` // Value Integer
 	Flags         any               `json:"flags,omitempty"`     // MSG_OOB, MSG_MORE, ...
 
+	CltFD         int               `json:"client_fd,omitempty"` // Client FD Socket Accept
+
 	// Standard parameters
 	Host          string            `json:"host,omitempty"`      // URL / IP / Domain
 	Ip            string            `json:"ip,omitempty"`        // 127.0.0.1
