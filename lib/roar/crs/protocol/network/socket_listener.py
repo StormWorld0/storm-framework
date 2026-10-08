@@ -6,7 +6,7 @@ from ...transport import CRS
 
 class ClientListener:
     """Class Khusus menangani IO/Close Listener"""
-    
+
     def __init__(self, cfd: int = None):
         self._cfd = cfd
 
@@ -140,11 +140,11 @@ class ClientListener:
             )
 
         packet = IPCPayloadBuilder.build(
-            state=self, 
-            mode="close-cfd", 
+            state=self,
+            mode="close-cfd",
             close_session=False,
         )
-        
+
         resp = CRS.send(packet)
         self._is_closed_cfd = True
 
