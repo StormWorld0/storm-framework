@@ -66,7 +66,9 @@ def execute(options, net):
 
         # Client Simulator: Connect ke Port Ephemeral Server
         clt_sock = net.Socket()
-        clt_sock.socket(clt_sock.AF_INET, clt_sock.SOCK_STREAM)
+        resp = clt_sock.socket(clt_sock.AF_INET, clt_sock.SOCK_STREAM)
+        if resp.ok:
+            smf.printf("[✓] Client File-Decriptor =>", resp.fileno)
         resp = clt_sock.connect(host, port)
 
         if resp.ok:
@@ -89,7 +91,7 @@ def execute(options, net):
 
         smf.printf(
             "[✓] Accepted Client  =>",
-            f"{resp.remote_ip} (Client FD: {resp.fileno})",
+            f"{resp.remote_ip} (Client FD: {resp._client_fd})",
         )
 
         # Echo Verification Test (PING - PONG)
