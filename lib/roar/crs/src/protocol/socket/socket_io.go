@@ -47,7 +47,7 @@ func handleSend(ctx *ExecutionContext) packet.ResponsePacket {
 		fd = ctx.Req.CltFD
 	}
 	
-	if fd < 0 {
+	if fd >= 0 {
 		flag := ParseFlags(ctx.Req.Flags)
 		if err := ExecuteFDWrite(fd, ctx.Req.Data, ctx.Timeout, flag); err != nil {
 			ctx.SaveSession(ctx.RawFD)
@@ -79,7 +79,7 @@ func handleRecv(ctx *ExecutionContext) packet.ResponsePacket {
 		fd = ctx.Req.CltFD
 	}
 	
-    if fd < 0 {
+    if fd >= 0 {
 		flag := ParseFlags(ctx.Req.Flags)
 		buffer, n, _, bufPtr, err := ExecuteRecvFrom(fd, ctx.Req.ReadSize, ctx.Timeout, flag)
 	    defer ReleaseBuffer(bufPtr)
