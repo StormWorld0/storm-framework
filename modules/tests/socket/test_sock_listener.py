@@ -91,7 +91,7 @@ def execute(options, net):
 
         smf.printf(
             "[✓] Accepted Client  =>",
-            f"{resp.remote_ip} (Client FD: {resp._client_fd})",
+            f"{resp.remote_ip} (Client FD: {resp._client_fd()})",
         )
 
         # Echo Verification Test (PING - PONG)
