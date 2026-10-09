@@ -115,4 +115,3 @@ def execute(options, net):
             srv_sock.close()
         if clt_sock is not None:
             clt_sock.close()
-        
