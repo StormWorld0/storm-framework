@@ -80,7 +80,7 @@ func (ctx *ExecutionContext) LoadSessionState() error {
 // Menyimpan ClienFD yang di ambil dari accept lintener
 func (ctx *ExecutionContext) SaveSessionCFD(val int) {
 	if ctx.Req.SessionID != "" && ctx.Req.KeepAlive {
-		utils.SessionHosts.Store(ctx.Req.SessionID, val)
+		utils.ClientFD.Store(ctx.Req.SessionID, val)
 		ctx.CFD = val // Update state di context
 	}
 }
