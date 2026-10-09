@@ -65,7 +65,7 @@ def execute(options, net):
 
         # Client Simulator: Connect ke Port Ephemeral Server
         clt_sock = net.Socket()
-        clt_sock.socket(clt_sock.AF_INET, clt_ock.SOCK_STREAM)
+        clt_sock.socket(clt_sock.AF_INET, clt_sock.SOCK_STREAM)
         resp = clt_sock.connect(host, port)
 
         if resp.ok:
