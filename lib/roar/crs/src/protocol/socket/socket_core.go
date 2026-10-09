@@ -153,12 +153,17 @@ func handleConnect(ctx *ExecutionContext) packet.ResponsePacket {
 		errChan <- unix.Connect(ctx.RawFD, sockAddr)
 	}()
 
+	var timeoutChan <-chan time.Time
+	if ctx.Timeout > 0 {
+		timeoutChan = time.After(ctx.Timeout)
+	}
+
 	select {
 	case err := <-errChan:
 		if err != nil {
 			return packet.ResponsePacket{Status: "ERROR", Message: "OS Connect failed: " + err.Error()}
 		}
-	case <-time.After(ctx.Timeout):
+	case <-timeoutChan:
 		unix.Close(ctx.RawFD)
 		return packet.ResponsePacket{Status: "ERROR", Message: "Connect timeout expired. Socket aborted."}
 	}
