@@ -152,7 +152,7 @@ class CRS:
 
         msg_id = uuid.uuid4().hex
         data["msg_id"] = msg_id
-        req_timeout = float(data.get("timeout", 5.0)) + 1.0
+        timeout = float(data.get("timeout", 5.0))
         event = threading.Event()
 
         with cls._dict_lock:
@@ -171,24 +171,35 @@ class CRS:
                 pid.reap_zombie()
                 return {"status": "ERROR", "message": f"Failed to write IPC: {write_err}"}
 
+            if timeout == 0.0:
+                req_timeout = None
+            else:
+                req_timeout = timeout + 1.0
+                
             wait_interval = 0.5  # Check pulse (0.5 seconds)
             elapsed = 0.0
 
-            while elapsed < req_timeout:
-                if event.wait(timeout=wait_interval):
-                    break  # Event set by Reader (Success or Initial Cleanup)
-
-                # If wait() is longer than 0.5s, check if the reader is still alive/acknowledged the process.
-                if cls._process is not proc or proc.poll() is not None:
-                    return {
-                        "status": "ERROR",
-                        "message": "Engine crashed while waiting for response",
-                    }
-
-                elapsed += wait_interval
+            if req_timeout is None:
+                while cls._process and cls._process.poll() is None:
+                    if event.wait(timeout=wait_interval):
+                        break
+                else:
+                    return {"status": "ERROR", "message": "Engine crashed while waiting for infinite response"}
             else:
-                # Loop completes without break => Timeout
-                return {"status": "ERROR", "message": f"IPC Timeout ({req_timeout:.1f}s)"}
+                while elapsed < req_timeout:
+                    if event.wait(timeout=wait_interval):
+                        break  # Event set by Reader (Success or Initial Cleanup)
+
+                    # If wait() is longer than 0.5s, check if the reader is still alive/acknowledged the process.
+                    if cls._process is not proc or proc.poll() is not None:
+                        return {
+                            "status": "ERROR",
+                            "message": "Engine crashed while waiting for response",
+                        }
+                    elapsed += wait_interval
+                else:
+                    # Loop completes without break => Timeout
+                    return {"status": "ERROR", "message": f"IPC Timeout ({req_timeout:.1f}s)"}
 
             # Take a response
             with cls._dict_lock:
