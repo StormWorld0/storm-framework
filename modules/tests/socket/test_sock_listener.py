@@ -95,7 +95,7 @@ def execute(options, net):
         clt_sock.send(b"CLIENT_TEST_PING")
 
         # Server baca paket via ClientListener
-        data = srv_conn.recv(1024)
+        data = conn.recv(1024)
         smf.printf("[✓] Server Received  =>", data.raw_bytes)
 
         if data.raw_bytes == b"CLIENT_TEST_PING":
@@ -104,7 +104,7 @@ def execute(options, net):
 
             # Client terima balasan
             reply = clt_sock.recv(1024)
-            smf.printf("[✓] Client Received  =>", reply.str_bytes)
+            smf.printf("[✓] Client Received  =>", reply.raw_bytes)
             smf.printf("\n[✓] SERVER LIFECYCLE TEST PASSED PERFECTLY!")
     except Exception as e:
         smf.printf("[!] Test Exception =>", e)
