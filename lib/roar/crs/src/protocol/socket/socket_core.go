@@ -127,6 +127,7 @@ func handleAccept(ctx *ExecutionContext) packet.ResponsePacket {
 	return packet.ResponsePacket{
 		Status: "SUCCESS", 
 		Data: map[string]interface{}{
+			"client_fd":  nFD,
 			"client_uds": udsPath,
 		},
 	}
