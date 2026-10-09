@@ -40,12 +40,12 @@ class SocketResponse:
 
     @property
     def fileno(self) -> int:
-        """Mengembalikan respons FD (File-Descriptor) dari Open Socket."""
-        if not (uds := self._data.get("uds_path")):
-            return -1
-
-        fd = real_fd(uds)
-        return fd
+        """Mengembalikan (File-Descriptor)."""
+        if (uds := self._data.get("uds_path")):
+            return real_fd(uds)
+        if (uds := self._data.get("client_uds")):
+            return real_fd(uds)
+        return -1
 
     @property
     def raw_bytes(self) -> bytes:
@@ -160,10 +160,8 @@ class SocketResponse:
 
     def _client_fd(self):
         """Mengembalikan ListenerFD"""
-        if not (uds := self._data.get("client_uds")):
+        if not (fd := self._data.get("client_fd")):
             return -1
-
-        fd = real_fd(uds)
         return fd
 
     def __iter__(self):
