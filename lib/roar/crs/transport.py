@@ -175,7 +175,7 @@ class CRS:
                 req_timeout = None
             else:
                 req_timeout = timeout + 1.0
-                
+
             wait_interval = 0.5  # Check pulse (0.5 seconds)
             elapsed = 0.0
 
@@ -184,7 +184,10 @@ class CRS:
                     if event.wait(timeout=wait_interval):
                         break
                 else:
-                    return {"status": "ERROR", "message": "Engine crashed while waiting for infinite response"}
+                    return {
+                        "status": "ERROR",
+                        "message": "Engine crashed while waiting for infinite response",
+                    }
             else:
                 while elapsed < req_timeout:
                     if event.wait(timeout=wait_interval):
@@ -199,7 +202,10 @@ class CRS:
                     elapsed += wait_interval
                 else:
                     # Loop completes without break => Timeout
-                    return {"status": "ERROR", "message": f"IPC Timeout ({req_timeout:.1f}s)"}
+                    return {
+                        "status": "ERROR",
+                        "message": f"IPC Timeout ({req_timeout:.1f}s)",
+                    }
 
             # Take a response
             with cls._dict_lock:
