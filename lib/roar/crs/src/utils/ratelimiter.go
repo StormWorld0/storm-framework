@@ -86,9 +86,9 @@ func (e *EngineRateLimiter) setRate(maxUnits int) {
 	e.limiter = ratelimit.New(ctx, uint(maxUnits), time.Second)
 }
 
-// UpdatePrimitiveRate mempermudah pembaruan dari modul lain berdasarkan key primitif.
-func UpdatePrimitiveRate(req packet.RequestPacket) {
-	SetPrimitiveRate(req.Primitive, req.RateLimit)
+// UpdateRateLimit mempermudah pembaruan dari modul lain berdasarkan key primitif.
+func UpdateRateLimit(req packet.RequestPacket) {
+	SetPrimitiveRate(req.Primitive, req.Frl)
 }
 
 // Take menahan eksekusi berdasarkan primitif tertentu.
