@@ -56,7 +56,6 @@ class DNSResolver(DNState):
         raw_res = CRS.send(packet)
         res = DNSResponse(raw_res)
         res._trace()
-        res._timeout()
         res._nxdomain()
 
         try:
