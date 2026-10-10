@@ -1,16 +1,14 @@
 package whois
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
 	"io"
-	"net/http"
-	"strings"
+	"fmt"
 	"time"
-
+	"strings"
+	"context"
+	"net/http"
+	"encoding/json"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
-	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/utils"
 )
 
 const (
@@ -34,8 +32,6 @@ func IsDomain(s string) bool {
 }
 
 func WhoisDom(req packet.RequestPacket) packet.ResponsePacket {
-	utils.Take() // Rate limiter
-
 	// Idiomatic Go: gunakan !IsDomain
 	if !IsDomain(req.Domain) {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Invalid Domain format"}
