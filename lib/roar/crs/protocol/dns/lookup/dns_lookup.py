@@ -16,7 +16,6 @@ class DNSResolver(DNState):
     """Namespace OOP untuk operasi DNS"""
 
     DTrace = StackTrace
-    Timeout = TimeoutTrace
     NXDOMAIN = NXDomain
 
     def query(
