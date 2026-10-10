@@ -74,7 +74,7 @@ func ExecuteStandard(req packet.RequestPacket, timeout time.Duration) packet.Res
 	defer resp.Body.Close()
 
 	if resp.StatusCode == 429 {
-		utils.UpdateGlobalRate(req.Frl)
+		utils.UpdateRateLimit(req)
 	}
 
 	return BuildSuccessResponse(resp, req.InfoTLS, "retryablehttp")
