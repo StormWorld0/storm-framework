@@ -4,7 +4,7 @@
 
 from typing import Dict, Any, List
 from lib.smf.ingest import DataBuilder
-from .exception import StackTrace, TimeoutTrace, NXDomain
+from .exception import StackTrace, NXDomain
 
 
 class DNSResponse:
