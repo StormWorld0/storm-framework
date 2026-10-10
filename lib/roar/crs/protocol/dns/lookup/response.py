@@ -18,7 +18,7 @@ class DNSResponse:
         self._status: str = raw_response.get("status", "UNKNOWN")
         self._message: str = raw_response.get("message", "UNKNOWN")
 
-        # Ekstraksi payload "Data" dari Go IPC
+        # Ekstraksi payload "Data"
         self._data: Dict[str, Any] = raw_response.get("data", {})
 
     @property
@@ -79,12 +79,6 @@ class DNSResponse:
         """Melempar Exception"""
         if self.status.upper() in {"ERROR", "CRITICAL"}:
             raise StackTrace(self.message)
-        return None
-
-    def _timeout(self):
-        """Melempar Exception Timeout"""
-        if self.status.upper() == "TIMEOUT":
-            raise TimeoutTrace(self.message)
         return None
 
     def _nxdomain(self):
