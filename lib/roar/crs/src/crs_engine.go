@@ -28,7 +28,7 @@ func main() {
 	go func() {
 		<-sigChan
 		cancel() // Batalkan semua konteks worker jika OS mengirim SIGTERM
-		os.Stdin.Close()
+		os.Stdin.Close() // Tutup stdin
 		utils.Stop() // Menghentikan ratelimiter
 	}()
 	
@@ -36,11 +36,9 @@ func main() {
 	const maxCapacity = 10 * 1024 * 1024 // Max 10MB per JSON line
 	buf := make([]byte, 64*1024)
 	crs.Buffer(buf, maxCapacity)
-
-	var req packet.RequestPacket
 	
 	// Inisialisasi Global ratelimiter
-	utils.InitGlobalRateLimiter(ctx, req)
+	utils.InitRateLimiterManager(ctx)
 
 	// Channel sebagai Fan-In untuk mengumpulkan semua response secara thread-safe.
 	// Buffer dialokasikan (1000) untuk mencegah backpressure pada worker.
@@ -132,7 +130,11 @@ func main() {
 			defer wgWorkers.Done()
 			
 			// Release Token: Mengembalikan kuota ke semaphore saat eksekusi selesai
-			defer func() { <-semaphore }() 
+			defer func() { <-semaphore }()
+
+			// Inisialisasi Set Ratelimit
+			utils.SetPrimitiveRate(r.Primitive, r.RateLimit)
+			utils.Take(r.Primitive) // Ambil token ratelimit
 
 			var res packet.ResponsePacket
 			handler, ok := protocol.Handlers[r.Primitive]
