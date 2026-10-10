@@ -26,8 +26,6 @@ var handlers = map[string]CommandHandler{
 
 // Socket adalah entry point eksekusi koneksi menggunakan POSIX-like primitive operations.
 func Socket(req packet.RequestPacket) packet.ResponsePacket {
-	utils.Take()
-
 	ctx := NewExecutionContext(req)
 	defer ctx.Cleanup()
 
