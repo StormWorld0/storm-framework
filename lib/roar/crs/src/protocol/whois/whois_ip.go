@@ -1,15 +1,13 @@
 package whois
 
 import (
-	"context"
-	"fmt"
 	"io"
+	"fmt"
 	"net"
-	"net/http"
 	"time"
-
+	"context"
+	"net/http"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
-	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/utils"
 )
 
 const (
@@ -33,8 +31,6 @@ func init() {
 
 // WhoisIP mengeksekusi HTTP GET ke server RDAP
 func WhoisIP(req packet.RequestPacket) packet.ResponsePacket {
-	utils.Take() // Rate limiter
-
 	// Validasi Input (Sanitasi IP)
 	if parsedIP := net.ParseIP(req.Ip); parsedIP == nil {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Invalid IP address format"}
