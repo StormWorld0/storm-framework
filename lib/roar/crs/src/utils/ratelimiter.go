@@ -8,93 +8,128 @@ import (
 	"sync"
 	"time"
 
-	"github.com/projectdiscovery/ratelimit"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
+	"github.com/projectdiscovery/ratelimit"
 )
 
-// EngineRateLimiter didesain untuk Long-Lived Daemon.
+// EngineRateLimiter menangani rate limit untuk satu primitif spesifik.
 type EngineRateLimiter struct {
 	mu         sync.RWMutex
 	limiter    *ratelimit.Limiter
-	ctx        context.Context 
-	cancelFunc context.CancelFunc 
+	ctx        context.Context
+	cancelFunc context.CancelFunc
+}
+
+// RateLimiterManager mengelola kumpulan limiter untuk berbagai primitif secara concurrent-safe.
+type RateLimiterManager struct {
+	mu       sync.RWMutex
+	rootCtx  context.Context
+	limiters map[string]*EngineRateLimiter
 }
 
 var (
-	globalLimiter *EngineRateLimiter
-	limiterOnce   sync.Once
+	globalManager *RateLimiterManager
+	managerOnce   sync.Once
 )
 
-// InitGlobalRateLimiter menginisialisasi Rate Limiter untuk daemon.
-// rootCtx adalah context dari daemon yang terikat dengan sigterm.
-func InitGlobalRateLimiter(ctx context.Context, req packet.RequestPacket) {
-	limiterOnce.Do(func() {
-		globalLimiter = &EngineRateLimiter{
-			ctx: ctx,
+// InitRateLimiterManager menginisialisasi manager utama yang terikat dengan rootCtx daemon.
+// Dipanggil sekali saat daemon startup.
+func InitRateLimiterManager(ctx context.Context) {
+	managerOnce.Do(func() {
+		globalManager = &RateLimiterManager{
+			rootCtx:  ctx,
+			limiters: make(map[string]*EngineRateLimiter),
 		}
-		globalLimiter.SetRate(req.RateLimit)
 	})
 }
 
-// SetRate memungkinkan update rate secara on-the-fly untuk task baru
-// TANPA menyebabkan goroutine leak pada daemon yang terus hidup.
-func (e *EngineRateLimiter) SetRate(maxUnits int) {
+// SetPrimitiveRate mengatur atau memperbarui rate limit untuk primitif tertentu secara on-the-fly
+// TANPA memengaruhi primitif lain yang sedang berjalan.
+func SetPrimitiveRate(primitiveKey string, maxUnits int) {
+	if globalManager == nil {
+		return
+	}
+
+	globalManager.mu.Lock()
+	limiter, exists := globalManager.limiters[primitiveKey]
+	if !exists {
+		limiter = &EngineRateLimiter{
+			ctx: globalManager.rootCtx,
+		}
+		globalManager.limiters[primitiveKey] = limiter
+	}
+	globalManager.mu.Unlock()
+
+	limiter.setRate(maxUnits)
+}
+
+func (e *EngineRateLimiter) setRate(maxUnits int) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	// Cleanup Limiter Lama:
-	// Jika sebelumnya sudah ada limiter yang berjalan, batalkan context-nya.
-	// Ini akan membunuh background goroutine (ticker) bawaan projectdiscovery/ratelimit.
+	// Cleanup Limiter Lama untuk primitif ini (mencegah goroutine leak)
 	if e.cancelFunc != nil {
 		e.cancelFunc()
 		e.cancelFunc = nil
 	}
 
-	// Jika ratelimit 0 maka di anggap tidak ada
+	// Jika ratelimit <= 0, anggap tidak ada limit
 	if maxUnits <= 0 {
 		e.limiter = nil
 		return
 	}
 
-	// Buat Lifecycle Baru:
-	// Turunkan context baru dari rootCtx IPC daemon.
-	// Jika daemon terkena sigterm, rootCtx mati, otomatis ctx ini juga mati.
+	// Buat Lifecycle Baru terturun dari rootCtx daemon
 	ctx, cancel := context.WithCancel(e.ctx)
 	e.cancelFunc = cancel
 
 	e.limiter = ratelimit.New(ctx, uint(maxUnits), time.Second)
 }
 
-// UpdateGlobalRate mempermudah pembaruan dari modul lain (misal saat transisi task IPC)
-func UpdateGlobalRate(newLimit int) {
-	if globalLimiter != nil {
-		globalLimiter.SetRate(newLimit)
-	}
+// UpdatePrimitiveRate mempermudah pembaruan dari modul lain berdasarkan key primitif.
+func UpdatePrimitiveRate(req packet.RequestPacket) {
+	SetPrimitiveRate(req.Primitive, req.RateLimit)
 }
 
-// Take menahan eksekusi hingga token tersedia.
-func Take() {
-	if globalLimiter == nil {
+// Take menahan eksekusi berdasarkan primitif tertentu.
+func Take(primitiveKey string) {
+	if globalManager == nil {
 		return
 	}
 
-	globalLimiter.mu.RLock()
-	limiter := globalLimiter.limiter
-	globalLimiter.mu.RUnlock()
+	globalManager.mu.RLock()
+	limiter, exists := globalManager.limiters[primitiveKey]
+	globalManager.mu.RUnlock()
 
-	if limiter != nil {
-		limiter.Take()
+	if !exists || limiter == nil {
+		return
+	}
+
+	limiter.mu.RLock()
+	l := limiter.limiter
+	limiter.mu.RUnlock()
+
+	if l != nil {
+		l.Take()
 	}
 }
 
-// Close dipanggil HANYA saat daemon menangkap (SIGTERM).
-// Untuk memastikan pembersihan akhir secara manual.
+// Stop membersihkan seluruh background goroutine dari *seluruh* primitif aktif 
+// saat daemon menangkap SIGTERM.
 func Stop() {
-	if globalLimiter != nil {
-		globalLimiter.mu.Lock()
-		defer globalLimiter.mu.Unlock()
-		if globalLimiter.cancelFunc != nil {
-			globalLimiter.cancelFunc()
+	if globalManager == nil {
+		return
+	}
+
+	globalManager.mu.Lock()
+	defer globalManager.mu.Unlock()
+
+	for _, limiter := range globalManager.limiters {
+		limiter.mu.Lock()
+		if limiter.cancelFunc != nil {
+			limiter.cancelFunc()
+			limiter.cancelFunc = nil
 		}
+		limiter.mu.Unlock()
 	}
 }
