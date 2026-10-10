@@ -9,7 +9,7 @@ from ....transport import CRS
 
 from .response import DNSResponse
 from .state_build import DNState, IPCPayloadBuilder
-from .exception import StackTrace, TimeoutTrace, NXDomain
+from .exception import StackTrace, NXDomain
 
 
 class DNSResolver(DNState):
