@@ -18,19 +18,34 @@ class DNSResolver(DNState):
     DTrace = StackTrace
     NXDOMAIN = NXDomain
 
-    def query(
-        self,
-        domain: str,
+    def __init__(self):
+        super().__init__()
+        self.query = self
+        
+    def tcp(
+        self, 
+        domain: str, 
         type: str = None,
-        proto: str = None,
         **kwargs,
     ):
-        """Saving Query values"""
+        """TCP Protocol"""
         self.domains = domain
         if type is not None:
             self.types = type
-        if proto is not None:
-            self.protocol = proto
+        self.protocol = "tcp"
+        return self
+
+    def udp(
+        self,
+        domain: str,
+        type: str = None,
+        **kwargs,
+    ):
+        """UDP Protocol"""
+        self.domains = domain
+        if type is not None:
+            self.types = type
+        self.protocol = "udp"
         return self
 
     def concurrency(self, con: int, **kwargs):
