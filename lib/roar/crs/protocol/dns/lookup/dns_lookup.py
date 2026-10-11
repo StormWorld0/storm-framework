@@ -21,10 +21,10 @@ class DNSResolver(DNState):
     def __init__(self):
         super().__init__()
         self.query = self
-        
+
     def tcp(
-        self, 
-        domain: str, 
+        self,
+        domain: str,
         type: str = None,
         **kwargs,
     ):
