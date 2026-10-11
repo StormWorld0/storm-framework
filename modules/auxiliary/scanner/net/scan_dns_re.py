@@ -145,7 +145,7 @@ def execute(options, net):
     try:
         for record_type in DNS_RECORDS:
             dns.query.tcp(target_domain, record_type)
-            dns.timeout(0.2)
+            dns.timeout(0.3)
             dns.concurrency(50)
             dns.setlimit(150, 50)
             resp = dns.run()
