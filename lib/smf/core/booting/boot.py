@@ -21,6 +21,7 @@ from ..security.syscall import is_docker
 def boot():
     smf.printd("Booting Storm Framework", level="INFO")
     try:
+        count = -1
         with SpinBoot():
             # Check core startup security
             smf.printd("System synchronization is running", level="INFO")
@@ -52,15 +53,15 @@ def boot():
 
             # Checking the environment using syscall
             if not is_docker():
+                count += 5 
                 smf.printd("Integrity verification is running", level="INFO")
                 run_verif()
 
         # Countdown to pause and start
-        for i in range(5, 0, -1):
+        for i in range(count, 0, -1):
             sys.stdout.write(f"\r[✓] Successfully Starting Storm Framework [{i}]")
             sys.stdout.flush()
             time.sleep(1)
-
     except KeyboardInterrupt:
         smf.printf("\n[*] Booting successfully stopped.")
         sys.exit(2)
