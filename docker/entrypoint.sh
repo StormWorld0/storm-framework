@@ -52,11 +52,4 @@ if [ ! -f config/smf_ca.key ] || [ ! -f config/smf_ca.crt ]; then
     cd "$APP_ROOT"
 fi
 
-# --- DYNAMIC CAPABILITY DETECTION ---
-# Using capsh to read the Bounding Set of the current container
-if command -v capsh >/dev/null && capsh --print | grep -q "cap_net_raw"; then
-    setcap cap_net_raw,cap_net_admin=eip /usr/local/bin/python3.13
-    setcap cap_net_raw,cap_net_bind_service=eip /usr/bin/nmap
-fi
-
 exec "$@"
