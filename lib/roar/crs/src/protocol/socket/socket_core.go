@@ -162,7 +162,7 @@ func handleConnect(ctx *ExecutionContext) packet.ResponsePacket {
 	select {
 	case err := <-errChan:
 		if err != nil {
-			return packet.ResponsePacket{Status: "ERROR", Message: "OS Connect failed: " + err.Error()}
+			return packet.ResponsePacket{Status: "ALERT", Message: "OS Connect failed: " + err.Error()}
 		}
 	case <-timeoutChan:
 		unix.Close(ctx.RawFD)
@@ -196,7 +196,7 @@ func handleCreate(ctx *ExecutionContext) packet.ResponsePacket {
 
 	rawConn, err := fd.Dial(tCtx, "tcp", host)
 	if err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: "TCP Dial failed: " + err.Error()}
+		return packet.ResponsePacket{Status: "ALERT", Message: "TCP Dial failed: " + err.Error()}
 	}
 
 	ctx.Conn = rawConn
