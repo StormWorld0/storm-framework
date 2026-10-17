@@ -26,7 +26,6 @@ def get_service_banner(ip, port, sock):
     Checking port status and parsing banner/version information via Go CRS Engine.
     """
     try:
-
         # Jika port HTTP, kita langsung titip payload 'HEAD /' di field Bod
         payload_body = ""
         if port in [80, 443, 8080]:
@@ -88,8 +87,6 @@ def get_service_banner(ip, port, sock):
     except Exception as e:
         smf.printd("Global error service", e, level="ERROR")
         return f"{C.ERROR} ERROR ", None
-    finally:
-        sock.close()
 
 
 REQUIRED_OPTIONS = {"IP": ""}
@@ -203,3 +200,5 @@ def execute(options, net):
     except Exception as e:
         smf.printf(f"{C.ERROR}[!] ERROR =>", e, file=sys.stderr, flush=True)
         smf.printd("Global Exception", e, level="ERROR")
+    finally:
+        sock.close()
