@@ -36,7 +36,7 @@ def execute(options, net):
         http.get(url)
         http.timeout(5.0).setoptions(verify=False, redirect=False)
         r = http.run()
-        
+
         for header, value in r.headers.items():
             smf.printf(f"  {CC.YELLOW}{header}:{C.RESET} {value}")
 
