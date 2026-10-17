@@ -52,13 +52,10 @@ class HTTPClient(HTTPState, HTTPMethod):
 
     def concurrency(self, con: int, **kwargs):
         """Storing Concurrency values (Strict Int & Bounds)"""
-        if not isinstance(con, int):
-            raise TypeError(f"Concurrency must be an integer, got {type(con).__name__}")
-
         if con <= 0:
             raise ValueError("Concurrency must be greater than 0")
 
-        self.goroutine = con
+        self.goroutine = int(con)
         return self
 
     def setlimit(self, ratelimit: int, frate: int | None = None, **kwargs):
@@ -78,9 +75,6 @@ class HTTPClient(HTTPState, HTTPMethod):
 
     def timeout(self, value: float, **kwargs):
         """Timeout value settings (Coerces int to float safely)"""
-        if not isinstance(value, int) or not isinstance(value, float):
-            raise TypeError(f"Timeout must be a float or int, got {type(value).__name__}")
-
         v = float(value)
         if v <= 0:
             raise ValueError("Timeout must be greater than 0")
