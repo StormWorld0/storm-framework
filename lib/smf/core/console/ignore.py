@@ -30,4 +30,7 @@ IGNORED_SYSTEM_COMMANDS = {
     "cargo",
     "go",
     "build",
+    # Protocol execution
+    "ssh",
+    "telnet",
 }
