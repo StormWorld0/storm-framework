@@ -53,7 +53,7 @@ def boot():
 
             # Checking the environment using syscall
             if not is_docker():
-                count += 5 
+                count += 5
                 smf.printd("Integrity verification is running", level="INFO")
                 run_verif()
 
