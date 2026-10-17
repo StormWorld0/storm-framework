@@ -21,12 +21,12 @@ to find vulnerabilities, do a quick scan of.
 }
 
 
-def get_service_banner(ip, port, net):
+def get_service_banner(ip, port, sock):
     """
     Checking port status and parsing banner/version information via Go CRS Engine.
     """
     try:
-        sock = net.Socket()
+        
 
         # Jika port HTTP, kita langsung titip payload 'HEAD /' di field Bod
         payload_body = ""
@@ -175,8 +175,9 @@ def execute(options, net):
     smf.printf(f"{C.HEADER} SCANNING: PORT & VERSION in {target_ip}")
     MAX_TOTAL_WIDTH = 30
     try:
+        sock = net.Socket()
         for port in ports_to_check:
-            status_line, banner = get_service_banner(target_ip, port, net)
+            status_line, banner = get_service_banner(target_ip, port, sock)
             service_name = port_names.get(port, "Unknown Service")
 
             port_info_string = f"  Port {port} ({service_name})"
