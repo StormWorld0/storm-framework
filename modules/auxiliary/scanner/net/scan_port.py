@@ -26,7 +26,6 @@ def get_service_banner(ip, port, sock):
     Checking port status and parsing banner/version information via Go CRS Engine.
     """
     try:
-        
 
         # Jika port HTTP, kita langsung titip payload 'HEAD /' di field Bod
         payload_body = ""
