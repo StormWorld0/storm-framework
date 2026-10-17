@@ -32,12 +32,12 @@ def get_service_banner(ip, port, sock):
             payload_body = f"HEAD / HTTP/1.1\r\nHost: {ip}\r\nConnection: close\r\n\r\n"
 
         sock.goroutine(100)
-        sock.timeout(2.0)
+        sock.timeout(0.2)
         s = sock.create_connection(ip, port)
         if not s.ok:
             return f"{C.ERROR} CLOSED " + STATUS_CLOSED, None
 
-        sock.timeout(1.0)
+        sock.timeout(1)
         r = sock.send(payload_body)
         if r.ok:
             res = sock.recv(1024)
