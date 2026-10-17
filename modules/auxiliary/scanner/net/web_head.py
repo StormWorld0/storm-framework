@@ -32,10 +32,11 @@ def execute(options, net):
     smf.printf()
     smf.printf(f"{CC.CYAN} CHECKING THE HEADER =>{CC.RESET}", url)
     try:
-        headers = {"User-Agent": "Storm-Framework/3.11 (X11; Linux x86_64)"}
-        r = net.HTTPR(
-            "get", url, headers=headers, timeout=5, verify=False, redirect=False
-        )
+        http = net.HTTPR()
+        http.get(url)
+        http.timeout(5.0).setoptions(verify=False, redirect=False)
+        r = http.run()
+        
         for header, value in r.headers.items():
             smf.printf(f"  {CC.YELLOW}{header}:{C.RESET} {value}")
 
