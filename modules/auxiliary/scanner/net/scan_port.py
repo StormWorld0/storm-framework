@@ -33,6 +33,7 @@ def get_service_banner(ip, port, net):
         if port in [80, 443, 8080]:
             payload_body = f"HEAD / HTTP/1.1\r\nHost: {ip}\r\nConnection: close\r\n\r\n"
 
+        sock.goroutine(100)
         sock.timeout(2.0)
         s = sock.create_connection(ip, port)
         if not s.ok:
