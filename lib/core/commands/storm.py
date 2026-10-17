@@ -2,7 +2,7 @@
 # -- SMF License
 import smf
 
-from apps.utility.colors import *
+from apps.utility.colors import CC
 from apps.utility.update import run_update as update
 from apps.utility.restart import run_restart as restart
 
