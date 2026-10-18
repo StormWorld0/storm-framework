@@ -36,6 +36,7 @@ if [ ! -f .env ]; then
     write_to_file "STORM_PRIVKEY=${PRIV_KEY}" ".env" false
     write_to_file "STORM_PUBKEY=${PUB_KEY}" ".env" true
     write_to_file "STORM_API=https://api.cant.workers.dev" ".env" true
+    write_to_file "DOCKER=True" ".env" true
 fi
 
 if [ ! -f config/smf_ca.key ] || [ ! -f config/smf_ca.crt ]; then
