@@ -15,7 +15,7 @@ from lib.roar.cache import cache_modules as cache
 from lib.roar.callbin import manager
 from lib.smf.postgresql import DBManager
 
-from ..security.syscall import is_docker
+from ..security.syscall import is_this_docker
 
 
 def boot():
@@ -51,8 +51,8 @@ def boot():
                 db = DBManager(config_path)
                 db.current_workspace = "default"
 
-            # Checking the environment using syscall
-            if not is_docker():
+            # Checking the environment
+            if not is_this_docker():
                 count += 5
                 smf.printd("Integrity verification is running", level="INFO")
                 run_verif()
