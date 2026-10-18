@@ -98,7 +98,9 @@ def is_docker() -> bool:
         self_mnt = os.stat("/proc/self/ns/mnt").st_ino
         init_mnt = os.stat("/proc/1/ns/mnt").st_ino
         if self_mnt != init_mnt:
-            smf.printd("Syscall => Mount Namespace Isolation True > Score 30", level="INFO")
+            smf.printd(
+                "Syscall => Mount Namespace Isolation True > Score 30", level="INFO"
+            )
             smf.printf("Syscall => Mount Namespace Isolation True > Score 30")
             score += 30
 
