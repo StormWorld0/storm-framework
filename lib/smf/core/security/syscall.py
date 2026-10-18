@@ -137,6 +137,9 @@ def is_docker() -> bool:
 
 
 def is_this_docker() -> bool:
-    path = os.path.isfile(ROOT, ".env")
+    path = os.path.join(ROOT, ".env")
+    if not os.path.isfile(path)
+        return False
+    
     cfg = dotenv_values(path)
     return cfg.get("DOCKER", "False").lower() == "true"
