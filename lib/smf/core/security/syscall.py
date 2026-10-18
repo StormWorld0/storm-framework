@@ -10,6 +10,8 @@ import ctypes
 import fcntl
 import struct
 
+from rootmap import ROOT
+from dotenv import dotenv_values
 from lib.roar.crs.net_api import Socket
 
 # --- Struct Definition for Syscalls ---
@@ -132,3 +134,9 @@ def is_docker() -> bool:
             break
 
     return score >= threshold
+
+def is_this_docker() -> bool:
+    path = os.path.isfile(ROOT, ".env")
+    cfg = dotenv_values(path)
+    return cfg.get("DOCKER", "False").lower() == "true"
+    
