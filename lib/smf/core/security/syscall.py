@@ -4,6 +4,7 @@
 # Complete information about the License is in the root directory.
 # Author: zxelzy
 
+import os
 import smf
 import ctypes
 import fcntl
@@ -91,6 +92,16 @@ def is_docker() -> bool:
                 smf.printf("Syscall => SYSINF True > Score 30")
                 score += 30
 
+    # MOUNT NAMESPACE ISOLATION CHECK (Syscall: stat on /proc/self/ns/mnt) - Weight: 30
+    # Comparing this process's mount namespace inode with PID 1 (host init)
+    if libc:
+        self_mnt = os.stat("/proc/self/ns/mnt").st_ino
+        init_mnt = os.stat("/proc/1/ns/mnt").st_ino
+        if self_mnt != init_mnt:
+            smf.printd("Syscall => Mount Namespace Isolation True > Score 30", level="INFO")
+            smf.printf("Syscall => Mount Namespace Isolation True > Score 30")
+            score += 30
+
     # MAC ADDRESS OUI CHECK (Kernel IOCTL) - Weight: 30
     # Unprivileged: Reading MAC address (SIOCGIFHWADDR) does not require CAP_NET_ADMIN,
     # just need open() access to a regular socket.
@@ -102,14 +113,12 @@ def is_docker() -> bool:
                 s.fileno, 0x8927, struct.pack("256s", bytes(ifname, "utf-8")[:15])
             )
             return ":".join("%02x" % b for b in info[18:24])
-        except OSError as e:
-            if e.errno != 19:
-                smf.printf(f"[!] Error ioctl on {ifname} =>", e)
+        except OSError:
             return ""
         finally:
             sock.close()
 
-    interfaces = ["eth0", "ens33", "enp3s0", "eth1"]
+    interfaces = ["eth0"]
     matched_docker = False
 
     for iface in interfaces:
