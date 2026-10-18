@@ -2,7 +2,8 @@
 
 set -euo pipefail
 
-PROJECT_DIR="/opt/storm-framework"
+XDG_SHARE_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+PROJECT_DIR="$XDG_SHARE_HOME/storm-framework"
 VENV_PATH="$PROJECT_DIR/venv"
 
 # Access project directory
