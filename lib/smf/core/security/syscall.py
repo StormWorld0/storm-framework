@@ -78,6 +78,7 @@ def is_docker() -> bool:
         if libc.statfs(b"/", ctypes.byref(statfs_buf)) == 0:
             if statfs_buf.f_type in (OVERLAYFS_SUPER_MAGIC, AUFS_SUPER_MAGIC):
                 smf.printd("Syscall => STATF True > Score 40", level="INFO")
+                smf.printf("Syscall => STATF True > Score 40")
                 score += 40
 
     # PROCESS ENTROPY CHECK (Syscall: sysinfo) - Weight: 30
@@ -87,6 +88,7 @@ def is_docker() -> bool:
         if libc.sysinfo(ctypes.byref(sysinfo_buf)) == 0:
             if sysinfo_buf.procs < 50:
                 smf.printd("Syscall => SYSINF True > Score 30", level="INFO")
+                smf.printf("Syscall => SYSINF True > Score 30")
                 score += 30
 
     # MAC ADDRESS OUI CHECK (Kernel IOCTL) - Weight: 30
@@ -100,15 +102,22 @@ def is_docker() -> bool:
                 s.fileno, 0x8927, struct.pack("256s", bytes(ifname, "utf-8")[:15])
             )
             return ":".join("%02x" % b for b in info[18:24])
-        except Exception as e:
-            smf.printf("[!] Error detecting whether this is docker =>", e)
+        except OSError as e:
+            if e.errno != 19:
+                smf.printf(f"[!] Error ioctl on {ifname} =>", e)
             return ""
         finally:
             sock.close()
 
-    eth0_mac = get_mac_address_ioctl("eth0")
-    if eth0_mac.startswith("02:42"):
-        smf.printd("Syscall => IOCTL True > Score 30", level="INFO")
-        score += 30
+    interfaces = ["eth0", "ens33", "enp3s0", "eth1"]
+    matched_docker = False
+
+    for iface in interfaces:
+        mac = get_mac_address_ioctl(iface)
+        if mac.startswith("02:42"):
+            matched_docker = True
+            smf.printd(f"Syscall => IOCTL True ({iface}) > Score 30", level="INFO")
+            score += 30
+            break
 
     return score >= threshold
