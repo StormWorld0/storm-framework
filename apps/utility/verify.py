@@ -34,9 +34,7 @@ def run_verif():
 
         elif result.returncode != 0:
             # Priority 2: Pure tampering (Modified / Missing files)
-            smf.printf(
-                "[!] WARNING => System detects modified/missing files >", result
-            )
+            smf.printf("[!] WARNING => System detects modified/missing files >", result)
             smf.printd(
                 "Integrity detects modified/missing files", result, level="WARNING"
             )
