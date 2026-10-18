@@ -21,7 +21,7 @@ from ..security.syscall import is_docker
 def boot():
     smf.printd("Booting Storm Framework", level="INFO")
     try:
-        count = -1
+        count = 0
         with SpinBoot():
             # Check core startup security
             smf.printd("System synchronization is running", level="INFO")
