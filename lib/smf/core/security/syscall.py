@@ -100,7 +100,8 @@ def is_docker() -> bool:
                 s.fileno, 0x8927, struct.pack("256s", bytes(ifname, "utf-8")[:15])
             )
             return ":".join("%02x" % b for b in info[18:24])
-        except Exception:
+        except Exception as e:
+            smf.printf("[!] Error detecting whether this is docker =>", e)
             return ""
         finally:
             sock.close()
