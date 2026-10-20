@@ -3,9 +3,9 @@ name = "Storm-Framework"
 org = [
     {name = "StormWorld0", email = "StormWorld0@proton.me"}
 ]
-version = "3.12"
+version = "3"
 authors = [
-    {name = "エルジー", email = "elzyproot@protonmail.com"}
+    {name = "エルジー", email = "zxelzy@proton.me"}
 ]
 description = "Just a Storm Framework. All-in-one Pentest tool."
 readme = "README.md"
