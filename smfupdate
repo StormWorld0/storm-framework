@@ -11,7 +11,7 @@ try:
     from lib.ui.helpers import update
     from scripts.wrapper.gen_wrapper import generate
 except ImportError as e:
-    print("[!] Error import smfupdate => {e}")
+    print(f"[!] Error import smfupdate => {e}")
 
 
 wrapper = None
