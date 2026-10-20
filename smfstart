@@ -15,4 +15,4 @@ try:
     systemb()
 except ImportError as e:
     smf.printf(f"Error smfstart =>", e, file=sys.stderr)
-    sys.exit(100)
+    sys.exit(1)
