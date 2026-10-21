@@ -3,14 +3,15 @@ import smf
 from ..socket import Socket
 from apps.utility.colors import CC
 
+
 class TelnetState:
     """Mengelola State Telnet"""
-    
+
     def __init__(
-        self, 
-        host: str, 
-        port: int = 23, 
-        timeout: float = 3.0, 
+        self,
+        host: str,
+        port: int = 23,
+        timeout: float = 3.0,
         **kwargs,
     ):
         """Open koneksi Telnet di atas TCP Socket"""
