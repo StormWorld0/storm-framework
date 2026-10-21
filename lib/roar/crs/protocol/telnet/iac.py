@@ -1,7 +1,7 @@
 from .config import TelnetCmd
 
 
-class IAC:
+class TelnetIAC:
     """Mengelola logika IAC"""
 
     def _negotiate_iac(self, raw_data: bytes) -> bytes:
