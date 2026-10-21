@@ -11,7 +11,7 @@ class TelnetState:
         self,
         host: str,
         port: int = 23,
-        timeout: float = 3.0,
+        timeout: float = 0.0,
         **kwargs,
     ):
         """Open koneksi Telnet di atas TCP Socket"""
@@ -20,8 +20,10 @@ class TelnetState:
         self.sock = Socket()
         # Set Timeout Default Socket
         self.sock.timeout(timeout)
-        # Create an Instant TCP connection
-        self.resp_con = self.sock.create_connection(host, port)
+        # Set Address Family & Socket Type
+        self.sock.socket(self.sock.AF_INET, self.sock.SOCK_STREAM)
+        # Create an TCP connection
+        self.resp_con = self.sock.connect(host, port)
         # Set Timeout Telnet Default
         self._timeout = timeout
         # Buffer storage
