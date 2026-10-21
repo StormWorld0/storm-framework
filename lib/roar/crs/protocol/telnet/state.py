@@ -32,6 +32,8 @@ class TelnetState:
         self._iac_fragment = b""
         # Sessions State
         self._is_closed = False
+        # Default Raw
+        self.raw = False
 
         if kwargs:
             smf.printf(
