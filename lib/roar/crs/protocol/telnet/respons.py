@@ -1,6 +1,6 @@
 class TelnetResponse:
     """Mengelola Response Telnet"""
-    
+
     @property
     def ok(self) -> bool:
         """Returns True on success"""
