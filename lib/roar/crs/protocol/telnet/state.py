@@ -39,7 +39,7 @@ class TelnetState:
     def _ensure_open(self, operation: str):
         """Validasi internal untuk mencegah eksekusi operasi pada sesi yang tertutup."""
         if self._is_closed:
-            smf.printd(f"Cannot {operation} on a closed Socket session.", level="ERROR")
+            smf.printd(f"Cannot {operation} on a closed Telnet session.", level="ERROR")
             raise RuntimeError(
-                f"Cannot execute {operation}() on a closed Socket session."
+                f"Cannot execute {operation}() on a closed Telnet session."
             )
