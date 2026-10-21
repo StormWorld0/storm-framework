@@ -93,4 +93,4 @@ class TelnetIO:
         if not send_status.ok:
             return (b"" if self.raw else ""), -1
 
-        return self.read(expected, self._timeout, self.raw)
+        return self.read(expected)
