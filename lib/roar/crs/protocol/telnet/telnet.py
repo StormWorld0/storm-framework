@@ -18,7 +18,7 @@ class TelnetClient(
     Terintegrasi dengan TelnetCmd & TelnetOpt untuk kontrol granular dan Type-Safety.
     """
     
-    def setoptions(self, raw: bool: False):
+    def setoptions(self, raw: bool = False):
         if not isinstance(raw, bool):
             raise TypeError("setoptions must be bool")
         self.raw = raw
