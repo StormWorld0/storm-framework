@@ -28,7 +28,7 @@ class TelnetIO:
             for item in expected_list
         ]
 
-        wait_time = timeout if timeout is not None else self.timeout
+        wait_time = timeout
         start_time = time.time()
 
         while True:
@@ -51,7 +51,7 @@ class TelnetIO:
             if self.resp_con.ok:
                 resp = self.sock.timeout(read_timeout).recv(readsize=4096)
 
-                if resp.status in ("ERROR", "WARN"):
+                if resp.status in ("ERROR", "WARN", "ALERT"):
                     break
 
                 if resp.ok and not resp.raw_bytes:
