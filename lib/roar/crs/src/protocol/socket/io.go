@@ -152,7 +152,7 @@ func ExecuteSendTo(fd int, data string, sa unix.Sockaddr, timeout time.Duration,
 
 		defer func() {
 			zeroTv := unix.Timeval{Sec: 0, Usec: 0}
-		    unix.SetsockoptTimeval(fd, unix.SOL_SOCKET, unix.SO_RCVTIMEO, &zeroTv)
+		    unix.SetsockoptTimeval(fd, unix.SOL_SOCKET, unix.SO_SNDTIMEO, &zeroTv)
 		}()
 	}
 
