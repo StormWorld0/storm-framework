@@ -18,6 +18,8 @@ class TelnetState:
 
         # Open Inheritance
         self.sock = Socket()
+        # Set Goroutine so as not to block
+        self.sock.goroutine(50)
         # Set Timeout Default Socket
         self.sock.timeout(timeout)
         # Set Address Family & Socket Type
