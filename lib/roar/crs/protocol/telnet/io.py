@@ -11,7 +11,8 @@ class TelnetIO:
         expected: Union[str, bytes, List[Union[str, bytes]]] = b"",
     ) -> Tuple[Union[str, bytes], int]:
         """Membaca Response Telnet (Tuple return: data, match_index)"""
-
+        self._ensure_open("read")
+        
         timeout = self._timeout
         raw = self.raw
 
@@ -77,7 +78,8 @@ class TelnetIO:
         expected: Union[str, bytes, List[Union[str, bytes]]] = b"",
     ) -> Tuple[Union[str, bytes], int]:
         """Mengirim data Telnet dan langsung membaca Response"""
-
+        self._ensure_open("send")
+        
         # Mencegah payload biner (negosiasi IAC) rusak akibat penambahan CRLF otomatis
         if isinstance(command, str):
             cmd_payload = f"{command}\r\n".encode("utf-8")
