@@ -45,11 +45,9 @@ class TelnetIO:
             if (time.time() - start_time) >= wait_time:
                 break
 
-            read_timeout = 0.8 if self._buffer else wait_time
-
-            # Memperbaiki state checker: Evaluasi status koneksi keseluruhan (resp_con), bukan variabel independen.
+            # Evaluasi status koneksi keseluruhan (resp_con), bukan variabel independen.
             if self.resp_con.ok:
-                resp = self.sock.timeout(read_timeout).recv(readsize=4096)
+                resp = self.sock.timeout(0).recv(readsize=4096)
 
                 if resp.status in ("ERROR", "WARN", "ALERT"):
                     break
@@ -91,7 +89,7 @@ class TelnetIO:
                 cmd_payload = command + b"\r\n"
 
         # Validasi pengiriman. Jika socket drop, gagalkan langsung tanpa menunggu siklus read.
-        send_status = self.sock.timeout(self._timeout).send(cmd_payload)
+        send_status = self.sock.timeout(0).sendall(cmd_payload)
         if not send_status.ok:
             return (b"" if self.raw else ""), -1
 
