@@ -11,7 +11,7 @@ class TelnetState:
         self,
         host: str,
         port: int = 23,
-        timeout: float = 0.0,
+        timeout: float = 3.0,
         **kwargs,
     ):
         """Open koneksi Telnet di atas TCP Socket"""
