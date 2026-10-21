@@ -28,6 +28,8 @@ class TelnetState:
         self._buffer = b""
         # Telnet handshake variables
         self._iac_fragment = b""
+        # Sessions State
+        self._is_closed = False
 
         if kwargs:
             smf.printf(
