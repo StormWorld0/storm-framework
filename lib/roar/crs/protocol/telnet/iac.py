@@ -32,9 +32,9 @@ class TelnetIAC:
                     opt = data[i + 2 : i + 3]
                     # Auto-Rejection / Hardened Fallback
                     if cmd in (TelnetCmd.DO, TelnetCmd.DONT):
-                        self.sock.sendall(TelnetCmd.IAC + TelnetCmd.WONT + opt)
+                        self.sock.send(TelnetCmd.IAC + TelnetCmd.WONT + opt)
                     elif cmd in (TelnetCmd.WILL, TelnetCmd.WONT):
-                        self.sock.sendall(TelnetCmd.IAC + TelnetCmd.DONT + opt)
+                        self.sock.send(TelnetCmd.IAC + TelnetCmd.DONT + opt)
                     i += 3
                 elif cmd == TelnetCmd.SB:
                     end_sb = data.find(TelnetCmd.IAC + TelnetCmd.SE, i)
