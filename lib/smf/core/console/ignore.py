@@ -12,9 +12,6 @@ IGNORED_SYSTEM_COMMANDS = {
     "neovim",
     "less",
     "more",
-    "head",
-    "tail",
-    "cat",
     # File / Directory Operations
     "mkdir",
     "touch",
