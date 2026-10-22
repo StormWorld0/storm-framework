@@ -33,9 +33,11 @@ def execute(args, ctx):
 
         if cmd == "export":
             if len(args) < 2:
-                smf.printf(f"[!]{CC.YELLOW} It is mandatory to include the log level argument.{CC.RESET}")
+                smf.printf(
+                    f"[!]{CC.YELLOW} It is mandatory to include the log level argument.{CC.RESET}"
+                )
                 return
-                
+
             val = args[1]
             valup = val.upper()
 
