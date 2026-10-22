@@ -5,12 +5,11 @@ import smf
 
 from pathlib import Path
 from apps.utility.colors import CC
+from apps.utility.helper import get_home
 
 
 def extract_logs(level_target: str, output_file: str = "log.txt"):
-    """
-    Extract logs from internal SQLite database by level.
-    """
+    """Extract logs from internal SQLite database by level."""
 
     db_dir = Path(rootmap.ROOT) / "lib" / "sqlite" / "logging"
     db_path = db_dir / "log.db"
@@ -44,8 +43,8 @@ def extract_logs(level_target: str, output_file: str = "log.txt"):
             smf.printf(f"[!]{CC.YELLOW} No log level =>{CC.RESET}", level_query)
             return
 
-        home_dir = Path.home()
-        dump_folder = home_dir / "storm_logs"
+        home_dir = get_home()
+        dump_folder = home_dir / "smflog"
         dump_folder.mkdir(exist_ok=True)
         final_output_path = dump_folder / output_file
 
@@ -53,7 +52,7 @@ def extract_logs(level_target: str, output_file: str = "log.txt"):
         with open(final_output_path, "w", encoding="utf-8") as f:
             # Report Header
             f.write("=" * 60 + "\n")
-            f.write("  STORM FRAMEWORK - DIAGNOSTIC LOG REPORT\n")
+            f.write("  STORM FRAMEWORK - LOG REPORT\n")
             f.write(f"  Level        : {level_query}\n")
             f.write(f"  Total Entry  : {len(rows)} data\n")
             f.write(
@@ -94,7 +93,6 @@ def extract_logs(level_target: str, output_file: str = "log.txt"):
             level_query,
         )
         smf.printf(f"[!]{CC.YELLOW} File saved to =>{CC.RESET}", final_output_path)
-
     except sqlite3.Error as e:
         smf.printf(f"[-]{CC.RED} A Database Log I/O error occurred{CC.RESET}")
         smf.printd("A Database Log I/O error occurred", e, level="ERROR")
