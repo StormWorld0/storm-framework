@@ -21,11 +21,11 @@ fn printf(
     flush: bool,
 ) -> PyResult<()> {
     
-    // Konversi tuple iterator ke Vec<Bound> dengan alokasi O(1)
+    // Convert tuple iterator to Vec<Bound> with O(1) allocation
     let objects: Vec<Bound<'_, PyAny>> = args.iter().collect();
 
-    // Routing ke memori sekuensial (Fast-path)
-    // PrintResult otomatis dikonversi menjadi PyResult (PyErr) berkat implementasi From di errors.rs
+    // Routing to sequential memory (Fast-path)
+    // PrintResult is automatically converted to PyResult (PyErr) thanks to the From implementation in errors.rs
     core::core_print(py, &objects, sep, end, file, flush)?;
     
     Ok(())
@@ -39,12 +39,12 @@ fn printd(
     level: &str,
 ) -> PyResult<()> {
     
-    // Ekstraksi seluruh pesan pengguna tanpa terpotong
+    // Extract all user messages without truncation
     let objects: Vec<Bound<'_, PyAny>> = args.iter().collect();
     
-    // Arahkan ke Telemetry Engine
-    // Sama seperti printf, error internal (seperti SQLite error/IO error) 
-    // akan terlempar otomatis ke Python jika terjadi kegagalan fatal.
+    // Navigate to Telemetry Engine
+    // Just like printf, internal errors (like SQLite error/IO error) 
+    // will automatically throw to Python in case of fatal failure.
     telemetry::execute_telemetry(py, level, &objects)?;
     
     Ok(())
