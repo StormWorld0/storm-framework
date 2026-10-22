@@ -2,7 +2,7 @@
 # -- SMF License
 import smf
 
-from apps.utility.colors import *
+from apps.utility.colors import CC
 from lib.smfdb_helpers.log_utils import extract_logs
 from lib.smfdb_helpers.log_stream import dump_log
 
@@ -32,6 +32,10 @@ def execute(args, ctx):
         cmd = args[0].lower()
 
         if cmd == "export":
+            if len(args) < 2:
+                smf.printf(f"[!]{CC.YELLOW} It is mandatory to include the log level argument.{CC.RESET}")
+                return
+                
             val = args[1]
             valup = val.upper()
 
