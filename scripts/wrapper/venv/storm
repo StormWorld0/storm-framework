@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-# Helper: Resolve target user context for sudo execution
+# Resolve target user context for sudo execution
 get_target_user_context() {
     if [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != "root" ]; then
         TARGET_USER="$SUDO_USER"
@@ -19,7 +19,6 @@ get_target_user_context() {
         exit 1
     fi
 }
-
 
 # --- Configuration ---
 get_target_user_context
@@ -45,6 +44,29 @@ check_deps() {
             exit 1
         fi
     done
+}
+
+# Help list
+show_help() {
+    echo
+    echo "Arguments"
+    echo
+    echo "  System:"
+    echo "    [-h][--help]     : Displays existing commands"
+    echo "    [-v][--version]  : Displays the current version"
+    echo "    [-v -L]          : Shows whether the latest update is available"
+    echo "    [-c --crt]       : Copying CA to HOME Directory"
+    echo "    [--update]       : Update to the latest version"
+    echo "    [--clean]        : Cleaning Injection files (If there are)"
+    echo
+    echo "  Database:"
+    echo "    [-db init]       : Initializing the PostgreSQL database"
+    echo "    [-db reinit]     : Reinitializing the PostgreSQL database"
+    echo "    [-db delete]     : Deleting a PostgreSQL database"
+    echo "    [-db start]      : Starting the PostgreSQL service"
+    echo "    [-db stop]       : Stopping the PostgreSQL service"
+    echo "    [-db status]     : Checking the condition of the PostgreSQL service"
+    echo
 }
 
 # Argument Parsing
@@ -143,25 +165,7 @@ case "${1:-}" in
             echo "[*] Invalid arguments: $*" >&2
             exit 1
         fi
-        echo
-        echo "Arguments"
-        echo
-        echo "  System:"
-        echo "    [-h][--help]     : Displays existing commands"
-        echo "    [-v][--version]  : Displays the current version"
-        echo "    [-v -L]          : Shows whether the latest update is available"
-        echo "    [-c --crt]       : Copying CA to HOME Directory"
-        echo "    [--update]       : Update to the latest version"
-        echo "    [--clean]        : Cleaning Injection files (If there are)"
-        echo
-        echo "  Database:"
-        echo "    [-db init]       : Initializing the PostgreSQL database"
-        echo "    [-db reinit]     : Reinitializing the PostgreSQL database"
-        echo "    [-db delete]     : Deleting a PostgreSQL database"
-        echo "    [-db start]      : Starting the PostgreSQL service"
-        echo "    [-db stop]       : Stopping the PostgreSQL service"
-        echo "    [-db status]     : Checking the condition of the PostgreSQL service"
-        echo
+        show_help
         ;;
 
     "")
