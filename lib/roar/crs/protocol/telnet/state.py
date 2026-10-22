@@ -25,7 +25,7 @@ class TelnetState:
 
         self.host = host
         self.port = port
-        
+
         # Set Timeout Telnet Default
         self._timeout = timeout
         # Buffer storage
