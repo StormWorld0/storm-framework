@@ -17,14 +17,14 @@ var bufferPool = sync.Pool{
 	},
 }
 
-// ReleaseBuffer mengembalikan buffer ke memory pool
+// ReleaseBuffer returns the buffer to the memory pool.
 func ReleaseBuffer(bufPtr *[]byte) {
 	if bufPtr != nil {
 		bufferPool.Put(bufPtr)
 	}
 }
 
-// ExecuteWrite menangani dekode base64 dan pengiriman payload TCP/TLS.
+
 func ExecuteWrite(conn net.Conn, data string, timeout time.Duration) error {
 	if data == "" {
 		return nil
@@ -109,7 +109,6 @@ func ExecuteFDWriteAll(fd int, data string, timeout time.Duration, flags int) er
 
 
 
-// ExecuteRead menangani alokasi buffer efisien dan timeout untuk operasi baca.
 func ExecuteRead(conn net.Conn, readSize int, timeout time.Duration) ([]byte, int, *[]byte, error) {
 	if readSize <= 0 {
 		readSize = 4096
@@ -145,7 +144,6 @@ func ExecuteSendTo(fd int, data string, sa unix.Sockaddr, timeout time.Duration,
 		return fmt.Errorf("base64 decode failed: %w", err)
 	}
 	
-	// Terapkan SO_SNDTIMEO untuk mencegah goroutine hang jika kernel send buffer penuh
 	if timeout > 0 {
 		tv := unix.NsecToTimeval(timeout.Nanoseconds())
 		unix.SetsockoptTimeval(fd, unix.SOL_SOCKET, unix.SO_SNDTIMEO, &tv)
@@ -156,11 +154,9 @@ func ExecuteSendTo(fd int, data string, sa unix.Sockaddr, timeout time.Duration,
 		}()
 	}
 
-	// Flag default 0. Eksekusi pengiriman datagram
 	return unix.Sendto(fd, dataDec, flag, sa)
 }
 
-// ExecuteReadFrom mengeksekusi blocking recvfrom dengan timeout dan buffer pooling
 func ExecuteRecvFrom(fd int, readSize int, timeout time.Duration, flag int) ([]byte, int, unix.Sockaddr, *[]byte, error) {
 	if readSize <= 0 {
 		readSize = 4096
