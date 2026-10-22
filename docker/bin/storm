@@ -15,7 +15,7 @@ if [ $# -ge 2 ] && [ "${1:-}" = "-c" ] && [ "${2:-}" = "--crt" ]; then
         TARGET_HOME="$HOME"
     fi
 
-    if docker run --rm -v storm_data:"$APP_HOME/data" "$DOCKER_NAME" cat "$APP_HOME/data/smf_ca.crt" > "$TARGET_HOME/smf_ca.crt" 2>/dev/null; then
+    if docker run --rm -v storm_data:"$APP_HOME/config" "$DOCKER_NAME" cat "$APP_HOME/config/smf_ca.crt" > "$TARGET_HOME/smf_ca.crt" 2>/dev/null; then
         if [ -n "${SUDO_USER:-}" ]; then
             chown "$SUDO_USER" "$TARGET_HOME/smf_ca.crt"
         fi
@@ -40,18 +40,18 @@ if [ "$EUID" -eq 0 ]; then
     PRIV_FLAGS=("--cap-add=NET_ADMIN" "--cap-add=NET_RAW" "--cap-add=SYS_ADMIN")
 fi
 
-# PARSING ARGUMEN (BASH ARRAY)
+# ARGUMENT PARSING (BASH ARRAY)
 if [ $# -eq 0 ]; then
     CMD_ARGS=("./smfstart")
 else
     CMD_ARGS=("$@")
 fi
 
-# Eksekusi Docker (Ekspansi Array)
+# Docker Execution (Ekspansi Array)
 exec docker run $TTY_FLAG --init --rm \
     --network host \
     "${PRIV_FLAGS[@]}" \
-    -v storm_data:"$APP_HOME/data" \
+    -v storm_data:"$APP_HOME/config" \
     -v "$PWD:/workspace" \
     -w /workspace \
     "$DOCKER_NAME" "${CMD_ARGS[@]}"
