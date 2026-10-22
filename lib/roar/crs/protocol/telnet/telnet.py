@@ -14,6 +14,12 @@ class TelnetClient(TelnetState, TelnetResponse, TelnetIAC, TelnetIO):
     Terintegrasi dengan TelnetCmd & TelnetOpt untuk kontrol granular dan Type-Safety.
     """
 
+    def connect(self):
+        self._ensure_open("connect")
+        if self.host != None:
+            self.resp_con = self.sock.connect(self.host, self.port)
+        return self
+
     def setoptions(self, raw: bool = False):
         self._ensure_open("setoptions")
         if not isinstance(raw, bool):
