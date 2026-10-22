@@ -218,7 +218,7 @@ cd "$INSTALL_DIR" || { echo -e "${RED}[x] ERROR: Lost track of directory!${NC}";
 "$PYTHON_CMD" -m scripts.wrapper.wrapper_data --data Linux
 
 # Creating a global wrapper symlink
-sudo ln -s "$BIN_DIR/storm" "$SYMLINK"
+sudo ln -s "$BIN_DIR/$TOOL_NAME" "$SYMLINK"
 
 echo -e "${GREEN}####################################################${NC}"
 echo -e "${GREEN}[✓] INSTALLATION COMPLETE${NC}"
