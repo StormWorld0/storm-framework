@@ -7,27 +7,18 @@ from apps.utility.colors import CC
 class TelnetState:
     """Mengelola State Telnet"""
 
-    def __init__(
-        self,
-        host: str = None,
-        port: int = 23,
-        timeout: float = 3.0,
-        **kwargs,
-    ):
+    def __init__(self, **kwargs):
         """Open koneksi Telnet di atas TCP Socket"""
 
         # Open Inheritance
         self.sock = Socket()
         # Set Goroutine so as not to block
         self.sock.goroutine(10)
-        self.sock.timeout(timeout)
+        self.sock.timeout(3.0)
         self.sock.socket(self.sock.AF_INET, self.sock.SOCK_STREAM)
 
-        self.host = host
-        self.port = port
-
         # Set Timeout Telnet Default
-        self._timeout = timeout
+        self._timeout = 3.0
         # Buffer storage
         self._buffer = b""
         # Telnet handshake variables
