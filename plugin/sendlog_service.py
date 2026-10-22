@@ -29,22 +29,20 @@ class Plugin:
         self.rate_limit_delay = 15.0
         self.last_timestamp = 0.0
 
-        # Inisialisasi Ed25519 Private Key dari Base64 (PKCS#8 DER format)
+        # Initialize Ed25519 Private Key from Base64 (PKCS#8 DER format)
         privkey_b64 = os.getenv("STORM_PRIVKEY")
         if not privkey_b64:
             raise
 
         try:
-            # Decode Base64 untuk mendapatkan byte DER (ASN.1)
-            # Menambahkan logic padding = (opsional di Python, b64decode biasanya mentolerir,
-            # tapi kita pastikan paddingnya tepat jika environment strict)
+            # Decode Base64 to get DER bytes (ASN.1)
             pad_len = 4 - (len(privkey_b64) % 4)
             if pad_len != 4:
                 privkey_b64 += "=" * pad_len
 
             der_bytes = base64.b64decode(privkey_b64)
 
-            # Parsing struktur PKCS#8 DER menjadi objek Ed25519PrivateKey
+            # Parse PKCS#8 DER structure into Ed25519PrivateKey object
             self.private_key = serialization.load_der_private_key(
                 der_bytes, password=None
             )
@@ -70,7 +68,7 @@ class Plugin:
 
     def _fetch_and_forward(self):
         """Read SQLite and send data sequentially."""
-        # Hitung timestamp awal hari ini (00:00:00)
+        # Calculate today's start timestamp (00:00:00)
         today_start = datetime.combine(datetime.now().date(), time.min).timestamp()
         fetch_since = max(today_start, self.last_timestamp)
 
@@ -128,29 +126,26 @@ class Plugin:
             )
 
     def _consumer_forward_logs(self):
-        """Pop queue, kirim API, lalu enforce delay minimal 10 detik."""
+        """Pop queue, send API, then enforce minimum delay of 15 seconds."""
         while not self.stop_event.is_set():
             try:
-                # Blocking fetch dengan timeout agar thread bisa gracefully exit jika needed
                 request_body = self.log_queue.get(block=True, timeout=1.0)
             except queue.Empty:
                 continue
 
             start_time = monotonic()
 
-            # Melakukan pengiriman data dengan mekanisme retry internal jika gagal
+            # Perform data delivery with an internal retry mechanism if it fails.
             success = self._send_to_api(request_body)
 
             if not success:
-                # Jika HTTP request gagal/timeout, masukkan kembali ke antrean depan (re-queue)
-                # Catatan: Pada queue standard, re-queue ditaruh di belakang. Untuk requeue ke depan
-                # bisa menggunakan queue.Deque / collections.deque jika prioritas mutlak.
+                # If the HTTP request fails/times out, re-queue it.
                 smf.printd("Delivery failed, requeue payload", level="WARN")
                 self.log_queue.put(request_body)
 
             self.log_queue.task_done()
 
-            # Enforce Throttling: Hitung durasi execution & pastikan interval minimum >= 10s
+            # Enforce Throttling: Calculate execution duration
             elapsed = monotonic() - start_time
             sleep_duration = max(0.0, self.rate_limit_delay - elapsed)
             self.stop_event.wait(timeout=sleep_duration)
@@ -172,7 +167,7 @@ class Plugin:
                         f"CODE: {res.status_code} : {status} =>", message, level="INFO"
                     )
                 except Exception:
-                    smf.printd(f"CODE: 200OK", level="INFO")
+                    smf.printd(f"CODE: 200 OK", level="INFO")
 
             elif res.status_code >= 400:
                 try:
@@ -201,10 +196,10 @@ class Plugin:
 
     def teardown(self):
         """SUICIDE FUNCTION"""
-        # Sinyalkan ke SEMUA thread untuk keluar dari loop
+        # Sends a signal to ALL threads to exit the loop
         self.stop_event.set()
 
-        # Tunggu consumer thread benar-benar selesai
+        # Wait for the consumer thread to completely finish
         if self.consumer_thread and self.consumer_thread.is_alive():
             self.consumer_thread.join(timeout=2.0)
 
