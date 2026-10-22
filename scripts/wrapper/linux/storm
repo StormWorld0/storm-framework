@@ -2,10 +2,25 @@
 
 set -euo pipefail
 
-XDG_SHARE_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+# Helper: Resolve non-root target home & ownership
+get_target_user_context() {
+    if [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != "root" ]; then
+        TARGET_USER="$SUDO_USER"
+        TARGET_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+        TARGET_GID=$(id -g "$SUDO_USER")
+    else
+        TARGET_USER="$(id -un)"
+        TARGET_HOME="$HOME"
+        TARGET_GID="$(id -g)"
+    fi
+}
+
+# --- Configuration ---
+get_target_user_context
+XDG_SHARE_HOME="$TARGET_HOME/.local/share"
 PROJECT_DIR="$XDG_SHARE_HOME/storm-framework"
 
-# Directory validation
+# Change directory
 cd "$PROJECT_DIR" || { echo "[*] ERROR: Failed to access $PROJECT_DIR"; exit 1; }
 
 # Helper: Dependency checker
@@ -18,17 +33,27 @@ check_deps() {
     done
 }
 
-# Helper: Resolve non-root target home & ownership
-get_target_user_context() {
-    if [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != "root" ]; then
-        TARGET_USER="$SUDO_USER"
-        TARGET_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
-        TARGET_GID=$(id -g "$SUDO_USER")
-    else
-        TARGET_USER="$(id -un)"
-        TARGET_HOME="$HOME"
-        TARGET_GID="$(id -g)"
-    fi
+# Help list
+show_help() {
+    echo
+    echo "Arguments"
+    echo
+    echo "  System:"
+    echo "    [-h][--help]     : Displays existing commands"
+    echo "    [-v][--version]  : Displays the current version"
+    echo "    [-v -L]          : Shows whether the latest update is available"
+    echo "    [-c --crt]       : Copying CA to HOME Directory"
+    echo "    [--update]       : Update to the latest version"
+    echo "    [--clean]        : Cleaning Injection files (If there are)"
+    echo
+    echo "  Database:"
+    echo "    [-db init]       : Initializing the PostgreSQL database"
+    echo "    [-db reinit]     : Reinitializing the PostgreSQL database"
+    echo "    [-db delete]     : Deleting a PostgreSQL database"
+    echo "    [-db start]      : Starting the PostgreSQL service"
+    echo "    [-db stop]       : Stopping the PostgreSQL service"
+    echo "    [-db status]     : Checking the condition of the PostgreSQL service"
+    echo
 }
 
 # Argument Parsing via Pattern Matching
@@ -47,13 +72,12 @@ case "${1:-}" in
             exit 1
         fi
 
-        SRC_CERT="./data/smf_ca.crt"
+        SRC_CERT="./config/smf_ca.crt"
         if [ ! -f "$SRC_CERT" ]; then
             echo "[*] ERROR: Certificate file '$SRC_CERT' not found." >&2
             exit 1
         fi
 
-        get_target_user_context
         DEST_CERT="$TARGET_HOME/smf_ca.crt"
 
         cp "$SRC_CERT" "$DEST_CERT" || { echo "[*] ERROR: Failed to copy certificate." >&2; exit 1; }
@@ -78,7 +102,7 @@ case "${1:-}" in
 
         elif [ "$#" -eq 2 ] && [ "${2:-}" = "-L" ]; then
             check_deps
-            
+
             current_version=$(jq -r '.version // empty' data/data.json 2>/dev/null)
             latest_version=$(curl -fsSL "https://raw.githubusercontent.com/StormWorld0/storm-framework/main/data/data.json" | jq -r '.version // empty' 2>/dev/null)
 
@@ -125,25 +149,7 @@ case "${1:-}" in
             echo "[*] Invalid arguments: $*" >&2
             exit 1
         fi
-        echo
-        echo "Arguments"
-        echo
-        echo "  System:"
-        echo "    [-h][--help]     : Displays existing commands"
-        echo "    [-v][--version]  : Displays the current version"
-        echo "    [-v -L]          : Shows whether the latest update is available"
-        echo "    [-c --crt]       : Copying CA to HOME Directory"
-        echo "    [--update]       : Update to the latest version"
-        echo "    [--clean]        : Cleaning Injection files (If there are)"
-        echo
-        echo "  Database:"
-        echo "    [-db init]       : Initializing the PostgreSQL database"
-        echo "    [-db reinit]     : Reinitializing the PostgreSQL database"
-        echo "    [-db delete]     : Deleting a PostgreSQL database"
-        echo "    [-db start]      : Starting the PostgreSQL service"
-        echo "    [-db stop]       : Stopping the PostgreSQL service"
-        echo "    [-db status]     : Checking the condition of the PostgreSQL service"
-        echo
+        show_help
         ;;
 
     "")
