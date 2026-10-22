@@ -9,7 +9,7 @@ class TelnetState:
 
     def __init__(
         self,
-        host: str,
+        host: str = None,
         port: int = 23,
         timeout: float = 3.0,
         **kwargs,
@@ -19,11 +19,13 @@ class TelnetState:
         # Open Inheritance
         self.sock = Socket()
         # Set Goroutine so as not to block
-        self.sock.goroutine(50)
-        # Set Timeout Default Socket
+        self.sock.goroutine(10)
         self.sock.timeout(timeout)
-        # Create an TCP connection
-        self.resp_con = self.sock.create_connection(host, port)
+        self.sock.socket(self.sock.AF_INET, self.sock.SOCK_STREAM)
+
+        self.host = host
+        self.port = port
+        
         # Set Timeout Telnet Default
         self._timeout = timeout
         # Buffer storage
