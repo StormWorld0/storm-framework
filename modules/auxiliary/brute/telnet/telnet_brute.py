@@ -79,8 +79,9 @@ def execute(options, net):
             if not username:
                 continue
 
-            con = net.Telnet(ip, port, timeout=1.0)
-
+            con = net.Telnet()
+            con.timeout(1.0)
+            con.connect(ip, port)
             if not con.ok:
                 con.close()
                 con = None
@@ -88,7 +89,6 @@ def execute(options, net):
 
             # Kirim username, tunggu prompt password
             _, r = con.send(username, expected=promt_pass)
-
             if r < 0:
                 smf.printf(
                     f"{CC.YELLOW}[*] Username: {username} " f"{SYM_FAILED}{CC.RESET}"
@@ -121,7 +121,9 @@ def execute(options, net):
         for password in passwords:
             con = None
             try:
-                con = net.Telnet(ip, port, timeout=1.0)
+                con = net.Telnet()
+                con.timeout(1.0)
+                con.connect(ip, port)
                 if not con.ok:
                     continue
 
