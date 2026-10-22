@@ -39,6 +39,8 @@ INSTALL_DIR="$XDG_SHARE_HOME/$REPO_NAME"
 VENV_DIR="$INSTALL_DIR/venv"
 VENV_PYTHON="$VENV_DIR/bin/python"
 
+SYMLINK="/usr/local/bin/$TOOL_NAME"
+
 # Create a folder if it doesn't exist
 mkdir -p "$INSTALL_DIR" "$BIN_DIR"
 
@@ -216,8 +218,12 @@ cd "$INSTALL_DIR" || { echo -e "${RED}[x] ERROR: Lost track of directory!${NC}";
 # Creating a Dynamic Wrapper Script
 "$VENV_PYTHON" -m scripts.wrapper.wrapper_data --data Venv
 
+# Creating a global wrapper symlink
+sudo ln -s "$BIN_DIR/storm" "$SYMLINK"
+
 echo -e "${GREEN}####################################################${NC}"
 echo -e "${GREEN}[✓] INSTALLATION COMPLETE${NC}"
 echo -e "${GREEN}[✓] PATH STORM: ${INSTALL_DIR}${NC}"
 echo -e "${GREEN}[✓] PATH WRAPPER: ${BIN_DIR}/${TOOL_NAME}${NC}"
+echo -e "${GREEN}[✓] SYMLINK WRAPPER: ${SYMLINK}${NC}"
 echo -e "${GREEN}####################################################${NC}"
