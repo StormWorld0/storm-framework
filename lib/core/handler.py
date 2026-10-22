@@ -35,6 +35,6 @@ def execute(cmd: str, args: list[str], ctx: "Context") -> bool:
             return True
         except Exception as e:
             smf.printf(f"[!]{CC.RED} ERROR COMMAND =>{CC.RESET}", safe_cmd)
-            smf.printd(f"Error when executing a command {safe_mode}.py", e, level="ERROR")
+            smf.printd(f"Error when executing a command {safe_cmd}.py", e, level="ERROR")
             return True
     return False
