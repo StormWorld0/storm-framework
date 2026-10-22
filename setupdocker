@@ -6,6 +6,9 @@ REPO_NAME="storm-framework"
 WRAPPER_URL="https://raw.githubusercontent.com/StormWorld0/$REPO_NAME/main/docker/bin/$TOOL_NAME"
 DOCKER_IMAGE="stormworld0/$REPO_NAME:latest"
 
+# Global wrapper symlink path
+SYMLINK="/usr/local/bin/$TOOL_NAME"
+
 # Color
 GREEN='\033[92m'
 RED='\033[91m'
@@ -36,14 +39,20 @@ docker pull "$DOCKER_IMAGE"
 
 # --- DOWNLOAD & INSTALL WRAPPER ---
 XDG_BIN_HOME="$HOME/.local/bin"
-TARGET_PATH="$XDG_BIN_HOME/$TOOL_NAME"
+WRAPER_DIR="$XDG_BIN_HOME/$TOOL_NAME"
 
 # Create a folder if it doesn't exist
 mkdir -p "$XDG_BIN_HOME"
 
 # Download wrapper
-curl -sL "$WRAPPER_URL" -o "$TARGET_PATH"
-chmod +x "$TARGET_PATH"
+curl -sL "$WRAPPER_URL" -o "$WRAPER_DIR"
+chmod +x "$WRAPER_DIR"
 
-# Installation complete
+# Symlink wrapper
+sudo ln -s "$WRAPER_DIR" "$SYMLINK"
+
+echo -e "${GREEN}####################################################${NC}"
 echo -e "${GREEN}[✓] INSTALLATION COMPLETE${NC}"
+echo -e "${GREEN}[✓] PATH WRAPPER: ${WRAPER_DIR}${NC}"
+echo -e "${GREEN}[✓] SYMLINK WRAPPER: ${SYMLINK}${NC}"
+echo -e "${GREEN}####################################################${NC}"
