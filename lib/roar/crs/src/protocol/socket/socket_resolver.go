@@ -98,12 +98,12 @@ func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
 
 	var targetPort int
 
-	// 1. Resolusi Port (Service) dengan AI_NUMERICSERV & Dynamic Transport Protocol
+	// Port Resolution (Service) with AI_NUMERICSERV & Dynamic Transport Protocol
 	if portFinal != "" {
 		if p, err := strconv.Atoi(portFinal); err == nil {
 			targetPort = p
 		} else {
-			// Evaluasi AI_NUMERICSERV: Abort jika input bukan angka
+			// AI_NUMERICSERV evaluation: Abort if input is not a number
 			if (flags & aiNumericServ) != 0 {
 				return packet.ResponsePacket{
 					Status:  "ERROR",
@@ -111,7 +111,7 @@ func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
 				}
 			}
 
-			// Tentukan proto lookup berdasarkan hint sockType / protocol
+			// Define proto lookup based on hint sockType / protocol
 			lookupProto := "tcp"
 			if sockType == unix.SOCK_DGRAM || protocol == unix.IPPROTO_UDP {
 				lookupProto = "udp"
@@ -128,7 +128,7 @@ func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
 		}
 	}
 
-	// 2. Resolusi Host dengan Optimasi Network Query (Mencegah Unnecessary DNS Noise)
+	// Host Resolution with Network Query Optimization (Preventing Unnecessary DNS Noise)
 	var ips []net.IP
 	var canonName string
 
@@ -150,8 +150,8 @@ func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
 				}
 			}
 
-			// Tentukan scope network resolver berdasarkan AF hint
-			// Menghindari DNS AAAA query jika caller hanya butuh IPv4 (AF_INET)
+			// Determine the scope of the network resolver based on the AF hint
+			// Avoid DNS AAAA queries if the caller only needs IPv4 (AF_INET)
 			lookupNetwork := "ip"
 			switch family {
 			case unix.AF_INET:
@@ -169,21 +169,21 @@ func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
 			}
 			ips = resolvedIPs
 
-			// Evaluasi AI_CANONNAME
+			// AI_CANONNAME Evaluation
 			if hostFinal != "" && flags&aiCanonName != 0 {
 				canonName = resolveCanonicalName(context.Background(), hostFinal, int(flags))
             }
 		}
 	}
 
-	// 3. Matriks Inferensi SockType & Protocol
-	// POSIX getaddrinfo mengisi concreted socktype & protocol jika hints bernilai 0
+	// SockType & Protocol Inference Matrix
+	// POSIX getaddrinfo fills in concreted socktype & protocol if hints is 0
 	combinations, err := resolveAddrCombination(int(sockType), int(protocol))
     if err != nil {
 	    return packet.ResponsePacket{Status:  "ERROR", Message: "getaddrinfo: " + err.Error()}
     }
 
-	// 4. Construct Multi-tuple Results
+	// Construct Multi-tuple Results
 	var results []map[string]interface{}
 
 	for _, ip := range ips {
