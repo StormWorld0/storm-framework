@@ -3,12 +3,11 @@ package socket
 import (
 	"fmt"
 	"net"
-	"strings"
 	"time"
-
+	"strings"
+	"golang.org/x/sys/unix"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/utils"
-	"golang.org/x/sys/unix"
 )
 
 type ExecutionContext struct {
@@ -51,11 +50,11 @@ func (ctx *ExecutionContext) LoadSessionState() error {
 	}
 
 	if v, ok := utils.ClientFD.Load(ctx.Req.SessionID); ok {
-		ctx.CFD = v.(int) // Load client FD jika ada
+		ctx.CFD = v.(int) // Load ListenerFD if present
 	}
 
 	if hostVal, ok := utils.SessionHosts.Load(ctx.Req.SessionID); ok {
-		ctx.Host = hostVal.(string) // Aman karena map ini isinya pasti string
+		ctx.Host = hostVal.(string)
 	}
 
 	val, ok := utils.ActiveSessions.Load(ctx.Req.SessionID)
@@ -73,27 +72,26 @@ func (ctx *ExecutionContext) LoadSessionState() error {
 	default:
 		return fmt.Errorf("corrupted session data")
 	}
-	
 	return nil
 }
 
-// Menyimpan ClienFD yang di ambil dari accept lintener
+// Save the ClientFD taken from the accept lintener
 func (ctx *ExecutionContext) SaveSessionCFD(val int) {
 	if ctx.Req.SessionID != "" && ctx.Req.KeepAlive {
 		utils.ClientFD.Store(ctx.Req.SessionID, val)
-		ctx.CFD = val // Update state di context
+		ctx.CFD = val
 	}
 }
 
-// Menyimpan Host yang di ambil dari Connect
+// Save Host taken from Connect
 func (ctx *ExecutionContext) SaveSessionHost(host string) {
 	if ctx.Req.SessionID != "" && ctx.Req.KeepAlive {
 		utils.SessionHosts.Store(ctx.Req.SessionID, host)
-		ctx.Host = host // Update state di context
+		ctx.Host = host
 	}
 }
 
-// Menyimpan RawFD & net.Conn
+// Saving RawFD & net.Conn
 func (ctx *ExecutionContext) SaveSession(val interface{}) {
 	if ctx.Req.SessionID != "" && ctx.Req.KeepAlive {
 		utils.ActiveSessions.Store(ctx.Req.SessionID, val)
@@ -101,7 +99,7 @@ func (ctx *ExecutionContext) SaveSession(val interface{}) {
 	}
 }
 
-// Close Session Mode Close milik socket
+// Close Session The socket's Close mode
 func (ctx *ExecutionContext) CloseSession() packet.ResponsePacket {
 	if ctx.Req.SessionID != "" && ctx.Req.CloseSess {
 		utils.SessionHosts.Delete(ctx.Req.SessionID) // Delete host
@@ -113,9 +111,9 @@ func (ctx *ExecutionContext) CloseSession() packet.ResponsePacket {
 		if val, ok := utils.ActiveSessions.LoadAndDelete(ctx.Req.SessionID); ok {
 			switch v := val.(type) {
 			case net.Conn:
-				v.Close()     // Tutup jika tipe data net.Conn
+				v.Close()     // Close if data type net.Conn
 			case int:         //
-				unix.Close(v) // Tutup jika tipe data raw FD
+				unix.Close(v) // Close if raw FD data type
 			}
 			return packet.ResponsePacket{Status: "SUCCESS", Message: "Session closed"}
 		}
@@ -124,7 +122,7 @@ func (ctx *ExecutionContext) CloseSession() packet.ResponsePacket {
 	return packet.ResponsePacket{Status: "WARN", Message: "Incomplete data to close the connection"}
 }
 
-// Close ClienFD Mode Close milik Accept Listener
+// Close ClientFD Accept Listener's Close mode
 func (ctx *ExecutionContext) CloseCFD() packet.ResponsePacket {
 	if ctx.Req.SessionID != "" {
 		if val, ok := utils.ClientFD.LoadAndDelete(ctx.Req.SessionID); ok {
@@ -136,21 +134,21 @@ func (ctx *ExecutionContext) CloseCFD() packet.ResponsePacket {
 	return packet.ResponsePacket{Status: "WARN", Message: "Incomplete data to close the ClientFD"}
 }
 
-// Darurat di jalankan oleh defer
+// Emergency run by defer
 func (ctx *ExecutionContext) Cleanup() {
 	if !ctx.KeepSession {
 		if ctx.Conn != nil {
-			ctx.Conn.Close()         // Tutup net.Conn
+			ctx.Conn.Close()         // Close net.Conn
 		} else if ctx.RawFD != -1 {
-			unix.Close(ctx.RawFD)    // Tutup RawFD
+			unix.Close(ctx.RawFD)    // Closed RawFD
 		}
 		if ctx.CFD != -1 {
-			unix.Close(ctx.CFD)      // Tutup ClienFD
+			unix.Close(ctx.CFD)      // Closed ClienFD
 		}
 		if ctx.Req.SessionID != "" {
-			utils.ActiveSessions.Delete(ctx.Req.SessionID) // Hapus Session Aktif
-			utils.SessionHosts.Delete(ctx.Req.SessionID)   // Hapus Host
-			utils.ClientFD.Delete(ctx.Req.SessionID)       // Hapus ClienFD
+			utils.ActiveSessions.Delete(ctx.Req.SessionID) // Delete Active Session
+			utils.SessionHosts.Delete(ctx.Req.SessionID)   // Delete Host
+			utils.ClientFD.Delete(ctx.Req.SessionID)       // Delete ClientFD
 		}
 	}
 }
