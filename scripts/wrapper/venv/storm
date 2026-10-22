@@ -2,7 +2,28 @@
 
 set -euo pipefail
 
-XDG_SHARE_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+# Helper: Resolve target user context for sudo execution
+get_target_user_context() {
+    if [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != "root" ]; then
+        TARGET_USER="$SUDO_USER"
+        TARGET_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+        TARGET_GID=$(id -g "$SUDO_USER")
+    else
+        TARGET_USER="$(id -un)"
+        TARGET_HOME="$HOME"
+        TARGET_GID="$(id -g)"
+    fi
+
+    if [ -z "$TARGET_HOME" ] || [ ! -d "$TARGET_HOME" ]; then
+        echo "[*] ERROR: Could not determine valid home directory." >&2
+        exit 1
+    fi
+}
+
+
+# --- Configuration ---
+get_target_user_context
+XDG_SHARE_HOME="$TARGET_HOME/.local/share"
 PROJECT_DIR="$XDG_SHARE_HOME/storm-framework"
 VENV_PATH="$PROJECT_DIR/venv"
 
@@ -26,24 +47,6 @@ check_deps() {
     done
 }
 
-# Helper: Resolve target user context for sudo execution
-get_target_user_context() {
-    if [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != "root" ]; then
-        TARGET_USER="$SUDO_USER"
-        TARGET_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
-        TARGET_GID=$(id -g "$SUDO_USER")
-    else
-        TARGET_USER="$(id -un)"
-        TARGET_HOME="$HOME"
-        TARGET_GID="$(id -g)"
-    fi
-
-    if [ -z "$TARGET_HOME" ] || [ ! -d "$TARGET_HOME" ]; then
-        echo "[*] ERROR: Could not determine valid home directory." >&2
-        exit 1
-    fi
-}
-
 # Argument Parsing
 case "${1:-}" in
     --update)
@@ -60,13 +63,12 @@ case "${1:-}" in
             exit 1
         fi
 
-        SRC_CERT="./data/smf_ca.crt"
+        SRC_CERT="./config/smf_ca.crt"
         if [ ! -f "$SRC_CERT" ]; then
             echo "[*] ERROR: Certificate '$SRC_CERT' not found." >&2
             exit 1
         fi
 
-        get_target_user_context
         DEST_CERT="$TARGET_HOME/smf_ca.crt"
 
         cp "$SRC_CERT" "$DEST_CERT" || { echo "[*] ERROR: Failed to copy certificate." >&2; exit 1; }
@@ -94,7 +96,7 @@ case "${1:-}" in
 
         elif [ "$#" -eq 2 ] && [ "${2:-}" = "-L" ]; then
             check_deps
-            
+
             current_version=$(jq -r '.version // empty' data/data.json 2>/dev/null)
             latest_version=$(curl -fsSL "https://raw.githubusercontent.com/StormWorld0/storm-framework/main/data/data.json" | jq -r '.version // empty' 2>/dev/null)
 
