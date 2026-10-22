@@ -144,7 +144,6 @@ func handleSendTo(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found for sendto."}
 	}
 
-	// Resolve target IP dan Port
 	sockAddr, err := resolveSockAddr(ctx.Req)
 	if err != nil {
 		return packet.ResponsePacket{Status: "ERROR", Message: "ResolveSockAddr: " + err.Error()}
@@ -152,7 +151,6 @@ func handleSendTo(ctx *ExecutionContext) packet.ResponsePacket {
 
 	flag := ParseFlags(ctx.Req.Flags)
 	
-	// Eksekusi menggunakan helper
 	if err := ExecuteSendTo(fd, ctx.Req.Data, sockAddr, ctx.Timeout, flag); err != nil {
 		ctx.SaveSession(ctx.RawFD)
 		// Error timeout (EAGAIN / EWOULDBLOCK)
@@ -204,7 +202,7 @@ func handleRecvFrom(ctx *ExecutionContext) packet.ResponsePacket {
 
 	ctx.SaveSession(ctx.RawFD)
 
-	// Ekstrak IP dan Port dari Sender (Remote Address)
+	// Extract IP and Port from Sender (Remote Address)
 	var senderIP string
 	var senderPort int
 	switch v := sa.(type) {
