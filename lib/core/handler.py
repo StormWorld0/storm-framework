@@ -3,6 +3,7 @@ import os
 import smf
 
 from typing import TYPE_CHECKING
+from apps.utility.colors import CC
 
 if TYPE_CHECKING:
     from lib.smf.core.console.engine import Context
@@ -17,7 +18,6 @@ def execute(cmd: str, args: list[str], ctx: "Context") -> bool:
     # [Security / Sanity Check]
     # Prevent potential LFI
     safe_cmd = os.path.basename(cmd)
-
     cmd_path = os.path.join("lib", "core", "commands", f"{safe_cmd}.py")
 
     if os.path.exists(cmd_path):
@@ -30,14 +30,11 @@ def execute(cmd: str, args: list[str], ctx: "Context") -> bool:
             # The module will modify the properties of `ctx`
             # directly in memory (in-place modification).
             cmd.execute(args, ctx)
-
-            return True  # Routing successfully handled
+            return True
         except KeyboardInterrupt:
             return True
-
         except Exception as e:
-            smf.printf("[!] ERROR COMMAND =>", safe_cmd)
-            smf.printd("ERROR WHEN EXECUTING A COMMAND", safe_cmd, e, level="ERROR")
+            smf.printf(f"[!]{CC.RED} ERROR COMMAND =>{CC.RESET}", safe_cmd)
+            smf.printd(f"Error when executing a command {safe_mode}.py", e, level="ERROR")
             return True
-
     return False
