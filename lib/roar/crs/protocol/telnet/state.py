@@ -22,10 +22,8 @@ class TelnetState:
         self.sock.goroutine(50)
         # Set Timeout Default Socket
         self.sock.timeout(timeout)
-        # Set Address Family & Socket Type
-        self.sock.socket(self.sock.AF_INET, self.sock.SOCK_STREAM)
         # Create an TCP connection
-        self.resp_con = self.sock.connect(host, port)
+        self.resp_con = self.sock.create_connection(host, port)
         # Set Timeout Telnet Default
         self._timeout = timeout
         # Buffer storage
