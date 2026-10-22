@@ -27,9 +27,9 @@ func main() {
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-sigChan
-		cancel() // Batalkan semua konteks worker jika OS mengirim SIGTERM
-		os.Stdin.Close() // Tutup stdin
-		utils.Stop() // Menghentikan ratelimiter
+		cancel() // Cancel all worker contexts if the OS sends SIGTERM
+		os.Stdin.Close() // Close stdin
+		utils.Stop() // Stopping ratelimiter
 	}()
 	
 	crs := bufio.NewScanner(os.Stdin)
@@ -37,15 +37,15 @@ func main() {
 	buf := make([]byte, 64*1024)
 	crs.Buffer(buf, maxCapacity)
 	
-	// Inisialisasi Global ratelimiter
+	// Global ratelimiter initialization
 	utils.InitRateLimiterManager(ctx)
 
-	// Channel sebagai Fan-In untuk mengumpulkan semua response secara thread-safe.
-	// Buffer dialokasikan (1000) untuk mencegah backpressure pada worker.
+	// Channel as Fan-In to collect all responses in a thread-safe manner.
+	// Buffers are allocated (1000) to prevent backpressure on the worker.
 	responseChan := make(chan packet.ResponsePacket, 1000)
 	
 	var wgWorkers sync.WaitGroup
-	// Map thread-safe untuk menyimpan Semaphore (Channel) per-protokol
+	// Thread-safe map for storing per-protocol Semaphores (Channels)
 	// Key: req.Primitive (string), Value: chan struct{} (Semaphore)
 	var semaphores sync.Map 
 	writerDone := make(chan struct{})
@@ -68,8 +68,8 @@ func main() {
 		default:
 		}
 
-		// Unmarshal dilakukan di main goroutine agar aman dari race condition 
-		// terhadap memory internal buffer scanner.Bytes()
+		// Unmarshal is done in the main goroutine to avoid race conditions
+		// against the scanner's internal memory buffer.Bytes()
 		var req packet.RequestPacket
 		if err := json.Unmarshal(line, &req); err != nil {
 			select {
@@ -80,7 +80,7 @@ func main() {
 			continue
 		}
 
-		// [MODE SYNCHRONOUS]: Untuk protokol yang tidak thread-safe
+		// [MODE SYNCHRONOUS]: For non-thread-safe protocols
 		if req.Go <= 0 {
 			var res packet.ResponsePacket
 			handler, ok := protocol.Handlers[req.Primitive]
@@ -90,10 +90,11 @@ func main() {
 					Message: "Unknown primitive: " + req.Primitive,
 				}
 			} else {
-				res = handler(req) // Eksekusi memblokir scanner loop
+				res = handler(req) // Execution blocking loop scanner
 			}
 
-			// PENTING: Salin MsgID dari Request ke Response
+			// IMPORTANT: Copy the MsgID from Request to Response
+			// so that the results that come out are not thrown away.
 			res.MsgID = req.MsgID
 			
 			select {
@@ -104,19 +105,20 @@ func main() {
 			continue
 		}
 
-		// [MODE ASYNCHRONOUS DENGAN SEMAPHORE]: Untuk protokol yang mendukung concurrency
-		// Load atau inisialisasi semaphore dengan kapasitas req.Go
+		// [ASYNCHRONOUS MODE WITH SEMAPHORE]: For protocols that support concurrency
+		// This is also used so that the primitives being executed do not block the main thread.
+		// Load or initialize semaphore with req.Go capacity to be dynamic.
 		var sem chan struct{}
         if semIntf, ok := semaphores.Load(req.Primitive); ok {
             sem = semIntf.(chan struct{})
         } else {
-            // Alokasi memori HANYA terjadi jika primitive baru pertama kali dipanggil
+            // Memory allocation ONLY occurs when a primitive is called for the first time.
             newSem := make(chan struct{}, req.Go)
             actual, _ := semaphores.LoadOrStore(req.Primitive, newSem)
             sem = actual.(chan struct{})
         }
 
-		// Acquire Token dengan Cancellation Aware
+		// Acquire Token with Cancellation Aware
 		select {
 		case sem <- struct{}{}:
 		case <-ctx.Done():
@@ -129,12 +131,12 @@ func main() {
 		go func(r packet.RequestPacket, semaphore chan struct{}) {
 			defer wgWorkers.Done()
 			
-			// Release Token: Mengembalikan kuota ke semaphore saat eksekusi selesai
+			// Release Token: Returns the quota to the semaphore when execution is complete.
 			defer func() { <-semaphore }()
 
-			// Inisialisasi Set Ratelimit
+			// Initialize Ratelimit Set
 			utils.SetPrimitiveRate(r.Primitive, r.RateLimit)
-			utils.Take(r.Primitive) // Ambil token ratelimit
+			utils.Take(r.Primitive) // Take ratelimit token
 
 			var res packet.ResponsePacket
 			handler, ok := protocol.Handlers[r.Primitive]
@@ -147,10 +149,10 @@ func main() {
 				res = handler(r)
 			}
 
-			// PENTING: Salin MsgID dari Request ke Response
+			// Copy MsgID from Request to Response
 			res.MsgID = r.MsgID
 
-			// Safe send: Cegah deadlock jika writer/main sudah shutdown
+			// Safe send: Prevent deadlock if writer/main is already shutdown
 			select {
 			case responseChan <- res:
 			case <-ctx.Done():
@@ -158,7 +160,7 @@ func main() {
 			}
 		}(req, sem)
 	}
-	// Stdin EOF terdeteksi -> Trigger cancellation untuk sisa worker
+	// Stdin EOF detected -> Trigger cancellation for remaining workers
 	Shutdown:
 	cancel()
 	
@@ -166,7 +168,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "CRS Engine Stdin Error: %v\n", err)
 	}
 
-	// Memastikan Go exited sebelum timeout dan mengirim SIGKILL
+	// Make sure Go exited before timeout and SIGKILL
 	shutdownComplete := make(chan struct{})
 	go func() {
 		wgWorkers.Wait()
