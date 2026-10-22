@@ -7,35 +7,33 @@ use crate::errors::PrintResult;
 
 pub fn core_print(
     _py: Python<'_>,
-    // 1. UBAH: Slice berisi Bound objects, bukan legacy GIL references
-    objects: &[Bound<'_, PyAny>], 
+    objects: &[Bound<'_, PyAny>], // Slice contains Bound objects, not legacy GIL references
     sep: &str,
     end: &str,
-    // 2. UBAH: Option yang membungkus reference ke Bound object
-    file: Option<&Bound<'_, PyAny>>, 
+    file: Option<&Bound<'_, PyAny>>, // Option that wraps a reference to a Bound object
     flush: bool,
 ) -> PrintResult<()> {
-    // 1. Inisialisasi destinasi (Stdout atau Python file object)
-    // Parameter 'file' sekarang bertipe Option<&Bound<'_, PyAny>>
+    // Initialize destination (Stdout or Python file object)
+    // The 'file' parameter is now of type Option<&Bound<'_, PyAny>>
     let dest = OutputDestination::from_py_object(file, _py)?;
     
-    // 2. Optimasi: Menulis langsung ke buffer (Streaming)
+    // Optimization: Write directly to buffer (Streaming)
     for (idx, obj) in objects.iter().enumerate() {
-        // Karena iterasi pada &[Bound<'_, PyAny>], variabel 'obj' di sini
-        // otomatis bertipe &Bound<'_, PyAny>.
+        // Due to iteration on &[Bound<'_, PyAny>], the variable 'obj' here
+        // automatically of type &Bound<'_, PyAny>.
         let s = object_to_string(obj)?;
         dest.write(&s)?;
         
-        // Tulis separator jika bukan elemen terakhir
+        // Write separator if not the last element
         if idx < objects.len() - 1 {
             dest.write(sep)?;
         }
     }
     
-    // 3. Tulis karakter penutup (end)
+    // Write the closing character (end)
     dest.write(end)?;
     
-    // 4. Flush jika diminta
+    // Flush if requested
     if flush {
         dest.flush()?;
     }
