@@ -24,24 +24,24 @@ var handlers = map[string]CommandHandler{
 	"getaddrinfo": handleGetAddrInfo,
 }
 
-// Socket adalah entry point eksekusi koneksi menggunakan POSIX-like primitive operations.
+// A socket is an entry point for executing a connection using POSIX-like primitive operations.
 func Socket(req packet.RequestPacket) packet.ResponsePacket {
 	ctx := NewExecutionContext(req)
 	defer ctx.Cleanup()
 
-	// Locking Per-Session untuk Mencegah Race Condition
+	// Per-Session Locking to Prevent Race Conditions
 	if ctx.Req.SessionID != "" {
 		mu := utils.GetSessionLock(ctx.Req.SessionID)
 		mu.Lock()
 		defer mu.Unlock()
 	}
 
-	// Eksekusi Pembersihan Sessions
+	// Session Cleanup Execution
 	if ctx.Mode == "close" {
 		return ctx.CloseSession()
 	}
 
-	// Eksekusi Pembersihan clienFD
+	// clienFD Cleanup Execution
 	if ctx.Mode == "close-cfd" {
 		return ctx.CloseCFD()
 	}
