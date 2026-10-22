@@ -89,7 +89,7 @@ class TelnetIO:
                 cmd_payload = command + b"\r\n"
 
         # Validasi pengiriman. Jika socket drop, gagalkan langsung tanpa menunggu siklus read.
-        send_status = self.sock.timeout(self._timeout).send(cmd_payload)
+        send_status = self.sock.timeout(self._timeout).sendall(cmd_payload)
         if not send_status.ok:
             return (b"" if self.raw else ""), -1
 
