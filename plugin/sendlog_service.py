@@ -11,7 +11,9 @@ from time import monotonic
 from dotenv import load_dotenv
 from rootmap import ROOT
 from datetime import datetime, time
+from lib.roar.crs.net_api import HTTPR
 from cryptography.hazmat.primitives import serialization
+
 
 __autorun__ = True
 
@@ -157,7 +159,8 @@ class Plugin:
             "Content-Type": "application/json",
         }
         try:
-            res = requests.post(self.api_url, json=payload, headers=headers, timeout=5.0)
+            http = HTTPR()
+            res = http.post(self.api_url, payload, headers).timeout(5.0).concurrency(1).run()
             res_data = res.json()
             if res.status_code == 200:
                 try:
@@ -167,14 +170,14 @@ class Plugin:
                         f"CODE: {res.status_code} : {status} =>", message, level="INFO"
                     )
                 except Exception:
-                    smf.printd(f"CODE: 200 OK", level="INFO")
+                    smf.printd(f"CODE: {res.status_code}", level="INFO")
 
             elif res.status_code >= 400:
                 try:
                     status = res_data.get("status")
                     message = res_data.get("message")
                     smf.printd(
-                        f"CODE: {res.status_code} : {status} =>", message, level="ERROR"
+                        f"CODE: {res.status_code} : {status} =>", message, level="WARN"
                     )
                     return False
                 except Exception:
