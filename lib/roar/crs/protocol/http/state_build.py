@@ -81,7 +81,8 @@ class IPCPayloadBuilder:
             encode = "string"
 
         if isinstance(state._body, dict):
-            body_bytes = json.dumps(state._body).encode("utf-8")
+            body = state._body
+            body_bytes = json.dumps(body).encode("utf-8")
             body_str = base64.b64encode(body_bytes).decode("utf-8")
             encode = "dict"
 
