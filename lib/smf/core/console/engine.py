@@ -118,7 +118,7 @@ class Context:
         finally:
             smf.printf()
 
-    def dispatch(self, cmd: str, args: list[str]) -> None:
+    def console(self, cmd: str, args: list[str]) -> None:
         """
         This method is the gateway to the handler.
         Pipeline: Input -> Core (self) -> Handler -> Commands
