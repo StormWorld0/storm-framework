@@ -26,11 +26,7 @@ func ParseBody(encoding string, rawBody interface{}) (io.Reader, error) {
 	} else if encoding == "bytes" {
 		bodyFinal = bodyDec
 	} else if encoding == "dict" {
-		var mapBody map[string]interface{}
-        if err := json.Unmarshal(bodyDec, &mapBody); err != nil {
-            return nil, err
-        }
-		bodyFinal = mapBody
+		bodyFinal = bodyDec
 	} else {
 		bodyFinal = rawBody
 	}
