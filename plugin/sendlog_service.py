@@ -14,7 +14,6 @@ from datetime import datetime, time
 from lib.roar.crs.net_api import HTTPR
 from cryptography.hazmat.primitives import serialization
 
-
 __autorun__ = True
 
 
@@ -160,7 +159,12 @@ class Plugin:
         }
         try:
             http = HTTPR()
-            res = http.post(self.api_url, payload, headers).timeout(5.0).concurrency(1).run()
+            res = (
+                http.post(self.api_url, payload, headers)
+                .timeout(5.0)
+                .concurrency(1)
+                .run()
+            )
             res_data = res.json()
             if res.status_code == 200:
                 try:
