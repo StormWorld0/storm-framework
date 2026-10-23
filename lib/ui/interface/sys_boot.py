@@ -13,7 +13,7 @@ try:
     from ..banner import banner as style
 except ImportError as e:
     smf.printf(f"Error import interface =>", e, file=sys.stderr)
-    sys.exit(100)
+    sys.exit(2)
 
 
 # Perform step by step initialization starting before entering the interface
