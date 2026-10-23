@@ -4,14 +4,13 @@
 # Complete information about the License is in the root directory.
 # Author: zxelzy
 
-import readline  # noqa: F401
 import sys
 import smf
 
 try:
-    from lib.smf.core.booting.boot import boot
-    from ..banner import banner as style_ui
-    from .start_interfc import main
+    from lib.smf.core.booting.free_boot import systemd as sysd
+    from .control_ifc import systemctl as sysctl
+    from ..banner import banner as style
 except ImportError as e:
     smf.printf(f"Error import interface =>", e, file=sys.stderr)
     sys.exit(100)
@@ -22,6 +21,6 @@ except ImportError as e:
 # Loading banner for style framework
 # call main to activate (Read Eval Print Loop) interface
 def systemb():
-    boot()
-    style_ui()
-    main()
+    sysd()     # Running the boot system
+    style()    # Displays the UI/UX style of the REPL session
+    sysctl()   # Run the main control system
