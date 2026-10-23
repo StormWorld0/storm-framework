@@ -4,7 +4,6 @@
 # Complete information about the License is in the root directory.
 # Author: zxelzy
 
-import readline  # noqa: F401
 import sys
 import smf
 
@@ -16,7 +15,7 @@ except ImportError as e:
     sys.exit(100)
 
 
-def main():
+def systemctl():
     core = Context()
 
     while not core.exit:
@@ -44,8 +43,8 @@ def main():
         args = user_input[1:]
 
         # Send input data to the console
-        core.dispatch(cmd, args)
+        core.console(cmd, args)
 
 
 if __name__ == "__main__":
-    main()
+    systemctl()
