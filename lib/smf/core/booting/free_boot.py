@@ -18,7 +18,7 @@ from lib.smf.postgresql import DBManager
 from ..security.syscall import is_this_docker
 
 
-def boot():
+def systemd():
     smf.printd("Booting Storm Framework", level="INFO")
     try:
         count = 0
