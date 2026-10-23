@@ -36,7 +36,6 @@ func ExecuteStandard(req packet.RequestPacket, timeout time.Duration) packet.Res
 			RootCAs:            tlsCA,
 			InsecureSkipVerify: !req.Verify,
 			MinVersion:         tls.VersionTLS10,
-			MaxVersion:         tls.VersionTLS13,
 			Renegotiation:      tls.RenegotiateOnceAsClient, // Penting untuk beberapa bypass WAF
 		},
 		MaxIdleConns:          100,
