@@ -1,11 +1,11 @@
 package http
 
 import (
+	"io"
 	"bytes"
+	"strings"
 	"encoding/json"
     "encoding/base64"
-	"io"
-	"strings"
 )
 
 // ParseBody mendukung berbagai tipe data dari (bytes, string, reader, struct/json)
@@ -25,6 +25,12 @@ func ParseBody(encoding string, rawBody interface{}) (io.Reader, error) {
 		bodyFinal = string(bodyDec)
 	} else if encoding == "bytes" {
 		bodyFinal = bodyDec
+	} else if encoding == "dict" {
+		var mapBody map[string]interface{}
+        if err := json.Unmarshal(bodyDec, &mapBody); err != nil {
+            return nil, err
+        }
+		bodyFinal = mapBody
 	} else {
 		bodyFinal = rawBody
 	}
