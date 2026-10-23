@@ -117,7 +117,6 @@ class Plugin:
 
                     self.log_queue.put(request_body)
                     self.last_timestamp = row_ts
-
         except sqlite3.Error as e:
             smf.printd("Database error sendlog", e, level="ERROR")
         except Exception as e:
@@ -135,6 +134,8 @@ class Plugin:
 
             if not request_body:
                 continue
+
+            smf.printd("Sendlog", request_body, level="DEBUG")
 
             start_time = monotonic()
 
