@@ -60,7 +60,9 @@ func ExecuteStandard(req packet.RequestPacket, timeout time.Duration) packet.Res
 		return BuildErrorResponse("ERROR", "retryablehttp", "Request creation failed: "+err.Error())
 	}
 
-	httpReq.Header.Set("User-Agent", GetUserAgent(req.UA))
+	for key, value := range req.Headers {
+        httpReq.Header.Set(key, value)
+    }
 
 	resp, err := client.Do(httpReq)
 	if err != nil {
