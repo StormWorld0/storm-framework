@@ -72,6 +72,7 @@ class IPCPayloadBuilder:
     @staticmethod
     def build(state: HTTPState) -> Dict:
         body_str = ""
+        encode = ""
         if isinstance(state._body, str):
             body = state._body
             body_bytes = body.encode("utf-8")
