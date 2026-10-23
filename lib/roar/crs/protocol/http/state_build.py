@@ -3,6 +3,7 @@
 # -- Author zxelzy
 
 import smf
+import json
 import base64
 
 from typing import Dict
@@ -78,6 +79,11 @@ class IPCPayloadBuilder:
             body_bytes = body.encode("utf-8")
             body_str = base64.b64encode(body_bytes).decode("utf-8")
             encode = "string"
+
+        if isinstance(state._body, dict):
+            body_bytes = json.dumps(state._body).encode("utf-8")
+            body_str = base64.b64encode(body_bytes).decode("utf-8")
+            encode = "dict"
 
         if isinstance(state._body, bytes):
             body = state._body
