@@ -194,10 +194,10 @@ class Plugin:
                 level="INFO",
             )
             return True
-        except requests.exceptions.Timeout:
+        except http.Timeout:
             smf.printd("Request timeout sendlog", level="WARN")
             return False
-        except requests.exceptions.RequestException as e:
+        except http.HTrace as e:
             smf.printd("API sendlog request failed", e, level="ERROR")
             return False
 
