@@ -21,6 +21,6 @@ except ImportError as e:
 # Loading banner for style framework
 # call main to activate (Read Eval Print Loop) interface
 def systemb():
-    sysd()     # Running the boot system
-    style()    # Displays the UI/UX style of the REPL session
-    sysctl()   # Run the main control system
+    sysd()  # Running the boot system
+    style()  # Displays the UI/UX style of the REPL session
+    sysctl()  # Run the main control system
