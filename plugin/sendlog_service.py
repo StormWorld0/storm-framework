@@ -133,6 +133,9 @@ class Plugin:
             except queue.Empty:
                 continue
 
+            if not request_body:
+                continue
+
             start_time = monotonic()
 
             # Perform data delivery with an internal retry mechanism if it fails.
