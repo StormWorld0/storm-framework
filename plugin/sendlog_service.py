@@ -135,8 +135,6 @@ class Plugin:
             if not request_body:
                 continue
 
-            smf.printd("Sendlog", request_body, level="DEBUG")
-
             start_time = monotonic()
 
             # Perform data delivery with an internal retry mechanism if it fails.
@@ -161,6 +159,7 @@ class Plugin:
             "Content-Type": "application/json",
         }
         try:
+            smf.printd("Sendlog", payload, level="DEBUG")
             http = HTTPR()
             res = (
                 http.post(self.api_url, payload, headers)
