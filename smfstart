@@ -11,8 +11,8 @@ import sys
 import smf
 
 try:
-    from lib.ui.interface import systemb
-    systemb()
+    from lib.ui.interface import main
+    main()
 except ImportError as e:
     smf.printf(f"Error smfstart =>", e, file=sys.stderr)
     sys.exit(1)
