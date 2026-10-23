@@ -4,7 +4,6 @@ import json
 import queue
 import base64
 import sqlite3
-import requests
 import threading
 
 from time import monotonic
