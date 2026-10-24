@@ -40,14 +40,14 @@ func main() {
 	// Global ratelimiter initialization
 	utils.InitRateLimiterManager(ctx)
 
-	// Channel as Fan-In to collect all responses in a thread-safe manner.
-	// Buffers are allocated (1000) to prevent backpressure on the worker.
-	responseChan := make(chan packet.ResponsePacket, 1000)
-	
-	var wgWorkers sync.WaitGroup
 	// Thread-safe map for storing per-protocol Semaphores (Channels)
 	// Key: req.Primitive (string), Value: chan struct{} (Semaphore)
 	var semaphores sync.Map 
+	var wgWorkers sync.WaitGroup
+
+	// Channel as Fan-In to collect all responses in a thread-safe manner.
+	// Buffers are allocated (1000) to prevent backpressure on the worker.
+	responseChan := make(chan packet.ResponsePacket, 1000)
 	writerDone := make(chan struct{})
 
 	// DEDICATED WRITER GOROUTINE
