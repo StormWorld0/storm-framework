@@ -35,7 +35,7 @@ class HTTPState:
         timeout: float = 5.0,
         rlimit: int = 150,
         frate: int = 50,
-        con: int = 0,
+        con: int = 1,
         **kwargs,
     ):
         self._method = method.upper()
