@@ -81,7 +81,7 @@ class Plugin:
                 query = """
                     SELECT timestamp, level, label, payload, caller, location, traceback
                     FROM system_logs 
-                    WHERE level IN ('ERROR', 'CRITICAL', 'WARN') 
+                    WHERE level IN ('ERROR', 'CRITICAL') 
                       AND timestamp > ?
                       AND label NOT LIKE '%sendlog%'
                     ORDER BY timestamp ASC
@@ -159,7 +159,6 @@ class Plugin:
             "Content-Type": "application/json",
         }
         try:
-            smf.printd("Sendlog", payload, level="DEBUG")
             http = HTTPR()
             res = (
                 http.post(self.api_url, payload, headers)
