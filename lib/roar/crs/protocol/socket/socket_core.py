@@ -23,8 +23,6 @@ class SocketCore:
             stype=stype,
             sproto=sproto,
             mode="socket",
-            infotls=False,
-            close_session=False,
         )
 
         resp = CRS.send(packet)
@@ -46,8 +44,6 @@ class SocketCore:
             host=host,
             port=port,
             mode="bind",
-            infotls=False,
-            close_session=False,
         )
 
         resp = CRS.send(packet)
@@ -67,8 +63,6 @@ class SocketCore:
             state=self,
             backlog=backlog,
             mode="listen",
-            infotls=False,
-            close_session=False,
         )
 
         resp = CRS.send(packet)
@@ -86,8 +80,6 @@ class SocketCore:
         packet = IPCPayloadBuilder.build(
             state=self,
             mode="accept",
-            infotls=False,
-            close_session=False,
         )
 
         resp = CRS.send(packet)
@@ -113,8 +105,6 @@ class SocketCore:
             host=host,
             port=port,
             mode="connect",
-            infotls=False,
-            close_session=False,
         )
 
         resp = CRS.send(packet)
@@ -136,8 +126,6 @@ class SocketCore:
             host=host,
             port=port,
             mode="create",
-            infotls=False,
-            close_session=False,
         )
 
         resp = CRS.send(packet)
