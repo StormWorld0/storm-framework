@@ -248,8 +248,16 @@ const (
 
 
 func handleGetNameInfo(ctx *ExecutionContext) packet.ResponsePacket {
-	hostFinal := DerefString(ctx.Req.Host, "")
-	portFinal := DerefString(ctx.Req.Port, "")
+	addr, port, err := BuildTarget(ctx.Req.Host, ctx.Req.Port)
+	if err != nil {
+		return packet.ResponsePacket{
+			Status:  "ERROR",
+			Message: "Failed build target: " + err.Error(),
+		}
+	}
+
+	hostFinal := DerefString(addr, "")
+	portFinal := DerefString(port, "")
 	flags := ParseOptName(ctx.Req.Flags)
 	
 	ip := net.ParseIP(hostFinal)
