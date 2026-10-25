@@ -127,3 +127,18 @@ func BuildUdsPath(fd int, name string) (string, error) {
 
 	return udsPath, nil
 }
+
+// helper untuk mengonversi unix.Sockaddr ke string IP:Port
+func formatSockaddr(sa unix.Sockaddr) string {
+	switch v := sa.(type) {
+	case *unix.SockaddrInet4:
+		ip := net.IP(v.Addr[:])
+		return net.JoinHostPort(ip.String(), strconv.Itoa(v.Port))
+	case *unix.SockaddrInet6:
+		ip := net.IP(v.Addr[:])
+		return net.JoinHostPort(ip.String(), strconv.Itoa(v.Port))
+	case *unix.SockaddrUnix:
+		return v.Name
+	}
+	return ""
+}
