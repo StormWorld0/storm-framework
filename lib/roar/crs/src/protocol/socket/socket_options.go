@@ -14,9 +14,11 @@ func handleSetsockopt(ctx *ExecutionContext) packet.ResponsePacket {
 
 	var targetFD int = -1
 
-	if ctx.RawFD != -1 {
+	if ctx.RawFD != -1 {         // FD Socket
 		targetFD = ctx.RawFD
-	} else if ctx.Conn != nil {
+	} else if ctx.CltFD != -1 {  // FD Client Listener
+		targetFD = ctx.CltFD
+	} else if ctx.Conn != nil {  // FD net.Conn / tls.Conn
 		if sc, ok := ctx.Conn.(interface{ SyscallConn() (syscall.RawConn, error) }); ok {
 			raw, err := sc.SyscallConn()
 			if err != nil {
@@ -32,10 +34,6 @@ func handleSetsockopt(ctx *ExecutionContext) packet.ResponsePacket {
 		}
 	}
 
-	if targetFD == -1 {
-		return packet.ResponsePacket{Status: "ERROR", Message: "Could not obtain raw FD for setsockopt. Invalid socket state."}
-	}
-
 	level := ParseOptLevel(ctx.Req.OptLevel)
 	optName := ParseOptName(ctx.Req.OptName)
 	optVal := int(ctx.Req.OptVal)
@@ -46,8 +44,10 @@ func handleSetsockopt(ctx *ExecutionContext) packet.ResponsePacket {
 
 	if ctx.Conn != nil {
 	    ctx.SaveSession(ctx.Conn)
-	} else {
-		ctx.SaveSession(targetFD)
+	} else if ctx.RawFD != -1 {
+		ctx.SaveSession(ctx.RawFD)
+	} else if ctx.CltFD != -1 {
+		ctx.SaveSessionCFD(ctx.CltFD)
 	}
 
 	return packet.ResponsePacket{
