@@ -2,7 +2,6 @@ import smf
 
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
-
 from ...transport import CRS
 
 
@@ -32,8 +31,6 @@ class SocketTLS:
             ca=ca,
             verify=verify,
             mode="upgrade_tls",
-            infotls=True,
-            close_session=False,
         )
 
         resp = CRS.send(packet)
