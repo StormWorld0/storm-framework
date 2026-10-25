@@ -12,10 +12,7 @@ class Inspector:
         packet = IPCPayloadBuilder.build(
             state=self,
             cfd=self._cfd,
-            infotls=False,
             mode="getsockname",
-            cfd=self._cfd,
-            close_session=False,
         )
 
         resp = CRS.send(packet)
@@ -30,9 +27,7 @@ class Inspector:
         packet = IPCPayloadBuilder.build(
             state=self,
             cfd=self._cfd,
-            infotls=False,
             mode="getpeername",
-            close_session=False,
         )
 
         resp = CRS.send(packet)
