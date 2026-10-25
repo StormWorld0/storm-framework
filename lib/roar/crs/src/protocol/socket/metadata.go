@@ -4,8 +4,6 @@ import (
 	"reflect"
 	"strconv"
 	"time"
-	"net"
-
 	"golang.org/x/sys/unix"
 	ctls "github.com/StormWorld0/storm-framework/lib/roar/crs/src/tls"
 )
