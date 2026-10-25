@@ -2,6 +2,7 @@ from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
 from ...transport import CRS
 
+
 class Inspector:
     """Class khusus menangani Inspector Listener"""
 
