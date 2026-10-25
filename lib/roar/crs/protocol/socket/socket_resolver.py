@@ -9,7 +9,7 @@ class SocketResolver:
     def getaddrinfo(
         self,
         host: str,
-        port: str | int,
+        port: str | int = None,
         addrf: str | int = None,
         stype: str | int = None,
         sproto: str | int = None,
@@ -34,6 +34,29 @@ class SocketResolver:
         response._trace()
         response._ktrace()
         return response.addrinfo
+
+    def getnameinfo(
+        self, 
+        host: str, 
+        port: stt | int = None, 
+        flag: str | int = None, 
+        **kwargs,
+    ) -> SocketResponse:
+        """Dapatkan Hostname dari IP:PORT"""
+        self._ensure_open("getnameinfo")
+        packet = IPCPayloadBuilder.build(
+            state=self,
+            host=host,
+            port=port,
+            flag=flag,
+            mode="getnameinfo",
+        )
+        
+        resp = CRS.send(packet)
+        response = SocketResponse(resp)
+        response._trace()
+        response._ktrace()
+        return response.nameinfo
 
     def getsockname(self, **kwargs) -> SocketResponse:
         """Dapatkan IP local socket"""
