@@ -137,6 +137,8 @@ def execute(options, net):
             smf.printf("[✓] Hex bytes =>", resp.hex_bytes)
             smf.printf("[✓] Int bytes =>", resp.int_bytes)
             smf.printf("[✓] Str bytes =>", resp.str_bytes)
+    except KeyboardInterrupt:
+        pass
     except sock.STrace as e:
         smf.printf("[*] Error Socket =>", e)
     finally:
