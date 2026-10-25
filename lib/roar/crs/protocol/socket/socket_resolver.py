@@ -35,4 +35,37 @@ class SocketResolver:
         response = SocketResponse(resp)
         response._trace()
         response._ktrace()
-        return response
+        return response.addrinfo
+
+    def getsockname(self):
+        """Dapatkan IP local socket"""
+        self._ensure_open("getsockname")
+        packet = IPCPayloadBuilder.build(
+            state=self,
+            infotls=False,
+            mode="getsockname",
+            close_session=False,
+        )
+
+        resp = CRS.send(packet)
+        response = SocketResponse(resp)
+        response._trace()
+        response._ktrace()
+        return response.local_ip
+
+    def getpeername(self):
+        """Dapatkan IP server socket"""
+        self._ensure_open("getpeername")
+        packet = IPCPayloadBuilder.build(
+            state=self,
+            infotls=False,
+            mode="getpeername",
+            close_session=False,
+        )
+
+        resp = CRS.send(packet)
+        response = SocketResponse(resp)
+        response._trace()
+        response._ktrace()
+        return response.remote_ip
+    
