@@ -216,7 +216,6 @@ class CRS:
             smf.printd("Response Dict CRS", res_dict, level="DEBUG")
             return res_dict
         except KeyboardInterrupt:
-            smf.printd("KeyboardInterrupt detected in transport", level="INFO")
             return {"status": "ALERT", "message": "KeyboardInterrupt detected"}
         except Exception as e:
             smf.printd("Error send IPC CRS", e, level="ERROR")
