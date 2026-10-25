@@ -34,7 +34,7 @@ func performTLSHandshake(ctx context.Context, conn net.Conn, addr string, req pa
 func handleUpgradeTLS(ctx *ExecutionContext) packet.ResponsePacket {
 	if ctls.IsTLSConn(ctx.Conn) {
 		ctx.SaveSession(ctx.Conn)
-		return packet.ResponsePacket{Status: "ERROR", Message: "Connection is already TLS"}
+		return packet.ResponsePacket{Status: "WARN", Message: "Connection is already TLS"}
 	}
 	
 	file := os.NewFile(uintptr(ctx.RawFD), fmt.Sprintf("socket_tls_%d", ctx.RawFD))
