@@ -19,9 +19,7 @@ class SocketIO:
             state=self,
             data=data,
             flag=flag,
-            infotls=False,
             mode="sendall",
-            close_session=False,
         )
 
         resp = CRS.send(packet)
@@ -42,9 +40,7 @@ class SocketIO:
             state=self,
             data=data,
             flag=flag,
-            infotls=False,
             mode="send",
-            close_session=False,
         )
 
         resp = CRS.send(packet)
@@ -65,9 +61,7 @@ class SocketIO:
             state=self,
             readsize=readsize,
             flag=flag,
-            infotls=False,
             mode="recv",
-            close_session=False,
         )
 
         resp = CRS.send(packet)
@@ -92,9 +86,7 @@ class SocketIO:
             host=host,
             port=port,
             flag=flag,
-            infotls=False,
             mode="sendto",
-            close_session=False,
         )
 
         resp = CRS.send(packet)
@@ -119,9 +111,7 @@ class SocketIO:
             host=host,
             port=port,
             flag=flag,
-            infotls=False,
             mode="recvfrom",
-            close_session=False,
         )
 
         resp = CRS.send(packet)
