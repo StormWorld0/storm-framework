@@ -30,6 +30,29 @@ class Inspector:
         response._ktrace()
         return response
 
+    def getsockopt(
+        self,
+        level: str | int,
+        name: str | int,
+        **kwargs,
+    ) -> SocketResponse:
+        """Mengambil socket options"""
+        self.state._ensure_open("getsockopt")
+        packet = IPCPayloadBuilder.build(
+            state=self,
+            cfd=self._cfd,
+            level=level,
+            name=name,
+            mode="getsockopt",
+        )
+
+        resp = CRS.send(packet)
+        response = SocketResponse(resp)
+        response._trace()
+        response._ktrace()
+        val = response._data.get("val_opt", -1)
+        return val
+
     def getsockname(self) -> SocketResponse:
         """Dapatkan IP local socket"""
         self.state._ensure_open("getsockname")
