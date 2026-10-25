@@ -35,7 +35,7 @@ class SocketResolver:
         response._ktrace()
         return response.addrinfo
 
-    def getsockname(self, **kwargs):
+    def getsockname(self, **kwargs) -> SocketResponse:
         """Dapatkan IP local socket"""
         self._ensure_open("getsockname")
         packet = IPCPayloadBuilder.build(
@@ -49,7 +49,7 @@ class SocketResolver:
         response._ktrace()
         return response.local_ip
 
-    def getpeername(self, **kwargs):
+    def getpeername(self, **kwargs) -> SocketResponse:
         """Dapatkan IP server socket"""
         self._ensure_open("getpeername")
         packet = IPCPayloadBuilder.build(
