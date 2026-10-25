@@ -103,7 +103,7 @@ func (ctx *ExecutionContext) SaveSession(val interface{}) {
 func (ctx *ExecutionContext) CloseSession() packet.ResponsePacket {
 	if ctx.Req.SessionID != "" && ctx.Req.CloseSess {
 		utils.SessionHosts.Delete(ctx.Req.SessionID) // Delete host
-		utils.RemoveSessionLock(ctx.Req.SessionID)   // Delete SessionLock
+		utils.SessionLocks.Delete(ctx.Req.SessionID) // Delete SessionLock
 
 		// Delete Client's Descriptor File
 		if val, ok := utils.ClientFD.LoadAndDelete(ctx.Req.SessionID); ok {
@@ -111,7 +111,7 @@ func (ctx *ExecutionContext) CloseSession() packet.ResponsePacket {
 		}
 		if val, ok := utils.ActiveSessions.LoadAndDelete(ctx.Req.SessionID); ok {
 			switch v := val.(type) {
-			case net.Conn:
+			case net.Conn:    //
 				v.Close()     // Close if data type net.Conn
 			case int:         //
 				unix.Close(v) // Close if raw FD data type
@@ -150,7 +150,7 @@ func (ctx *ExecutionContext) Cleanup() {
 			utils.ActiveSessions.Delete(ctx.Req.SessionID) // Delete Active Session
 			utils.SessionHosts.Delete(ctx.Req.SessionID)   // Delete Host
 			utils.ClientFD.Delete(ctx.Req.SessionID)       // Delete ClientFD
-			utils.RemoveSessionLock(ctx.Req.SessionID)     // Delete SessionsLock
+			utils.SessionLocks.Delete(ctx.Req.SessionID)   // Delete SessionsLock
 		}
 	}
 }
