@@ -5,7 +5,7 @@ import socket
 from typing import Dict, Any, Optional
 
 from .utils_fd import real_fd
-from .exception import SockTrace
+from .exception import SockTrace, KITrace
 from .metadata import TLSMetadata
 
 
@@ -156,6 +156,12 @@ class SocketResponse:
         """Melempar Exception"""
         if (sts := self.status.upper()) in {"ERROR", "CRITICAL"}:
             raise SockTrace(sts, self.message)
+        return None
+
+    def _ktrace(self):
+        """Melempar KeyboardInterrupt"""
+        if (sts := self.status.upper()) == "INTER":
+            raise KITrace(sts, self.message)
         return None
 
     def _client_fd(self):
