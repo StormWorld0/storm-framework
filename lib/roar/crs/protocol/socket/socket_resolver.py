@@ -36,10 +36,10 @@ class SocketResolver:
         return response.addrinfo
 
     def getnameinfo(
-        self, 
-        host: str, 
-        port: stt | int = None, 
-        flag: str | int = None, 
+        self,
+        host: str,
+        port: stt | int = None,
+        flag: str | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Dapatkan Hostname dari IP:PORT"""
@@ -51,7 +51,7 @@ class SocketResolver:
             flag=flag,
             mode="getnameinfo",
         )
-        
+
         resp = CRS.send(packet)
         response = SocketResponse(resp)
         response._trace()
