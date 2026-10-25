@@ -6,6 +6,7 @@ import (
 	"time"
 	"context"
 	"strconv"
+	"strings"
 	"golang.org/x/sys/unix"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 )
@@ -235,3 +236,76 @@ func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
 		},
 	}
 }
+
+
+const (
+	ni_Numerichost = 0x01 // Don't resolve hostname, return IP as is
+	ni_Numericserv = 0x02 // Do not resolve service, return numeric port
+	ni_Namereqd    = 0x04 // Error if hostname cannot be resolved
+	ni_Dgram       = 0x08 // Use UDP protocol for lookup service (default TCP)
+	ni_Nofqdn      = 0x10 // Return only hostname without domain (before first dot)
+)
+
+
+func handleGetNameInfo(ctx *ExecutionContext) packet.ResponsePacket {
+	hostFinal := ctx.Req.Host
+	portFinal := ctx.Req.Port
+	flags := ctx.Req.Flags
+	
+	ip := net.ParseIP(hostFinal)
+	if ip == nil {
+		return packet.ResponsePacket{Status: "ERROR", Message: "Invalid IP address."}
+	}
+
+	var host string
+	var serv string
+
+	// -- Host / Reverse DNS --
+	if flags&ni_Numerichost != 0 {
+		host = ip.String()
+	} else {
+		names, err := net.DefaultResolver.LookupAddr(context.Background(), ip.String())
+		if err != nil || len(names) == 0 {
+			if flags&ni_Namereqd != 0 {
+				return packet.ResponsePacket{Status: "ERROR", Message: err.Error()}
+			}
+			// Fallback to IP string if name not found
+			host = ip.String()
+		}
+		
+		host = strings.TrimSuffix(names[0], ".")
+		// Extract hostname
+		if flags&ni_Nofqdn != 0 {
+			if idx := strings.Index(host, "."); idx != -1 {
+				host = host[:idx]
+			}
+		}
+	}
+
+	// -- Service / Port --
+	if flags&ni_Numericserv != 0 {
+		serv = strconv.Itoa(portFinal)
+	} else {
+		proto := "tcp"
+		if flags&ni_Dgram != 0 {
+			proto = "udp"
+		}
+
+		serviceName, lookupErr := net.LookupPort(proto, strconv.Itoa(portFinal))
+		if lookupErr != nil {
+			serv = strconv.Itoa(portFinal) // Fallback to port number
+		} else {
+			serv = serviceName
+		}
+	}
+
+	return packet.ResponsePacket{
+		Status: "SUCCESS",
+		Data: map[string]interface{}{
+			"host":    host,
+			"service": serv,
+			"rtt_ms":  time.Since(ctx.StartTime).Milliseconds(),
+		},
+	}
+}
+
