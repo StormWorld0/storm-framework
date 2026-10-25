@@ -6,6 +6,30 @@ from ...transport import CRS
 class Inspector:
     """Class khusus menangani Inspector Listener"""
 
+    def setsockopt(
+        self,
+        level: str | int,
+        name: str | int,
+        value: int = None,
+        **kwargs,
+    ) -> SocketResponse:
+        """Socket Options Configuration"""
+        self.state._ensure_open("setsockopt")
+        packet = IPCPayloadBuilder.build(
+            state=self,
+            cfd=self._cfd,
+            level=level,
+            name=name,
+            value=value,
+            mode="setsockopt",
+        )
+
+        resp = CRS.send(packet)
+        response = SocketResponse(resp)
+        response._trace()
+        response._ktrace()
+        return response
+
     def getsockname(self) -> SocketResponse:
         """Dapatkan IP local socket"""
         self.state._ensure_open("getsockname")
@@ -35,3 +59,15 @@ class Inspector:
         response._trace()
         response._ktrace()
         return response.remote_ip
+
+    def timeout(self, value: float):
+        """Global Timeout"""
+        self.state._timeout = float(value)
+        return self
+
+    def goroutine(self, value: int):
+        """Global Goroutine"""
+        if not isinstance(value, int):
+            raise TypeError("[!] Goroutine must be integer.")
+        self.state.con = value
+        return self
