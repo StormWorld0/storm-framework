@@ -1,9 +1,11 @@
 package socket
 
 import (
+	"os"
 	"net"
 	"fmt"
 	"time"
+	"sync"
 	"context"
 	"strconv"
 	"strings"
@@ -347,15 +349,19 @@ func handleGetNameInfo(ctx *ExecutionContext) packet.ResponsePacket {
 			protocol = "udp"
 		}
 
+		var serviceMapOnce sync.Once
+		var serviceMap map[int]map[string]string
+		var serviceErr error
+		
 		serviceMapOnce.Do(func() {
-			service, err = loadService("/etc/services")
+			serviceMap, serviceErr = loadService("/etc/services")
 		})
-		if err != nil {
+		if serviceErr != nil {
 			serv = portFinal // Fallback to port number
 		}
 		
 		portNum, _ := strconv.Atoi(portFinal)
-		if proto, ok := service[portNum]; ok {
+		if proto, ok := serviceMap[portNum]; ok {
 			if name, ok := proto[protocol]; ok {
 				serv = name
 			}
