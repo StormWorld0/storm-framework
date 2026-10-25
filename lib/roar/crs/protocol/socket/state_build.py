@@ -160,7 +160,9 @@ class IPCPayloadBuilder:
             "client-fd": cfd if cfd is not None else state.cfd,
             "session_id": state.sessid,
             "keep-alive": state.keepalive,
-            "close-session": close_session if close_session is not None else state.close_session,
+            "close-session": (
+                close_session if close_session is not None else state.close_session
+            ),
             "mode": mode if mode is not None else state.mode,
             "verify": verify if verify is not None else state.verify,
             "info_tls": infotls if infotls is not None else state.infotls,
