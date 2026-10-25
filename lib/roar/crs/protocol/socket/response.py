@@ -99,7 +99,7 @@ class SocketResponse:
     def addrinfo(self) -> list[tuple]:
         """Mengonversi data 'results' dari getaddrinfo ke daftar tuple standar"""
         if self.status != "SUCCESS":
-            return []
+            return [(self.status, self.message)]
 
         results = self._data.get("results", [])
         parsed = []
@@ -122,6 +122,16 @@ class SocketResponse:
                 sockaddr = (ip, port)
             parsed.append((family, socktype, protocol, canonname, sockaddr))
         return parsed
+
+    @property
+    def nameinfo(self) -> tuple[str, str]:
+        """Mengembalikan 'tuple' dari getnameinfo."""
+        if self.status != "SUCCESS":
+            return (self.status, self.message)
+
+        host = self._data.get("host", "")
+        serv = self._data.get("service", "")
+        return (host, serv)
 
     @property
     def rtt_ms(self) -> int:
