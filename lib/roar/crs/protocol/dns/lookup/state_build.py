@@ -18,7 +18,7 @@ class DNState:
         timeout: float = 2.0,
         rlimit: int = 150,
         frate: int = 10,
-        con: int = 0,
+        con: int = 1,
         **kwargs,
     ):
         self.domains = domain
