@@ -248,9 +248,9 @@ const (
 
 
 func handleGetNameInfo(ctx *ExecutionContext) packet.ResponsePacket {
-	hostFinal := ctx.Req.Host
-	portFinal := ctx.Req.Port
-	flags := ctx.Req.Flags
+	hostFinal := DerefString(ctx.Req.Host, "")
+	portFinal := DerefString(ctx.Req.Port, "")
+	flags := ParseOptName(ctx.Req.Flags)
 	
 	ip := net.ParseIP(hostFinal)
 	if ip == nil {
