@@ -29,6 +29,28 @@ class SocketOptions:
         response._ktrace()
         return response
 
+    def getsockopt(
+        self,
+        level: str | int,
+        name: str | int,
+        **kwargs,
+    ) -> SocketResponse:
+        """Mengambil socket options"""
+        self._ensure_open("getsockopt")
+        packet = IPCPayloadBuilder.build(
+            state=self,
+            level=level,
+            name=name,
+            mode="getsockopt",
+        )
+
+        resp = CRS.send(packet)
+        response = SocketResponse(resp)
+        response._trace()
+        response._ktrace()
+        val = response._data.get("val_opt", -1)
+        return val
+
     def timeout(self, value: float):
         """Global Timeout"""
         self._timeout = float(value)
