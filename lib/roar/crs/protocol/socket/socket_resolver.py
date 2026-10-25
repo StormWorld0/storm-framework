@@ -68,4 +68,3 @@ class SocketResolver:
         response._trace()
         response._ktrace()
         return response.remote_ip
-    
