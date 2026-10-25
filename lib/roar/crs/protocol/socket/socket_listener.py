@@ -22,12 +22,10 @@ class ClientListener(Inspector):
         self.state._ensure_open("sendall")
         packet = IPCPayloadBuilder.build(
             state=self.state,
+            cfd=self._cfd,
             data=data,
             flag=flag,
-            infotls=False,
-            cfd=self._cfd,
             mode="sendall",
-            close_session=False,
         )
 
         resp = CRS.send(packet)
@@ -46,12 +44,10 @@ class ClientListener(Inspector):
         self.state._ensure_open("send")
         packet = IPCPayloadBuilder.build(
             state=self.state,
+            cfd=self._cfd,
             data=data,
             flag=flag,
-            infotls=False,
-            cfd=self._cfd,
             mode="send",
-            close_session=False,
         )
 
         resp = CRS.send(packet)
@@ -70,12 +66,10 @@ class ClientListener(Inspector):
         self.state._ensure_open("recv")
         packet = IPCPayloadBuilder.build(
             state=self.state,
+            cfd=self._cfd,
             readsize=readsize,
             flag=flag,
-            infotls=False,
-            cfd=self._cfd,
             mode="recv",
-            close_session=False,
         )
 
         resp = CRS.send(packet)
@@ -96,14 +90,12 @@ class ClientListener(Inspector):
         self.state._ensure_open("sendto")
         packet = IPCPayloadBuilder.build(
             state=self.state,
+            cfd=self._cfd,
             data=data,
             host=host,
             port=port,
             flag=flag,
-            infotls=False,
-            cfd=self._cfd,
             mode="sendto",
-            close_session=False,
         )
 
         resp = CRS.send(packet)
@@ -122,12 +114,10 @@ class ClientListener(Inspector):
         self.state._ensure_open("recvfrom")
         packet = IPCPayloadBuilder.build(
             state=self.state,
+            cfd=self._cfd,
             readsize=readsize,
             flag=flag,
-            infotls=False,
-            cfd=self._cfd,
             mode="recvfrom",
-            close_session=False,
         )
 
         resp = CRS.send(packet)
@@ -149,7 +139,6 @@ class ClientListener(Inspector):
         packet = IPCPayloadBuilder.build(
             state=self.state,
             mode="close-cfd",
-            close_session=False,
         )
 
         resp = CRS.send(packet)
