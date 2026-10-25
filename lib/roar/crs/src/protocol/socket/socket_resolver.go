@@ -292,7 +292,7 @@ func handleGetNameInfo(ctx *ExecutionContext) packet.ResponsePacket {
 
 	// -- Service / Port --
 	if flags&ni_Numericserv != 0 {
-		serv = strconv.Atoi(portFinal)
+		serv, _ = strconv.Atoi(portFinal)
 	} else {
 		proto := "tcp"
 		if flags&ni_Dgram != 0 {
@@ -301,7 +301,7 @@ func handleGetNameInfo(ctx *ExecutionContext) packet.ResponsePacket {
 
 		serviceName, lookupErr := net.LookupPort(proto, portFinal)
 		if lookupErr != nil {
-			serv = strconv.Atoi(portFinal) // Fallback to port number
+			serv, _ = strconv.Atoi(portFinal) // Fallback to port number
 		} else {
 			serv = serviceName
 		}
