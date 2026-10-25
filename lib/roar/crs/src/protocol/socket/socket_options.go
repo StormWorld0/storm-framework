@@ -111,7 +111,6 @@ func handleGetSockOpt(ctx *ExecutionContext) packet.ResponsePacket {
 			"level":     level,
 			"opt_name":  optName,
 			"val_opt":   val,
-			"rtt_ms":    time.Since(ctx.StartTime).Milliseconds(),
 		},
 	}
 }
