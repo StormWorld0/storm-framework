@@ -284,16 +284,16 @@ func handleGetNameInfo(ctx *ExecutionContext) packet.ResponsePacket {
 
 	// -- Service / Port --
 	if flags&ni_Numericserv != 0 {
-		serv = strconv.Itoa(portFinal)
+		serv = portFinal
 	} else {
 		proto := "tcp"
 		if flags&ni_Dgram != 0 {
 			proto = "udp"
 		}
 
-		serviceName, lookupErr := net.LookupPort(proto, strconv.Itoa(portFinal))
+		serviceName, lookupErr := net.LookupPort(proto, portFinal)
 		if lookupErr != nil {
-			serv = strconv.Itoa(portFinal) // Fallback to port number
+			serv = portFinal // Fallback to port number
 		} else {
 			serv = serviceName
 		}
