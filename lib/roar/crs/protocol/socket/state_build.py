@@ -128,12 +128,6 @@ class IPCPayloadBuilder:
         mode: str = None,
         close_session: bool = None,
     ) -> dict:
-        # Mutasi state keamanan secara dinamis dari operasi spesifik
-        if verify is not None:
-            state.verify = verify
-
-        if addr_fam is not None:
-            state.addr_fam = addr_fam
 
         # Encoding muatan data
         data_str = ""
