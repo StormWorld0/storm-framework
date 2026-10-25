@@ -1,6 +1,5 @@
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
-
 from ...transport import CRS
 
 
@@ -22,8 +21,6 @@ class SocketOptions:
             name=name,
             value=value,
             mode="setsockopt",
-            infotls=False,
-            close_session=False,
         )
 
         resp = CRS.send(packet)
