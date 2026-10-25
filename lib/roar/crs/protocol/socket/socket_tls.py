@@ -42,4 +42,5 @@ class SocketTLS:
 
         response = SocketResponse(resp)
         response._trace()
+        response._ktrace()
         return response
