@@ -95,7 +95,7 @@ func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
 	family := ParseAF(ctx.Req.AF)
 	sockType := ParseSockType(ctx.Req.SType)
 	protocol := ParseProtocol(ctx.Req.SProto)
-	flags := ParseOptName(ctx.Req.Flags)
+	flags := ParseFlags(ctx.Req.Flags)
 
 	var targetPort int
 
@@ -246,6 +246,54 @@ const (
 	ni_Nofqdn      = 0x10 // Return only hostname without domain (before first dot)
 )
 
+func loadService(path string) (map[int]map[string]string, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[int]map[string]string)
+	lines := strings.Split(string(data), "\n")
+
+	for _, line := range lines {
+		// Hapus komentar dan spasi berlebih.
+		if idx := strings.Index(line, "#"); idx != -1 {
+			line = line[:idx]
+		}
+		fields := strings.Fields(line)
+		if len(fields) < 2 {
+			continue
+		}
+
+		serviceName := fields[0]
+		portProto := fields[1] // contoh: "80/tcp"
+
+		parts := strings.Split(portProto, "/")
+		if len(parts) != 2 {
+			continue
+		}
+
+		portNum, err := strconv.Atoi(parts[0])
+		if err != nil {
+			continue
+		}
+
+		protocol := parts[1]
+		if protocol != "tcp" && protocol != "udp" {
+			continue
+		}
+
+		if result[portNum] == nil {
+			result[portNum] = make(map[string]string)
+		}
+
+		if _, exists := result[portNum][protocol]; !exists {
+			result[portNum][protocol] = serviceName
+		}
+	}
+	return result, nil
+}
+
 
 func handleGetNameInfo(ctx *ExecutionContext) packet.ResponsePacket {
 	addr, port, err := BuildTarget(ctx.Req.Host, ctx.Req.Port)
@@ -258,7 +306,7 @@ func handleGetNameInfo(ctx *ExecutionContext) packet.ResponsePacket {
 
 	hostFinal := DerefString(addr, "")
 	portFinal := DerefString(port, "")
-	flags := ParseOptName(ctx.Req.Flags)
+	flags := ParseFlags(ctx.Req.Flags)
 	
 	ip := net.ParseIP(hostFinal)
 	if ip == nil {
@@ -266,7 +314,7 @@ func handleGetNameInfo(ctx *ExecutionContext) packet.ResponsePacket {
 	}
 
 	var host string
-	var serv int
+	var serv string
 
 	// -- Host / Reverse DNS --
 	if flags&ni_Numerichost != 0 {
@@ -292,18 +340,25 @@ func handleGetNameInfo(ctx *ExecutionContext) packet.ResponsePacket {
 
 	// -- Service / Port --
 	if flags&ni_Numericserv != 0 {
-		serv, _ = strconv.Atoi(portFinal)
+		serv = portFinal
 	} else {
-		proto := "tcp"
+		protocol := "tcp"
 		if flags&ni_Dgram != 0 {
-			proto = "udp"
+			protocol = "udp"
 		}
 
-		serviceName, lookupErr := net.LookupPort(proto, portFinal)
-		if lookupErr != nil {
-			serv, _ = strconv.Atoi(portFinal) // Fallback to port number
-		} else {
-			serv = serviceName
+		serviceMapOnce.Do(func() {
+			service, err = loadService("/etc/services")
+		})
+		if err != nil {
+			serv = portFinal // Fallback to port number
+		}
+		
+		portNum, _ := strconv.Atoi(portFinal)
+		if proto, ok := service[portNum]; ok {
+			if name, ok := proto[protocol]; ok {
+				serv = name
+			}
 		}
 	}
 
