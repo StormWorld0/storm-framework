@@ -1,6 +1,5 @@
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
-
 from ...transport import CRS
 
 
@@ -15,6 +14,7 @@ class SocketResolver:
         stype: str | int = None,
         sproto: str | int = None,
         flag: str | int = None,
+        **kwargs,
     ) -> SocketResponse:
         """Dapatkan informasi alamat"""
         self._ensure_open("getaddrinfo")
@@ -26,9 +26,7 @@ class SocketResolver:
             stype=stype,
             sproto=sproto,
             flag=flag,
-            infotls=False,
             mode="getaddrinfo",
-            close_session=False,
         )
 
         resp = CRS.send(packet)
@@ -37,14 +35,12 @@ class SocketResolver:
         response._ktrace()
         return response.addrinfo
 
-    def getsockname(self):
+    def getsockname(self, **kwargs):
         """Dapatkan IP local socket"""
         self._ensure_open("getsockname")
         packet = IPCPayloadBuilder.build(
             state=self,
-            infotls=False,
             mode="getsockname",
-            close_session=False,
         )
 
         resp = CRS.send(packet)
@@ -53,14 +49,12 @@ class SocketResolver:
         response._ktrace()
         return response.local_ip
 
-    def getpeername(self):
+    def getpeername(self, **kwargs):
         """Dapatkan IP server socket"""
         self._ensure_open("getpeername")
         packet = IPCPayloadBuilder.build(
             state=self,
-            infotls=False,
             mode="getpeername",
-            close_session=False,
         )
 
         resp = CRS.send(packet)
