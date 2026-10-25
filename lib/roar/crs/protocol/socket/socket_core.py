@@ -30,6 +30,7 @@ class SocketCore:
         resp = CRS.send(packet)
         response = SocketResponse(resp)
         response._trace()
+        response._ktrace()
         return response
 
     def bind(
@@ -52,6 +53,7 @@ class SocketCore:
         resp = CRS.send(packet)
         response = SocketResponse(resp)
         response._trace()
+        response._ktrace()
         return response
 
     def listen(
@@ -72,6 +74,7 @@ class SocketCore:
         resp = CRS.send(packet)
         response = SocketResponse(resp)
         response._trace()
+        response._ktrace()
         return response
 
     def accept(
@@ -90,6 +93,7 @@ class SocketCore:
         resp = CRS.send(packet)
         response = SocketResponse(resp)
         response._trace()
+        response._ktrace()
 
         cfd = response._client_fd()
         if cfd < 0:
@@ -116,6 +120,7 @@ class SocketCore:
         resp = CRS.send(packet)
         response = SocketResponse(resp)
         response._trace()
+        response._ktrace()
         return response
 
     def create_connection(
@@ -138,6 +143,7 @@ class SocketCore:
         resp = CRS.send(packet)
         response = SocketResponse(resp)
         response._trace()
+        response._ktrace()
         return response
 
     def close(
@@ -156,4 +162,5 @@ class SocketCore:
 
         response = SocketResponse(resp)
         response._trace()
+        response._ktrace()
         return response
