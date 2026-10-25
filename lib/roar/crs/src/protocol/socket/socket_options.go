@@ -44,7 +44,11 @@ func handleSetsockopt(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Setsockopt failed: " + err.Error()}
 	}
 
-	ctx.SaveSession(targetFD)
+	if ctx.Conn != nil {
+	    ctx.SaveSession(ctx.Conn)
+	} else {
+		ctx.SaveSession(targetFD)
+	}
 
 	return packet.ResponsePacket{
 		Status: "SUCCESS",
