@@ -55,7 +55,7 @@ class SocketIO:
 
     def recv(
         self,
-        readsize: int = None,
+        readsize: int,
         flag: str | int = None,
         **kwargs,
     ) -> SocketResponse:
@@ -105,7 +105,9 @@ class SocketIO:
 
     def recvfrom(
         self,
-        readsize: int = None,
+        readsize: int,
+        host: str = None,
+        port: str | int = None,
         flag: str | int = None,
         **kwargs,
     ) -> SocketResponse:
@@ -114,6 +116,8 @@ class SocketIO:
         packet = IPCPayloadBuilder.build(
             state=self,
             readsize=readsize,
+            host=host,
+            port=port,
             flag=flag,
             infotls=False,
             mode="recvfrom",
