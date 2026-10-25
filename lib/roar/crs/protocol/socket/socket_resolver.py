@@ -34,4 +34,5 @@ class SocketResolver:
         resp = CRS.send(packet)
         response = SocketResponse(resp)
         response._trace()
+        response._ktrace()
         return response
