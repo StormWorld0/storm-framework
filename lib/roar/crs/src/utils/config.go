@@ -10,8 +10,8 @@ var SessionHosts = sync.Map{}   // map[string]string (Host)
 var ClientFD = sync.Map{}       // map[string]string (File Decriptor Client)
 
 // Store Mutex (Lock) per SessionID
-var sessionLocks sync.Map
+var SessionLocks sync.Map
 func GetSessionLock(sessionID string) *sync.Mutex {
-	mu, _ := sessionLocks.LoadOrStore(sessionID, &sync.Mutex{})
+	mu, _ := SessionLocks.LoadOrStore(sessionID, &sync.Mutex{})
 	return mu.(*sync.Mutex)
 }
