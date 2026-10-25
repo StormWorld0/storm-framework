@@ -28,7 +28,6 @@ func handleSocket(ctx *ExecutionContext) packet.ResponsePacket {
 	}
 	
 	ctx.SaveSession(fd)
-
 	return packet.ResponsePacket{
 		Status: "SUCCESS",
 		Data: map[string]interface{}{
@@ -39,9 +38,6 @@ func handleSocket(ctx *ExecutionContext) packet.ResponsePacket {
 
 
 func handleBind(ctx *ExecutionContext) packet.ResponsePacket {
-	if ctx.Req.SessionID == "" {
-		return packet.ResponsePacket{Status: "ERROR", Message: "SessionID is required for bind"}
-	}
 	if ctx.RawFD == -1 {
 		return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found. Call 'socket' primitive first."}
 	}
@@ -55,19 +51,8 @@ func handleBind(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Bind failed: " + err.Error()}
 	}
 
-	localAddr, err := unix.Getsockname(ctx.RawFD)
-	if err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: "Failed to see local addr & port: " + err.Error()}
-	}
-
 	ctx.SaveSession(ctx.RawFD)
-
-	return packet.ResponsePacket{
-		Status: "SUCCESS",
-		Data: map[string]interface{}{
-			"local_ip": localAddr,
-		},
-	}
+	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(ctx.RawFD, 0)}
 }
 
 
@@ -86,8 +71,7 @@ func handleListen(ctx *ExecutionContext) packet.ResponsePacket {
 	}
 
 	ctx.SaveSession(ctx.RawFD)
-
-	return packet.ResponsePacket{Status: "SUCCESS", Data: map[string]interface{}{"backlog": backlog}}
+	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(ctx.RawFD, 0)}
 }
 
 
@@ -138,6 +122,7 @@ func handleConnect(ctx *ExecutionContext) packet.ResponsePacket {
 	if ctx.Req.SessionID == "" {
 		return packet.ResponsePacket{Status: "ERROR", Message: "SessionID is required for connect"}
 	}
+	
 	if ctx.RawFD == -1 {
 		return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found for this session. Call 'socket' primitive first."}
 	}
@@ -199,8 +184,6 @@ func handleCreate(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ALERT", Message: "TCP Dial failed: " + err.Error()}
 	}
 
-	ctx.Conn = rawConn
-	ctx.SaveSession(ctx.Conn)
-
+	ctx.SaveSession(rawConn)
 	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadata(0)}
 }
