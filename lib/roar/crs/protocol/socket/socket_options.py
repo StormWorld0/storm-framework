@@ -29,6 +29,7 @@ class SocketOptions:
         resp = CRS.send(packet)
         response = SocketResponse(resp)
         response._trace()
+        response._ktrace()
         return response
 
     def timeout(self, value: float):
