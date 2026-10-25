@@ -33,6 +33,7 @@ class ClientListener:
         resp = CRS.send(packet)
         response = SocketResponse(resp)
         response._trace()
+        response._ktrace()
         return response
 
     def send(
@@ -56,6 +57,7 @@ class ClientListener:
         resp = CRS.send(packet)
         response = SocketResponse(resp)
         response._trace()
+        response._ktrace()
         return response
 
     def recv(
@@ -79,6 +81,7 @@ class ClientListener:
         resp = CRS.send(packet)
         response = SocketResponse(resp)
         response._trace()
+        response._ktrace()
         return response
 
     def sendto(
@@ -106,6 +109,7 @@ class ClientListener:
         resp = CRS.send(packet)
         response = SocketResponse(resp)
         response._trace()
+        response._ktrace()
         return response
 
     def recvfrom(
@@ -129,6 +133,7 @@ class ClientListener:
         resp = CRS.send(packet)
         response = SocketResponse(resp)
         response._trace()
+        response._ktrace()
         return response
 
     def close(
@@ -152,4 +157,5 @@ class ClientListener:
 
         response = SocketResponse(resp)
         response._trace()
+        response._ktrace()
         return response
