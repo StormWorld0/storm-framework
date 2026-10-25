@@ -4,16 +4,15 @@
 package main
 
 import (
-	"bufio"
-	"context"
-	"fmt"
 	"os"
-	"encoding/json"
-	"os/signal"
-	"syscall"
+	"fmt"
 	"sync"
 	"time"
-
+	"bufio"
+	"context"
+	"syscall"
+	"os/signal"
+	"encoding/json"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/utils"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/protocol"
@@ -108,31 +107,29 @@ func main() {
 		// [ASYNCHRONOUS MODE WITH SEMAPHORE]: For protocols that support concurrency
 		// This is also used so that the primitives being executed do not block the main thread.
 		// Load or initialize semaphore with req.Go capacity to be dynamic.
-		var sem chan struct{}
+		var sem *DynamicSemaphore
         if semIntf, ok := semaphores.Load(req.Primitive); ok {
-            sem = semIntf.(chan struct{})
+            sem = semIntf.(*DynamicSemaphore)
         } else {
             // Memory allocation ONLY occurs when a primitive is called for the first time.
-            newSem := make(chan struct{}, req.Go)
+            newSem := NewDynamicSemaphore(req.Go)
             actual, _ := semaphores.LoadOrStore(req.Primitive, newSem)
-            sem = actual.(chan struct{})
+            sem = actual.(*DynamicSemaphore)
         }
 
-		// Acquire Token with Cancellation Aware
-		select {
-		case sem <- struct{}{}:
-		case <-ctx.Done():
+		// Acquire Token with Cancellation Aware & resize evaluation
+		if err := sem.Acquire(ctx, req.Go); err != nil {
 			goto Shutdown
 		}
 		
 		wgWorkers.Add(1)
 
 		// FAN-OUT WORKER GOROUTINE
-		go func(r packet.RequestPacket, semaphore chan struct{}) {
+		go func(r packet.RequestPacket, semaphore *DynamicSemaphore) {
 			defer wgWorkers.Done()
 			
 			// Release Token: Returns the quota to the semaphore when execution is complete.
-			defer func() { <-semaphore }()
+			defer semaphore.Release()
 
 			// Initialize Ratelimit Set
 			utils.SetPrimitiveRate(r.Primitive, r.RateLimit)
@@ -180,7 +177,7 @@ func main() {
 	select {
 	case <-shutdownComplete:
 		os.Exit(0)
-	case <-time.After(500 * time.Millisecond):
+	case <-time.After(1000 * time.Millisecond):
 		fmt.Fprintf(os.Stderr, "CRS Engine: Force exit due to worker timeout\n")
 		os.Exit(1)
 	}
