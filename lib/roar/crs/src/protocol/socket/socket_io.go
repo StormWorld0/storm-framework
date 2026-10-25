@@ -18,26 +18,29 @@ func handleSendAll(ctx *ExecutionContext) packet.ResponsePacket {
 		fd = ctx.Req.CltFD
 	}
 	
-	if fd < 0 {
-		return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found for sendall."}
+	if fd >= 0 {
+		flag := ParseFlags(ctx.Req.Flags)
+		if err := ExecuteFDWriteAll(fd, ctx.Req.Data, ctx.Timeout, flag); err != nil {
+		    ctx.SaveSession(ctx.RawFD)
+		    // Error timeout (EAGAIN / EWOULDBLOCK)
+		    if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
+		    	return packet.ResponsePacket{
+			    	Status:  "TIMEOUT",
+				    Message: "SendAll failed: " + err.Error(),
+				    Data:    ctx.GenerateMetadataFD(fd, 0),
+		    	} 
+	    	}
+	    	return packet.ResponsePacket{Status: "ERROR", Message: "SendAll failed: " + err.Error()}
+    	}
+	    ctx.SaveSession(ctx.RawFD)
+	    return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(fd, 0)}
 	}
-
-	flag := ParseFlags(ctx.Req.Flags)
 	
-	if err := ExecuteFDWriteAll(fd, ctx.Req.Data, ctx.Timeout, flag); err != nil {
-		ctx.SaveSession(ctx.RawFD)
-		// Error timeout (EAGAIN / EWOULDBLOCK)
-		if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
-			return packet.ResponsePacket{
-				Status:  "TIMEOUT",
-				Message: "SendAll failed: " + err.Error(),
-				Data:    ctx.GenerateMetadataFD(fd, 0),
-			} 
-		}
+	if err := ExecuteWrite(ctx.Conn, ctx.Req.Data, ctx.Timeout); err != nil {
 		return packet.ResponsePacket{Status: "ERROR", Message: "SendAll failed: " + err.Error()}
 	}
-	ctx.SaveSession(ctx.RawFD)
-	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(fd, 0)}
+	ctx.SaveSession(ctx.Conn)
+    return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadata(0)}
 }
 
 
@@ -164,7 +167,6 @@ func handleSendTo(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Sendto failed: " + err.Error()}
 	}
 	ctx.SaveSession(ctx.RawFD)
-	
 	return packet.ResponsePacket{
 		Status: "SUCCESS", 
 		Data: ctx.GenerateMetadataFD(fd, 0),
