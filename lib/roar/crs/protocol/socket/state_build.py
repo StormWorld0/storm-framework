@@ -39,7 +39,7 @@ class SocketState:
         cert: str = "",
         key: str = "",
         ca: str = "",
-        con: int = 0,
+        con: int = 1,
         **kwargs,
     ):
         self.host = host
