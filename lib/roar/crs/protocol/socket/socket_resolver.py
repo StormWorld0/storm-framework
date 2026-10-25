@@ -38,7 +38,7 @@ class SocketResolver:
     def getnameinfo(
         self,
         host: str,
-        port: stt | int = None,
+        port: str | int = None,
         flag: str | int = None,
         **kwargs,
     ) -> SocketResponse:
