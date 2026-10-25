@@ -266,7 +266,7 @@ func handleGetNameInfo(ctx *ExecutionContext) packet.ResponsePacket {
 	}
 
 	var host string
-	var serv string
+	var serv int
 
 	// -- Host / Reverse DNS --
 	if flags&ni_Numerichost != 0 {
@@ -292,7 +292,7 @@ func handleGetNameInfo(ctx *ExecutionContext) packet.ResponsePacket {
 
 	// -- Service / Port --
 	if flags&ni_Numericserv != 0 {
-		serv = portFinal
+		serv = strconv.Atoi(portFinal)
 	} else {
 		proto := "tcp"
 		if flags&ni_Dgram != 0 {
@@ -301,7 +301,7 @@ func handleGetNameInfo(ctx *ExecutionContext) packet.ResponsePacket {
 
 		serviceName, lookupErr := net.LookupPort(proto, portFinal)
 		if lookupErr != nil {
-			serv = portFinal // Fallback to port number
+			serv = strconv.Atoi(portFinal) // Fallback to port number
 		} else {
 			serv = serviceName
 		}
