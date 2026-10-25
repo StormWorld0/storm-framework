@@ -36,6 +36,7 @@ class SocketState:
         mode: str = "open",
         verify: bool = True,
         infotls: bool = False,
+        close_session: bool = False,
         cert: str = "",
         key: str = "",
         ca: str = "",
@@ -69,6 +70,7 @@ class SocketState:
         # CRS session isolation
         self.sessid = sessid if sessid else f"smf_sess_{uuid.uuid4().hex[:12]}"
         self._is_closed = False
+        self.close_session = close_session
 
         # TLS Security Status
         self.is_tls = False
@@ -124,7 +126,7 @@ class IPCPayloadBuilder:
         ratelimit: int = None,
         cfd: int = None,
         mode: str = None,
-        close_session: bool = False,
+        close_session: bool = None,
     ) -> dict:
         # Mutasi state keamanan secara dinamis dari operasi spesifik
         if verify is not None:
@@ -158,7 +160,7 @@ class IPCPayloadBuilder:
             "client-fd": cfd if cfd is not None else state.cfd,
             "session_id": state.sessid,
             "keep-alive": state.keepalive,
-            "close-session": close_session,
+            "close-session": close_session if close_session is not None else state.close_session,
             "mode": mode if mode is not None else state.mode,
             "verify": verify if verify is not None else state.verify,
             "info_tls": infotls if infotls is not None else state.infotls,
