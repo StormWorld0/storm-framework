@@ -23,11 +23,7 @@ def execute(options, net):
         resp = sock.getaddrinfo(host, None, addrf=sock.AF_INET, sproto=sock.IPPROTO_TCP)
         smf.printf("[✓] Getaddrinfo Results =>", resp)
 
-        addrs = [
-            sockaddr
-            for _, _, _, _, sockaddr in resp
-            if sockaddr
-        ]
+        addrs = [sockaddr for _, _, _, _, sockaddr in resp if sockaddr]
 
         if addrs is not None:
             smf.printf()
