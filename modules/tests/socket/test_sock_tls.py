@@ -75,7 +75,7 @@ def execute(options, net):
     port = options.get("PORT")
 
     data = (
-        f"GET /plans/ HTTP/1.3\r\n"
+        f"GET /plans/ HTTP/1.1\r\n"
         f"Host: {host}\r\n"
         f"User-Agent: Storm-Framework/3.0\r\n"
         f"Accept: */*\r\n"
