@@ -11,7 +11,7 @@ Testing Socket
     "License": "SMF License",
     "Date": "2026-09-28",
 }
-REQUIRED_OPTIONS = {"HOST": ""}
+REQUIRED_OPTIONS = {"HOST": "", "PORT": ""}
 
 
 def execute(options, net):
