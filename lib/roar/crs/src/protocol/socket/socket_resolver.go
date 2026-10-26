@@ -329,14 +329,15 @@ func handleGetNameInfo(ctx *ExecutionContext) packet.ResponsePacket {
 			}
 			// Fallback to IP string if name not found
 			host = ip.String()
-		}
+		} else {
 		
-		host = strings.TrimSuffix(names[0], ".")
-		// Extract hostname
-		if flags&ni_Nofqdn != 0 {
-			if idx := strings.Index(host, "."); idx != -1 {
-				host = host[:idx]
-			}
+		    host = strings.TrimSuffix(names[0], ".")
+		    // Extract hostname
+		    if flags&ni_Nofqdn != 0 {
+			    if idx := strings.Index(host, "."); idx != -1 {
+				    host = host[:idx]
+			    }
+		    }
 		}
 	}
 
@@ -358,7 +359,7 @@ func handleGetNameInfo(ctx *ExecutionContext) packet.ResponsePacket {
 		})
 		if serviceErr != nil {
 			serv = portFinal // Fallback to port number
-		}
+		} 
 		
 		portNum, _ := strconv.Atoi(portFinal)
 		if proto, ok := serviceMap[portNum]; ok {
