@@ -36,14 +36,16 @@ func handleUpgradeTLS(ctx *ExecutionContext) packet.ResponsePacket {
 		ctx.SaveSession(ctx.Conn)
 		return packet.ResponsePacket{Status: "WARN", Message: "Connection is already TLS"}
 	}
-	
-	file := os.NewFile(uintptr(ctx.RawFD), fmt.Sprintf("socket_tls_%d", ctx.RawFD))
-	rawConn, err := net.FileConn(file)
-	file.Close()
-	if err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: "Failed to wrap net.Conn: " + err.Error()}
+
+	if ctx.RawFD != -1 {
+    	file := os.NewFile(uintptr(ctx.RawFD), fmt.Sprintf("socket_tls_%d", ctx.RawFD))
+	    rawConn, err := net.FileConn(file)
+    	file.Close()
+    	if err != nil {
+		    return packet.ResponsePacket{Status: "ERROR", Message: "Failed to wrap net.Conn: " + err.Error()}
+	    }
+	    ctx.Conn = rawConn
 	}
-	ctx.Conn = rawConn
 
 	tCtx, cancel := context.WithTimeout(context.Background(), ctx.Timeout)
 	defer cancel()
