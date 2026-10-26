@@ -126,15 +126,13 @@ def execute(options, net):
                 smf.printf("[!] Failed Send TLS =>", resp.message)
                 return
 
-            resp = sock.recv(1024)
+            resp = sock.recv(4096)
             if not resp.ok:
                 smf.printf("[!] Failed Recv TLS =>", resp.message)
                 return
 
             smf.printf("[✓] Checked Type =>", resp.checked_type)
             smf.printf("[✓] Status TLS   =>", resp.status_tls)
-            smf.printf("[✓] Raw bytes =>", resp.raw_bytes)
-            smf.printf("[✓] Hex bytes =>", resp.hex_bytes)
             smf.printf("[✓] Int bytes =>", resp.int_bytes)
             smf.printf("[✓] Str bytes =>", resp.str_bytes)
     except KeyboardInterrupt:
