@@ -22,16 +22,9 @@ def execute(options, net):
         smf.printf("[*] Getaddrinfo =>", host)
         resp = sock.getaddrinfo(host, None, addrf=sock.AF_INET, sproto=sock.IPPROTO_TCP)
         smf.printf("[✓] Getaddrinfo Results =>", resp)
-
-        addr = None
-        for _, _, _, _, ipp in resp:
-            if ipp:
-                ip, port = ipp
-                if port != 0:
-                    addr = f"{ip}:{port}"
-                    break
-                addr = ip
-                break
+        
+        _, _, _, _, addr = resp:
+        
         if addr is not None:
             smf.printf("[*] Getnameinfo =>", addr)
             resp = sock.getnameinfo(addr)
