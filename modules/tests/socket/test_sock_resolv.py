@@ -20,7 +20,7 @@ def execute(options, net):
 
     sock = net.Socket()
     try:
-        smf.printf("[*] Getaddrinfo => {host}:{port}")
+        smf.printf(f"[*] Getaddrinfo => {host}:{port}")
         resp = sock.getaddrinfo((host, port), addrf=sock.AF_INET, sproto=sock.IPPROTO_TCP)
         smf.printf("[✓] Getaddrinfo Results =>", resp)
 
