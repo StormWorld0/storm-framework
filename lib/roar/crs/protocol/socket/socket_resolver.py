@@ -22,7 +22,7 @@ class SocketResolver:
             if len(host) != 2:
                 raise ValueError("Host tuple only accepts 2 elements: (host, port)")
             host, port = host
-            
+
         packet = IPCPayloadBuilder.build(
             state=self,
             host=host,
@@ -53,7 +53,7 @@ class SocketResolver:
             if len(host) != 2:
                 raise ValueError("Host tuple only accepts 2 elements: (host, port)")
             host, port = host
-            
+
         packet = IPCPayloadBuilder.build(
             state=self,
             host=host,
