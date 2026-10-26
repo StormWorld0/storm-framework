@@ -330,7 +330,6 @@ func handleGetNameInfo(ctx *ExecutionContext) packet.ResponsePacket {
 			// Fallback to IP string if name not found
 			host = ip.String()
 		} else {
-		
 		    host = strings.TrimSuffix(names[0], ".")
 		    // Extract hostname
 		    if flags&ni_Nofqdn != 0 {
