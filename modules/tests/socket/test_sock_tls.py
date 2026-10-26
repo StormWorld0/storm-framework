@@ -75,12 +75,12 @@ def execute(options, net):
     port = options.get("PORT")
 
     data = (
-        f"POST /post HTTP/1.1\r\n"
-        f"Host: {host}\r\n"
+        f"GET /plans/ HTTP/1.3\r\n"
+        f"Host: www.{host}\r\n"
         f"User-Agent: Storm-Framework/3.0\r\n"
-        f"Connection: close\r\n"
+        f"Accept: */*\r\n"
+        f"Connection: Keep-Alive\r\n"
         f"\r\n"
-        f"HEX_BYTES_TEST_1234567890_ABCDEF"
     )
 
     sock = net.Socket()
