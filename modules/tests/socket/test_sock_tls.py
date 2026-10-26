@@ -76,7 +76,7 @@ def execute(options, net):
 
     data = (
         f"GET /plans/ HTTP/1.3\r\n"
-        f"Host: www.{host}\r\n"
+        f"Host: {host}\r\n"
         f"User-Agent: Storm-Framework/3.0\r\n"
         f"Accept: */*\r\n"
         f"Connection: Keep-Alive\r\n"
