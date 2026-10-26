@@ -23,16 +23,17 @@ def execute(options, net):
         resp = sock.getaddrinfo(host, None, addrf=sock.AF_INET, sproto=sock.IPPROTO_TCP)
         smf.printf("[✓] Getaddrinfo Results =>", resp)
 
-        addr = None
-        for _, _, _, _, sockaddr in resp:
-            if sockaddr:
-                addr = sockaddr
-                break
+        addrs = [
+            sockaddr
+            for _, _, _, _, sockaddr in resp
+            if sockaddr
+        ]
 
-        if addr is not None:
-            smf.printf("[*] Getnameinfo =>", addr)
-            resp = sock.getnameinfo(addr)
-            smf.printf("[✓] Getnameinfo Results =>", resp)
+        if addrs is not None:
+            smf.printf()
+            for addr in addrs:
+                resp = sock.getnameinfo(addr)
+                smf.printf(f"[✓] Getnameinfo > {addr} =>", resp)
     except KeyboardInterrupt:
         pass
     except sock.STrace as e:
