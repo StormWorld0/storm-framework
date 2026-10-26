@@ -16,11 +16,12 @@ REQUIRED_OPTIONS = {"HOST": ""}
 
 def execute(options, net):
     host = options.get("HOST")
+    port = options.get("PORT")
 
     sock = net.Socket()
     try:
-        smf.printf("[*] Getaddrinfo =>", host)
-        resp = sock.getaddrinfo(host, None, addrf=sock.AF_INET, sproto=sock.IPPROTO_TCP)
+        smf.printf("[*] Getaddrinfo => {host}:{port}")
+        resp = sock.getaddrinfo((host, port), addrf=sock.AF_INET, sproto=sock.IPPROTO_TCP)
         smf.printf("[✓] Getaddrinfo Results =>", resp)
 
         addrs = [sockaddr for _, _, _, _, sockaddr in resp if sockaddr]
