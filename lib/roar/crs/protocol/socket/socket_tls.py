@@ -30,7 +30,7 @@ class SocketTLS:
             key=key,
             ca=ca,
             verify=verify,
-            infotls: bool = True,
+            infotls=True,
             mode="upgrade_tls",
         )
 
