@@ -79,7 +79,7 @@ def execute(options, net):
         f"Host: {host}\r\n"
         f"User-Agent: Storm-Framework/3.0\r\n"
         f"Accept: */*\r\n"
-        f"Connection: Keep-Alive\r\n"
+        f"Connection: Close\r\n"
         f"\r\n"
     )
 
