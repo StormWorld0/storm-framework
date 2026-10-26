@@ -8,7 +8,7 @@ class SocketResolver:
 
     def getaddrinfo(
         self,
-        host: str,
+        host: str | tuple[str, str | int],
         port: str | int = None,
         addrf: str | int = None,
         stype: str | int = None,
@@ -18,6 +18,11 @@ class SocketResolver:
     ) -> SocketResponse:
         """Dapatkan informasi alamat"""
         self._ensure_open("getaddrinfo")
+        if isinstance(host, tuple):
+            if len(host) != 2:
+                raise ValueError("Host tuple only accepts 2 elements: (host, port)")
+            host, port = host
+            
         packet = IPCPayloadBuilder.build(
             state=self,
             host=host,
@@ -37,13 +42,18 @@ class SocketResolver:
 
     def getnameinfo(
         self,
-        host: str,
+        host: str | tuple[str, str | int],
         port: str | int = None,
         flag: str | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Dapatkan Hostname dari IP:PORT"""
         self._ensure_open("getnameinfo")
+        if isinstance(host, tuple):
+            if len(host) != 2:
+                raise ValueError("Host tuple only accepts 2 elements: (host, port)")
+            host, port = host
+            
         packet = IPCPayloadBuilder.build(
             state=self,
             host=host,
