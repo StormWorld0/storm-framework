@@ -22,21 +22,22 @@ def execute(options, net):
 
     try:
         result = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
-
         if result.ok:
-            smf.printf("Socket created:", result.fileno)
+            smf.printf("Socket created:", sock.fileno())
 
         result = sock.connect(ip, port)
-
         if not result.ok:
             smf.printd("Connect failed", result, level="ERROR")
             return
 
+        smf.printf("IP Local  =>", sock.getsockname())
+        smf.printf("IP Server =>", sock.getpeername())
+
         data = (
-            b"GET /anything HTTP/1.1\r\n"
-            b"Host: httpbin.org\r\n"
-            b"Connection: close\r\n"
-            b"\r\n"
+            f"GET /anything HTTP/1.1\r\n"
+            f"Host: {host}\r\n"
+            f"Connection: close\r\n"
+            f"\r\n"
         )
 
         sock.timeout(1.0)
