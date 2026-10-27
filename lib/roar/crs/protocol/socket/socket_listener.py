@@ -89,7 +89,7 @@ class ClientListener(Inspector):
     ) -> SocketResponse:
         """Send datagram along with Host & Port"""
         self.state._ensure_open("sendto")
-        if is_tuple(host):
+        if is_tuple2(host):
             host, port = host
 
         packet = IPCPayloadBuilder.build(
