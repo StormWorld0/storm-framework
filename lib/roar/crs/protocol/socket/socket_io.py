@@ -102,21 +102,14 @@ class SocketIO:
     def recvfrom(
         self,
         readsize: int,
-        host: str | tuple[str, str | int] = None,
-        port: str | int = None,
         flags: str | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Taking Buffer"""
         self._ensure_open("recvfrom")
-        if is_tuple2(host):
-            host, port = host
-
         packet = IPCPayloadBuilder.build(
             state=self,
             readsize=readsize,
-            host=host,
-            port=port,
             flag=flags,
             mode="recvfrom",
         )
