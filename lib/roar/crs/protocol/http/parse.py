@@ -24,7 +24,8 @@ def parse_url(url):
 def domain_to_ip(domain):
     """Returning IPV4 and IPV6"""
     try:
-        resp = Socket.getaddrinfo(domain, None, proto=socket.IPPROTO_TCP)
+        sock = Socket()
+        resp = sock.getaddrinfo(domain, None, proto=sock.IPPROTO_TCP)
 
         ipv4 = set()
         ipv6 = set()
