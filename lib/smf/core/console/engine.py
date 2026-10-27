@@ -10,6 +10,7 @@ import shutil
 import subprocess
 
 from apps.utility.colors import CC
+from apps.utility.helper import get_home
 from data.option import default_options
 from lib.core import handler as i
 from lib.roar.plugin_api import plugin
@@ -62,26 +63,10 @@ class Context:
         smf.printd("CONTEXT RUNTIME", self.net, level="DEBUG")
         smf.printd("CONTEXT DATABASE", self.db, level="DEBUG")
 
-    def _get_home(self) -> Path:
-        """
-        Restores the original user home path.
-        Avoid resolution to /root.
-        """
-        sudo_user = os.environ.get("SUDO_USER")
-        if sudo_user:
-            try:
-                import pwd
-
-                return Path(pwd.getpwnam(sudo_user).pw_dir)
-            except (KeyError, ImportError) as e:
-                smf.printd("(KeyError, ImportError)", e, level="WARN")
-
-        return Path.home()
-
     def _execute_external(self, cmd: str, args: list[str]) -> bool:
         """Throwing commands to external devices."""
         cmd_clean = os.path.basename(cmd).strip().lower()
-        home = self._get_home()
+        home = get_home()
         smf.printd("Normalization of the HOME USER directory", home, level="INFO")
 
         if cmd_clean in IGNORED_SYSTEM_COMMANDS:
