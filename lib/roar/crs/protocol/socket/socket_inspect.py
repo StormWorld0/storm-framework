@@ -3,7 +3,7 @@ from .response import SocketResponse
 from ...transport import CRS
 
 
-class Inspector:
+class ListenInspect:
     """Class khusus menangani Inspector Listener"""
 
     def setsockopt(
