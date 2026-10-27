@@ -3,9 +3,10 @@ from .response import SocketResponse
 from .utils_fd import real_fd
 from ...transport import CRS
 
+
 class FDListen:
     """Class khusus inheritance dari fungsi Accept"""
-    
+
     def fileno(self, **kwargs) -> int:
         """Mengambil File-Decriptor milik Client Socket"""
         self.state._ensure_open("fileno")
