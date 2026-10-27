@@ -36,7 +36,7 @@ func handleFilenoClt(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: "FilenoClt failed: " + err.Error()}
     }
     
-    ctx.SaveSession(ctx.RawFD)
+    ctx.SaveSessionCFD(ctx.CFD)
     return packet.ResponsePacket{
         Status: "SUCCESS",
         Data: map[string]interface{}{
