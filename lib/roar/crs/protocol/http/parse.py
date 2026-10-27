@@ -20,6 +20,7 @@ def parse_url(url):
         "query": parsed.query,
     }
 
+
 def domain_to_ip(domain):
     """Returning IPV4 and IPV6"""
     try:
