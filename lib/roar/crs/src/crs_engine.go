@@ -39,9 +39,6 @@ func main() {
 	// Global ratelimiter initialization
 	utils.InitRateLimiterManager(ctx)
 
-	// Thread-safe map for storing per-protocol Semaphores (Channels)
-	// Key: req.Primitive (string), Value: chan struct{} (Semaphore)
-	var semaphores sync.Map 
 	var wgWorkers sync.WaitGroup
 
 	// Channel as Fan-In to collect all responses in a thread-safe manner.
@@ -103,33 +100,12 @@ func main() {
 			}
 			continue
 		}
-
-		// [ASYNCHRONOUS MODE WITH SEMAPHORE]: For protocols that support concurrency
-		// This is also used so that the primitives being executed do not block the main thread.
-		// Load or initialize semaphore with req.Go capacity to be dynamic.
-		var sem *DynamicSemaphore
-        if semIntf, ok := semaphores.Load(req.Primitive); ok {
-            sem = semIntf.(*DynamicSemaphore)
-        } else {
-            // Memory allocation ONLY occurs when a primitive is called for the first time.
-            newSem := NewDynamicSemaphore(req.Go)
-            actual, _ := semaphores.LoadOrStore(req.Primitive, newSem)
-            sem = actual.(*DynamicSemaphore)
-        }
 		
 		wgWorkers.Add(1)
 
 		// FAN-OUT WORKER GOROUTINE
-		go func(r packet.RequestPacket, sem *DynamicSemaphore) {
+		go func(r packet.RequestPacket) {
 			defer wgWorkers.Done()
-
-			// Acquire Token with Cancellation Aware & resize evaluation
-		    if err := sem.Acquire(ctx, req.Go); err != nil {
-			    return
-		    }
-			
-			// Release Token: Returns the quota to the semaphore when execution is complete.
-			defer sem.Release()
 
 			// Initialize Ratelimit Set
 			utils.SetPrimitiveRate(r.Primitive, r.RateLimit)
@@ -155,7 +131,7 @@ func main() {
 			case <-ctx.Done():
 				return
 			}
-		}(req, sem)
+		}(req)
 	}
 	// Stdin EOF detected -> Trigger cancellation for remaining workers
 	Shutdown:
