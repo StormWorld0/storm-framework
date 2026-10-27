@@ -2,7 +2,6 @@ package socket
 
 import (
     "net"
-    "fmt"
     "time"
     "context"
     "golang.org/x/sys/unix"
@@ -21,19 +20,8 @@ func handleSocket(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Failed to create socket: " + err.Error()}
 	}
 
-	name := fmt.Sprintf("@storm_fd_%s", ctx.Req.MsgID)
-	udsPath, err := BuildUdsPath(fd, name)
-	if err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: err.Error()}
-	}
-	
 	ctx.SaveSession(fd)
-	return packet.ResponsePacket{
-		Status: "SUCCESS",
-		Data: map[string]interface{}{
-			"uds_path": udsPath,
-		},
-	}
+	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(fd, 0)}
 }
 
 
@@ -99,20 +87,11 @@ func handleAccept(ctx *ExecutionContext) packet.ResponsePacket {
 	}
 
 	ctx.SaveSessionCFD(nFD)
-
-	name := fmt.Sprintf("@client_fd_%s", ctx.Req.MsgID)
-	udsPath, err := BuildUdsPath(nFD, name)
-	if err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: err.Error()}
-	}
-
 	ctx.SaveSession(ctx.RawFD)
-	
 	return packet.ResponsePacket{
 		Status: "SUCCESS", 
 		Data: map[string]interface{}{
 			"client_fd":  nFD,
-			"client_uds": udsPath,
 		},
 	}
 }
@@ -150,12 +129,10 @@ func handleConnect(ctx *ExecutionContext) packet.ResponsePacket {
 			return packet.ResponsePacket{Status: "ALERT", Message: "OS Connect failed: " + err.Error()}
 		}
 	case <-timeoutChan:
-		unix.Close(ctx.RawFD)
 		return packet.ResponsePacket{Status: "ERROR", Message: "Connect timeout expired. Socket aborted."}
 	}
 
 	ctx.SaveSession(ctx.RawFD)
-
 	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(ctx.RawFD, 0)}
 }
 
