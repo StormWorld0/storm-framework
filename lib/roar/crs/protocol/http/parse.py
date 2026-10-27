@@ -1,5 +1,5 @@
 import ipaddress
-from .. import Socket
+from ..socket import Socket
 from urllib.parse import urlparse
 
 
