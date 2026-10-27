@@ -85,7 +85,7 @@ class Inspector:
         return response.remote_ip
 
     def fileno(self, **kwargs) -> int:
-        """Mengambil File-Decriptor milik Socket"""
+        """Mengambil File-Decriptor milik Client Socket"""
         self.state._ensure_open("fileno")
         packet = IPCPayloadBuilder.build(
             state=self,
