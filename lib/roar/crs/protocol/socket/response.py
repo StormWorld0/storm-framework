@@ -4,7 +4,6 @@ import socket
 
 from typing import Dict, Any, Optional
 
-from .utils_fd import real_fd
 from .exception import SockTrace, KITrace
 from .metadata import TLSMetadata
 
