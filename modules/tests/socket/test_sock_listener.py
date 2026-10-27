@@ -71,7 +71,7 @@ def execute(options, net):
             smf.printf("[✓] Client File-Decriptor =>", clt_sock.fileno())
         else:
             smf.printf("[!] Socket error =>", resp.message)
-            
+
         resp = clt_sock.connect((host, port))
 
         if resp.ok:
