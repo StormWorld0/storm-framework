@@ -1,11 +1,12 @@
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
-from .socket_inspector import Inspector
+from .socket_inspect import ListenInspect
+from .socket_fd import ListenFD
 from .validate import is_tuple2
 from ...transport import CRS
 
 
-class ClientListener(Inspector):
+class ClientListener(ListenInspect, ListenFD):
     """Class Khusus menangani IO/Close Listener"""
 
     def __init__(self, state, cfd: int = None):
