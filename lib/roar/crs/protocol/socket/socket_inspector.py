@@ -1,5 +1,6 @@
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
+from .utils_fd import real_fd
 from ...transport import CRS
 
 
@@ -82,6 +83,23 @@ class Inspector:
         response._trace()
         response._ktrace()
         return response.remote_ip
+
+    def fileno(self, **kwargs) -> int:
+        """Mengambil File-Decriptor milik Socket"""
+        self.state._ensure_open("fileno")
+        packet = IPCPayloadBuilder.build(
+            state=self,
+            cfd=self._cfd,
+            mode="fileno-clt",
+        )
+
+        resp = CRS.send(packet)
+        response = SocketResponse(resp)
+        response._trace()
+        response._ktrace()
+        if uds := response._data.get("client_uds"):
+            return real_fd(uds)
+        return -1
 
     def timeout(self, value: float):
         """Global Timeout"""
