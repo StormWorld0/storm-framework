@@ -11,7 +11,7 @@ class ListenFD:
         """Mengambil File-Decriptor milik Client Socket"""
         self.state._ensure_open("fileno")
         packet = IPCPayloadBuilder.build(
-            state=self,
+            state=self.state,
             cfd=self._cfd,
             mode="fileno-clt",
         )
