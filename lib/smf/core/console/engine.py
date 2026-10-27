@@ -21,7 +21,6 @@ from .ignore import IGNORED_SYSTEM_COMMANDS
 
 from typing import Any, Optional
 from dataclasses import dataclass, field
-from pathlib import Path
 
 
 # ----------------------
