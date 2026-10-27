@@ -42,7 +42,7 @@ class SocketCore:
         self._ensure_open("bind")
         if is_tuple2(host):
             host, port = host
-            
+
         packet = IPCPayloadBuilder.build(
             state=self,
             host=host,
@@ -106,7 +106,7 @@ class SocketCore:
         self._ensure_open("connect")
         if is_tuple2(host):
             host, port = host
-            
+
         packet = IPCPayloadBuilder.build(
             state=self,
             host=host,
@@ -130,7 +130,7 @@ class SocketCore:
         self._ensure_open("create")
         if is_tuple2(host):
             host, port = host
-            
+
         packet = IPCPayloadBuilder.build(
             state=self,
             host=host,
