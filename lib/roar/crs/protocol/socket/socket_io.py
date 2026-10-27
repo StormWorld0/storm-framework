@@ -10,7 +10,7 @@ class SocketIO:
     def sendall(
         self,
         data: str | bytes,
-        flag: str | int = None,
+        flags: str | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Sending all data"""
@@ -18,7 +18,7 @@ class SocketIO:
         packet = IPCPayloadBuilder.build(
             state=self,
             data=data,
-            flag=flag,
+            flag=flags,
             mode="sendall",
         )
 
@@ -31,7 +31,7 @@ class SocketIO:
     def send(
         self,
         data: str | bytes,
-        flag: str | int = None,
+        flags: str | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Sending data"""
@@ -39,7 +39,7 @@ class SocketIO:
         packet = IPCPayloadBuilder.build(
             state=self,
             data=data,
-            flag=flag,
+            flag=flags,
             mode="send",
         )
 
@@ -52,7 +52,7 @@ class SocketIO:
     def recv(
         self,
         readsize: int,
-        flag: str | int = None,
+        flags: str | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Taking Buffer"""
@@ -60,7 +60,7 @@ class SocketIO:
         packet = IPCPayloadBuilder.build(
             state=self,
             readsize=readsize,
-            flag=flag,
+            flag=flags,
             mode="recv",
         )
 
@@ -75,7 +75,7 @@ class SocketIO:
         data: str | bytes,
         host: str,
         port: str | int = None,
-        flag: str | int = None,
+        flags: str | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Send datagram along with Host & Port"""
@@ -85,7 +85,7 @@ class SocketIO:
             data=data,
             host=host,
             port=port,
-            flag=flag,
+            flag=flags,
             mode="sendto",
         )
 
@@ -100,7 +100,7 @@ class SocketIO:
         readsize: int,
         host: str = None,
         port: str | int = None,
-        flag: str | int = None,
+        flags: str | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Taking Buffer"""
@@ -110,7 +110,7 @@ class SocketIO:
             readsize=readsize,
             host=host,
             port=port,
-            flag=flag,
+            flag=flags,
             mode="recvfrom",
         )
 
