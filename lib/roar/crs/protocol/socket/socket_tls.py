@@ -31,7 +31,7 @@ class SocketTLS:
             ca=ca,
             verify=verify,
             infotls=True,
-            mode="upgrade_tls",
+            mode="upgrade-tls",
         )
 
         resp = CRS.send(packet)
