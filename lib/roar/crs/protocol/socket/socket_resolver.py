@@ -96,19 +96,3 @@ class SocketResolver:
         response._trace()
         response._ktrace()
         return response.remote_ip
-
-    def fileno(self, **kwargs) -> int:
-        """Mengambil File-Decriptor milik Socket"""
-        self._ensure_open("fileno")
-        packet = IPCPayloadBuilder.build(
-            state=self,
-            mode="fileno",
-        )
-
-        resp = CRS.send(packet)
-        response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
-        if uds := response._data.get("uds_path"):
-            return real_fd(uds)
-        return -1
