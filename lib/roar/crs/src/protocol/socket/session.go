@@ -80,6 +80,7 @@ func (ctx *ExecutionContext) SaveSessionCFD(val int) {
 	if ctx.Req.SessionID != "" && ctx.Req.KeepAlive {
 		utils.ClientFD.Store(ctx.Req.SessionID, val)
 		ctx.CFD = val
+		ctx.KeepSession = true
 	}
 }
 
