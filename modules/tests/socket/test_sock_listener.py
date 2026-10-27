@@ -17,7 +17,7 @@ Testing Socket Listener
 
 def execute(options, net):
     srv_sock = net.Socket()
-    srv_sock.goroutine(2)  # Disable bloking main thread
+    srv_sock.goroutine(5)  # Disable bloking main thread
     clt_sock = None
     conn = None
     try:
@@ -69,6 +69,9 @@ def execute(options, net):
         resp = clt_sock.socket(clt_sock.AF_INET, clt_sock.SOCK_STREAM)
         if resp.ok:
             smf.printf("[✓] Client File-Decriptor =>", clt_sock.fileno())
+        else:
+            smf.printf("[!] Socket error =>", resp.message)
+            
         resp = clt_sock.connect((host, port))
 
         if resp.ok:
