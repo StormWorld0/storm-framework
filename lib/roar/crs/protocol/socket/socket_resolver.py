@@ -10,10 +10,10 @@ class SocketResolver:
         self,
         host: str | tuple[str, str | int],
         port: str | int = None,
-        addrf: str | int = None,
-        stype: str | int = None,
-        sproto: str | int = None,
-        flag: str | int = None,
+        af: str | int = None,
+        type: str | int = None,
+        proto: str | int = None,
+        flags: str | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Dapatkan informasi alamat"""
@@ -27,10 +27,10 @@ class SocketResolver:
             state=self,
             host=host,
             port=port,
-            addr_fam=addrf,
-            stype=stype,
-            sproto=sproto,
-            flag=flag,
+            addr_fam=af,
+            stype=type,
+            sproto=proto,
+            flag=flags,
             mode="getaddrinfo",
         )
 
@@ -44,7 +44,7 @@ class SocketResolver:
         self,
         host: str | tuple[str, str | int],
         port: str | int = None,
-        flag: str | int = None,
+        flags: str | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Dapatkan Hostname dari IP:PORT"""
