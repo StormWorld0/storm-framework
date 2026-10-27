@@ -26,7 +26,7 @@ def execute(options, net):
         # Socket Allocation
         resp = sock.socket(sock.AF_INET, sock.SOCK_DGRAM)
         if resp.ok:
-            smf.printf("[*] File Descriptor =>", resp.fileno)
+            smf.printf("[*] File Descriptor =>", sock.fileno())
 
         # Global timeout
         sock.timeout(2.0)
