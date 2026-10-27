@@ -1,6 +1,7 @@
 from .socket_listener import ClientListener
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
+from .validate import is_tuple2
 
 from ...transport import CRS
 
@@ -33,12 +34,15 @@ class SocketCore:
 
     def bind(
         self,
-        host: str,
+        host: str | tuple[str, str | int],
         port: str | int,
         **kwargs,
     ) -> SocketResponse:
         """Binding local connection"""
         self._ensure_open("bind")
+        if is_tuple2(host):
+            host, port = host
+            
         packet = IPCPayloadBuilder.build(
             state=self,
             host=host,
@@ -94,12 +98,15 @@ class SocketCore:
 
     def connect(
         self,
-        host: str,
+        host: str | tuple[str, str | int],
         port: str | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Open Connection"""
         self._ensure_open("connect")
+        if is_tuple2(host):
+            host, port = host
+            
         packet = IPCPayloadBuilder.build(
             state=self,
             host=host,
@@ -115,12 +122,15 @@ class SocketCore:
 
     def create_connection(
         self,
-        host: str,
+        host: str | tuple[str, str | int],
         port: str | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Creating a TCP Stream connection"""
         self._ensure_open("create")
+        if is_tuple2(host):
+            host, port = host
+            
         packet = IPCPayloadBuilder.build(
             state=self,
             host=host,
