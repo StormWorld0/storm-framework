@@ -35,7 +35,7 @@ class SocketCore:
     def bind(
         self,
         host: str | tuple[str, str | int],
-        port: str | int,
+        port: str | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Binding local connection"""
