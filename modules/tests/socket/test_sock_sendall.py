@@ -19,14 +19,14 @@ def execute(options, net):
     port = options.get("PORT")
 
     data = (
-        b"POST /post HTTP/1.1\r\n"
-        b"Host: httpbin.org\r\n"
-        b"User-Agent: RawFdTester/1.0\r\n"
-        b"Content-Type: text/plain\r\n"
-        b"Content-Length: 32\r\n"
-        b"Connection: close\r\n"
-        b"\r\n"
-        b"HEX_BYTES_TEST_1234567890_ABCDEF"
+        f"POST /post HTTP/1.1\r\n"
+        f"Host: {host}\r\n"
+        f"User-Agent: Storm-Framework/3.0\r\n"
+        f"Content-Type: text/plain\r\n"
+        f"Content-Length: 32\r\n"
+        f"Connection: close\r\n"
+        f"\r\n"
+        f"HEX_BYTES_TEST_1234567890_ABCDEF"
     )
 
     sock = net.Socket()
@@ -34,9 +34,9 @@ def execute(options, net):
         sock.timeout(5.0)
         resp = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
         if resp.ok:
-            smf.printf("[✓] File Decriptor =>", resp.fileno)
+            smf.printf("[✓] File Decriptor =>", sock.fileno())
 
-        resp = sock.connect(host, port)
+        resp = sock.connect((host, port))
         if not resp.ok:
             smf.printf("[!] Failed connect =>", resp.message)
             return
