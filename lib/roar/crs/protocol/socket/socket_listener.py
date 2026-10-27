@@ -15,7 +15,7 @@ class ClientListener(Inspector):
     def sendall(
         self,
         data: str | bytes,
-        flag: str | int = None,
+        flags: str | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Sending all data"""
@@ -24,7 +24,7 @@ class ClientListener(Inspector):
             state=self.state,
             cfd=self._cfd,
             data=data,
-            flag=flag,
+            flag=flags,
             mode="sendall",
         )
 
@@ -37,7 +37,7 @@ class ClientListener(Inspector):
     def send(
         self,
         data: str | bytes,
-        flag: str | int = None,
+        flags: str | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Sending data"""
@@ -46,7 +46,7 @@ class ClientListener(Inspector):
             state=self.state,
             cfd=self._cfd,
             data=data,
-            flag=flag,
+            flag=flags,
             mode="send",
         )
 
@@ -59,7 +59,7 @@ class ClientListener(Inspector):
     def recv(
         self,
         readsize: int = None,
-        flag: str | int = None,
+        flags: str | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Taking Buffer"""
@@ -68,7 +68,7 @@ class ClientListener(Inspector):
             state=self.state,
             cfd=self._cfd,
             readsize=readsize,
-            flag=flag,
+            flag=flags,
             mode="recv",
         )
 
@@ -83,7 +83,7 @@ class ClientListener(Inspector):
         data: str | bytes,
         host: str,
         port: str | int = None,
-        flag: str | int = None,
+        flags: str | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Send datagram along with Host & Port"""
@@ -94,7 +94,7 @@ class ClientListener(Inspector):
             data=data,
             host=host,
             port=port,
-            flag=flag,
+            flag=flags,
             mode="sendto",
         )
 
@@ -107,7 +107,7 @@ class ClientListener(Inspector):
     def recvfrom(
         self,
         readsize: int = None,
-        flag: str | int = None,
+        flags: str | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Taking Buffer"""
@@ -116,7 +116,7 @@ class ClientListener(Inspector):
             state=self.state,
             cfd=self._cfd,
             readsize=readsize,
-            flag=flag,
+            flag=flags,
             mode="recvfrom",
         )
 
