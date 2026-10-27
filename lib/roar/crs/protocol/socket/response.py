@@ -161,7 +161,7 @@ class SocketResponse:
     def _ktrace(self):
         """Melempar KeyboardInterrupt"""
         if (sts := self.status.upper()) == "INTER":
-            raise KITrace(sts, self.message)
+            return KITrace(sts, self.message)
         return None
 
     def _client_fd(self):
