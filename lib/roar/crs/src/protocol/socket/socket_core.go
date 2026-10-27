@@ -87,7 +87,6 @@ func handleAccept(ctx *ExecutionContext) packet.ResponsePacket {
 	}
 
 	ctx.SaveSessionCFD(nFD)
-	ctx.SaveSession(ctx.RawFD)
 	return packet.ResponsePacket{
 		Status: "SUCCESS", 
 		Data: map[string]interface{}{
