@@ -39,15 +39,6 @@ class SocketResponse:
         return self._message
 
     @property
-    def fileno(self) -> int:
-        """Mengembalikan (File-Descriptor)."""
-        if uds := self._data.get("uds_path"):
-            return real_fd(uds)
-        if uds := self._data.get("client_uds"):
-            return real_fd(uds)
-        return -1
-
-    @property
     def raw_bytes(self) -> bytes:
         """Mengembalikan raw bytes murni."""
         raw_val = self._data.get("raw_bytes")
