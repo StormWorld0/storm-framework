@@ -120,7 +120,7 @@ func main() {
 		wgWorkers.Add(1)
 
 		// FAN-OUT WORKER GOROUTINE
-		go func(r packet.RequestPacket, semaphore *DynamicSemaphore) {
+		go func(r packet.RequestPacket, sem *DynamicSemaphore) {
 			defer wgWorkers.Done()
 
 			// Acquire Token with Cancellation Aware & resize evaluation
@@ -129,7 +129,7 @@ func main() {
 		    }
 			
 			// Release Token: Returns the quota to the semaphore when execution is complete.
-			defer semaphore.Release()
+			defer sem.Release()
 
 			// Initialize Ratelimit Set
 			utils.SetPrimitiveRate(r.Primitive, r.RateLimit)
