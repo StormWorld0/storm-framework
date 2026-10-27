@@ -17,25 +17,24 @@ Testing Socket Listener
 
 def execute(options, net):
     srv_sock = net.Socket()
-    srv_sock.goroutine(5)  # So that it doesn't block 2 active sockets
     clt_sock = None
     conn = None
     try:
         # Allocation
         resp = srv_sock.socket(srv_sock.AF_INET, srv_sock.SOCK_STREAM)
         if resp.ok:
-            smf.printf("[*] Server Raw FD  =>", resp.fileno)
+            smf.printf("[*] Server Raw FD  =>", srv_sock.fileno())
 
         # Allow Address Reuse (SO_REUSEADDR)
         srv_sock.setsockopt(srv_sock.SOL_SOCKET, srv_sock.SO_REUSEADDR, 1)
 
         # Bind ke Localhost port 0 (OS akan alokasikan Ephemeral Port acak)
-        resp = srv_sock.bind("127.0.0.1", 0)
+        resp = srv_sock.bind(("127.0.0.1", 0))
         if not resp.ok:
             smf.printf("[!] Bind Failed     =>", resp.message)
             return
 
-        smf.printf("[✓] Bound to Address =>", resp.local_ip)
+        smf.printf("[✓] Bound to Address =>", srv_sock.getsockname())
 
         # Parsing host dan port dinamis dari resp.local_ip ("127.0.0.1:PORT")
         host, port_str = resp.local_ip.rsplit(":", 1)
@@ -68,8 +67,8 @@ def execute(options, net):
         clt_sock = net.Socket()
         resp = clt_sock.socket(clt_sock.AF_INET, clt_sock.SOCK_STREAM)
         if resp.ok:
-            smf.printf("[✓] Client File-Decriptor =>", resp.fileno)
-        resp = clt_sock.connect(host, port)
+            smf.printf("[✓] Client File-Decriptor =>", clt_sock.fileno())
+        resp = clt_sock.connect((host, port))
 
         if resp.ok:
             smf.printf("[✓] Client Connected =>", f"{host}:{port}")
@@ -89,10 +88,7 @@ def execute(options, net):
             smf.printf("[!] Accept Error     =>", resp.message)
             return
 
-        smf.printf(
-            "[✓] Accepted Client  =>",
-            f"Client FD: {resp.fileno}",
-        )
+        smf.printf("[✓] Accepted Client  =>", conn.fileno())
 
         # Echo Verification Test (PING - PONG)
         clt_sock.send(b"CLIENT_TEST_PING")
