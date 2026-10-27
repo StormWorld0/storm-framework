@@ -37,7 +37,7 @@ def execute(options, net):
         smf.printf("[✓] Bound to Address =>", srv_sock.getsockname())
 
         # Parsing host dan port dinamis dari resp.local_ip ("127.0.0.1:PORT")
-        host, port_str = resp.local_ip.rsplit(":", 1)
+        host, port_str = srv_sock.getsockname().rsplit(":", 1)
         port = int(port_str)
 
         # Listen dengan Backlog 5
