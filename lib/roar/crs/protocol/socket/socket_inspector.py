@@ -84,23 +84,6 @@ class Inspector:
         response._ktrace()
         return response.remote_ip
 
-    def fileno(self, **kwargs) -> int:
-        """Mengambil File-Decriptor milik Client Socket"""
-        self.state._ensure_open("fileno")
-        packet = IPCPayloadBuilder.build(
-            state=self,
-            cfd=self._cfd,
-            mode="fileno-clt",
-        )
-
-        resp = CRS.send(packet)
-        response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
-        if uds := response._data.get("client_uds"):
-            return real_fd(uds)
-        return -1
-
     def timeout(self, value: float):
         """Global Timeout"""
         self.state._timeout = float(value)
