@@ -58,7 +58,7 @@ class SocketResolver:
             state=self,
             host=host,
             port=port,
-            flag=flag,
+            flag=flags,
             mode="getnameinfo",
         )
 
