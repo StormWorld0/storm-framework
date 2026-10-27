@@ -4,7 +4,7 @@ from .utils_fd import real_fd
 from ...transport import CRS
 
 
-class FDListen:
+class ListenFD:
     """Class khusus inheritance dari fungsi Accept"""
 
     def fileno(self, **kwargs) -> int:
@@ -25,7 +25,7 @@ class FDListen:
         return -1
 
 
-class FDSocket:
+class SocketFD:
     """Class khusus inheritance dari Socket"""
 
     def fileno(self, **kwargs) -> int:
