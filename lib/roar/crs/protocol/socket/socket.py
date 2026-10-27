@@ -6,6 +6,7 @@ from .state_build import SocketState
 from .constants import ConstantsMix
 
 from .socket_core import SocketCore
+from .socket_fd import SocketFD
 from .socket_io import SocketIO
 from .socket_options import SocketOptions
 from .socket_tls import SocketTLS
@@ -15,6 +16,7 @@ from .socket_resolver import SocketResolver
 class Socket(
     SocketState,
     SocketCore,
+    SocketFD,
     SocketIO,
     SocketOptions,
     SocketTLS,
@@ -34,5 +36,5 @@ class Socket(
         self.close()
 
     def __repr__(self):
-        tls_state = "TLS" if self.is_tls else "TCP/UDP"
+        tls_state = "TLS" if self.is_tls else "TCP"
         return f"<Socket host='{self.host}:{self.port}' proto='{tls_state}' sessid='{self.sessid}' closed={self._is_closed}>"
