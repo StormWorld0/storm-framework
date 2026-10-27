@@ -88,7 +88,7 @@ def execute(options, net):
         sock.timeout(5.0)
         resp = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
         if resp.ok:
-            smf.printf("[✓] File Decriptor =>", resp.fileno)
+            smf.printf("[✓] File Decriptor =>", sock.fileno())
 
         resp = sock.connect(host, port)
         if not resp.ok:
