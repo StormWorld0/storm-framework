@@ -15,17 +15,16 @@ REQUIRED_OPTIONS = {"HOST": "", "PORT": ""}
 
 
 def execute(options, net):
-    ip = options.get("HOST")
+    host = options.get("HOST")
     port = options.get("PORT")
 
     sock = net.Socket()
-
     try:
         result = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
         if result.ok:
             smf.printf("Socket created:", sock.fileno())
 
-        result = sock.connect(ip, port)
+        result = sock.connect(host, port)
         if not result.ok:
             smf.printd("Connect failed", result, level="ERROR")
             return
@@ -50,10 +49,10 @@ def execute(options, net):
         result = sock.recv(1024)
 
         if result.ok:
-            smf.printf("Str response    =>", result.str_bytes)
-            smf.printf("Raw response    =>", result.raw_bytes)
-            smf.printf("Hex response    =>", result.hex_bytes)
             smf.printf("Int response    =>", result.int_bytes)
+            smf.printf("Hex response    =>", result.hex_bytes)
+            smf.printf("Raw response    =>", result.raw_bytes)
+            smf.printf("Str response    =>", result.str_bytes)
     except KeyboardInterrupt:
         pass
     except sock.STrace as e:
