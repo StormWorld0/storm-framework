@@ -19,13 +19,13 @@ class SocketState:
         self,
         host: str = "",
         port: str | int = None,
-        addr_fam: str | int = "",
-        stype: str | int = "",
-        sproto: str | int = "",
+        af: str | int = "",
+        type: str | int = "",
+        proto: str | int = "",
         level: str | int = "",
         name: str | int = "",
         value: int = 1,
-        flag: str | int = 0,
+        flags: str | int = 0,
         backlog: int = 0,
         timeout: float = 0.0,
         readsize: int = 0,
@@ -53,15 +53,15 @@ class SocketState:
         self.infotls = infotls
 
         # AF_* and SOCK_* and IPPROTO_*
-        self.af = addr_fam
-        self.stype = stype
-        self.sproto = sproto
+        self.af = af
+        self.stype = type
+        self.sproto = proto
 
         # SOL_* and SO_* and value and MSG_*
         self.level = level
         self.name = name
         self.value = int(value)
-        self.flag = flag
+        self.flag = flags
 
         # Used by listen
         self.backlog = backlog
