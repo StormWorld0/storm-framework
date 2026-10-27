@@ -83,7 +83,7 @@ class SocketIO:
         self._ensure_open("sendto")
         if is_tuple2(host):
             host, port = host
-            
+
         packet = IPCPayloadBuilder.build(
             state=self,
             data=data,
@@ -111,7 +111,7 @@ class SocketIO:
         self._ensure_open("recvfrom")
         if is_tuple2(host):
             host, port = host
-            
+
         packet = IPCPayloadBuilder.build(
             state=self,
             readsize=readsize,
