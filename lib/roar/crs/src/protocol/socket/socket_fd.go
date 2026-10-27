@@ -20,7 +20,7 @@ func handleFileno(ctx *ExecutionContext) packet.ResponsePacket {
     return packet.ResponsePacket{
         Status: "SUCCESS",
         Data: map[string]interface{}{
-            "uds_path": udsPath
+            "uds_path": udsPath,
         },
     }
 }
@@ -40,7 +40,7 @@ func handleFilenoClt(ctx *ExecutionContext) packet.ResponsePacket {
     return packet.ResponsePacket{
         Status: "SUCCESS",
         Data: map[string]interface{}{
-            "client_uds": udsPath
+            "client_uds": udsPath,
         },
     }
 } 
