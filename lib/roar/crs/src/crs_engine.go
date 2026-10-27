@@ -116,17 +116,17 @@ func main() {
             actual, _ := semaphores.LoadOrStore(req.Primitive, newSem)
             sem = actual.(*DynamicSemaphore)
         }
-
-		// Acquire Token with Cancellation Aware & resize evaluation
-		if err := sem.Acquire(ctx, req.Go); err != nil {
-			goto Shutdown
-		}
 		
 		wgWorkers.Add(1)
 
 		// FAN-OUT WORKER GOROUTINE
 		go func(r packet.RequestPacket, semaphore *DynamicSemaphore) {
 			defer wgWorkers.Done()
+
+			// Acquire Token with Cancellation Aware & resize evaluation
+		    if err := sem.Acquire(ctx, req.Go); err != nil {
+			    return
+		    }
 			
 			// Release Token: Returns the quota to the semaphore when execution is complete.
 			defer semaphore.Release()
@@ -177,7 +177,7 @@ func main() {
 	select {
 	case <-shutdownComplete:
 		os.Exit(0)
-	case <-time.After(1000 * time.Millisecond):
+	case <-time.After(500 * time.Millisecond):
 		fmt.Fprintf(os.Stderr, "CRS Engine: Force exit due to worker timeout\n")
 		os.Exit(1)
 	}
