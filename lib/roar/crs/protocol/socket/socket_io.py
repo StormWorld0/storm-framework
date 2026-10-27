@@ -102,7 +102,7 @@ class SocketIO:
     def recvfrom(
         self,
         readsize: int,
-        host: str | tuple[str, str | int],
+        host: str | tuple[str, str | int] = None,
         port: str | int = None,
         flags: str | int = None,
         **kwargs,
