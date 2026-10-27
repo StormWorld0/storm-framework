@@ -78,32 +78,30 @@ All protocols definitely have different parameters, here you can learn what para
 **1. Open Socket**
 ```python
 sock = net.Socket()
-resp = sock.socket(addrf, stype, proto)
+sock.socket(af, type, proto)
 ```
 **Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
 
 **Inheritance:** `net.Socket()` will inherit all the functions below it, and all of those functions will only return Response.
 
 **Parameter**
-- **addrf:** Address Family such as: `sock.AF_INET`, `sock.AF_INET6`, etc.
-- **stype:** Sock Type like: `sock.SOCK_STREAM`, `sock.SOCK_DGRAM`, etc.
+- **af:** Address Family such as: `sock.AF_INET`, `sock.AF_INET6`, etc.
+- **type:** Sock Type like: `sock.SOCK_STREAM`, `sock.SOCK_DGRAM`, etc.
 - **proto:** Protocols such as: `sock.IPPROTO_IP`, etc. | Default 0 = Determined by Kernel UNIX
 
 **Response**
 - **status:** SUCCESS/WARN/ERROR/TIMEOUT.
 - **message:** Messages adjust to status.
-
 - **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
-- **fileno:** This will return the number of File-Decryptor (FD).
 
 
 **2. Connect to Socket**
 ```python
-resp = sock.connect(host, port)
+sock.connect((host, port))
 ```
 **Parameter**
-- **host:** This can be IP:Port / Hostname.
-- **port:** This is a typical Port.
+- **host:** This can be IP:Port / Hostname. | tuple (host, port) or str host.
+- **port:** This is a typical Port. | Default None
 
 **Response**
 - **status:** SUCCESS/WARN/ERROR/TIMEOUT.
@@ -114,19 +112,20 @@ resp = sock.connect(host, port)
 - **rtt_ms:** Returns the Round Trip Time in milliseconds.
 - **checked_type:** Returns the connection status to see if the tls/tcp connection is working. | Debug.
 - **status_tls:** Returns a Boolean. If True=TLS is enabled. False=TLS is disabled.
-- **remote_ip:** Returns the target IP:PORT.
-- **local_ip:** Returns local IP:PORT.
 
 
 **3. Send Data**
 ```python
-resp = sock.send(data, flag)
+sock.send(data, flags)
+```
+```python
+sock.sendall(data, flags)
 ```
 **Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
 
 **Parameter**
 - **data:** Can be bytes / http request / payload etc.
-- **flag:** (Optional) | Default 0
+- **flags:** (Optional) | Default 0
 
 **Response**
 - **status:** SUCCESS/WARN/ERROR/TIMEOUT.
@@ -139,15 +138,15 @@ resp = sock.send(data, flag)
 - **status_tls:** Returns a Boolean. If True=TLS is enabled. False=TLS is disabled.
 
 ```python
-resp = sock.sendto(data, host, port, flag)
+sock.sendto(data, (host, port), flags)
 ```
 **Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
 
 **Parameter**
 - **data:** Can be bytes / http request / payload etc.
-- **host:** This can be IP:Port / Hostname.
-- **port:** This is a typical Port.
-- **flag:** MSG_* such as: `sock.MSG_OOB`, `sock.MSG_MORE`, etc. | str & int | Default 0.
+- **host:** This can be IP:Port / Hostname. | tuple (host, port) or str host.
+- **port:** This is a typical Port. | Default None.
+- **flags:** MSG_* such as: `sock.MSG_OOB`, `sock.MSG_MORE`, etc. | str & int | Default 0.
 
 **Response**
 - **status:** SUCCESS/WARN/ERROR/TIMEOUT.
@@ -160,13 +159,13 @@ resp = sock.sendto(data, host, port, flag)
 
 **4. Viewing the buffer**
 ```python
-raw = sock.recv(readsize, flag)
+sock.recv(readsize, flags)
 ```
 **Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
 
 **Parameter**
 - **readsize:** To determine how many bytes of buffer to take.
-- **flag:** (Optional) | Default 0
+- **flags:** (Optional) | Default 0
 
 **Response**
 - **status:** SUCCESS/WARN/ERROR/TIMEOUT.
@@ -177,21 +176,19 @@ raw = sock.recv(readsize, flag)
 - **str_bytes:** Returns Raw Bytes as String.
 - **hex_bytes:** Returns Hex Bytes.
 - **int_bytes:** Returns the number of Bytes.
-- **remote_ip:** Returns the target IP:PORT.
-- **local_ip:** Returns local IP:PORT.
 - **is_reused:** Returns a Boolean. True=Using the same connection. False=Create a new connection.
 - **rtt_ms:** Returns the Round Trip Time in milliseconds.
 - **checked_type:** Returns the connection status to see if the tls/tcp connection is working. | Debug.
 - **status_tls:** Returns a Boolean. If True=TLS is active. False=TLS is disabled.
 
 ```python
-raw = sock.recvfrom(readsize, flag)
+sock.recvfrom(readsize, flags)
 ```
 **Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
 
 **Parameter**
 - **readsize:** To determine how many bytes of buffer to take.
-- **flag:** MSG_* such as: `sock.MSG_OOB`, `sock.MSG_MORE`, etc. | str & int | Default 0.
+- **flags:** MSG_* such as: `sock.MSG_OOB`, `sock.MSG_MORE`, etc. | str & int | Default 0.
 
 **Response**
 - **status:** SUCCESS/WARN/ERROR/TIMEOUT.
@@ -209,7 +206,7 @@ raw = sock.recvfrom(readsize, flag)
 
 **5. TLS Upgrade**
 ```python
-resp = sock.uptls(cert, key, ca, verify)
+sock.uptls(cert, key, ca, verify)
 ```
 **Parameter**
 - **cert:** Path to the certificate file.
@@ -251,9 +248,61 @@ Automatically inherits TLS connections to send/recv and send/recv usage remains 
 - **cert_chain:** Returns the number of certificate chains that were successfully verified.
 
 
-**6. Socket Options**
+**6. Bind**
 ```python
-resp = sock.setsockopt(level, name, value)
+sock.bind((host, port))
+```
+**Parameter**
+- **host:** This can be Hostname.
+- **port:** This is a typical Port.
+
+**Response**
+- **status:** SUCCESS/WARN/ERROR/TIMEOUT.
+- **message:** Messages adjust to status.
+- **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
+
+
+**7. Listen**
+```python
+sock.listen(backlog)
+```
+**Parameter**
+- **backlog:** Maximum limit of inbound connection queue allowed to hang before `accept()`.
+
+**Response**
+- **status:** SUCCESS/WARN/ERROR/TIMEOUT.
+- **message:** Messages adjust to status.
+- **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
+
+
+**8. Accept**
+```python
+conn, resp = sock.accept()
+```
+**Inheritance:**
+- **sendall**
+- **send**
+- **recv**
+- **sendto**
+- **recvfrom**
+- **setsockopt**
+- **getsockopt**
+- **getsockname**
+- **getpeername**
+- **fileno**
+- **timeout**
+- **close**
+
+
+**Response**
+- **status:** SUCCESS/WARN/ERROR/TIMEOUT.
+- **message:** Messages adjust to status.
+- **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
+
+
+**9. Set Socket Options**
+```python
+sock.setsockopt(level, name, value)
 ```
 **Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
 
@@ -268,62 +317,27 @@ resp = sock.setsockopt(level, name, value)
 - **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
 
 
-**7. Bind**
+**10. Get Socket Options**
 ```python
-resp = sock.bind(host, port)
+sock.getsockopt(level, name)
 ```
-**Parameter**
-- **host:** This can be IP:Port / Hostname.
-- **port:** This is a typical Port.
+**Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
 
-**Response**
-- **status:** SUCCESS/WARN/ERROR/TIMEOUT.
-- **message:** Messages adjust to status.
-
-- **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
-- **local_ip:** Returns local IP:PORT.
-
-
-**8. Listen**
-```python
-resp = sock.listen(backlog)
-```
-**Parameter**
-- **backlog:** Maximum limit of inbound connection queue allowed to hang before `accept()`.
-
-**Response**
-- **status:** SUCCESS/WARN/ERROR/TIMEOUT.
-- **message:** Messages adjust to status.
-- **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
-
-
-**9. Accept**
-```python
-resp = sock.accept()
-```
-**Parameter:** There isn't any.
-
-**Response**
-- **status:** SUCCESS/WARN/ERROR/TIMEOUT.
-- **message:** Messages adjust to status.
-
-- **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
-- **is_reused:** Returns a Boolean. True=Using the same connection. False=Create a new connection.
-- **rtt_ms:** Returns the Round Trip Time in milliseconds.
+**Response:** This function directly returns an int.
 
 
 **10. Timeout**
 ```python
 sock.timeout(value)
 ```
-**Description:** The timeout function is created to set a default timeout for all functions executed after it, eliminating the need to apply timeouts repeatedly in each function.
+**Description:** The timeout function is created to set a default timeout for all functions executed after it, eliminating the need to apply timeouts repeatedly in each function. Default = 0 Bloking.
 
 **Value:** In this parameter, the input must be in the form of a float such as: 1.0, 10.5, etc.
 
 
 **11. Creating Connection**
 ```python
-resp = sock.create_connection(host, port)
+sock.create_connection(host, port)
 ```
 **Description:** This function is used to immediately open a connection quickly without having to perform socket() and connect() literacy because this is done automatically by the binary CRS. This makes it faster and requires less code. Send, receive, and uptls still require manual processing afterward.
 
@@ -335,25 +349,48 @@ resp = sock.create_connection(host, port)
 
 **12. Get Address Information**
 ```python
-resp = sock.getaddrinfo(host, port, addrf, stype, sproto, flag)
+sock.getaddrinfo(host, port, af, type, proto, flags)
 ```
 **Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
 
 **Parameter**
-- **addrf:** Address Family such as: `sock.AF_INET`, `sock.AF_INET6`, etc.
-- **stype:** Sock Type like: `sock.SOCK_STREAM`, `sock.SOCK_DGRAM`, etc.
-- **sproto:** Protocols such as: `sock.IPPROTO_IP`, etc. | Default 0 = Determined by Kernel UNIX
-- **flag:** MSG_* such as: `sock.MSG_OOB`, `sock.MSG_MORE`, etc. | Default 0.
+- **af:** Address Family such as: `sock.AF_INET`, `sock.AF_INET6`, etc.
+- **type:** Sock Type like: `sock.SOCK_STREAM`, `sock.SOCK_DGRAM`, etc.
+- **proto:** Protocols such as: `sock.IPPROTO_IP`, etc. | Default 0 = Determined by Kernel UNIX
+- **flags:** MSG_* such as: `sock.MSG_OOB`, `sock.MSG_MORE`, etc. | Default 0.
 
-**Response**
-- **status:** SUCCESS/WARN/ERROR/TIMEOUT.
-- **message:** Messages adjust to status.
-
-- **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
-- **addrinfo:** Converts 'results' data from getaddrinfo to a standard tuple list.
+**Response**: Getaddrinfo directly returns a list[tuple] response of 5 elements.
 
 
-**13. Closing the connection**
+**13. Get Name Info**
+```python
+sock.getnameinfo((host, port))
+```
+**Response:** Returns a tuple of host and serv.
+
+
+**14. Get Socket Name**
+```python
+sock.getsockname()
+```
+**Response:** Returns the local IP in the format IP:Port.
+
+
+**15.Get Peer Name**
+```python
+sock.getpeername()
+```
+**Response:** Returns the server IP in the format IP:Port.
+
+
+**16. Fileno**
+```python
+sock.fileno()
+```
+**Response:** Returns Python File Descriptor.
+
+
+**17. Closing the connection**
 ```python
 resp = sock.close()
 ```
@@ -364,7 +401,7 @@ resp = sock.close()
 - **message:** Messages adjust to status.
 
 
-**14. Exception Socket**
+**18. Exception Socket**
 ```python
 try:
     ...
