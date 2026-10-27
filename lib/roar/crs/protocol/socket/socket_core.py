@@ -10,18 +10,18 @@ class SocketCore:
 
     def socket(
         self,
-        addrf: str | int,
-        stype: str | int,
-        sproto: str | int = None,
+        af: str | int,
+        type: str | int,
+        proto: str | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Open Socket"""
         self._ensure_open("socket")
         packet = IPCPayloadBuilder.build(
             state=self,
-            addr_fam=addrf,
-            stype=stype,
-            sproto=sproto,
+            addr_fam=af,
+            stype=type,
+            sproto=proto,
             mode="socket",
         )
 
