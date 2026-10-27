@@ -1,6 +1,7 @@
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
 from .socket_inspector import Inspector
+from .validate import is_tuple2
 from ...transport import CRS
 
 
@@ -81,13 +82,16 @@ class ClientListener(Inspector):
     def sendto(
         self,
         data: str | bytes,
-        host: str,
+        host: str | tuple[str, str | int],
         port: str | int = None,
         flags: str | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Send datagram along with Host & Port"""
         self.state._ensure_open("sendto")
+        if is_tuple(host):
+            host, port = host
+            
         packet = IPCPayloadBuilder.build(
             state=self.state,
             cfd=self._cfd,
@@ -106,12 +110,17 @@ class ClientListener(Inspector):
 
     def recvfrom(
         self,
-        readsize: int = None,
+        readsize: int,
+        host: str | tuple[str, str | int] = None,
+        port: str | int = None,
         flags: str | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Taking Buffer"""
         self.state._ensure_open("recvfrom")
+        if is_tuple2(host):
+            host, port = host
+            
         packet = IPCPayloadBuilder.build(
             state=self.state,
             cfd=self._cfd,
