@@ -50,11 +50,11 @@ func (ctx *ExecutionContext) LoadSessionState() error {
 	}
 
 	if v, ok := utils.ClientFD.Load(ctx.Req.SessionID); ok {
-		ctx.CFD = v.(int) // Load ListenerFD if present
+		ctx.CFD = v.(int) // Load ClientFD if present
 	}
 
 	if hostVal, ok := utils.SessionHosts.Load(ctx.Req.SessionID); ok {
-		ctx.Host = hostVal.(string)
+		ctx.Host = hostVal.(string) // Load the saved host
 	}
 
 	val, ok := utils.ActiveSessions.Load(ctx.Req.SessionID)
@@ -79,7 +79,6 @@ func (ctx *ExecutionContext) LoadSessionState() error {
 func (ctx *ExecutionContext) SaveSessionCFD(val int) {
 	if ctx.Req.SessionID != "" && ctx.Req.KeepAlive {
 		utils.ClientFD.Store(ctx.Req.SessionID, val)
-		ctx.CFD = val
 		ctx.KeepSession = true
 	}
 }
@@ -88,7 +87,6 @@ func (ctx *ExecutionContext) SaveSessionCFD(val int) {
 func (ctx *ExecutionContext) SaveSessionHost(host string) {
 	if ctx.Req.SessionID != "" && ctx.Req.KeepAlive {
 		utils.SessionHosts.Store(ctx.Req.SessionID, host)
-		ctx.Host = host
 	}
 }
 
