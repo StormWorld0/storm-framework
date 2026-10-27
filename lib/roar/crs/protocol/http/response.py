@@ -7,10 +7,9 @@ import smf
 import re
 
 from typing import Dict, Any, Optional, Union
-
-from apps.utility.parse import parse_url, domain_to_ip
 from lib.smf.ingest import DataBuilder
 
+from .parse import parse_url, domain_to_ip
 from .exception import StackTrace, TimeoutTrace
 from .metadata import HTTPTLSMetadata
 
