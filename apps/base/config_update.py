@@ -15,7 +15,7 @@ def check_update():
     # Url to github data json
     url = "https://raw.githubusercontent.com/StormWorld0/storm-framework/main/data/data.json"
     try:
-        resp = HTTPR().timeout(0.8).concurrency(50).get(url).run()
+        resp = HTTPR().timeout(0.8).get(url).run()
         latest_version = resp.json()["version"]
 
         # Get local json data
