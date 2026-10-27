@@ -17,6 +17,7 @@ Testing Socket Listener
 
 def execute(options, net):
     srv_sock = net.Socket()
+    srv_sock.goroutine(2) # Disable bloking main thread
     clt_sock = None
     conn = None
     try:
