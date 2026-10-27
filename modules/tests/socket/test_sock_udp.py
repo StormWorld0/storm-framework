@@ -45,9 +45,7 @@ def build_dns_query(domain: str, txid: int = 0x1234) -> bytes:
 def execute(options, net):
     host = options.get("HOST")
     port = 53
-
     sock = net.Socket()
-
     try:
         # Create a socket
         result = sock.socket(sock.AF_INET, sock.SOCK_DGRAM, sock.IPPROTO_UDP)
@@ -55,7 +53,7 @@ def execute(options, net):
             smf.printd("Socket creation failed", result, level="ERROR")
             return
 
-        smf.printf("File Decriptor =>", result.fileno)
+        smf.printf("File Decriptor =>", sock.fileno())
 
         # Connect to server
         result = sock.connect(host, port)
@@ -81,6 +79,7 @@ def execute(options, net):
             smf.printf("Int Response       =>", result.int_bytes)
             smf.printf("Raw Response       =>", result.raw_bytes)
             smf.printf("Hex Response       =>", result.hex_bytes)
+            smf.printf("Str Response       =>", result.str_bytes)
     except KeyboardInterrupt:
         pass
     except sock.STrace as e:
