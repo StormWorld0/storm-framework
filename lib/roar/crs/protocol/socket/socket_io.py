@@ -1,5 +1,6 @@
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
+from .validate import is_tuple2
 
 from ...transport import CRS
 
@@ -73,13 +74,16 @@ class SocketIO:
     def sendto(
         self,
         data: str | bytes,
-        host: str,
+        host: str | tuple[str, str | int],
         port: str | int = None,
         flags: str | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Send datagram along with Host & Port"""
         self._ensure_open("sendto")
+        if is_tuple2(host):
+            host, port = host
+            
         packet = IPCPayloadBuilder.build(
             state=self,
             data=data,
@@ -98,13 +102,16 @@ class SocketIO:
     def recvfrom(
         self,
         readsize: int,
-        host: str = None,
+        host: str | tuple[str, str | int],
         port: str | int = None,
         flags: str | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Taking Buffer"""
         self._ensure_open("recvfrom")
+        if is_tuple2(host):
+            host, port = host
+            
         packet = IPCPayloadBuilder.build(
             state=self,
             readsize=readsize,
