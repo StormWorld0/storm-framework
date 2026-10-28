@@ -81,8 +81,5 @@ def execute(args, ctx):
 
     except AttributeError as e:
         smf.printd("ATTRIBUTE ERROR COMMAND RUN", e, level="ERROR")
-        smf.printf(f"{CC.RED}[!] RUN ATTRIBUTE ERROR{CC.RESET}")
-
     except Exception as e:
         smf.printd("ERROR COMMAND RUN EXCEPTION", e, level="ERROR")
-        smf.printf(f"{CC.RED}[!] ERROR DURING EXECUTION{CC.RESET}")
