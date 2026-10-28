@@ -219,6 +219,11 @@ class CRS:
             smf.printd("Response Dict CRS", res_dict, level="DEBUG")
             return res_dict
         except KeyboardInterrupt:
+            try:
+                if proc and proc.stdin:
+                    proc.stdin.close()
+            except Exception:
+                pass
             return {"status": "INTER", "message": "KeyboardInterrupt detected"}
         except (BrokenPipeError, OSError):
             return {"status": "BROKEN", "message": "(CRS.send) experienced BrokenPipe"}
