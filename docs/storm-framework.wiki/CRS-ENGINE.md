@@ -337,7 +337,7 @@ sock.timeout(value)
 
 **11. Creating Connection**
 ```python
-sock.create_connection(host, port)
+sock.create_connection((host, port))
 ```
 **Description:** This function is used to immediately open a connection quickly without having to perform socket() and connect() literacy because this is done automatically by the binary CRS. This makes it faster and requires less code. Send, receive, and uptls still require manual processing afterward.
 
@@ -349,7 +349,7 @@ sock.create_connection(host, port)
 
 **12. Get Address Information**
 ```python
-sock.getaddrinfo(host, port, af, type, proto, flags)
+sock.getaddrinfo((host, port), af, type, proto, flags)
 ```
 **Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
 
@@ -419,7 +419,6 @@ dns = net.DNSL()
 dns.query(domain, type, proto)
 dns.timeout(value)
 dns.setlimit(ratelimit, frate)
-dns.concurrency(con)
 resp = dns.run()
 ```
 **Description:** DNSL are stateless, and you get a response immediately after each run.
@@ -490,7 +489,6 @@ http.rawhttp.post(url, body, headers)
 ```python
 http.setoptions(ca, retry, redirect, verify, tls)
 http.timeout(value)
-http.concurrency(con)
 http.setlimit(ratelimit, frate)
 
 # Only runing returns a response
@@ -608,7 +606,7 @@ res, var = r.read(expected, timeout, raw)
 sock = net.Socket()
 
 # Open Socket
-sock.socket(addrf, stype, proto)
+sock.socket(af, type, proto)
 
 # Open connection to Socket
 sock.connect(host, port)
@@ -643,16 +641,13 @@ sock.SOCK_*
 sock.IPPROTO_*
 ```
 ```python
-# Simple call to getaddrinfo
-resp = net.Socket().getaddrinfo(...)
-
 # Explicit
 sock = net.Socket()
 resp = sock.getaddrinfo(...)
 
-# The response from getaddrinfo returns a tuple with 5 elements
+# The response from getaddrinfo returns a `list[tuple]` with 5 elements
 # that is: [0]family, [1]socktype, [2]protocol, [3]canonname, [4]sockaddr
-for x in resp: # or (for x in resp.addrinfo:)
+for x in resp: # or (for x in resp:)
 ```
 
 - **Response**
@@ -680,7 +675,6 @@ smf.printf(r.tls.version, r.tls.cipher, etc.)
 ```python
 dns = net.DNSL()
 dns.timeout(0.2)       # Set Timeout
-dns.concurrency(50)    # Set Concurrency
 dns.setlimit(150, 50)  # Set Ratelimit and update ratelimit
 
 resp = dns.run() # Runing DNS and return response
@@ -703,7 +697,6 @@ path_ca = "/path/path/cert.pem"
 http = net.HTTPR(...)
 http.setoptions(path_ca, 2, true, true, true) # Set CA, retry, redirect, verify tls, tls response
 http.timeout(5.0)      # Set Timeout
-http.concurrency(50)   # Set Concurency
 http.setlimit(150, 80) # Set Ratelimit and update ratelimit
 
 resp = http.run() # Runing HTTP and return response
