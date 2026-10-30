@@ -10,6 +10,9 @@ class ListenFD:
     def fileno(self, **kwargs) -> int:
         """Mengambil File-Decriptor milik Client Socket"""
         self.state._ensure_open("fileno")
+        if self.state._client_fd != -1:
+            return self.state._client_fd
+            
         packet = IPCPayloadBuilder.build(
             state=self.state,
             cfd=self._cfd,
@@ -20,8 +23,11 @@ class ListenFD:
         response = SocketResponse(resp)
         response._trace()
         response._ktrace()
+        
         if uds := response._data.get("client_uds"):
-            return real_fd(uds)
+            fd = real_fd(uds)
+            self.state._client_fd = fd
+            return self.state._client_fd
         return -1
 
 
@@ -31,6 +37,9 @@ class SocketFD:
     def fileno(self, **kwargs) -> int:
         """Mengambil File-Decriptor milik Socket"""
         self._ensure_open("fileno")
+        if self._sock_fd != -1:
+            return self._sock_fd
+            
         packet = IPCPayloadBuilder.build(
             state=self,
             mode="fileno",
@@ -40,6 +49,9 @@ class SocketFD:
         response = SocketResponse(resp)
         response._trace()
         response._ktrace()
+        
         if uds := response._data.get("uds_path"):
-            return real_fd(uds)
+            fd = real_fd(uds)
+            self._sock_fd = fd
+            return self._sock_fd
         return -1
