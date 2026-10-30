@@ -139,7 +139,8 @@ func (ctx *ExecutionContext) Cleanup() {
 	if !ctx.KeepSession {
 		if ctx.Conn != nil {
 			ctx.Conn.Close()         // Close net.Conn
-		} else if ctx.RawFD != -1 {
+		}
+		if ctx.RawFD != -1 {
 			unix.Close(ctx.RawFD)    // Closed RawFD
 		}
 		if ctx.CFD != -1 {
