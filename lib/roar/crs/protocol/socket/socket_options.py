@@ -51,7 +51,7 @@ class SocketOptions:
         val = response._data.get("val_opt", -1)
         return val
 
-    def timeout(self, value: float):
+    def settimeout(self, value: float):
         """Global Timeout"""
         self._timeout = float(value)
         return self
