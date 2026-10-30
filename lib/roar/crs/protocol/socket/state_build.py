@@ -41,6 +41,8 @@ class SocketState:
         key: str = "",
         ca: str = "",
         con: int = 1,
+        sock_fd: int = -1,
+        clt_fd: int = -1,
         **kwargs,
     ):
         self.host = host
@@ -81,6 +83,10 @@ class SocketState:
 
         # Goroutine not support
         self.con = con
+
+        # Cache File Descriptor. Operation O(1)
+        self._sock_fd = sock_fd
+        self._client_fd = clt_fd
 
         if kwargs:
             smf.printf(
