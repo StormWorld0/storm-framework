@@ -160,11 +160,7 @@ class Plugin:
         }
         try:
             http = HTTPR()
-            res = (
-                http.post(self.api_url, payload, headers)
-                .timeout(5.0)
-                .run()
-            )
+            res = http.post(self.api_url, payload, headers).timeout(5.0).run()
             res_data = res.json()
             if res.status_code == 200:
                 try:
