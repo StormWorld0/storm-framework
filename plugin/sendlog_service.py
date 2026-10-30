@@ -163,7 +163,6 @@ class Plugin:
             res = (
                 http.post(self.api_url, payload, headers)
                 .timeout(5.0)
-                .concurrency(1)
                 .run()
             )
             res_data = res.json()
