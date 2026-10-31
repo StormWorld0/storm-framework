@@ -79,7 +79,7 @@ func resolveAddrCombination(sockType, protocol int) ([]addrResult, error) {
 	}
 }
 
-func GetAddrInfo(ctx *ExecutionContext) (str, str, str, int, error) {
+func GetAddrInfo(ctx *ExecutionContext) (string, string, string, int, error) {
 	addr, port, err := BuildTarget(ctx.Req.Host, ctx.Req.Port)
 	if err != nil {
 		return nil, nil, nil, nil, fmt.Errorf("Failed build target: %s", err)
