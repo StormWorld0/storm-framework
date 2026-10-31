@@ -157,7 +157,7 @@ class SocketCore:
             how=how,
             mode="shutdown",
         )
-        
+
         resp = CRS.send(packet)
         response = SocketResponse(resp)
         response._trace()
