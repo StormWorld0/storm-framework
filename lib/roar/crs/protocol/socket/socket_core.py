@@ -2,7 +2,6 @@ from .socket_listener import ClientListener
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
 from .validate import is_tuple2
-
 from ...transport import CRS
 
 
@@ -140,6 +139,25 @@ class SocketCore:
             mode="create",
         )
 
+        resp = CRS.send(packet)
+        response = SocketResponse(resp)
+        response._trace()
+        response._ktrace()
+        return response
+
+    def shutdown(
+        self,
+        how: str | int,
+        **kwargs,
+    ) -> SocketResponse:
+        """Closing read/write"""
+        self._ensure_open("shutdown")
+        packet = IPCPayloadBuilder.build(
+            state=self,
+            how=how,
+            mode="shutdown",
+        )
+        
         resp = CRS.send(packet)
         response = SocketResponse(resp)
         response._trace()
