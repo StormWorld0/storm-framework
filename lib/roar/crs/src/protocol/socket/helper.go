@@ -28,13 +28,19 @@ func resolveSockAddr(host, port, af) (unix.Sockaddr, error) {
 	}
 
 	afInt := ParseAF(af)
-	if afInt == unix.AF_INET6 {
-		var addr16 [16]byte
-		copy(addr16[:], ips[0].To16())
-		return &unix.SockaddrInet6{Port: Ports, Addr: addr16}, nil
+	for _, ip := range ips {
+		if afInt == unix.AF_INET6 {
+			if ip4 := ip.To4(); ip4 == nil {
+				var addr16 [16]byte
+				copy(addr16[:], ip.To16())
+				return &unix.SockaddrInet6{Port: ports, Addr: addr16}, nil
+			}
+		} else {
+			if ip4 := ip.To4(); ip4 != nil {
+				var addr4 [4]byte
+				copy(addr4[:], ip4)
+				return &unix.SockaddrInet4{Port: ports, Addr: addr4}, nil
+			}
+		}
 	}
-
-	var addr4 [4]byte
-	copy(addr4[:], ips[0].To4())
-	return &unix.SockaddrInet4{Port: Ports, Addr: addr4}, nil
 }
