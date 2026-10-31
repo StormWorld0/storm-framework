@@ -16,7 +16,7 @@ import (
 func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
 	h1, p2, r1, r2, e1 := GetAddrInfo(ctx)
 	if e1 != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: err.Error()}
+		return packet.ResponsePacket{Status: "ERROR", Message: e1.Error()}
 	}
 	return packet.ResponsePacket{
 		Status: "SUCCESS",
