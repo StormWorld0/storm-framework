@@ -9,6 +9,7 @@ type CommandHandler func(ctx *ExecutionContext) packet.ResponsePacket
 
 var handlers = map[string]CommandHandler{
 	"socket":      handleSocket,
+	"shutdown":    handleShutdown,
 	"bind":        handleBind,
 	"listen":      handleListen,
 	"accept":      handleAccept,
