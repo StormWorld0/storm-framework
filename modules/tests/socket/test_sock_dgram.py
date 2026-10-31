@@ -29,7 +29,7 @@ def execute(options, net):
             smf.printf("[*] File Descriptor =>", sock.fileno())
 
         # Global timeout
-        sock.timeout(2.0)
+        sock.settimeout(2.0)
 
         # Send datagram
         resp = sock.sendto(dns_query, host, port)
