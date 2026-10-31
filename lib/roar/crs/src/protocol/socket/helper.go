@@ -28,7 +28,7 @@ func resolveSockAddr(req packet.RequestPacket) (unix.Sockaddr, error) {
 		return nil, fmt.Errorf("DNS Resolution failed: %s", hostStr)
 	}
 
-	afInt := ParseAF(ctx.Req.AF)
+	afInt := ParseAF(req.AF)
 	for _, ip := range ips {
 		if afInt == unix.AF_INET6 {
 			if ip4 := ip.To4(); ip4 == nil {
