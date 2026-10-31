@@ -39,7 +39,7 @@ def execute(options, net):
             f"\r\n"
         )
 
-        sock.timeout(1.0)
+        sock.settimeout(1.0)
         result = sock.send(data)
 
         if not result.ok:
