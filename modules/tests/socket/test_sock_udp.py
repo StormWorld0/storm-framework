@@ -62,7 +62,7 @@ def execute(options, net):
             return
 
         # Global timeout
-        sock.timeout(2.0)
+        sock.settimeout(2.0)
 
         # Build data
         query = build_dns_query("example.com")
