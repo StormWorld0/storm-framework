@@ -124,6 +124,7 @@ class SocketCore:
         self,
         host: str | tuple[str, str | int],
         port: str | int = None,
+        timeout: float | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Creating a TCP Stream connection"""
@@ -135,6 +136,7 @@ class SocketCore:
             state=self,
             host=host,
             port=port,
+            timeout=timeout,
             mode="create",
         )
 
