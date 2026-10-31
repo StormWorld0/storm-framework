@@ -80,7 +80,7 @@ func resolveAddrCombination(sockType, protocol int) ([]addrResult, error) {
 func getAddrInfo(ctx *ExecutionContext) (string, string, []map[string]interface{}, int, error) {
 	addr, port, err := BuildTarget(ctx.Req.Host, ctx.Req.Port)
 	if err != nil {
-		return "", "", nil, 0, fmt.Errorf("Failed build target: %s", err)
+		return "", "", nil, 0, fmt.Errorf("Failed build target: %w", err)
 	}
 
 	hostFinal := DerefString(addr, "")
@@ -148,7 +148,7 @@ func getAddrInfo(ctx *ExecutionContext) (string, string, []map[string]interface{
 
 			resolvedIPs, err := net.DefaultResolver.LookupIP(context.Background(), lookupNetwork, hostFinal)
 			if err != nil {
-				return "", "", nil, 0, fmt.Errorf("getaddrinfo failed: %s", err)
+				return "", "", nil, 0, fmt.Errorf("getaddrinfo failed: %w", err)
 			}
 			ips = resolvedIPs
 
@@ -163,7 +163,7 @@ func getAddrInfo(ctx *ExecutionContext) (string, string, []map[string]interface{
 	// POSIX getaddrinfo fills in concreted socktype & protocol if hints is 0
 	combinations, err := resolveAddrCombination(int(sockType), int(protocol))
     if err != nil {
-	    return "", "", nil, 0, fmt.Errorf("getaddrinfo: %s", err)
+	    return "", "", nil, 0, fmt.Errorf("getaddrinfo: %w", err)
     }
 
 	// Construct Multi-tuple Results
@@ -268,7 +268,7 @@ func loadService(path string) (map[int]map[string]string, error) {
 func getNameInfo(ctx *ExecutionContext) (string, string, error) {
 	addr, port, err := BuildTarget(ctx.Req.Host, ctx.Req.Port)
 	if err != nil {
-		return "", "", fmt.Errorf("Failed build target: %s", err)
+		return "", "", fmt.Errorf("Failed build target: %w", err)
 	}
 
 	hostFinal := DerefString(addr, "")
