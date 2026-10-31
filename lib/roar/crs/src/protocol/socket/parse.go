@@ -3,11 +3,10 @@ package socket
 import (
 	"strconv"
 	"strings"
-
 	"golang.org/x/sys/unix"
 )
 
-// Helper parser utama: Menerima int, float64 (dari JSON), atau string
+// Main parser helper: Accepts int, float64 (from JSON), or string
 func parseConstant(input any, lookupMap map[string]int, defaultVal int) int {
 	if input == nil {
 		return defaultVal
@@ -15,21 +14,21 @@ func parseConstant(input any, lookupMap map[string]int, defaultVal int) int {
 
 	switch v := input.(type) {
 	case int:
-		return v // Passthrough kalau pengguna kirim int
+		return v // If int
 	case float64:
-		return int(v) // Handling angka dari JSON Unmarshal
+		return int(v) // Handling numbers from JSON Unmarshal
 	case string:
 		clean := strings.ToUpper(strings.TrimSpace(v))
 		if clean == "" {
 			return defaultVal
 		}
 
-		// 1. Cek dari mapping string ("AF_INET")
+		// 1. Check from string mapping
 		if val, exists := lookupMap[clean]; exists {
 			return val
 		}
 
-		// 2. Cek jika string berupa angka ("2")
+		// 2. Check if the string is a number ("2")
 		if num, err := strconv.Atoi(clean); err == nil {
 			return num
 		}
@@ -146,6 +145,13 @@ var flagsMap = map[string]int{
 	"MSG_TRUNC":       unix.MSG_TRUNC,
 }
 
+
+var howMap = map[string]int{
+	"SHUT_RD":    unix.SHUT_RD,
+	"SHUT_WR":    unix.SHUT_WR,
+	"SHUT_RDWR":  unix.SHUT_RDWR,
+}
+
 // --- PUBLIC PARSER FUNCTIONS ---
 
 func ParseAF(af any) int {
@@ -170,4 +176,8 @@ func ParseOptName(name any) int {
 
 func ParseFlags(flags any) int {
 	return parseConstant(flags, flagsMap, 0)
+}
+
+func ParseHow(how any) int {
+	return parseConstant(how, howMap, unix.SHUT_WR)
 }
