@@ -151,7 +151,7 @@ class ClientListener(ListenInspect, ListenFD):
             how=how,
             mode="shutdown",
         )
-        
+
         resp = CRS.send(packet)
         response = SocketResponse(resp)
         response._trace()
