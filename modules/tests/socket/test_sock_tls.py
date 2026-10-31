@@ -85,7 +85,7 @@ def execute(options, net):
 
     sock = net.Socket()
     try:
-        sock.timeout(5.0)
+        sock.settimeout(5.0)
         resp = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
         if resp.ok:
             smf.printf("[✓] File Decriptor =>", sock.fileno())
