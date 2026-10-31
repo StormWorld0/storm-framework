@@ -26,6 +26,7 @@ type RequestPacket struct {
 	OptName       any               `json:"opt-name,omitempty"`  // SO_REUSEADDR, SO_REUSEPORT, ...
 	OptVal        int               `json:"opt-value,omitempty"` // Value Integer
 	Flags         any               `json:"flags,omitempty"`     // MSG_OOB, MSG_MORE, ...
+	How           any               `json:"how,omitempty"`       // SHUT_RDWR, SHUT_WR, SHUT_RD
 
 	CltFD         int               `json:"client-fd,omitempty"` // Client FD Socket Accept
 
