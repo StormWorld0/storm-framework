@@ -138,6 +138,26 @@ class ClientListener(ListenInspect, ListenFD):
         response._ktrace()
         return response
 
+    def shutdown(
+        self,
+        how: str | int,
+        **kwargs,
+    ) -> SocketResponse:
+        """Closing read/write"""
+        self.state._ensure_open("shutdown")
+        packet = IPCPayloadBuilder.build(
+            state=self,
+            cfd=self._cfd,
+            how=how,
+            mode="shutdown",
+        )
+        
+        resp = CRS.send(packet)
+        response = SocketResponse(resp)
+        response._trace()
+        response._ktrace()
+        return response
+
     def close(
         self,
         **kwargs,
