@@ -5,17 +5,18 @@ import (
 	"fmt"
 	"strconv"
 	"golang.org/x/sys/unix"
+	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 )
 
 // Helper internal untuk resolving host/IP ke unix.Sockaddr (menghindari duplikasi)
-func resolveSockAddr(host, port, af) (unix.Sockaddr, error) {
-	addr, p1, err := BuildTarget(host, port)
+func resolveSockAddr(req packet.RequestPacket) (unix.Sockaddr, error) {
+	addr, port, err := BuildTarget(req.Host, req.Port)
 	if err != nil {
 		return nil, fmt.Errorf("Build target failed: %w", err)
 	}
 
 	hostStr := DerefString(addr, "")
-	portStr := DerefString(p1, "")
+	portStr := DerefString(port, "")
 	
 	if portStr == "" {
 		portStr = "0"
