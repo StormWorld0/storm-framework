@@ -22,7 +22,7 @@ func resolveSockAddr(req packet.RequestPacket) (unix.Sockaddr, error) {
 		portStr = "0"
 	}
 
-	Ports, _ := strconv.Atoi(portStr)
+	ports, _ := strconv.Atoi(portStr)
 	ips, err := net.LookupIP(hostStr)
 	if err != nil || len(ips) == 0 {
 		return nil, fmt.Errorf("DNS Resolution failed: %s", hostStr)
@@ -44,4 +44,5 @@ func resolveSockAddr(req packet.RequestPacket) (unix.Sockaddr, error) {
 			}
 		}
 	}
+	return nil, fmt.Errorf("no matching IP address found for target family")
 }
