@@ -27,6 +27,7 @@ class SocketState:
         value: int = 1,
         flags: str | int = 0,
         backlog: int = 0,
+        how: str | int = "",
         timeout: float = 0.0,
         readsize: int = 0,
         ratelimit: int = 0,
@@ -64,6 +65,7 @@ class SocketState:
         self.name = name
         self.value = int(value)
         self.flag = flags
+        self.how = how
 
         # Used by listen
         self.backlog = backlog
@@ -121,6 +123,7 @@ class IPCPayloadBuilder:
         name: str | int = None,
         value: int = None,
         flag: str | int = None,
+        how: str | int = None,
         backlog: int = None,
         infotls: bool = None,
         verify: bool = None,
@@ -153,6 +156,7 @@ class IPCPayloadBuilder:
             "opt-name": name,
             "opt-value": int(value) if value is not None else state.value,
             "flags": flag if flag is not None else state.flag,
+            "how": how if how is not None else state.how,
             "backlog": backlog if backlog is not None else state.backlog,
             "timeout": float(timeout) if timeout is not None else state._timeout,
             "readsize": readsize if readsize is not None else state.readsize,
