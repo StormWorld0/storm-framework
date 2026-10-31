@@ -5,30 +5,29 @@ import (
 	"fmt"
 	"strconv"
 	"golang.org/x/sys/unix"
-	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 )
 
 // Helper internal untuk resolving host/IP ke unix.Sockaddr (menghindari duplikasi)
-func resolveSockAddr(req packet.RequestPacket) (unix.Sockaddr, error) {
-	addr, port, err := BuildTarget(req.Host, req.Port)
+func resolveSockAddr(host, port, af) (unix.Sockaddr, error) {
+	addr, p1, err := BuildTarget(host, port)
 	if err != nil {
 		return nil, fmt.Errorf("Build target failed: %w", err)
 	}
 
-	host := DerefString(addr, "")
-	portStr := DerefString(port, "")
+	hostStr := DerefString(addr, "")
+	portStr := DerefString(p1, "")
 	
 	if portStr == "" {
 		portStr = "0"
 	}
 
 	Ports, _ := strconv.Atoi(portStr)
-	ips, err := net.LookupIP(host)
+	ips, err := net.LookupIP(hostStr)
 	if err != nil || len(ips) == 0 {
-		return nil, fmt.Errorf("DNS Resolution failed: %s", host)
+		return nil, fmt.Errorf("DNS Resolution failed: %s", hostStr)
 	}
 
-	afInt := ParseAF(req.AF)
+	afInt := ParseAF(af)
 	if afInt == unix.AF_INET6 {
 		var addr16 [16]byte
 		copy(addr16[:], ips[0].To16())
