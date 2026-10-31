@@ -51,9 +51,11 @@ class SocketOptions:
         val = response._data.get("val_opt", -1)
         return val
 
-    def settimeout(self, value: float):
+    def settimeout(self, value: float | int):
         """Global Timeout"""
-        self._timeout = float(value)
+        if not isinstance(value, (float, int)):
+            raise ValueError("'settimeout' Argument must be a float or int.")
+        self._timeout = value
         return self
 
     def goroutine(self, value: int):
