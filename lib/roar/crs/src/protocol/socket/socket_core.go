@@ -137,29 +137,43 @@ func handleConnect(ctx *ExecutionContext) packet.ResponsePacket {
 
 
 func handleCreate(ctx *ExecutionContext) packet.ResponsePacket {
-	addr, port, err := BuildTarget(ctx.Req.Host, ctx.Req.Port)
+	if ctx.Req.SessionID == "" {
+		return packet.ResponsePacket{Status: "ERROR", Message: "SessionID is required for connect"}
+	}
+	
+	ctx.SaveSessionHost(ctx.Req.Host)
+	
+	sockAddr, err := resolveSockAddr(ctx.Req)
 	if err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: "Build target failed: " + err.Error()}
+		return packet.ResponsePacket{Status: "ERROR", Message: err.Error()}
 	}
 
-	addrStr := DerefString(addr, "")
-	portStr := DerefString(port, "")
-
-	host := net.JoinHostPort(addrStr, portStr)
-
-	fd := utils.GetDialer()
-	if fd == nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: "Global dialer not initialized"}
-	}
-
-	tCtx, cancel := context.WithTimeout(context.Background(), ctx.Timeout)
-	defer cancel()
-
-	rawConn, err := fd.Dial(tCtx, "tcp", host)
+	fd, err := unix.Socket(unix.AF_INET, unix.SOCK_STREAM, 0)
 	if err != nil {
-		return packet.ResponsePacket{Status: "ALERT", Message: "TCP Dial failed: " + err.Error()}
+		return packet.ResponsePacket{Status: "ERROR", Message: "Failed to create socket: " + err.Error()}
+	}
+	
+	errChan := make(chan error, 1)
+	go func() {
+		errChan <- unix.Connect(fd, sockAddr)
+	}()
+
+	var timeoutChan <-chan time.Time
+	if ctx.Timeout > 0 {
+		timeoutChan = time.After(ctx.Timeout)
 	}
 
-	ctx.SaveSession(rawConn)
-	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadata(0)}
+	select {
+	case err := <-errChan:
+		if err != nil {
+			unix.Close(fd)
+			return packet.ResponsePacket{Status: "ALERT", Message: "OS Connect failed: " + err.Error()}
+		}
+	case <-timeoutChan:
+		unix.Close(fd)
+		return packet.ResponsePacket{Status: "ERROR", Message: "Connect timeout expired. Socket aborted."}
+	}
+
+	ctx.SaveSession(fd)
+	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(fd, 0)}
 }
