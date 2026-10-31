@@ -79,10 +79,10 @@ func resolveAddrCombination(sockType, protocol int) ([]addrResult, error) {
 	}
 }
 
-func GetAddrInfo(ctx *ExecutionContext) (string, string, string, int, error) {
+func GetAddrInfo(ctx *ExecutionContext) (string, string, []map[string]interface{}, int, error) {
 	addr, port, err := BuildTarget(ctx.Req.Host, ctx.Req.Port)
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("Failed build target: %s", err)
+		return "", "", nil, 0, fmt.Errorf("Failed build target: %s", err)
 	}
 
 	hostFinal := DerefString(addr, "")
@@ -102,7 +102,7 @@ func GetAddrInfo(ctx *ExecutionContext) (string, string, string, int, error) {
 		} else {
 			// AI_NUMERICSERV evaluation: Abort if input is not a number
 			if (flags & aiNumericServ) != 0 {
-				return nil, nil, nil, nil, fmt.Errorf("getaddrinfo: Servname not supported for ai_flags")
+				return "", "", nil, 0, fmt.Errorf("getaddrinfo: Servname not supported for ai_flags")
 			}
 
 			// Define proto lookup based on hint sockType / protocol
@@ -114,7 +114,7 @@ func GetAddrInfo(ctx *ExecutionContext) (string, string, string, int, error) {
 			if p, err := net.LookupPort(lookupProto, portFinal); err == nil {
 				targetPort = p
 			} else {
-				return nil, nil, nil, nil, fmt.Errorf("Servname not supported for ai_socktype")
+				return "", "", nil, 0, fmt.Errorf("Servname not supported for ai_socktype")
 			}
 		}
 	}
@@ -135,7 +135,7 @@ func GetAddrInfo(ctx *ExecutionContext) (string, string, string, int, error) {
 			ips = append(ips, parsedIP)
 		} else {
 			if (flags & aiNumericHost) != 0 {
-				return nil, nil, nil, nil, fmt.Errorf("getaddrinfo: Name or service not known (AI_NUMERICHOST enforced)")
+				return "", "", nil, 0, fmt.Errorf("getaddrinfo: Name or service not known (AI_NUMERICHOST enforced)")
 			}
 
 			// Determine the scope of the network resolver based on the AF hint
@@ -150,7 +150,7 @@ func GetAddrInfo(ctx *ExecutionContext) (string, string, string, int, error) {
 
 			resolvedIPs, err := net.DefaultResolver.LookupIP(context.Background(), lookupNetwork, hostFinal)
 			if err != nil {
-				return nil, nil, nil, nil, fmt.Errorf("getaddrinfo failed: %s", err)
+				return "", "", nil, 0, fmt.Errorf("getaddrinfo failed: %s", err)
 			}
 			ips = resolvedIPs
 
@@ -165,7 +165,7 @@ func GetAddrInfo(ctx *ExecutionContext) (string, string, string, int, error) {
 	// POSIX getaddrinfo fills in concreted socktype & protocol if hints is 0
 	combinations, err := resolveAddrCombination(int(sockType), int(protocol))
     if err != nil {
-	    return nil, nil, nil, nil, fmt.Errorf("getaddrinfo: %s", err)
+	    return "", "", nil, 0, fmt.Errorf("getaddrinfo: %s", err)
     }
 
 	// Construct Multi-tuple Results
@@ -203,7 +203,7 @@ func GetAddrInfo(ctx *ExecutionContext) (string, string, string, int, error) {
 	}
 
 	if len(results) == 0 && hostFinal != "" {
-        return nil, nil, nil, nil, fmt.Errorf("getaddrinfo: No address associated with hostname.")
+        return "", "", nil, 0, fmt.Errorf("getaddrinfo: No address associated with hostname.")
 	}
 
     return hostFinal, portFinal, results, len(results), nil
