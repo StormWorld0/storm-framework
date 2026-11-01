@@ -4,3 +4,8 @@ def is_tuple2(value) -> bool:
             raise ValueError("Host tuple only accepts 2 elements: (host, port)")
         return True
     return False
+
+def is_inflo(value) -> bool:
+    if not istanstance(value, (float, int)):
+        raise ValueError("Timeout must use float or int.")
+    return True
