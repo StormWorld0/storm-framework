@@ -7,6 +7,6 @@ def is_tuple2(value) -> bool:
 
 
 def is_inflo(value) -> bool:
-    if not istanstance(value, (float, int)):
+    if not isinstance(value, (float, int)):
         raise ValueError("Timeout must use float or int.")
     return True
