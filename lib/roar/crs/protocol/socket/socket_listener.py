@@ -170,6 +170,7 @@ class ClientListener(ListenInspect, ListenFD):
 
         packet = IPCPayloadBuilder.build(
             state=self.state,
+            cfd=self._cfd,
             mode="close-cfd",
         )
 
