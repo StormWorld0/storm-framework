@@ -21,8 +21,6 @@ class ListenFD:
 
         resp = CRS.send(packet)
         response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
 
         if uds := response._data.get("client_uds"):
             fd = real_fd(uds)
@@ -47,8 +45,6 @@ class SocketFD:
 
         resp = CRS.send(packet)
         response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
 
         if uds := response._data.get("uds_path"):
             fd = real_fd(uds)
