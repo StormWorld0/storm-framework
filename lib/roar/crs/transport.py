@@ -12,7 +12,6 @@ import smf
 from ..calling import call_bin
 from apps.utility.colors import CC
 from lib.pid_manager import PIDManager as pid
-from lib.smf.core.manage import ExceptionManager as em
 
 
 class CRS:
@@ -21,7 +20,9 @@ class CRS:
     _process = None
     _init_lock = threading.Lock()  # Special lock for initialization/spawn
     _write_lock = threading.Lock()  # Special lock to prevent Write STDIN collisions
-    _dict_lock = threading.Lock()  # Special lock for _pending_requests & _responses & _resp_stderr
+    _dict_lock = (
+        threading.Lock()
+    )  # Special lock for _pending_requests & _responses & _resp_stderr
 
     _pending_requests = {}
     _responses = {}
@@ -134,8 +135,11 @@ class CRS:
                     if line_str:
                         smf.printd("CRS Engine STDERR", line_str, level="CRITICAL")
                         with cls._dict_lock:
-                            cls._resp_stderr = {"status": "CRITICAL", "message": f"CRS Engine stderr: {line_str}"}
-                        
+                            cls._resp_stderr = {
+                                "status": "CRITICAL",
+                                "message": f"CRS Engine stderr: {line_str}",
+                            }
+
                 except (BrokenPipeError, OSError, ValueError):
                     break
                 except Exception as e:
@@ -145,7 +149,6 @@ class CRS:
             with cls._init_lock:
                 if cls._process is my_proc:
                     cls._process = None
-            
 
     @classmethod
     def send(cls, data: dict) -> dict:
