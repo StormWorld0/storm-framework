@@ -20,7 +20,7 @@ class ExceptionManager:
     # Shared state di level class dengan thread-safe lock & storage
     _lock: threading.Lock = threading.Lock()
     _alert_logs: List[Dict[str, Any]] = []
-    
+
     # Target status yang wajib dianalisis (selain ini akan langsung di-drop)
     TARGET_STATUSES = {"ERROR", "CRITICAL", "BROKEN", "INTER", "ALERT"}
 
@@ -49,11 +49,15 @@ class ExceptionManager:
                         "msg_id": _msg_id,
                         "status": _status,
                         "message": _message,
-                        "timestamp": time.time()
+                        "timestamp": time.time(),
                     }
                     cls._alert_logs.append(log_entry)
-                    
-                smf.printd("Target Alert Captured", f"Msg ID {_msg_id} | Status: {_status} | Msg: {_message}", level="WARN")
+
+                smf.printd(
+                    "Target Alert Captured",
+                    f"Msg ID {_msg_id} | Status: {_status} | Msg: {_message}",
+                    level="WARN",
+                )
 
                 # Mapping exception sesuai status
                 if _status == "CRITICAL":
@@ -70,8 +74,8 @@ class ExceptionManager:
 
     @classmethod
     def process_exc(
-        cls, 
-        data: Callable[[], Generator[Dict[str, Any], None, None]], 
+        cls,
+        data: Callable[[], Generator[Dict[str, Any], None, None]],
     ) -> List[Dict[str, Any]]:
         """Fungsi utama"""
         # Bersihkan log sebelumnya
@@ -86,16 +90,20 @@ class ExceptionManager:
                 if isinstance(raw_response, dict):
                     data_queue.put(raw_response)
 
-        producer_thread = threading.Thread(target=producer, name="Data-Producer", daemon=True)
+        producer_thread = threading.Thread(
+            target=producer, name="Data-Producer", daemon=True
+        )
         producer_thread.start()
 
         # Consumer Worker Pool
-        w = threading.Thread(target=cls._worker, args=(data_queue,), name=f"StreamWorker-Exception")
+        w = threading.Thread(
+            target=cls._worker, args=(data_queue,), name=f"StreamWorker-Exception"
+        )
         workers.append(w)
         w.start()
 
         producer_thread.join()
         data_queue.join()
-        
+
         with cls._lock:
             return list(cls._alert_logs)
