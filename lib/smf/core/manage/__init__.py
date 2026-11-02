@@ -1,1 +1,1 @@
-from .exception_ctrl import ExceptionManager # noqa
+from .exception_ctrl import ExceptionManager  # noqa
