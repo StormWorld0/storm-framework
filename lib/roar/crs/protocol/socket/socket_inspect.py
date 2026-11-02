@@ -25,10 +25,7 @@ class ListenInspect:
         )
 
         resp = CRS.send(packet)
-        response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
-        return response
+        return SocketResponse(resp)
 
     def getsockopt(
         self,
@@ -48,8 +45,6 @@ class ListenInspect:
 
         resp = CRS.send(packet)
         response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
         val = response._data.get("val_opt", -1)
         return val
 
@@ -64,8 +59,6 @@ class ListenInspect:
 
         resp = CRS.send(packet)
         response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
         return response.local_ip
 
     def getpeername(self) -> SocketResponse:
@@ -79,8 +72,6 @@ class ListenInspect:
 
         resp = CRS.send(packet)
         response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
         return response.remote_ip
 
     def timeout(self, value: float):
