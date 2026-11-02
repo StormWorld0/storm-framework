@@ -23,10 +23,7 @@ class SocketIO:
         )
 
         resp = CRS.send(packet)
-        response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
-        return response
+        return SocketResponse(resp)
 
     def send(
         self,
@@ -44,10 +41,7 @@ class SocketIO:
         )
 
         resp = CRS.send(packet)
-        response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
-        return response
+        return SocketResponse(resp)
 
     def recv(
         self,
@@ -65,10 +59,7 @@ class SocketIO:
         )
 
         resp = CRS.send(packet)
-        response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
-        return response
+        return SocketResponse(resp)
 
     def sendto(
         self,
@@ -93,10 +84,7 @@ class SocketIO:
         )
 
         resp = CRS.send(packet)
-        response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
-        return response
+        return SocketResponse(resp)
 
     def recvfrom(
         self,
@@ -114,7 +102,4 @@ class SocketIO:
         )
 
         resp = CRS.send(packet)
-        response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
-        return response
+        return SocketResponse(resp)
