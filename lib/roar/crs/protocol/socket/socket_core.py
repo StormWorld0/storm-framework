@@ -2,7 +2,7 @@ from .socket_listener import ClientListener
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
 from .validate import is_tuple2
-from ...transport import CRS
+from ...endpoint import CRS
 
 
 class SocketCore:
