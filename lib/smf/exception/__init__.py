@@ -5,6 +5,4 @@ from .crs_exc import (
     CRSProtocolError,
     CRSKeybordInterrupt,
     CRSConnectionRefused,
-) # noqa
-
-
+)  # noqa
