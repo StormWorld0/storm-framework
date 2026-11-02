@@ -24,10 +24,7 @@ class SocketOptions:
         )
 
         resp = CRS.send(packet)
-        response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
-        return response
+        return SocketResponse(resp)
 
     def getsockopt(
         self,
@@ -46,8 +43,6 @@ class SocketOptions:
 
         resp = CRS.send(packet)
         response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
         val = response._data.get("val_opt", -1)
         return val
 
