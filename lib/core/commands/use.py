@@ -2,25 +2,8 @@
 # -- SMF License
 import smf
 import importlib
-import apps.utility.load_db as db
+import apps.utility.utils as utils
 from apps.utility.colors import CC
-
-
-def load_module_dynamically(module_name):
-    # Returns module_path or module_name from DB
-    actual_path = db.resolve_module_path(module_name)
-
-    if not actual_path:
-        return None
-
-    # Direct transformation to dot notation for Python import
-    module_dots = f"modules.{actual_path.replace('/', '.')}"
-
-    try:
-        return importlib.import_module(module_dots)
-    except Exception as e:
-        smf.printd("Dynamic import error", f"{module_dots} -> {repr(e)}", level="ERROR")
-        return None
 
 
 # Command use to lock or use a module that you want to use.
@@ -36,7 +19,7 @@ def execute(args, ctx):
         return
 
     module_name = args[0] if args else ""
-    mod = load_module_dynamically(module_name)
+    mod = utils.load_module_dynamically(module_name)
 
     if mod:
         ctx.current_module = mod
