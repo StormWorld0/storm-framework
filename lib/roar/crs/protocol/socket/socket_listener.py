@@ -31,10 +31,7 @@ class ClientListener(ListenInspect, ListenFD):
         )
 
         resp = CRS.send(packet)
-        response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
-        return response
+        return SocketResponse(resp)
 
     def send(
         self,
@@ -53,11 +50,7 @@ class ClientListener(ListenInspect, ListenFD):
         )
 
         resp = CRS.send(packet)
-        response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
-        return response
-
+        return SocketResponse(resp)
     def recv(
         self,
         readsize: int = None,
@@ -75,10 +68,7 @@ class ClientListener(ListenInspect, ListenFD):
         )
 
         resp = CRS.send(packet)
-        response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
-        return response
+        return SocketResponse(resp)
 
     def sendto(
         self,
@@ -104,10 +94,7 @@ class ClientListener(ListenInspect, ListenFD):
         )
 
         resp = CRS.send(packet)
-        response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
-        return response
+        return SocketResponse(resp)
 
     def recvfrom(
         self,
@@ -133,10 +120,7 @@ class ClientListener(ListenInspect, ListenFD):
         )
 
         resp = CRS.send(packet)
-        response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
-        return response
+        return SocketResponse(resp)
 
     def shutdown(
         self,
@@ -153,10 +137,7 @@ class ClientListener(ListenInspect, ListenFD):
         )
 
         resp = CRS.send(packet)
-        response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
-        return response
+        return SocketResponse(resp)
 
     def close(
         self,
@@ -176,8 +157,4 @@ class ClientListener(ListenInspect, ListenFD):
 
         resp = CRS.send(packet)
         self._is_closed_cfd = True
-
-        response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
-        return response
+        return SocketResponse(resp)
