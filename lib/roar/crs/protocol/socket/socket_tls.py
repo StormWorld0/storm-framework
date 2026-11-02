@@ -1,8 +1,6 @@
-import smf
-
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
-from ...transport import CRS
+from ...endpoint import CRS
 
 
 class SocketTLS:
@@ -13,13 +11,12 @@ class SocketTLS:
         cert: str,
         key: str,
         ca: str = None,
-        verify: bool = False,
+        verify: bool = True,
         **kwargs,
     ) -> SocketResponse:
         """Upgrade connection to TLS/SSL"""
         self._ensure_open("uptls")
         if self.is_tls:
-            smf.printd("The connection is already using TLS", level="WARN")
             return SocketResponse(
                 {"status": "WARN", "message": "Already TLS", "data": {}}
             )
