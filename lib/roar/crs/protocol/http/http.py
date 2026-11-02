@@ -2,14 +2,11 @@
 # -- License SMF
 # -- Author zxelzy
 import smf
-
 from lib.smf.ingest import push_to_queue
-
 from .state_build import HTTPState, IPCPayloadBuilder
 from .normal_http import HTTPMethod
 from .response import HTTPResponse
-
-from ...transport import CRS
+from ...endpoint import CRS
 
 
 class HTTPClient(HTTPState, HTTPMethod):
