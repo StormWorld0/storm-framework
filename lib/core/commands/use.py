@@ -22,6 +22,7 @@ def load_module_dynamically(module_name):
         smf.printd("Dynamic import error", f"{module_dots} -> {repr(e)}", level="ERROR")
         return None
 
+
 # Command use to lock or use a module that you want to use.
 # here's an example as follows;
 # Command => use <val>
