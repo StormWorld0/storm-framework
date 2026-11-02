@@ -82,7 +82,7 @@ def execute(options, net):
             smf.printf("Str Response       =>", result.str_bytes)
     except KeyboardInterrupt:
         pass
-    except sock.STrace as e:
+    except sock.Exception as e:
         smf.printd("UDP DNS testing failed", e, level="ERROR")
     finally:
         sock.close()
