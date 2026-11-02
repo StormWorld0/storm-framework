@@ -29,6 +29,7 @@ class ExceptionManager:
             try:
                 raw_response = data_queue.get()
                 if raw_response is None:
+                    data_queue.task_done()
                     break
 
                 _status: str = raw_response.get("status", "UNKNOWN").upper()
