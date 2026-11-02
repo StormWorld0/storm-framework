@@ -9,7 +9,7 @@ from pathlib import Path
 from apps.utility.verify import run_verif, check_critical_files
 from apps.utility.spin import SpinBoot
 
-from lib.roar.crs import CRS
+from lib.roar.crs import CRSD
 from lib.roar.plugin_api import plugin
 from lib.roar.cache import cache_modules as cache
 from lib.roar.callbin import manager
@@ -33,7 +33,7 @@ def systemb():
                 raise
 
             # Connection Runtime Service Daemon
-            if not CRS._turn_on_process():
+            if not CRSD._turn_on_process():
                 smf.printd(
                     "Failed to start Connection Runtime Service Daemon", level="WARN"
                 )
