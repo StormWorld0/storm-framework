@@ -75,7 +75,6 @@ class ExceptionManager:
 
             except Exception as e:
                 smf.printd("Unexpected parsing error in worker", e, level="ERROR")
-            finally:
                 data_queue.task_done()
 
     @classmethod
