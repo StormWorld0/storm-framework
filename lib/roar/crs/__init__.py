@@ -1,1 +1,1 @@
-from .transport import CRS  # noqa
+from .endpoint import CRS  # noqa
