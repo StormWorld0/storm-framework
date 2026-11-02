@@ -2,18 +2,24 @@ from .base_exc import BaseException
 
 
 class CRSRuntimeError(BaseException):
-    pass
+    def __init__(self, msg: str = None):
+        self.message = msg
+        super().__init__(msg)
 
 
 class CRSException(BaseException):
-    pass
+    def __init__(self, msg: str = None):
+        self.message = msg
+        super().__init__(msg)
 
 
 class CRSProtocolError(BaseException):
-    pass
+    def __init__(self, msg: str = None):
+        self.message = msg
+        super().__init__(msg)
 
 
-class CRSStderrError(BaseException):
+class CRSKeybordInterrupt(KeyboardInterrupt):
     def __init__(self, msg: str = None):
         self.message = msg
         super().__init__(msg)
