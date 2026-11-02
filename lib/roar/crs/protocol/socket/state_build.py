@@ -1,10 +1,17 @@
 import smf
 import uuid
 import base64
-
 from apps.utility.colors import CC
-
+from lib.smf.exception import (
+    CRSRuntimeError,
+    CRSException,
+    CRSBrokenError,
+    CRSProtocolError,
+    CRSKeybordInterrupt,
+    CRSConnectionRefused,
+)
 from .exception import SockTrace
+
 
 
 class SocketState:
@@ -13,7 +20,9 @@ class SocketState:
     Menyimpan properti koneksi dan memvalidasi siklus hidup soket.
     """
 
-    STrace = SockTrace
+    ConnectionRefused = CRSConnectionRefused
+    RuntimeError = CRSRuntimeError
+    Exception = CRSException
 
     def __init__(
         self,
