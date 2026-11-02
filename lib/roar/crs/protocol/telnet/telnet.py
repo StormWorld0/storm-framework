@@ -14,10 +14,14 @@ class TelnetClient(TelnetState, TelnetResponse, TelnetIAC, TelnetIO):
     Terintegrasi dengan TelnetCmd & TelnetOpt untuk kontrol granular dan Type-Safety.
     """
 
-    def connect(self, host: str, port: str | int = 23):
-        self._ensure_open("connect")
+    def open(
+        self, 
+        host: str,
+        port: str | int = 23,
+    ):
+        self._ensure_open("open")
         if host != "":
-            self.resp_con = self.sock.connect(host, port)
+            self.resp_con = self.sock.create_connection((host, port))
         return self
 
     def setoptions(self, raw: bool = False):
@@ -27,15 +31,18 @@ class TelnetClient(TelnetState, TelnetResponse, TelnetIAC, TelnetIO):
         self.raw = raw
         return self
 
-    def timeout(self, value: float):
+    def settimeout(self, value: float):
         self._ensure_open("timeout")
-        if not isinstance(value, float) or not isinstance(value, int):
+        if not isinstance(value, (float, int)):
             raise TypeError("Timeout must be float or int")
-        self._timeout = float(value)
+        self._timeout = value
         return self
 
     def close(self):
         self._ensure_open("close")
+        if self._is_closed != False:
+            return
+            
         resp = self.sock.close()
         if resp.ok:
             self._is_closed = True
