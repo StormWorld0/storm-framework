@@ -15,7 +15,7 @@ class TelnetClient(TelnetState, TelnetResponse, TelnetIAC, TelnetIO):
     """
 
     def open(
-        self, 
+        self,
         host: str,
         port: str | int = 23,
     ):
@@ -42,7 +42,7 @@ class TelnetClient(TelnetState, TelnetResponse, TelnetIAC, TelnetIO):
         self._ensure_open("close")
         if self._is_closed != False:
             return
-            
+
         resp = self.sock.close()
         if resp.ok:
             self._is_closed = True
