@@ -10,7 +10,7 @@ from typing import Dict, Any, Optional, Union, List
 from lib.smf.ingest import push_to_queue, DataBuilder
 
 from apps.utility.colors import CC
-from ...transport import CRS
+from ...endpoint import CRS
 
 
 class StackTrace:
