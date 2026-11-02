@@ -151,18 +151,6 @@ class SocketResponse:
             return TLSMetadata(tls_data)
         return None
 
-    def _trace(self):
-        """Melempar Exception"""
-        if (sts := self.status.upper()) in {"ERROR", "CRITICAL"}:
-            raise SockTrace(sts, self.message)
-        return None
-
-    def _ktrace(self):
-        """Melempar KeyboardInterrupt"""
-        if (sts := self.status.upper()) == "INTER":
-            return KITrace(sts, self.message)
-        return None
-
     def _client_fd(self):
         """Mengembalikan ListenerFD"""
         if not (fd := self._data.get("client_fd")):
