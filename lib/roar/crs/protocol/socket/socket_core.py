@@ -26,10 +26,7 @@ class SocketCore:
         )
 
         resp = CRS.send(packet)
-        response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
-        return response
+        return SocketResponse(resp)
 
     def bind(
         self,
@@ -50,10 +47,7 @@ class SocketCore:
         )
 
         resp = CRS.send(packet)
-        response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
-        return response
+        return SocketResponse(resp)
 
     def listen(
         self,
@@ -69,10 +63,7 @@ class SocketCore:
         )
 
         resp = CRS.send(packet)
-        response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
-        return response
+        return SocketResponse(resp)
 
     def accept(
         self,
@@ -87,8 +78,6 @@ class SocketCore:
 
         resp = CRS.send(packet)
         response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
 
         cfd = response._client_fd()
         if cfd < 0:
@@ -114,10 +103,7 @@ class SocketCore:
         )
 
         resp = CRS.send(packet)
-        response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
-        return response
+        return SocketResponse(resp)
 
     def create_connection(
         self,
@@ -140,10 +126,7 @@ class SocketCore:
         )
 
         resp = CRS.send(packet)
-        response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
-        return response
+        return SocketResponse(resp)
 
     def shutdown(
         self,
@@ -159,10 +142,7 @@ class SocketCore:
         )
 
         resp = CRS.send(packet)
-        response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
-        return response
+        return SocketResponse(resp)
 
     def close(
         self,
@@ -177,8 +157,4 @@ class SocketCore:
         packet = IPCPayloadBuilder.build(state=self, mode="close", close_session=True)
         resp = CRS.send(packet)
         self._is_closed = True
-
-        response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
-        return response
+        return SocketResponse(resp)
