@@ -12,6 +12,7 @@ import smf
 from ..calling import call_bin
 from apps.utility.colors import CC
 from lib.pid_manager import PIDManager as pid
+from lib.smf.core.manage import ExceptionManager as em
 
 
 class CRS:
@@ -20,10 +21,11 @@ class CRS:
     _process = None
     _init_lock = threading.Lock()  # Special lock for initialization/spawn
     _write_lock = threading.Lock()  # Special lock to prevent Write STDIN collisions
-    _dict_lock = threading.Lock()  # Special lock for _pending_requests & _responses
+    _dict_lock = threading.Lock()  # Special lock for _pending_requests & _responses & _resp_stderr
 
     _pending_requests = {}
     _responses = {}
+    _resp_stderr = {}
     _reader_thread = None
     _stderr_thread = None
 
@@ -120,29 +122,30 @@ class CRS:
     @classmethod
     def _stderr_reader(cls, my_proc):
         """A standalone thread to asynchronously consume and log engine stderr."""
-        message = {}
         try:
             while my_proc and my_proc.poll() is None:
-                line = my_proc.stderr.readline()
-                if not line:
+                try:
+                    line = my_proc.stderr.readline()
+                    if not line:
+                        break
+
+                    # Take all stderr and throw it to smflogd
+                    line_str = line.strip()
+                    if line_str:
+                        smf.printd("CRS Engine STDERR", line_str, level="CRITICAL")
+                        with cls._dict_lock:
+                            cls._resp_stderr = {"status": "CRITICAL", "message": f"CRS Engine stderr: {line_str}"}
+                        
+                except (BrokenPipeError, OSError, ValueError):
                     break
-
-                # Take all stderr and throw it to smflogd
-                line_str = line.strip()
-                if line_str:
-                    smf.printd("CRS Engine STDERR", line_str, level="CRITICAL")
-                    message.update(
-                        {
-                            "status": "CRITICAL",
-                            "message": f"CRS Engine stderr: {line_str}",
-                        }
-                    )
-
-            return message
-        except (BrokenPipeError, OSError, ValueError):
-            pass
-        except Exception as e:
-            smf.printd("Exception in CRS stderr reader", e, level="ERROR")
+                except Exception as e:
+                    smf.printd("Exception in CRS stderr reader", e, level="ERROR")
+                    break
+        finally:
+            with cls._init_lock:
+                if cls._process is my_proc:
+                    cls._process = None
+            
 
     @classmethod
     def send(cls, data: dict) -> dict:
@@ -216,8 +219,12 @@ class CRS:
                     msg_id, {"status": "ERROR", "message": "Response lost or engine died"}
                 )
 
+            with cls._dick_lock:
+                res_err = cls._resp_err.copy()
+                cls._resp_err.clear()
+
             smf.printd("Response Dict CRS", res_dict, level="DEBUG")
-            return res_dict
+            return res_dict, res_err
         except KeyboardInterrupt:
             try:
                 if proc and proc.stdin:
