@@ -1,8 +1,9 @@
 from .transport import CRSD
 from lib.smf.core.manage import ExceptionManager as em
 
+
 class CRS:
-    
+
     @classmethod
     def send(cls, data: dict) -> dict:
         resp, err = CRSD.send_data(data)
