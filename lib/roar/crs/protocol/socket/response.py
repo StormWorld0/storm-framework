@@ -3,7 +3,6 @@ import base64
 import socket
 
 from typing import Dict, Any, Optional
-from .exception import SockTrace, KITrace
 from .metadata import TLSMetadata
 
 
