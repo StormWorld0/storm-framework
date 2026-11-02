@@ -3,7 +3,7 @@ from .response import SocketResponse
 from .socket_inspect import ListenInspect
 from .socket_fd import ListenFD
 from .validate import is_tuple2
-from ...transport import CRS
+from ...endpoint import CRS
 
 
 class ClientListener(ListenInspect, ListenFD):
