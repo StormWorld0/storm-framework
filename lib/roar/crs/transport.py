@@ -25,8 +25,8 @@ class CRSD:
     )  # Special lock for _pending_requests & _responses & _resp_stderr
 
     _pending_requests = {}
+    _pending_stderr = {}
     _responses = {}
-    _resp_stderr = {}
     _reader_thread = None
     _stderr_thread = None
 
@@ -45,7 +45,7 @@ class CRSD:
             binary_path = call_bin("crs_engine")
             if not os.path.exists(binary_path):
                 smf.printf(f"[!]{CC.YELLOW} Binary not found =>{CC.RESET}", binary_path)
-                smf.printd("Binary does not exist", binary_path, lever="WARN")
+                smf.printd("Binary does not exist", binary_path, level="WARN")
                 return None
 
             # Running IPC process
@@ -122,7 +122,7 @@ class CRSD:
 
     @classmethod
     def _stderr_reader(cls, my_proc):
-        """A standalone thread to asynchronously consume and log engine stderr."""
+        """A standalone thread to consume stderr and broadcast lines to all active requests."""
         try:
             while my_proc and my_proc.poll() is None:
                 try:
@@ -130,15 +130,13 @@ class CRSD:
                     if not line:
                         break
 
-                    # Take all stderr and throw it to smflogd
                     line_str = line.strip()
                     if line_str:
                         smf.printd("CRS Engine STDERR", line_str, level="CRITICAL")
                         with cls._dict_lock:
-                            cls._resp_stderr = {
-                                "status": "CRITICAL",
-                                "message": f"CRS Engine stderr: {line_str}",
-                            }
+                            # Broadcast stderr to all active/pending requests
+                            for err_list in cls._pending_stderr.values():
+                                err_list.append(line_str)
 
                 except (BrokenPipeError, OSError, ValueError):
                     break
@@ -154,7 +152,7 @@ class CRSD:
     def send_data(cls, data: dict) -> dict:
         proc = cls._turn_on_process()
         if not proc:
-            return {"status": "ERROR", "message": "Engine binary not running"}
+            return {"status": "ERROR", "message": "Engine binary not running"}, {}
 
         msg_id = uuid.uuid4().hex
         data["msg_id"] = msg_id
@@ -163,6 +161,7 @@ class CRSD:
 
         with cls._dict_lock:
             cls._pending_requests[msg_id] = event
+            cls._pending_stderr[msg_id] = []
 
         try:
             json_payload = json.dumps(data) + "\n"
@@ -175,10 +174,10 @@ class CRSD:
                     proc.stdin.flush()
             except (BrokenPipeError, OSError):
                 pid.reap_zombie()
-                return {"status": "BROKEN", "message": "Write IPC experienced BrokenPipe"}
+                return {"status": "BROKEN", "message": "Write IPC experienced BrokenPipe"}, {}
             except Exception as write_err:
                 pid.reap_zombie()
-                return {"status": "ERROR", "message": f"Failed to write IPC: {write_err}"}
+                return {"status": "ERROR", "message": f"Failed to write IPC: {write_err}"}, {}
 
             if timeout == 0.0:
                 req_timeout = None
@@ -196,7 +195,7 @@ class CRSD:
                     return {
                         "status": "ERROR",
                         "message": "Engine crashed while waiting for infinite response",
-                    }
+                    }, {}
             else:
                 while elapsed < req_timeout:
                     if event.wait(timeout=wait_interval):
@@ -207,25 +206,28 @@ class CRSD:
                         return {
                             "status": "ERROR",
                             "message": "Engine crashed while waiting for response",
-                        }
+                        }, {}
                     elapsed += wait_interval
                 else:
                     # Loop completes without break => Timeout
                     return {
                         "status": "ERROR",
                         "message": f"IPC Timeout ({req_timeout:.1f}s)",
-                    }
+                    }, {}
 
             # Take a response stdout
             with cls._dict_lock:
                 res_dict = cls._responses.pop(
                     msg_id, {"status": "ERROR", "message": "Response lost or engine died"}
                 )
+                stderr_lines = cls._pending_stderr.pop(msg_id, [])
 
-            # Take a response stderr
-            with cls._dick_lock:
-                res_err = cls._resp_err.copy()
-                cls._resp_err.clear()
+            res_err = {}
+            if stderr_lines:
+                res_err = {
+                    "status": "CRITICAL",
+                    "message": " | ".join(stderr_lines),
+                }
 
             smf.printd("Response Dict CRS", res_dict, level="DEBUG")
             return res_dict, res_err
@@ -235,14 +237,16 @@ class CRSD:
                     proc.stdin.close()
             except Exception:
                 pass
-            return {"status": "INTER", "message": "KeyboardInterrupt detected"}
+            return {"status": "INTER", "message": "KeyboardInterrupt detected"}, {}
         except (BrokenPipeError, OSError):
-            return {"status": "BROKEN", "message": "(CRS.send) experienced BrokenPipe"}
+            return {"status": "BROKEN", "message": "(CRS.send) experienced BrokenPipe"}, {}
         except Exception as e:
             smf.printd("Error send IPC CRS", e, level="ERROR")
-            return {"status": "ERROR", "message": str(e)}
+            return {"status": "ERROR", "message": str(e)}, {}
         finally:
             # Make sure the dictionary memory is cleared
             with cls._dict_lock:
                 cls._pending_requests.pop(msg_id, None)
+                cls._pending_stderr.pop(msg_id, None)
                 cls._responses.pop(msg_id, None)
+                
