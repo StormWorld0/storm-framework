@@ -51,6 +51,7 @@ class ClientListener(ListenInspect, ListenFD):
 
         resp = CRS.send(packet)
         return SocketResponse(resp)
+
     def recv(
         self,
         readsize: int = None,
