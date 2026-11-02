@@ -1,6 +1,6 @@
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
-from ...transport import CRS
+from ...endpoint import CRS
 
 
 class SocketOptions:
