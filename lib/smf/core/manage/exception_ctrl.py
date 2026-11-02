@@ -18,11 +18,11 @@ class ExceptionManager:
 
     @classmethod
     def _worker(
-        cls, 
-        data_queue: queue.Queue, 
-        error_holder: list, 
-        alert_logs: list, 
-        lock: threading.Lock
+        cls,
+        data_queue: queue.Queue,
+        error_holder: list,
+        alert_logs: list,
+        lock: threading.Lock,
     ) -> None:
         """Consumer worker that processes data from the queue asynchronously."""
         while True:
@@ -118,4 +118,3 @@ class ExceptionManager:
         if error_holder:
             raise error_holder[0]
         return alert_logs
-        
