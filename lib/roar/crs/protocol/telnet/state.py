@@ -12,10 +12,7 @@ class TelnetState:
 
         # Open Inheritance
         self.sock = Socket()
-        # Set Goroutine so as not to block
-        self.sock.goroutine(10)
         self.sock.timeout(3.0)
-        self.sock.socket(self.sock.AF_INET, self.sock.SOCK_STREAM)
 
         # Set Timeout Telnet Default
         self._timeout = 3.0
