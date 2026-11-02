@@ -5,13 +5,8 @@ from apps.utility.colors import CC
 from lib.smf.exception import (
     CRSRuntimeError,
     CRSException,
-    CRSBrokenError,
-    CRSProtocolError,
-    CRSKeybordInterrupt,
     CRSConnectionRefused,
 )
-from .exception import SockTrace
-
 
 
 class SocketState:
