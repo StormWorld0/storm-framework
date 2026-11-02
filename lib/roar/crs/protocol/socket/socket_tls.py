@@ -34,8 +34,4 @@ class SocketTLS:
         resp = CRS.send(packet)
         if resp.get("status") == "SUCCESS":
             self.is_tls = True
-
-        response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
-        return response
+        return SocketResponse(resp)
