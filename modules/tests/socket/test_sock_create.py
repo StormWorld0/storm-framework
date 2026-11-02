@@ -50,7 +50,7 @@ def execute(options, net):
             smf.printf("Str response    =>", res.str_bytes)
     except KeyboardInterrupt:
         pass
-    except sock.STrace as e:
+    except sock.Exception as e:
         smf.printd("Socket testing failed", e, level="ERROR")
     finally:
         sock.close()
