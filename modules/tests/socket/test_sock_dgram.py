@@ -51,7 +51,7 @@ def execute(options, net):
         smf.printf("[!] Failed recvfrom =>", resp.message)
     except KeyboardInterrupt:
         pass
-    except sock.STrace as e:
+    except sock.Exception as e:
         smf.printd("Connection error", e, level="ERROR")
     finally:
         sock.close()
