@@ -3,7 +3,6 @@ package socket
 import (
     "io"
     "net"
-    "time"
     "strconv"
     "encoding/hex"
     "encoding/base64"
