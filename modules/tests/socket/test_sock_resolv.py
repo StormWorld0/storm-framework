@@ -33,5 +33,5 @@ def execute(options, net):
                 smf.printf(f"[✓] Getnameinfo > {addr} =>", resp)
     except KeyboardInterrupt:
         pass
-    except sock.STrace as e:
+    except sock.Exception as e:
         smf.printf("Error =>", e)
