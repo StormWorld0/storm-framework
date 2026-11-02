@@ -36,8 +36,6 @@ class SocketResolver:
 
         resp = CRS.send(packet)
         response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
         return response.addrinfo
 
     def getnameinfo(
@@ -64,8 +62,6 @@ class SocketResolver:
 
         resp = CRS.send(packet)
         response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
         return response.nameinfo
 
     def getsockname(self, **kwargs) -> SocketResponse:
@@ -78,8 +74,6 @@ class SocketResolver:
 
         resp = CRS.send(packet)
         response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
         return response.local_ip
 
     def getpeername(self, **kwargs) -> SocketResponse:
@@ -92,6 +86,4 @@ class SocketResolver:
 
         resp = CRS.send(packet)
         response = SocketResponse(resp)
-        response._trace()
-        response._ktrace()
         return response.remote_ip
