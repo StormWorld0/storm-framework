@@ -1,15 +1,10 @@
-# -- https://github.com/StormWorld0/storm-framework
-# -- License SMF
-# -- Author: zxelzy
-
 import threading
 import queue
 import time
 import smf
 from typing import Generator, Dict, Any, List, Callable
 
-# Mengimpor custom exceptions dari modul modular terpisah milikmu
-from .exceptions import (
+from lib.smf.exception import (
     CRSRuntimeError,
     CRSException,
     CRSBrokenError,
@@ -19,41 +14,40 @@ from .exceptions import (
 
 
 class ExceptionManager:
-    # Shared state di level class dengan thread-safe lock & storage
-    _lock: threading.Lock = threading.Lock()
-    _alert_logs: List[Dict[str, Any]] = []
-
-    # Target status yang wajib dianalisis (selain ini akan langsung di-drop)
     TARGET_STATUSES = {"ERROR", "CRITICAL", "BROKEN", "INTER", "ALERT"}
 
     @classmethod
-    def _worker(cls, data_queue: queue.Queue) -> None:
-        """Consumer worker yang memproses data dari queue secara asynchronous & concurrent."""
+    def _worker(
+        cls, 
+        data_queue: queue.Queue, 
+        error_holder: list, 
+        alert_logs: list, 
+        lock: threading.Lock
+    ) -> None:
+        """Consumer worker that processes data from the queue asynchronously."""
         while True:
             try:
-                # Mengambil data dari queue dengan timeout kecil agar worker bisa berhenti bersih
-                raw_response = data_queue.get(timeout=0.1)
-            except queue.Empty:
-                break
+                raw_response = data_queue.get()
+                if raw_response is None:
+                    data_queue.task_done()
+                    break
 
-            try:
                 _status: str = raw_response.get("status", "UNKNOWN").upper()
                 _message: str = raw_response.get("message", "UNKNOWN")
                 _msg_id: str = raw_response.get("msg_id", "UNKNOWN")
 
-                # --- FILTERING & DROPPING LOGIC ---
                 if _status not in cls.TARGET_STATUSES:
-                    continue  # Drop data
+                    data_queue.task_done()
+                    continue
 
-                # Catat log secara thread-safe
-                with cls._lock:
+                with lock:
                     log_entry = {
                         "msg_id": _msg_id,
                         "status": _status,
                         "message": _message,
                         "timestamp": time.time(),
                     }
-                    cls._alert_logs.append(log_entry)
+                    alert_logs.append(log_entry)
 
                 smf.printd(
                     "Target Alert Captured",
@@ -61,20 +55,26 @@ class ExceptionManager:
                     level="WARN",
                 )
 
-                # Mapping exception sesuai status
+                # Define exceptions by status
+                exc_to_raise = None
                 if _status == "CRITICAL":
-                    raise CRSRuntimeError(_status, _message)
+                    exc_to_raise = CRSRuntimeError(_status, _message)
                 elif _status == "BROKEN":
-                    raise CRSBrokenError(_status, _message)
+                    exc_to_raise = CRSBrokenError(_status, _message)
                 elif _status == "INTER":
-                    raise CRSKeybordInterrupt(_status, _message)
+                    exc_to_raise = CRSKeybordInterrupt(_status, _message)
                 elif _status == "ERROR":
-                    raise CRSException(_status, _message)
+                    exc_to_raise = CRSException(_status, _message)
                 elif _status == "ALERT":
-                    raise CRSConnectionRefused(_status, _message)
+                    exc_to_raise = CRSConnectionRefused(_status, _message)
+
+                if exc_to_raise:
+                    with lock:
+                        if not error_holder:
+                            error_holder.append(exc_to_raise)
 
             except Exception as e:
-                smf.printd("Unexpected parsing error", e, level="ERROR")
+                smf.printd("Unexpected parsing error in worker", e, level="ERROR")
             finally:
                 data_queue.task_done()
 
@@ -83,32 +83,39 @@ class ExceptionManager:
         cls,
         data: Callable[[], Generator[Dict[str, Any], None, None]],
     ) -> List[Dict[str, Any]]:
-        """Fungsi utama"""
-        # Bersihkan log sebelumnya
-        with cls._lock:
-            cls._alert_logs.clear()
-
+        """Main functions with Queue-Worker architecture"""
+        alert_logs: List[Dict[str, Any]] = []
+        error_holder: List[Exception] = []
+        local_lock = threading.Lock()
         data_queue = queue.Queue(maxsize=10000)
 
-        # Producer Thread: Memasukkan stream data ke dalam queue secara efisien
+        # Producer Thread: Puts stream data into queue
         def producer():
-            for raw_response in data():
-                if isinstance(raw_response, dict):
-                    data_queue.put(raw_response)
+            try:
+                for raw_response in data():
+                    if isinstance(raw_response, dict):
+                        data_queue.put(raw_response)
+            finally:
+                data_queue.put(None)
 
         producer_thread = threading.Thread(
             target=producer, name="Data-Producer", daemon=True
         )
         producer_thread.start()
 
-        # Consumer Worker Pool
-        w = threading.Thread(
-            target=cls._worker, args=(data_queue,), name=f"StreamWorker-Exception"
+        # Consumer Worker Thread
+        worker_thread = threading.Thread(
+            target=cls._worker,
+            args=(data_queue, error_holder, alert_logs, local_lock),
+            name="StreamWorker-Exception",
         )
-        w.start()
+        worker_thread.start()
 
+        # Wait until the producer and worker have finished processing
         producer_thread.join()
         data_queue.join()
-
-        with cls._lock:
-            return list(cls._alert_logs)
+        worker_thread.join()
+        if error_holder:
+            raise error_holder[0]
+        return alert_logs
+        
