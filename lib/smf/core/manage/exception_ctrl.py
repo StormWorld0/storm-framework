@@ -92,7 +92,7 @@ class ExceptionManager:
         # Producer Thread: Puts stream data into queue
         def producer():
             try:
-                for raw_response in data():
+                for raw_response in data:
                     if isinstance(raw_response, dict):
                         data_queue.put(raw_response)
             finally:
