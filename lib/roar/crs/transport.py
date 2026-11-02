@@ -14,7 +14,7 @@ from apps.utility.colors import CC
 from lib.pid_manager import PIDManager as pid
 
 
-class CRS:
+class CRSD:
     """IPC (Inter-Process Communication) via Subprocess (Thread-Safe & Deadlock-Free)."""
 
     _process = None
@@ -151,7 +151,7 @@ class CRS:
                     cls._process = None
 
     @classmethod
-    def send(cls, data: dict) -> dict:
+    def send_data(cls, data: dict) -> dict:
         proc = cls._turn_on_process()
         if not proc:
             return {"status": "ERROR", "message": "Engine binary not running"}
@@ -216,12 +216,13 @@ class CRS:
                         "message": f"IPC Timeout ({req_timeout:.1f}s)",
                     }
 
-            # Take a response
+            # Take a response stdout
             with cls._dict_lock:
                 res_dict = cls._responses.pop(
                     msg_id, {"status": "ERROR", "message": "Response lost or engine died"}
                 )
 
+            # Take a response stderr
             with cls._dick_lock:
                 res_err = cls._resp_err.copy()
                 cls._resp_err.clear()
