@@ -54,7 +54,7 @@ def execute(options, net):
             smf.printf("[✓] Str bytes =>", resp.str_bytes)
     except KeyboardInterrupt:
         pass
-    except sock.STrace as e:
+    except sock.Exception as e:
         smf.printf("[*] Error Socket =>", e)
     finally:
         sock.close()
