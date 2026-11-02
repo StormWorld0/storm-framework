@@ -99,15 +99,15 @@ func handleRecv(ctx *ExecutionContext) packet.ResponsePacket {
 		    }
 			return packet.ResponsePacket{Status: "ERROR", Message: "Recv failed: " + err.Error()}
 		}
+
+		if n == 0 {
+		    return packet.ResponsePacket{Status: "ERROR", Message: "EOF Recv: " + err.Error()}
+	    }
 		
 		ctx.SaveSession(ctx.RawFD)
 	    meta := ctx.GenerateMetadataFD(fd, n)
 	    meta["raw_bytes"] = base64.StdEncoding.EncodeToString(buffer[:n])
 	    meta["hex_bytes"] = hex.EncodeToString(buffer[:n])
-
-		if n == 0 {
-		    return packet.ResponsePacket{Status: "ERROR", Message: "EOF Recv: " + err.Error()}
-	    }
     	return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
 	}
 	
@@ -125,14 +125,14 @@ func handleRecv(ctx *ExecutionContext) packet.ResponsePacket {
 		}
 	}
 	
+	if err == io.EOF {
+		return packet.ResponsePacket{Status: "ERROR", Message: "EOF Recv: " + err.Error()}
+	}
+
 	ctx.SaveSession(ctx.Conn)
 	meta := ctx.GenerateMetadata(n)
 	meta["raw_bytes"] = base64.StdEncoding.EncodeToString(buffer[:n])
 	meta["hex_bytes"] = hex.EncodeToString(buffer[:n])
-
-	if err == io.EOF {
-		return packet.ResponsePacket{Status: "ERROR", Message: "EOF Recv: " + err.Error()}
-	}
 	return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
 }
 
@@ -166,6 +166,7 @@ func handleSendTo(ctx *ExecutionContext) packet.ResponsePacket {
 		}
 		return packet.ResponsePacket{Status: "ERROR", Message: "Sendto failed: " + err.Error()}
 	}
+	
 	ctx.SaveSession(ctx.RawFD)
 	return packet.ResponsePacket{
 		Status: "SUCCESS", 
@@ -202,8 +203,6 @@ func handleRecvFrom(ctx *ExecutionContext) packet.ResponsePacket {
 		}
 	}
 
-	ctx.SaveSession(ctx.RawFD)
-
 	// Extract IP and Port from Sender (Remote Address)
 	var senderIP string
 	var senderPort int
@@ -222,16 +221,10 @@ func handleRecvFrom(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: "EOF Recvfrom: " + err.Error()}
 	}
 
-	return packet.ResponsePacket{
-		Status: "SUCCESS", 
-		Data: map[string]interface{}{
-			"raw_bytes":    base64.StdEncoding.EncodeToString(buffer[:n]),
-			"hex_bytes":    hex.EncodeToString(buffer[:n]),
-		    "remote_ip":    sender,
-		    "is_reused":    ctx.IsReused,
-		    "rtt_ms":       time.Since(ctx.StartTime).Milliseconds(),
-		    "Cheked":       "RawSocket",
-		    "read_bytes":   n,
-		},
-	}
+	ctx.SaveSession(ctx.RawFD)
+	meta := ctx.GenerateMetadataFD(fd, n)
+	meta["raw_bytes"] = base64.StdEncoding.EncodeToString(buffer[:n])
+	meta["hex_bytes"] = hex.EncodeToString(buffer[:n])
+	meta["remote_ip"] = sender
+	return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
 }
