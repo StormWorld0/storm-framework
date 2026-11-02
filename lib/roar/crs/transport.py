@@ -174,10 +174,16 @@ class CRSD:
                     proc.stdin.flush()
             except (BrokenPipeError, OSError):
                 pid.reap_zombie()
-                return {"status": "BROKEN", "message": "Write IPC experienced BrokenPipe"}, {}
+                return {
+                    "status": "BROKEN",
+                    "message": "Write IPC experienced BrokenPipe",
+                }, {}
             except Exception as write_err:
                 pid.reap_zombie()
-                return {"status": "ERROR", "message": f"Failed to write IPC: {write_err}"}, {}
+                return {
+                    "status": "ERROR",
+                    "message": f"Failed to write IPC: {write_err}",
+                }, {}
 
             if timeout == 0.0:
                 req_timeout = None
@@ -239,7 +245,10 @@ class CRSD:
                 pass
             return {"status": "INTER", "message": "KeyboardInterrupt detected"}, {}
         except (BrokenPipeError, OSError):
-            return {"status": "BROKEN", "message": "(CRS.send) experienced BrokenPipe"}, {}
+            return {
+                "status": "BROKEN",
+                "message": "(CRS.send) experienced BrokenPipe",
+            }, {}
         except Exception as e:
             smf.printd("Error send IPC CRS", e, level="ERROR")
             return {"status": "ERROR", "message": str(e)}, {}
@@ -249,4 +258,3 @@ class CRSD:
                 cls._pending_requests.pop(msg_id, None)
                 cls._pending_stderr.pop(msg_id, None)
                 cls._responses.pop(msg_id, None)
-                
