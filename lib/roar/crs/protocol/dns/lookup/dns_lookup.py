@@ -3,10 +3,8 @@
 # -- Author zxelzy
 
 import smf
-
 from lib.smf.ingest import push_to_queue
-from ....transport import CRS
-
+from ....endpoint import CRS
 from .response import DNSResponse
 from .state_build import DNState, IPCPayloadBuilder
 from .exception import StackTrace, NXDomain
