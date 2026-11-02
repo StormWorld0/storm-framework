@@ -3,7 +3,6 @@
 import smf
 import inspect
 import apps.utility.utils as utils
-
 from apps.utility.colors import CC
 
 
@@ -17,8 +16,10 @@ from apps.utility.colors import CC
 # After running the module will run and you just have to wait for it to finish.
 def execute(args, ctx):
     current_module = ctx.current_module
+    module_name = ctx.current_module_name
     options = ctx.options
     manager = ctx.plugin
+    mod_net = ctx.net
 
     if not current_module:
         smf.printf(f"{CC.YELLOW}[!] No modules selected. (use <module>) first.{CC.RESET}")
@@ -59,9 +60,6 @@ def execute(args, ctx):
         if full_path:
             options["PASS"] = full_path
 
-    # Runtime
-    mod_net = ctx.net
-
     # Execution module
     try:
         execute = current_module.execute
@@ -79,7 +77,14 @@ def execute(args, ctx):
         else:
             execute(options)
 
+    except RuntimeError as e:
+        smf.printd("Module runtime error", e, level="ERROR")
+        return
     except AttributeError as e:
-        smf.printd("ATTRIBUTE ERROR COMMAND RUN", e, level="ERROR")
+        smf.printd("Attribute error command run", e, level="ERROR")
+        return
     except Exception as e:
-        smf.printd("ERROR COMMAND RUN EXCEPTION", e, level="ERROR")
+        smf.printd("Error command run exception", e, level="ERROR")
+        return
+    finally:
+        smf.printf(f"{CC.RED}Module error =>{CC.RESET}", module_name)
