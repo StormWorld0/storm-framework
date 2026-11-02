@@ -3,8 +3,6 @@ import base64
 import socket
 
 from typing import Dict, Any, Optional
-
-from lib.smf.exception import crs_exc as crs
 from .exception import SockTrace, KITrace
 from .metadata import TLSMetadata
 
@@ -163,16 +161,6 @@ class SocketResponse:
         """Melempar KeyboardInterrupt"""
         if (sts := self.status.upper()) == "INTER":
             return KITrace(sts, self.message)
-        return None
-
-    def _stderr(self):
-        if self.status.upper() == "CRITICAL":
-            raise crs.CRSStderError(self.message)
-        return None
-
-    def _broken(self):
-        if self.status.upper() == "BROKEN":
-            raise crs.CRSBrokenError(self.message)
         return None
 
     def _client_fd(self):
