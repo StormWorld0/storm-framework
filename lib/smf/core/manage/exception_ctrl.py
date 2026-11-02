@@ -29,7 +29,6 @@ class ExceptionManager:
             try:
                 raw_response = data_queue.get()
                 if raw_response is None:
-                    data_queue.task_done()
                     break
 
                 _status: str = raw_response.get("status", "UNKNOWN").upper()
@@ -76,6 +75,7 @@ class ExceptionManager:
             except Exception as e:
                 smf.printd("Unexpected parsing error in worker", e, level="ERROR")
                 data_queue.task_done()
+                break
 
     @classmethod
     def process_exc(
