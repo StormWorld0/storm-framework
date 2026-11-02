@@ -13,6 +13,8 @@ from .exceptions import (
     CRSRuntimeError,
     CRSException,
     CRSBrokenError,
+    CRSKeybordInterrupt,
+    CRSConnectionRefused,
 )
 
 
@@ -61,11 +63,15 @@ class ExceptionManager:
 
                 # Mapping exception sesuai status
                 if _status == "CRITICAL":
-                    raise CRSRuntimeError(_message)
+                    raise CRSRuntimeError(_status, _message)
                 elif _status == "BROKEN":
-                    raise CRSBrokenError(_message)
-                elif _status in {"INTER", "ALERT"}:
-                    raise CRSException(_message)
+                    raise CRSBrokenError(_status, _message)
+                elif _status == "INTER":
+                    raise CRSKeybordInterrupt(_status, _message)
+                elif _status == "ERROR":
+                    raise CRSException(_status, _message)
+                elif _status == "ALERT":
+                    raise CRSConnectionRefused(_status, _message)
 
             except Exception as e:
                 smf.printd("Unexpected parsing error", e, level="ERROR")
@@ -99,7 +105,6 @@ class ExceptionManager:
         w = threading.Thread(
             target=cls._worker, args=(data_queue,), name=f"StreamWorker-Exception"
         )
-        workers.append(w)
         w.start()
 
         producer_thread.join()
