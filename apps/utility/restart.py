@@ -7,14 +7,14 @@ import sys
 import smf
 import lib.smf.core.sf.svch as svch
 from apps.utility.colors import CC
-from lib.pid_manager import PIDManager as pid
+from lib.smf.core.manage import PIDManager as pid
 
 
 def run_restart(options):
     # save old variables
     svch.session(options)
     # Kill the active process
-    pid.cleanup(timeout=1.0)
+    pid.cleanup(1.0)
     # Restart the storm
     executable = sys.argv[0]
     args = sys.argv
