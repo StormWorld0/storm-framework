@@ -2,7 +2,7 @@ import os
 import sqlite3
 import smf
 
-from .colors import *
+from .colors import CC
 from rootmap import ROOT
 from typing import List
 
