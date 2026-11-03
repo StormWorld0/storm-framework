@@ -31,7 +31,7 @@ jobs:
 
     - name: Auto Cleanup (Remove Unused Imports)
       run: |
-        autoflake --in-place --remove-all-unused-imports --recursive . --exclude=vendor
+        autoflake .
 
     - name: After Autoflake
       run: git status
