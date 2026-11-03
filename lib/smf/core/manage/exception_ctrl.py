@@ -1,8 +1,7 @@
 import threading
 import queue
-import time
 import smf
-from typing import Generator, Dict, Any, List, Callable
+from typing import List
 from lib.smf.exception import (
     CRSRuntimeError,
     CRSException,
@@ -17,7 +16,6 @@ class ExceptionManager:
     _error_holder: List[Exception] = []
     _local_lock = threading.Lock()
     _data_queue = queue.Queue(maxsize=10000)
-
 
     @classmethod
     def _worker(cls) -> None:
@@ -67,7 +65,7 @@ class ExceptionManager:
     @classmethod
     def process_exc(cls, data: dict) -> None:
         """Main functions with Queue-Worker architecture"""
-        
+
         # Producer Thread: Puts stream data into queue
         try:
             for v in data:
