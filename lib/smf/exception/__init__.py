@@ -15,4 +15,4 @@ from .storm_exc import (
     SMFOSError,
     SMFBinaryError,
     SMFBrokenPipeError,
-) # noqa
+)  # noqa
