@@ -13,7 +13,7 @@ def resolve_bin_path(query_name: str) -> str:
     bm = BinaryManager()
 
     # 1. Exact Match
-    exact_path = bm._query_db("filename", query_name)
+    exact_path = bm.query_db("filename", query_name)
     if exact_path:
         return exact_path
 
@@ -41,12 +41,12 @@ def resolve_bin_path(query_name: str) -> str:
         ]
 
     for candidate in candidates:
-        candidate_path = bm._query_db("filename", candidate)
+        candidate_path = bm.query_db("filename", candidate)
         if candidate_path:
             return candidate_path
 
     # Stem Fallback Match
-    stem_path = bm._query_db("stem", query_name)
+    stem_path = bm.query_db("stem", query_name)
     if stem_path:
         smf.printd(
             f"Resolved via pure stem fallback: {query_name}",
