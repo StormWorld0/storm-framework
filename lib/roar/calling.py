@@ -7,6 +7,7 @@ import smf
 from .callbin.helper import resolve_bin_path
 from ..smf.exception import SMFOSError, SMFRuntimeError, SMFImportError
 
+
 def call_bin(query_name: str) -> str:
     """To call the binary executable"""
     return resolve_bin_path(query_name)
