@@ -8,6 +8,3 @@ def exception_handler(exc_type, exc_value, exc_traceback):
         smf.printd(f"Type: {exc_type} | Value: {exc_value}", exc_traceback, level="ERROR")
     else:
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
-
-
-sys.excepthook = exception_handler
