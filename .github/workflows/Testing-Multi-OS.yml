@@ -32,15 +32,17 @@ jobs:
           apt-get clean
           
           if [ "${{ matrix.os }}" = "kalilinux/kali-rolling:latest" ]; then
+            KALI_SNAPSHOT=20260601
             rm -f /etc/apt/sources.list.d/kali.sources
-            echo "deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware" > /etc/apt/sources.list
+            echo "deb http://snapshot.kali.org/kali/${KALI_SNAPSHOT} kali-rolling main contrib non-free non-free-firmware" > /etc/apt/sources.list
             
             apt-get update -y
             
             cat << 'EOF' > /usr/local/bin/apt-get
           #!/bin/bash
+          KALI_SNAPSHOT=20260601
           rm -f /etc/apt/sources.list.d/kali.sources
-          echo "deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware" > /etc/apt/sources.list
+          echo "deb http://snapshot.kali.org/kali/${KALI_SNAPSHOT} kali-rolling main contrib non-free non-free-firmware" > /etc/apt/sources.list
           
           if [[ "$*" == *"install"* ]]; then
               /usr/bin/apt-get update -y >/dev/null 2>&1
