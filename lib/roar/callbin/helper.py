@@ -58,4 +58,4 @@ def resolve_bin_path(query_name: str) -> str:
     )
     raise FileNotFoundError(
         f"Binary or Shared Object '{query_name}' not found for current OS."
-      )
+    )
