@@ -1,7 +1,7 @@
 # -- https://github.com/StormWorld0/storm-framework
 # -- SMF License
 
-from lib.pid_manager import PIDManager as pid
+from lib.smf.core.manage import PIDManager as pid
 from lib.smf.postgresql import close_db
 
 
