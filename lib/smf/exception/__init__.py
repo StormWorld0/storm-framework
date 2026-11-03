@@ -1,3 +1,4 @@
+from .handler import exception_handler
 from .crs_exc import (
     CRSRuntimeError,
     CRSException,
