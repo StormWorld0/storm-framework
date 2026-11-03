@@ -26,9 +26,9 @@ def call_cty(query_name: str) -> ctypes.CDLL:
         smf.printd(
             f"Failed to load shared library '{lib_path}' into memory.",
             e,
-            level="CRITICAL",
+            level="ERROR",
         )
-        raise SMFOSError(f"Failed load binary ctypes: {lib_path}")
+        raise SMFOSError(f"Failed load binary ctypes: {lib_path}") from e
 
 
 def call_so(query_name: str, module_name: str = None):
@@ -61,5 +61,5 @@ def call_so(query_name: str, module_name: str = None):
         spec.loader.exec_module(module)
         return module
     except Exception as e:
-        smf.printd(f"Failed to load Python extension '{lib_path}'", e, level="CRITICAL")
-        raise SMFRuntimeError(f"Error exception: {e}")
+        smf.printd(f"Failed to load Python extension '{lib_path}'", e, level="ERROR")
+        raise SMFRuntimeError(f"Call_so function exception error") from e
