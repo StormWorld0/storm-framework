@@ -15,4 +15,6 @@ from .storm_exc import (
     SMFOSError,
     SMFBinaryError,
     SMFBrokenPipeError,
+    SMFConfigDatabaseError,
+    SMFDatabaseError,
 )  # noqa
