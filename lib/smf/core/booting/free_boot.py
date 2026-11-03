@@ -9,7 +9,7 @@ from apps.utility.spin import SpinBoot
 from lib.roar.crs import CRSD
 from lib.roar.plugin_api import plugin
 from lib.roar.cache import cache_modules as cache
-from lib.roar.callbin import manager
+from lib.roar.callbin.manager import BinaryManager
 from lib.smf.postgresql import DBManager
 from lib.smf.exception.handler import exception_handler
 from ..security.syscall import is_this_docker
@@ -26,7 +26,7 @@ def systemb():
             check_critical_files()
 
             # Cache Binary synchronization
-            if not manager.sync_bin():
+            if not BinaryManager().sync_bin():
                 smf.printd("Failed to synchronize Binary", level="ERROR")
                 raise
 
