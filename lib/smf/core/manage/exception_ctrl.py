@@ -3,7 +3,6 @@ import queue
 import time
 import smf
 from typing import Generator, Dict, Any, List, Callable
-
 from lib.smf.exception import (
     CRSRuntimeError,
     CRSException,
@@ -15,39 +14,26 @@ from lib.smf.exception import (
 
 class ExceptionManager:
     TARGET_STATUSES = {"ERROR", "CRITICAL", "BROKEN", "INTER", "ALERT"}
+    _error_holder: List[Exception] = []
+    _local_lock = threading.Lock()
+    _data_queue = queue.Queue(maxsize=10000)
+
 
     @classmethod
-    def _worker(
-        cls,
-        data_queue: queue.Queue,
-        error_holder: list,
-        alert_logs: list,
-        lock: threading.Lock,
-    ) -> None:
+    def _worker(cls) -> None:
         """Consumer worker that processes data from the queue asynchronously."""
         while True:
             try:
-                raw_response = data_queue.get()
-                if raw_response is None:
-                    data_queue.task_done()
+                resp = cls._data_queue.get()
+                if resp is None:
                     break
 
-                _status: str = raw_response.get("status", "UNKNOWN").upper()
-                _message: str = raw_response.get("message", "UNKNOWN")
-                _msg_id: str = raw_response.get("msg_id", "UNKNOWN")
+                _status: str = resp.get("status", "UNKNOWN")
+                _message: str = resp.get("message", "UNKNOWN")
+                _msg_id: str = resp.get("msg_id", "UNKNOWN")
 
                 if _status not in cls.TARGET_STATUSES:
-                    data_queue.task_done()
                     continue
-
-                with lock:
-                    log_entry = {
-                        "msg_id": _msg_id,
-                        "status": _status,
-                        "message": _message,
-                        "timestamp": time.time(),
-                    }
-                    alert_logs.append(log_entry)
 
                 smf.printd(
                     "Target Alert Captured",
@@ -69,52 +55,33 @@ class ExceptionManager:
                     exc_to_raise = CRSConnectionRefused(_status, _message)
 
                 if exc_to_raise:
-                    with lock:
-                        if not error_holder:
-                            error_holder.append(exc_to_raise)
+                    with cls._local_lock:
+                        if not cls._error_holder:
+                            cls._error_holder.append(exc_to_raise)
 
             except Exception as e:
                 smf.printd("Unexpected parsing error in worker", e, level="ERROR")
-                data_queue.task_done()
-                break
+            finally:
+                cls._data_queue.task_done()
 
     @classmethod
-    def process_exc(
-        cls,
-        data: Callable[[], Generator[Dict[str, Any], None, None]],
-    ) -> List[Dict[str, Any]]:
+    def process_exc(cls, data: dict) -> None:
         """Main functions with Queue-Worker architecture"""
-        alert_logs: List[Dict[str, Any]] = []
-        error_holder: List[Exception] = []
-        local_lock = threading.Lock()
-        data_queue = queue.Queue(maxsize=10000)
-
+        
         # Producer Thread: Puts stream data into queue
-        def producer():
-            try:
-                for raw_response in data:
-                    if isinstance(raw_response, dict):
-                        data_queue.put(raw_response)
-            finally:
-                data_queue.put(None)
+        try:
+            for v in data:
+                if isinstance(v, dict):
+                    cls._data_queue.put_nowait(v)
+        except Exception:
+            pass
 
-        producer_thread = threading.Thread(
-            target=producer, name="Data-Producer", daemon=True
-        )
-        producer_thread.start()
+        with cls._local_lock:
+            if cls._error_holder:
+                err = cls._error_holder.pop(0)
+                raise err
 
-        # Consumer Worker Thread
-        worker_thread = threading.Thread(
-            target=cls._worker,
-            args=(data_queue, error_holder, alert_logs, local_lock),
-            name="StreamWorker-Exception",
-        )
-        worker_thread.start()
 
-        # Wait until the producer and worker have finished processing
-        producer_thread.join()
-        data_queue.join()
-        worker_thread.join()
-        if error_holder:
-            raise error_holder[0]
-        return alert_logs
+# Consumer Worker Thread
+worker_thread = threading.Thread(target=ExceptionManager._worker, daemon=True)
+worker_thread.start()
