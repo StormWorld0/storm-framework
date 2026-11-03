@@ -7,7 +7,7 @@ from .crs_exc import (
     CRSConnectionRefused,
 )  # noqa
 from .storm_exc import (
-    SMFFileNotFountError,
+    SMFFileNotFoundError,
     SMFRuntimeError,
     SMFImportError,
     SMFException,
