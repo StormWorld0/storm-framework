@@ -76,15 +76,15 @@ def execute(args, ctx):
             execute(options, mod_net)
         else:
             execute(options)
-
     except RuntimeError as e:
+        smf.printf(f"{CC.RED}Module error =>{CC.RESET}", module_name)
         smf.printd("Module runtime error", e, level="ERROR")
         return
     except AttributeError as e:
+        smf.printf(f"{CC.RED}Module error =>{CC.RESET}", module_name)
         smf.printd("Attribute error command run", e, level="ERROR")
         return
     except Exception as e:
+        smf.printf(f"{CC.RED}Module error =>{CC.RESET}", module_name)
         smf.printd("Error command run exception", e, level="ERROR")
         return
-    finally:
-        smf.printf(f"{CC.RED}Module error =>{CC.RESET}", module_name)
