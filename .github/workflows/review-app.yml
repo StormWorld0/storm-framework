@@ -31,7 +31,7 @@ jobs:
 
     - name: Auto Cleanup (Remove Unused Imports)
       run: |
-        autoflake .
+        autoflake . --verbose
 
     - name: After Autoflake
       run: git status
