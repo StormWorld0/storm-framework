@@ -215,7 +215,7 @@ fn storm_sign(py: Python) -> PyResult<()> {
         return Ok(());
     }
 
-    log!("[✓] Success! Manifest signed and saved.");
+    log!("[✓] Security successful.");
     Ok(())
 }
 
