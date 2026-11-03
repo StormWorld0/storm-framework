@@ -19,7 +19,7 @@ class SMFTypeError(BaseException):
         super().__init__(msg)
 
 
-class SMFFileNotFountError(BaseException):
+class SMFFileNotFoundError(BaseException):
     def __init__(self, msg: str = None):
         self.message = msg
         super().__init__(msg)
