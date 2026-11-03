@@ -11,7 +11,7 @@ IS_LINUX = sys.platform.startswith("linux") or hasattr(sys, "getandroidapilevel"
 def resolve_bin_path(query_name: str) -> str:
     smf.printd(f"Resolving path for binary", query_name, level="DEBUG")
     bm = BinaryManager()
-    
+
     # 1. Exact Match
     exact_path = bm._query_db("filename", query_name)
     if exact_path:
