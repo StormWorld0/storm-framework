@@ -15,7 +15,7 @@ def run_sign():
         bin.storm_sign()
         return True
     except ImportError as e:
-        smf.print(
+        smf.printf(
             "[!] Critical => Binary not found.",
             file=sys.stderr,
             flush=True,
