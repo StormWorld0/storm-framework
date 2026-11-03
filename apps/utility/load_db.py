@@ -14,21 +14,6 @@ def _get_db_connection():
     return sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True, check_same_thread=False)
 
 
-"""
-def parse_query(query):
-    parts = query.split()
-    base_queries = []
-    filters = {}
-    for part in parts:
-        if ":" in part:
-            key, val = part.split(":", 1)
-            filters[key.lower()] = val.lower()
-        else:
-            base_queries.append(part.lower())
-    return " ".join(base_queries), filters
-"""
-
-
 def parse_query(query):
     parts = query.split()
 
@@ -119,7 +104,7 @@ def show_modules(category: str) -> List[str]:
 FILTER_MAP = {
     "author": ("author", "token"),
     "act": ("actions", "token"),
-    "defact": ("default_action", "exact"),
+    "defact": ("default_action", "token"),
     "cve": ("cve", "exact"),
     "severity": ("severity", "exact"),
 }
@@ -129,7 +114,7 @@ def search_modules(query):
     """Searching contains filters to find things faster"""
     base_query, filters = parse_query(query)
 
-    smf.printf(f"\n{CC.YELLOW}[*] Searching for =>{CC.RESET} {query}")
+    smf.printf(f"\n[*]{CC.YELLOW}Searching for =>{CC.RESET} {query}")
     smf.printf()
     smf.printf(f"{CC.CYAN}{'Module Path':<40} {'Category':<15} {'Description'}{CC.RESET}")
     smf.printf(f"{CC.MAGENTA}{'-'*40} {'-'*15} {'-'*50}{CC.RESET}")
@@ -138,7 +123,7 @@ def search_modules(query):
 
     if filters and not all(f_key in supported_filters for f_key in filters.keys()):
         smf.printf(
-            f"{CC.YELLOW}[!] Invalid filter detected. Supported: author, act, defact, cve, severity{CC.RESET}\n"
+            f"[!]{CC.YELLOW} Invalid filter detected. Supported: author, act, defact, cve, severity{CC.RESET}\n"
         )
         return
 
@@ -173,25 +158,6 @@ def search_modules(query):
                 ]
             )
 
-    """
-    for f_key, f_val in filters.items():
-        if f_key == "author":
-            query_parts.append("LOWER(author)=?")
-            sql_params.append(f"%{f_val}%")
-        elif f_key == "act":
-            query_parts.append("LOWER(actions)=?")
-            sql_params.append(f"%{f_val}%")
-        elif f_key == "defact":
-            query_parts.append("LOWER(default_action)=?")
-            sql_params.append(f"%{f_val}%")
-        elif f_key == "cve":
-            query_parts.append("LOWER(cve)=?")
-            sql_params.append(f"%{f_val}%")
-        elif f_key == "severity":
-            query_parts.append("LOWER(severity)=?")
-            sql_params.append(f"%{f_val}%")
-    """
-
     # Finalisasi SQL String
     sql_query = "SELECT module_path, category, description FROM module_cache"
     if query_parts:
@@ -205,7 +171,7 @@ def search_modules(query):
         rows = cursor.fetchall()
         conn.close()
     except sqlite3.Error as e:
-        smf.printf(f"{CC.RED}[!] Database Read Error{CC.RESET}")
+        smf.printf(f"[!]{CC.RED} Database Read Error{CC.RESET}")
         smf.printd("Database Read Error", e, level="ERROR")
         return
 
