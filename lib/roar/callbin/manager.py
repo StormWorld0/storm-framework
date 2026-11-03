@@ -16,23 +16,25 @@ class BinaryManager:
             "core": self._BASE_DIR / "external" / "source" / "out" / "core",
         }
         self._VALID_EXTENSIONS = {".so", ".dll", ".dylib", ".exe", ".bin", ".pyd"}
-        
+
         self._DB_PATH.parent.mkdir(parents=True, exist_ok=True)
         try:
             # check_same_thread=False aman asal query dijalankan terisolasi per method/cursor lokal
             self.conn = sqlite3.connect(self._DB_PATH, check_same_thread=False)
             self.conn.row_factory = sqlite3.Row
-            
+
             # Konfigurasi pragmas untuk performa tinggi (WAL mode)
             cursor = self.conn.cursor()
             cursor.execute("PRAGMA journal_mode=WAL;")
             cursor.execute("PRAGMA synchronous=NORMAL;")
             cursor.close()
-            
+
             self._init_db()
         except Exception as e:
             smf.printd("Failed to connect or configure SQLite database", e, level="ERROR")
-            raise SMFConfigDatabaseError("Failed to connect or configure SQLite Database.", e)
+            raise SMFConfigDatabaseError(
+                "Failed to connect or configure SQLite Database.", e
+            )
 
     def _init_db(self):
         try:
@@ -52,9 +54,13 @@ class BinaryManager:
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_stem ON binary(stem)")
         except sqlite3.Error as e:
             smf.printd("Failed to initialize SQLite cache schema", e, level="CRITICAL")
-            raise SMFConfigDatabaseError("Failed to initialize SQLite cache schema.") from e
+            raise SMFConfigDatabaseError(
+                "Failed to initialize SQLite cache schema."
+            ) from e
 
-    def _fast_scan(self, folder: Path, current_disk_files: Dict[str, Dict[str, Any]], category: str):
+    def _fast_scan(
+        self, folder: Path, current_disk_files: Dict[str, Dict[str, Any]], category: str
+    ):
         """Helper rekursif/iteratif untuk memindai direktori binary secara efisien."""
         if not folder.exists() or not folder.is_dir():
             return
@@ -68,7 +74,9 @@ class BinaryManager:
                         entry_path = Path(entry.path)
                         suffix = entry_path.suffix.lower()
                         is_valid = suffix in self._VALID_EXTENSIONS
-                        is_linux_binary = (suffix == "") and os.access(entry_path, os.X_OK)
+                        is_linux_binary = (suffix == "") and os.access(
+                            entry_path, os.X_OK
+                        )
 
                         if is_valid or is_linux_binary:
                             base_name = entry_path.name.split(".")[0]
@@ -83,7 +91,11 @@ class BinaryManager:
                                 "category": category,
                                 "mtime": st_mtime,
                             }
-                            smf.printd(f"Binary extracted: {entry_path.name}", category, level="DEBUG")
+                            smf.printd(
+                                f"Binary extracted: {entry_path.name}",
+                                category,
+                                level="DEBUG",
+                            )
         except Exception as e:
             smf.printd(f"Error scanning directory: {folder}", e, level="ERROR")
 
@@ -93,7 +105,7 @@ class BinaryManager:
             cursor = self.conn.cursor()
             cursor.execute("SELECT filename FROM binary")
             db_state = {row[0] for row in cursor.fetchall()}
-            
+
             current_disk_files: Dict[str, Dict[str, Any]] = {}
             for category, folder_path in self.bin_dirs.items():
                 self._fast_scan(folder_path, current_disk_files, category)
@@ -103,7 +115,7 @@ class BinaryManager:
                 with self.conn:
                     tx_cursor = self.conn.cursor()
                     updated_count = 0
-                    
+
                     if current_disk_files:
                         # Batching menggunakan executemany untuk performa optimal
                         payloads = [
@@ -116,7 +128,7 @@ class BinaryManager:
                             )
                             for filename, data in current_disk_files.items()
                         ]
-                        
+
                         tx_cursor.executemany(
                             """
                             INSERT INTO binary (filename, stem, path, category, mtime)
@@ -135,8 +147,13 @@ class BinaryManager:
 
                     if deleted_files:
                         removed = [(name,) for name in deleted_files]
-                        tx_cursor.executemany("DELETE FROM binary WHERE filename = ?", removed)
-                        smf.printd(f"Cleaned {len(removed)} binaries no longer in cache.", level="INFO")
+                        tx_cursor.executemany(
+                            "DELETE FROM binary WHERE filename = ?", removed
+                        )
+                        smf.printd(
+                            f"Cleaned {len(removed)} binaries no longer in cache.",
+                            level="INFO",
+                        )
 
                     smf.printd(
                         f"DB sync complete. Total scanned: {len(current_disk_files)}, Processed: {updated_count}",
@@ -144,7 +161,7 @@ class BinaryManager:
                     )
             else:
                 smf.printd("No drift detected. Sync skipped.", level="INFO")
-            
+
             return True
         except Exception as e:
             smf.printd("Fatal error during sync", e, level="ERROR")
@@ -167,4 +184,3 @@ class BinaryManager:
         except sqlite3.Error as e:
             smf.printd(f"DB error looking up {value}", e, level="ERROR")
             raise SMFDatabaseError(f"Database error locking up {value}") from e
-                
