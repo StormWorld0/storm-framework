@@ -3,23 +3,21 @@
 import smf
 import time
 import sys
-
 from pathlib import Path
-
 from apps.utility.verify import run_verif, check_critical_files
 from apps.utility.spin import SpinBoot
-
 from lib.roar.crs import CRSD
 from lib.roar.plugin_api import plugin
 from lib.roar.cache import cache_modules as cache
 from lib.roar.callbin import manager
 from lib.smf.postgresql import DBManager
-
+from lib.smf.exception.handler import exception_handler
 from ..security.syscall import is_this_docker
 
 
 def systemb():
     smf.printd("Booting Storm Framework", level="INFO")
+    sys.excepthook = exception_handler
     try:
         count = 0
         with SpinBoot():
