@@ -1,6 +1,6 @@
 import smf
 import sys
-from .manager import _query_db
+from .manager import BinaryManager
 from ...smf.exception import SMFFileNotFoundError
 
 IS_WINDOWS = sys.platform.startswith("win")
@@ -10,9 +10,10 @@ IS_LINUX = sys.platform.startswith("linux") or hasattr(sys, "getandroidapilevel"
 
 def resolve_bin_path(query_name: str) -> str:
     smf.printd(f"Resolving path for binary", query_name, level="DEBUG")
-
+    bm = BinaryManager()
+    
     # 1. Exact Match
-    exact_path = _query_db("filename", query_name)
+    exact_path = bm._query_db("filename", query_name)
     if exact_path:
         return exact_path
 
@@ -38,12 +39,12 @@ def resolve_bin_path(query_name: str) -> str:
         ]
 
     for candidate in candidates:
-        candidate_path = _query_db("filename", candidate)
+        candidate_path = bm._query_db("filename", candidate)
         if candidate_path:
             return candidate_path
 
     # Stem Fallback Match
-    stem_path = _query_db("stem", query_name)
+    stem_path = bm._query_db("stem", query_name)
     if stem_path:
         smf.printd(
             f"Resolved via pure stem fallback: {query_name}",
