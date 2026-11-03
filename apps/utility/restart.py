@@ -6,7 +6,7 @@ import os
 import sys
 import smf
 import lib.smf.core.sf.svch as svch
-
+from apps.utility.colors import CC
 from lib.pid_manager import PIDManager as pid
 
 
@@ -22,5 +22,5 @@ def run_restart(options):
         os.execv(executable, args)
     except Exception as e:
         smf.printd("Error while restarting", e, level="ERROR")
-        smf.printf(f"[!] Restart failed")
+        smf.printf(f"[!] {CC.YELLOW}Restarting failed{CC.RESET}")
         sys.exit(1)
