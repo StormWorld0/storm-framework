@@ -33,8 +33,8 @@ class BinaryManager:
         except Exception as e:
             smf.printd("Failed to connect or configure SQLite database", e, level="ERROR")
             raise SMFConfigDatabaseError(
-                "Failed to connect or configure SQLite Database.", e
-            )
+                "Failed to connect or configure SQLite Database."
+            ) from e
 
     def _init_db(self):
         try:
@@ -184,6 +184,3 @@ class BinaryManager:
         except sqlite3.Error as e:
             smf.printd(f"DB error looking up {value}", e, level="ERROR")
             raise SMFDatabaseError(f"Database error locking up {value}") from e
-
-
-mng = BinaryManager()
