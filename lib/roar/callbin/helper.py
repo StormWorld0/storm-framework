@@ -24,12 +24,14 @@ def resolve_bin_path(query_name: str) -> str:
             f"{query_name}.pyd",
             f"{query_name}.dll",
             f"{query_name}.exe",
+            f"{query_name}",
         ]
     elif IS_MACOS:
         candidates = [
             f"{query_name}.dylib",
             f"lib{query_name}.dylib",
             f"{query_name}.so",
+            f"{query_name}",
         ]
     elif IS_LINUX:
         candidates = [
