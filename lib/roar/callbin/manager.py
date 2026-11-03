@@ -185,4 +185,5 @@ class BinaryManager:
             smf.printd(f"DB error looking up {value}", e, level="ERROR")
             raise SMFDatabaseError(f"Database error locking up {value}") from e
 
+
 mng = BinaryManager()
