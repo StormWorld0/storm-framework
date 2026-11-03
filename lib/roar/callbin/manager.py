@@ -42,8 +42,8 @@ class BinaryManager:
                 cursor = self.conn.cursor()
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS binary (
-                        filename TEXT PRIMARY KEY,
-                        stem TEXT NOT NULL,
+                        filename TEXT PRIMARY KEY COLLATE NOCASE,
+                        stem TEXT NOT NULL COLLATE NOCASE,
                         path TEXT NOT NULL,
                         category TEXT,
                         mtime REAL
