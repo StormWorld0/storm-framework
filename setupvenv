@@ -210,7 +210,7 @@ fi
 cd "$INSTALL_DIR" || { echo -e "${RED}[x] ERROR: Lost track of directory!${NC}"; exit 1; }
 
 # sync binary signed
-"$PYTHON_CMD" -c "from lib.roar.callbin.manager import sync_bin; sync_bin()"
+"$PYTHON_CMD" -c "from lib.roar.callbin.manager import ManagerBinary; ManagerBinary().sync_bin()"
 
 # Sign using the isolated venv python
 "$VENV_PYTHON" -m scripts.security.sign
