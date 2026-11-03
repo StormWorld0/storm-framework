@@ -57,6 +57,4 @@ def resolve_bin_path(query_name: str) -> str:
         candidates,
         level="ERROR",
     )
-    raise SMFFileNotFoundError(
-        f"Binary '{query_name}' not found for current OS."
-    )
+    raise SMFFileNotFoundError(f"Binary '{query_name}' not found for current OS.")
