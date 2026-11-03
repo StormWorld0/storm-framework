@@ -9,7 +9,7 @@ IS_LINUX = sys.platform.startswith("linux") or hasattr(sys, "getandroidapilevel"
 
 
 def resolve_bin_path(query_name: str) -> str:
-    smf.printd(f"Resolving path for", query_name, level="DEBUG")
+    smf.printd(f"Resolving path for binary", query_name, level="DEBUG")
 
     # 1. Exact Match
     exact_path = _query_db("filename", query_name)
@@ -46,17 +46,17 @@ def resolve_bin_path(query_name: str) -> str:
     stem_path = _query_db("stem", query_name)
     if stem_path:
         smf.printd(
-            f"Resolved via pure stem fallback: {query_name} ->",
+            f"Resolved via pure stem fallback: {query_name}",
             stem_path,
             level="DEBUG",
         )
         return stem_path
 
     smf.printd(
-        f"Resolution failed for {query_name}. Candidates tried:",
+        f"Resolution failed for {query_name}.",
         candidates,
         level="ERROR",
     )
     raise SMFFileNotFoundError(
-        f"Binary or Shared Object '{query_name}' not found for current OS."
+        f"Binary '{query_name}' not found for current OS."
     )
