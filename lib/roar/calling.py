@@ -5,7 +5,7 @@ import ctypes
 import importlib.util
 import smf
 from .callbin.helper import resolve_bin_path
-
+from ..smf.exception import SMFOSError, SMFRuntimeError, SMFImportError
 
 def call_bin(query_name: str) -> str:
     """To call the binary executable"""
@@ -27,7 +27,7 @@ def call_cty(query_name: str) -> ctypes.CDLL:
             e,
             level="CRITICAL",
         )
-        raise
+        raise SMFOSError(f"Failed load binary ctypes: {lib_path}")
 
 
 def call_so(query_name: str, module_name: str = None):
@@ -53,7 +53,7 @@ def call_so(query_name: str, module_name: str = None):
         )
         spec = importlib.util.spec_from_file_location(module_name, lib_path)
         if spec is None:
-            raise ImportError(f"Cannot create spec for {lib_path}")
+            raise SMFImportError(f"Cannot create spec for {lib_path}")
 
         module = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = module
@@ -61,4 +61,4 @@ def call_so(query_name: str, module_name: str = None):
         return module
     except Exception as e:
         smf.printd(f"Failed to load Python extension '{lib_path}'", e, level="CRITICAL")
-        raise RuntimeError(f"Error exception: {e}")
+        raise SMFRuntimeError(f"Error exception: {e}")
