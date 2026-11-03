@@ -11,7 +11,7 @@ import smf
 
 from ..calling import call_bin
 from apps.utility.colors import CC
-from lib.pid_manager import PIDManager as pid
+from lib.smf.core.manage import PIDManager as pid
 
 
 class CRSD:
