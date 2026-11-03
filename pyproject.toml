@@ -65,6 +65,7 @@ exclude = '''
 [tool.autoflake]
 in-place = true
 recursive = true
+verbose = true
 remove-all-unused-imports = true
 exclude = "*/vendor/*,docs/*,__init__.py"
 
