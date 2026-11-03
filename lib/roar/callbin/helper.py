@@ -1,6 +1,7 @@
 import smf
 import sys
 from .manager import _query_db
+from ...smf.exception import SMFFileNotFoundError
 
 IS_WINDOWS = sys.platform.startswith("win")
 IS_MACOS = sys.platform == "darwin"
@@ -56,6 +57,6 @@ def resolve_bin_path(query_name: str) -> str:
         candidates,
         level="ERROR",
     )
-    raise FileNotFoundError(
+    raise SMFFileNotFoundError(
         f"Binary or Shared Object '{query_name}' not found for current OS."
     )
