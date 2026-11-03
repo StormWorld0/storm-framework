@@ -62,6 +62,12 @@ exclude = '''
 )/
 '''
 
+[tool.autoflake]
+in-place = true
+recursive = true
+remove-all-unused-imports = true
+exclude = "*/vendor/*,docs/*,__init__.py"
+
 [tool.pyrefly]
 search_path = ["."]
 
