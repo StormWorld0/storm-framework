@@ -6,6 +6,7 @@ from lib.smf.exception import (
     CRSRuntimeError,
     CRSException,
     CRSConnectionRefused,
+    SocketError,
 )
 
 
@@ -15,6 +16,7 @@ class SocketState:
     Menyimpan properti koneksi dan memvalidasi siklus hidup soket.
     """
 
+    SocketError
     ConnectionRefused = CRSConnectionRefused
     RuntimeError = CRSRuntimeError
     Exception = CRSException
