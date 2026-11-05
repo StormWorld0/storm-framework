@@ -59,3 +59,15 @@ class SMFDatabaseError(BaseException):
     def __init__(self, msg: str = None, *args):
         self.message = msg
         super().__init__(msg, args)
+
+
+class SMFMemoryError(BaseException):
+    def __init__(self, msg: str = None, *args):
+        self.message = msg
+        super().__init__(msg, args)
+
+
+class SMFConnectionError(BaseException):
+    def __init__(self, msg: str = None, *args):
+        self.message = msg
+        super().__init__(msg, args)
