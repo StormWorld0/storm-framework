@@ -3,6 +3,7 @@ from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
 from .validate import is_tuple2
 from ...endpoint import CRS
+from typing import Self
 from lib.smf.exception import SocketError
 
 
@@ -15,7 +16,7 @@ class SocketCore:
         type: str | int,
         proto: str | int = None,
         **kwargs,
-    ) -> self:
+    ) -> Self:
         """Open Socket"""
         self._ensure_open("socket")
         packet = IPCPayloadBuilder.build(
