@@ -149,7 +149,7 @@ class CRSD:
                     cls._process = None
 
     @classmethod
-    def send_data(cls, data: dict) -> dict:
+    def send_data(cls, data: dict) -> tuple[dict, dict]:
         proc = cls._turn_on_process()
         if not proc:
             return {"status": "ERROR", "message": "Engine binary not running"}, {}
