@@ -3,6 +3,7 @@ from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
 from .validate import is_tuple2
 from ...endpoint import CRS
+from lib.smf.exception import SocketError
 
 
 class SocketCore:
@@ -14,7 +15,7 @@ class SocketCore:
         type: str | int,
         proto: str | int = None,
         **kwargs,
-    ) -> SocketResponse:
+    ) -> Self:
         """Open Socket"""
         self._ensure_open("socket")
         packet = IPCPayloadBuilder.build(
@@ -25,8 +26,10 @@ class SocketCore:
             mode="socket",
         )
 
-        resp = CRS.send(packet)
-        return SocketResponse(resp)
+        resp = SocketResponse(CRS.send(packet))
+        if resp.ok:
+            return self
+        raise SocketError(f"Socket creation failed: {resp.message}")
 
     def bind(
         self,
