@@ -1,5 +1,6 @@
 from .base_exc import BaseException
 
+
 class SocketError(BaseException):
     def __init__(self, msg: str = None, *args):
         self.message = msg
