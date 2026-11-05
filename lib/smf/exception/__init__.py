@@ -20,3 +20,8 @@ from .storm_exc import (
     SMFConnectionError,
     SMFMemoryError,
 )  # noqa
+from .sock_exc import (
+    SocketError,
+    SocketConnectionRefused,
+    SocketTimeout,
+) # noqa
