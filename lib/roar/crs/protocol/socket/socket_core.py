@@ -15,7 +15,7 @@ class SocketCore:
         type: str | int,
         proto: str | int = None,
         **kwargs,
-    ) -> Self:
+    ) -> self:
         """Open Socket"""
         self._ensure_open("socket")
         packet = IPCPayloadBuilder.build(
