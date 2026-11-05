@@ -17,4 +17,6 @@ from .storm_exc import (
     SMFBrokenPipeError,
     SMFConfigDatabaseError,
     SMFDatabaseError,
+    SMFConnectionError,
+    SMFMemoryError
 )  # noqa
