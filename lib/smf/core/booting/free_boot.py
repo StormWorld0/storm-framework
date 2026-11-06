@@ -20,9 +20,7 @@ def systemb():
     smf.printd("Booting Storm Framework", level="INFO")
     sys.excepthook = exception_handler
     threading.excepthook = lambda args: exception_handler(
-        args.exc_type,
-        args.exc_value,
-        args.exc_traceback
+        args.exc_type, args.exc_value, args.exc_traceback
     )
     try:
         count = 0
