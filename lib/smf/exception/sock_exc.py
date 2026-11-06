@@ -1,4 +1,4 @@
-from .base_exc import BaseException
+from .base_exc import StormBaseException
 
 
 class SocketError(StormBaseException):
