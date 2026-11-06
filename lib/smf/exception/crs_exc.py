@@ -1,19 +1,19 @@
-from .base_exc import BaseException
+from .base_exc import StormBaseException
 
 
-class CRSRuntimeError(BaseException):
+class CRSRuntimeError(StormBaseException):
     def __init__(self, sts: str = None, msg: str = None):
         self.message = msg
         super().__init__(f"status: {sts} | message: {msg}")
 
 
-class CRSException(BaseException):
+class CRSException(StormBaseException):
     def __init__(self, sts: str = None, msg: str = None):
         self.message = msg
         super().__init__(f"status: {sts} | message: {msg}")
 
 
-class CRSProtocolError(BaseException):
+class CRSProtocolError(StormBaseException):
     def __init__(self, sts: str = None, msg: str = None):
         self.message = msg
         super().__init__(f"status: {sts} | message: {msg}")
@@ -25,13 +25,13 @@ class CRSKeybordInterrupt(KeyboardInterrupt):
         super().__init__(f"status: {sts} | message: {msg}")
 
 
-class CRSBrokenError(BaseException):
+class CRSBrokenError(StormBaseException):
     def __init__(self, sts: str = None, msg: str = None):
         self.message = msg
         super().__init__(f"status: {sts} | message: {msg}")
 
 
-class CRSConnectionRefused(BaseException):
+class CRSConnectionRefused(StormBaseException):
     def __init__(self, sts: str = None, msg: str = None):
         self.message = msg
         super().__init__(f"status: {sts} | message: {msg}")
