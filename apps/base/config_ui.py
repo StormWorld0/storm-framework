@@ -46,78 +46,78 @@ def show_help():
 CORE
 {CC.MAGENTA}----
 {CC.YELLOW}
-  use                           : To use the module, you can use <module_name> or <path_module>
-  set <var> <val>               : Filling values in variables
-  unset <var>                   : Delete value in a specific variable
-  unset all                     : Delete values in all variables
-  run                           : Run the selected module
+  use                           : Select and load a module (by name or path)
+  set <var> <val>               : Set a value for a specific variable
+  unset <var>                   : Clear the value of a specific variable
+  unset all                     : Clear all configured variables
+  run                           : Execute the currently selected module
 
 {CC.CYAN}
 DATABASE
 {CC.MAGENTA}--------
 {CC.YELLOW}
-  db_status                     : View PostgreSQL database connection status
-  db_connect                    : Connect to an external PostgreSQL database manually.
-                                  Use the argument format: uname:pass@host:port/db
-  db_disconnect                 : Serves to cleanly disconnect the database connection
+  db_status                     : Show current PostgreSQL database connection status
+  db_connect                    : Manually connect to an external PostgreSQL database
+                                  Format: uname:pass@host:port/db
+  db_disconnect                 : Cleanly terminate the active database connection
 
 {CC.CYAN}
 WORKSPACE
 {CC.MAGENTA}---------
 {CC.YELLOW}
-  workspace                     : Displays currently available workspaces and hosts
-  workspace add <ws_name>       : Adding a new workspace
-  workspace del <ws_name>       : Deleting a specific workspace
-  workspace <ws_name>           : Move to another workspace (if any)
+  workspace                     : Display active workspace and target hosts
+  workspace add <ws_name>       : Create a new workspace
+  workspace del <ws_name>       : Delete a specified workspace
+  workspace <ws_name>           : Switch to another workspace
 
 {CC.CYAN}
 DATA
 {CC.MAGENTA}----
 {CC.YELLOW}
-  services                      : Displays service data stored in the Postgres database
-  vulns                         : Displays vulnerability data stored in the Postgres database
-  hosts                         : Displays host data stored in the Postgres database
-  creds                         : Displays credentials stored in the Postgres database
+  services                      : Display stored service data from PostgreSQL
+  vulns                         : Display stored vulnerability data from PostgreSQL
+  hosts                         : Display stored host data from PostgreSQL
+  creds                         : Display stored credential data from PostgreSQL
 
 {CC.CYAN}
 PLUGIN
 {CC.MAGENTA}------
 {CC.YELLOW}
-  load <plugin_name>            : Loading plugins into memory
-  unload <plugin_name>          : Remove plugins from memory
-  show plugin                   : Displays existing plugins & plugin status
+  load <plugin_name>            : Load a plugin into memory
+  unload <plugin_name>          : Unload a plugin from memory
+  show plugin                   : Display available plugins and their current status
 
 {CC.CYAN}
 UTILITY
 {CC.MAGENTA}-------
 {CC.YELLOW}
-  show options                  : View the variables that have been set
-  show modules                  : Displaying module categories
-  show wordlist                 : Displays a list of available wordlists
-  show <categories>             : Displays the complete contents
-  log export <val>              : Export logs from internal database and save as txt
-  log dump                      : Dump logs to the terminal screen
-  info <module_name>            : Complete Modules information
-  search <module_name>          : To search for modules, you can also use
-                                  filters such as (act:...) / (defact:...) /
+  show options                  : View all currently set variables
+  show modules                  : Display available module categories
+  show wordlist                 : List available wordlists
+  show <categories>             : Display full contents of a specific category
+  log export <val>              : Export logs from internal database to a .txt file
+  log dump                      : Dump raw internal logs directly to the terminal
+  info <module_name>            : Show detailed information about a module
+  search <module_name>          : Search for modules with advanced filter support
+                                  Filters: (act:...) / (defact:...) /
                                   (severity:...) / (cve:...) / (author:...)
 
 {CC.CYAN}
 SYSTEM
 {CC.MAGENTA}------
 {CC.YELLOW}
-  help                          : Displaying the manual
-  about                         : Information Development
-  back                          : Back from current position
-  clear                         : Clear command line
+  help                          : Display this command manual
+  about                         : Display framework and development metadata
+  back                          : Return to the previous menu context
+  clear                         : Clear the terminal screen
   exit                          : Exit the application
-  restart                       : To restart if you experience a bug or error
-  storm update                  : Make updates if necessary
+  restart                       : Restart the framework engine
+  storm update                  : Check and install framework updates
 {CC.RESET}
 {CC.GREEN}
 COMMAND OUTSIDE
 {CC.MAGENTA}---------------
-{CC.CYAN}  Can run external tools such as: nuclei, nmap, ping, etc.
+{CC.CYAN}  Execute external system binaries directly (e.g., nuclei, nmap, ping, etc.)
 {CC.RESET}
     """)
 
