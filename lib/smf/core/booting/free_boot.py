@@ -3,6 +3,7 @@
 import smf
 import time
 import sys
+import threading
 from pathlib import Path
 from apps.utility.verify import run_verif, check_critical_files
 from apps.utility.spin import SpinBoot
@@ -18,6 +19,11 @@ from ..security.syscall import is_this_docker
 def systemb():
     smf.printd("Booting Storm Framework", level="INFO")
     sys.excepthook = exception_handler
+    threading.excepthook = lambda args: exception_handler(
+        args.exc_type,
+        args.exc_value,
+        args.exc_traceback
+    )
     try:
         count = 0
         with SpinBoot():
