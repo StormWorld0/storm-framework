@@ -19,11 +19,10 @@ class BinaryManager:
 
         self._DB_PATH.parent.mkdir(parents=True, exist_ok=True)
         try:
-            # check_same_thread=False aman asal query dijalankan terisolasi per method/cursor lokal
             self.conn = sqlite3.connect(self._DB_PATH, check_same_thread=False)
             self.conn.row_factory = sqlite3.Row
 
-            # Konfigurasi pragmas untuk performa tinggi (WAL mode)
+            # Pragmatic configuration for high performance (WAL mode)
             cursor = self.conn.cursor()
             cursor.execute("PRAGMA journal_mode=WAL;")
             cursor.execute("PRAGMA synchronous=NORMAL;")
@@ -49,7 +48,6 @@ class BinaryManager:
                         mtime REAL
                     )
                 """)
-                # Primary Key sudah otomatis mengindeks filename, hapus idx_filename yang redundan
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_path ON binary(path)")
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_stem ON binary(stem)")
         except sqlite3.Error as e:
@@ -59,9 +57,12 @@ class BinaryManager:
             ) from e
 
     def _fast_scan(
-        self, folder: Path, current_disk_files: Dict[str, Dict[str, Any]], category: str
+        self, 
+        folder: Path, 
+        current_disk_files: Dict[str, Dict[str, Any]], 
+        category: str
     ):
-        """Helper rekursif/iteratif untuk memindai direktori binary secara efisien."""
+        """Recursive/iterative helper for efficiently scanning binary directories."""
         if not folder.exists() or not folder.is_dir():
             return
 
@@ -117,7 +118,7 @@ class BinaryManager:
                     updated_count = 0
 
                     if current_disk_files:
-                        # Batching menggunakan executemany untuk performa optimal
+                        # Batching using executemany for optimal performance
                         payloads = [
                             (
                                 filename,
@@ -142,7 +143,6 @@ class BinaryManager:
                             """,
                             payloads,
                         )
-                        # Hitung rowcount jika driver mendukung, atau asumsikan sukses sinkronisasi batch
                         updated_count = len(payloads)
 
                     if deleted_files:
@@ -173,7 +173,7 @@ class BinaryManager:
                 raise ValueError("Invalid query column")
 
             cursor = self.conn.cursor()
-            # Parameterized query aman dari SQL Injection
+            # Parameterized queries are safe from SQL Injection
             cursor.execute(
                 f"SELECT path FROM binary WHERE {column} = ?",
                 (value,),
