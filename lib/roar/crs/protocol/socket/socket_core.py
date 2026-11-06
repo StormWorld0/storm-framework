@@ -148,7 +148,6 @@ class SocketCore:
         if value == -1:
             raise ValueError("No FD, run 'socket' first before taking over FD.")
         return value
-        
 
     def shutdown(
         self,
@@ -172,9 +171,7 @@ class SocketCore:
     ) -> SocketResponse:
         """Disconnecting"""
         if self._is_closed:
-            return SocketResponse(
-                {"status": "closed", "session_id": self.sessid}
-            )
+            return SocketResponse({"status": "closed", "session_id": self.sessid})
 
         packet = IPCPayloadBuilder.build(state=self, mode="close", close_session=True)
         resp = CRS.send(packet)
