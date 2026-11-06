@@ -45,8 +45,6 @@ class ExceptionManager:
                     exc_to_raise = CRSRuntimeError(_status, _message)
                 elif _status == "BROKEN":
                     exc_to_raise = CRSBrokenError(_status, _message)
-                elif _status == "INTER":
-                    exc_to_raise = CRSKeybordInterrupt(_status, _message)
                 elif _status == "ERROR":
                     exc_to_raise = CRSException(_status, _message)
                 elif _status == "ALERT":
