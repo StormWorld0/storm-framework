@@ -63,7 +63,8 @@ def execute(options, net):
         time.sleep(0.1)
 
         # Client Simulator: Connect ke Port Ephemeral Server
-        clt_sock = net.Socket().socket(clt_sock.AF_INET, clt_sock.SOCK_STREAM)
+        clt_sock = net.Socket()
+        clt_sock.socket(clt_sock.AF_INET, clt_sock.SOCK_STREAM)
         if clt_sock:
             smf.printf("[✓] Client File-Decriptor =>", clt_sock.fileno())
 
