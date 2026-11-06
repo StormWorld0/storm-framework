@@ -7,11 +7,12 @@ from lib.smf.exception import (
     CRSException,
     CRSBrokenError,
     CRSConnectionRefused,
+    CRSKeyboardInterrupt,
 )
 
 
 class ExceptionManager:
-    TARGET_STATUSES = {"ERROR", "CRITICAL", "BROKEN", "ALERT"}
+    TARGET_STATUSES = {"ERROR", "CRITICAL", "BROKEN", "INTER", "ALERT"}
     _error_holder: List[Exception] = []
     _local_lock = threading.Lock()
     _data_queue = queue.Queue(maxsize=10000)
@@ -46,6 +47,8 @@ class ExceptionManager:
                     exc_to_raise = CRSBrokenError(_status, _message)
                 elif _status == "ERROR":
                     exc_to_raise = CRSException(_status, _message)
+                elif _status == "INTER":
+                    exc_to_raise = CRSKeyboardInterrupt(_status, _message)
                 elif _status == "ALERT":
                     exc_to_raise = CRSConnectionRefused(_status, _message)
 
