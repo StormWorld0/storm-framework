@@ -25,8 +25,6 @@ def execute(options, net):
     try:
         # Socket Allocation
         resp = sock.socket(sock.AF_INET, sock.SOCK_DGRAM)
-        if resp.ok:
-            smf.printf("[*] File Descriptor =>", sock.fileno())
 
         # Global timeout
         sock.settimeout(2.0)
@@ -40,6 +38,7 @@ def execute(options, net):
         # Get response Buffer and remote IP
         resp = sock.recvfrom(1024)
         if resp.ok:
+            smf.printf("[✓] File Descriptor =>", sock.fileno())
             smf.printf("[✓] Remote IP    =>", resp.remote_ip)
             smf.printf()
             smf.printf("[✓] Raw Bytes    =>", resp.raw_bytes)
