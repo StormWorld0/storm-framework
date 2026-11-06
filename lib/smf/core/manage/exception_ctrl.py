@@ -6,7 +6,6 @@ from lib.smf.exception import (
     CRSRuntimeError,
     CRSException,
     CRSBrokenError,
-    CRSKeybordInterrupt,
     CRSConnectionRefused,
 )
 
