@@ -48,9 +48,8 @@ def execute(options, net):
     sock = net.Socket()
     try:
         # Create a socket
-        result = sock.socket(sock.AF_INET, sock.SOCK_DGRAM, sock.IPPROTO_UDP)
-        if not result.ok:
-            smf.printd("Socket creation failed", result, level="ERROR")
+        obj = sock.socket(sock.AF_INET, sock.SOCK_DGRAM, sock.IPPROTO_UDP)
+        if not obj:
             return
 
         smf.printf("File Decriptor =>", sock.fileno())
