@@ -19,7 +19,7 @@ class CRSProtocolError(StormBaseException):
         super().__init__(f"status: {sts} | message: {msg}")
 
 
-class CRSKeybordInterrupt(KeyboardInterrupt):
+class CRSKeyboardInterrupt(KeyboardInterrupt):
     def __init__(self, sts: str = None, msg: str = None):
         self.message = msg
         super().__init__(f"status: {sts} | message: {msg}")
