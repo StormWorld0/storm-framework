@@ -1,19 +1,19 @@
 from .base_exc import BaseException
 
 
-class SocketError(BaseException):
-    def __init__(self, msg: str = None, *args):
+class SocketError(StormBaseException):
+    def __init__(self, msg: str = None):
         self.message = msg
-        super().__init__(msg, args)
+        super().__init__(msg)
 
 
-class SocketConnectionRefused(BaseException):
-    def __init__(self, msg: str = None, *args):
+class SocketConnectionRefused(StormBaseException):
+    def __init__(self, msg: str = None):
         self.message = msg
-        super().__init__(msg, args)
+        super().__init__(msg)
 
 
-class SocketTimeout(BaseException):
-    def __init__(self, msg: str = None, *args):
+class SocketTimeout(StormBaseException):
+    def __init__(self, msg: str = None):
         self.message = msg
-        super().__init__(msg, args)
+        super().__init__(msg)
