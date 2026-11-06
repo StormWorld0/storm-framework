@@ -21,9 +21,8 @@ def execute(options, net):
     conn = None
     try:
         # Allocation
-        resp = srv_sock.socket(srv_sock.AF_INET, srv_sock.SOCK_STREAM)
-        if resp.ok:
-            smf.printf("[*] Server Raw FD  =>", srv_sock.fileno())
+        srv_sock.socket(srv_sock.AF_INET, srv_sock.SOCK_STREAM)
+        smf.printf("[*] Server Raw FD  =>", srv_sock.fileno())
 
         # Allow Address Reuse (SO_REUSEADDR)
         srv_sock.setsockopt(srv_sock.SOL_SOCKET, srv_sock.SO_REUSEADDR, 1)
@@ -64,12 +63,9 @@ def execute(options, net):
         time.sleep(0.1)
 
         # Client Simulator: Connect ke Port Ephemeral Server
-        clt_sock = net.Socket()
-        resp = clt_sock.socket(clt_sock.AF_INET, clt_sock.SOCK_STREAM)
-        if resp.ok:
+        clt_sock = net.Socket().socket(clt_sock.AF_INET, clt_sock.SOCK_STREAM)
+        if clt_sock:
             smf.printf("[✓] Client File-Decriptor =>", clt_sock.fileno())
-        else:
-            smf.printf("[!] Socket error =>", resp.message)
 
         resp = clt_sock.connect((host, port))
 
