@@ -1,2 +1,2 @@
-class BaseException(Exception):
+class StormBaseException(Exception):
     pass
