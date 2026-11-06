@@ -1,4 +1,3 @@
-// File: src/database.rs
 use pyo3::prelude::*;
 use rusqlite::Connection;
 use std::fs;
@@ -6,31 +5,31 @@ use std::path::PathBuf;
 use crate::errors::PrintResult;
 
 pub fn get_db_connection(py: Python<'_>) -> PrintResult<Connection> {
-    // Ekstrak Path dari Python (Butuh GIL Token)
+    // Extract Path from Python (Borrowing python's GIL for a moment)
     let rootmap_mod = PyModule::import(py, "rootmap")?;
     let root_py = rootmap_mod.getattr("ROOT")?;
     let root_path_str: String = root_py.call_method0("__str__")?.extract()?;
     let root_path = PathBuf::from(root_path_str);
 
-    // Susun Path Direktori
-    // Hasil: ROOT/lib/sqlite/logging
+    // Arrange Directory Paths
+    // Results: ROOT/lib/sqlite/logging
     let output_dir = root_path.join("lib").join("sqlite").join("logging");
     
-    // Susun Path File Lengkap
-    // Hasil: ROOT/lib/sqlite/logging/log.db
+    // Complete File Path Arrangement
+    // Results: ROOT/lib/sqlite/logging/log.db
     let file_path = output_dir.join("log.db");
 
-    // Pastikan Direktori Tersedia (Pre-flight check)
+    // Ensure Directory is Available (Pre-flight check)
     if !output_dir.exists() {
-        // Kita tangkap error IO dan ubah menjadi PrintResult (via ? operator)
+        // We catch the IO error and convert it to PrintResult (via ? operator)
         fs::create_dir_all(&output_dir)?;
     }
 
-    // 5. Buka Koneksi SQLite (Otomatis membuat file log.db jika belum ada)
-    // ? operator di sini akan dilempar sebagai SqliteError ke PrintResult
+    // Open SQLite Connection (Automatically create log.db file if it doesn't exist)
+    // ? operator here will be thrown as SqliteError to PrintResult
     let conn = Connection::open(file_path)?;
     
-    // 6. Konfigurasi Mesin Database High-Performance
+    // High-Performance Database Engine Configuration
     conn.execute_batch(
         "PRAGMA journal_mode = WAL;
          PRAGMA synchronous = NORMAL;
@@ -64,8 +63,8 @@ pub fn insert_log(
     location: &str,
     traceback: &str
 ) -> PrintResult<()> {
-    // Transaction Immediate: Kunci database secara eksplisit sebelum penulisan.
-    // Ini mengisolasi Rust INSERT/DELETE agar Python tidak membaca B-Tree setengah-jadi.
+    // Transaction Immediate: Explicitly lock the database before writing.
+    // This isolates Rust INSERT/DELETE so that Python doesn't read a half-finished B-Tree.
     let tx = conn.unchecked_transaction()?;
     
     tx.execute(
@@ -73,14 +72,14 @@ pub fn insert_log(
         (timestamp, level, label, payload, caller, location, traceback),
     )?;
 
-    let should_cleanup = rand::random::<u8>() < 3; // Probabilitas ~1% (membutuhkan crate `rand`)
+    let should_cleanup = rand::random::<u8>() < 3; // Probability ~1% (requires crate `rand`)
     
     if should_cleanup {
-        // Hitung cutoff langsung dari f64 `timestamp`
-        let retention_seconds = (3 * 24 * 60 * 60) as f64; // 3 Hari
+        // Calculate cutoff directly from f64 `timestamp`
+        let retention_seconds = (3 * 24 * 60 * 60) as f64; // 3Day
         let cutoff_timestamp = timestamp - retention_seconds;
         
-        // Hapus berdasarkan waktu
+        // Delete by time
         tx.execute(
             "DELETE FROM system_logs
              WHERE timestamp < ?1",
