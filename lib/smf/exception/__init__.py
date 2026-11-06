@@ -3,7 +3,7 @@ from .crs_exc import (
     CRSException,
     CRSBrokenError,
     CRSProtocolError,
-    CRSKeybordInterrupt,
+    CRSKeyboardInterrupt,
     CRSConnectionRefused,
 )  # noqa
 from .storm_exc import (
