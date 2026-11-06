@@ -20,8 +20,8 @@ def execute(options, net):
 
     sock = net.Socket()
     try:
-        result = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
-        if result.ok:
+        obj = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
+        if obj:
             smf.printf("Socket created:", sock.fileno())
 
         result = sock.connect(host, port)
