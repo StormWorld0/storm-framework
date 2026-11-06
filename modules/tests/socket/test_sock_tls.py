@@ -86,11 +86,11 @@ def execute(options, net):
     sock = net.Socket()
     try:
         sock.settimeout(5.0)
-        resp = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
-        if resp.ok:
+        obj = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
+        if obj:
             smf.printf("[✓] File Decriptor =>", sock.fileno())
 
-        resp = sock.connect(host, port)
+        resp = sock.connect((host, port))
         if not resp.ok:
             smf.printf("[!] Failed connect =>", resp.message)
             return
