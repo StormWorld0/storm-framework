@@ -57,10 +57,7 @@ class BinaryManager:
             ) from e
 
     def _fast_scan(
-        self, 
-        folder: Path, 
-        current_disk_files: Dict[str, Dict[str, Any]], 
-        category: str
+        self, folder: Path, current_disk_files: Dict[str, Dict[str, Any]], category: str
     ):
         """Recursive/iterative helper for efficiently scanning binary directories."""
         if not folder.exists() or not folder.is_dir():
