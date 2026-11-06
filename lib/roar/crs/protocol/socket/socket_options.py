@@ -50,12 +50,13 @@ class SocketOptions:
         """Global Timeout"""
         if not isinstance(value, (float, int)):
             raise ValueError("'settimeout' Argument must be a float or int.")
-        self._timeout = value
+        self._timeout = float(value)
         return self
 
-    def goroutine(self, value: int):
-        """Global Goroutine"""
-        if not isinstance(value, int):
-            raise TypeError("[!] Goroutine must be integer.")
-        self.con = value
-        return self
+    def gettimeout(self) -> float:
+        """Taking a timeout"""
+        if self._timeout == 0.0:
+            value = None
+        if self._timeout != 0.0:
+            value = self._timeout
+        return value
