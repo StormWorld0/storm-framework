@@ -24,7 +24,7 @@ def execute(options, net):
 
     try:
         # Socket Allocation
-        resp = sock.socket(sock.AF_INET, sock.SOCK_DGRAM)
+        sock.socket(sock.AF_INET, sock.SOCK_DGRAM)
 
         # Global timeout
         sock.settimeout(2.0)
