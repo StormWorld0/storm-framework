@@ -143,3 +143,10 @@ class ConstantsMix(
     Menggabungkan seluruh sub-class konstanta via Multiple Inheritance
     agar kompatibel dengan `class Socket`.
     """
+
+    family = AddrFamily
+    type = SockType
+    proto = IPProto
+    options = (SockOptionsSO, SockOptionsTCP, SockOptionsIP)
+    flag = SockFlags
+    how = SockHow
