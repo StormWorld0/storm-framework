@@ -28,9 +28,9 @@ class SocketCore:
         )
 
         resp = SocketResponse(CRS.send(packet))
-        if resp.ok:
-            return self
-        raise SocketError(f"Socket creation failed: {resp.message}")
+        if not resp.ok:
+            raise SocketError(f"Socket creation failed: {resp.message}")
+        return self
 
     def bind(
         self,
@@ -132,6 +132,24 @@ class SocketCore:
         resp = CRS.send(packet)
         return SocketResponse(resp)
 
+    def detach(self) -> int:
+        """Take over the FD socket"""
+        value = -1
+        if self._sock_fd == -1:
+            value = self.fileno()
+            self._sock_fd = -1
+            self.close()
+            return value
+        else:
+            value = self._sock_fd
+            self._sock_fd = -1
+            self.close()
+
+        if value == -1:
+            raise ValueError("No FD, run 'socket' first before taking over FD.")
+        return value
+        
+
     def shutdown(
         self,
         how: str | int,
@@ -155,7 +173,7 @@ class SocketCore:
         """Disconnecting"""
         if self._is_closed:
             return SocketResponse(
-                {"status": "already_closed", "session_id": self.sessid, "data": {}}
+                {"status": "closed", "session_id": self.sessid}
             )
 
         packet = IPCPayloadBuilder.build(state=self, mode="close", close_session=True)
