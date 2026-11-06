@@ -1,9 +1,9 @@
-from .base_exc import BaseException
+from .base_exc import StormBaseException
 
 
-class ModuleRuntimeError(BaseException):
+class ModuleRuntimeError(StormBaseException):
     pass
 
 
-class ModuleException(BaseException):
+class ModuleException(StormBaseException):
     pass
