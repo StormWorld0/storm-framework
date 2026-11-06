@@ -1,73 +1,73 @@
-from .base_exc import BaseException
+from .base_exc import StormBaseException
 
 
-class SMFRuntimeError(BaseException):
-    def __init__(self, msg: str = None, *args):
+class SMFRuntimeError(StormBaseException):
+    def __init__(self, msg: str = None):
         self.message = msg
-        super().__init__(msg, args)
+        super().__init__(msg)
 
 
-class SMFException(BaseException):
-    def __init__(self, msg: str = None, *args):
+class SMFException(StormBaseException):
+    def __init__(self, msg: str = None):
         self.message = msg
-        super().__init__(msg, args)
+        super().__init__(msg)
 
 
-class SMFTypeError(BaseException):
-    def __init__(self, msg: str = None, *args):
+class SMFTypeError(StormBaseException):
+    def __init__(self, msg: str = None):
         self.message = msg
-        super().__init__(msg, args)
+        super().__init__(msg)
 
 
-class SMFFileNotFoundError(BaseException):
-    def __init__(self, msg: str = None, *args):
+class SMFFileNotFoundError(StormBaseException):
+    def __init__(self, msg: str = None):
         self.message = msg
-        super().__init__(msg, args)
+        super().__init__(msg)
 
 
-class SMFOSError(BaseException):
-    def __init__(self, msg: str = None, *args):
+class SMFOSError(StormBaseException):
+    def __init__(self, msg: str = None):
         self.message = msg
-        super().__init__(msg, args)
+        super().__init__(msg)
 
 
-class SMFImportError(BaseException):
-    def __init__(self, msg: str = None, *args):
+class SMFImportError(StormBaseException):
+    def __init__(self, msg: str = None):
         self.message = msg
-        super().__init__(msg, args)
+        super().__init__(msg)
 
 
-class SMFBinaryError(BaseException):
-    def __init__(self, msg: str = None, *args):
+class SMFBinaryError(StormBaseException):
+    def __init__(self, msg: str = None):
         self.message = msg
-        super().__init__(msg, args)
+        super().__init__(msg)
 
 
-class SMFBrokenPipeError(BaseException):
-    def __init__(self, msg: str = None, *args):
+class SMFBrokenPipeError(StormBaseException):
+    def __init__(self, msg: str = None):
         self.message = msg
-        super().__init__(msg, args)
+        super().__init__(msg)
 
 
-class SMFConfigDatabaseError(BaseException):
-    def __init__(self, msg: str = None, *args):
+class SMFConfigDatabaseError(StormBaseException):
+    def __init__(self, msg: str = None):
         self.message = msg
-        super().__init__(msg, args)
+        super().__init__(msg)
 
 
-class SMFDatabaseError(BaseException):
-    def __init__(self, msg: str = None, *args):
+class SMFDatabaseError(StormBaseException):
+    def __init__(self, msg: str = None):
         self.message = msg
-        super().__init__(msg, args)
+        super().__init__(msg)
 
 
-class SMFMemoryError(BaseException):
-    def __init__(self, msg: str = None, *args):
+class SMFMemoryError(StormBaseException):
+    def __init__(self, msg: str = None):
         self.message = msg
-        super().__init__(msg, args)
+        super().__init__(msg)
 
 
-class SMFConnectionError(BaseException):
-    def __init__(self, msg: str = None, *args):
+class SMFConnectionError(StormBaseException):
+    def __init__(self, msg: str = None):
         self.message = msg
-        super().__init__(msg, args)
+        super().__init__(msg)
