@@ -11,7 +11,7 @@ from lib.smf.exception import (
 
 
 class ExceptionManager:
-    TARGET_STATUSES = {"ERROR", "CRITICAL", "BROKEN", "INTER", "ALERT"}
+    TARGET_STATUSES = {"ERROR", "CRITICAL", "BROKEN", "ALERT"}
     _error_holder: List[Exception] = []
     _local_lock = threading.Lock()
     _data_queue = queue.Queue(maxsize=10000)
