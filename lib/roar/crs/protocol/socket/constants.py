@@ -49,7 +49,7 @@ class SockOptionsSO:
     SO_RCVBUF = socket.SO_RCVBUF
     SO_KEEPALIVE = socket.SO_KEEPALIVE
     SO_OOBINLINE = socket.SO_OOBINLINE
-    SO_NO_CHECK = socket.SO_NO_CHECK
+    SO_NO_CHECK = "SO_NO_CHECK"
     SO_PRIORITY = socket.SO_PRIORITY
     SO_LINGER = socket.SO_LINGER
     SO_BSDCOMPAT = socket.SO_BSDCOMPAT
