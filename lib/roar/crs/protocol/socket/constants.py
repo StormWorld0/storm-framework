@@ -144,9 +144,6 @@ class ConstantsMix(
     agar kompatibel dengan `class Socket`.
     """
 
-    family = AddrFamily
-    type = SockType
-    proto = IPProto
-    options = (SockOptionsSO, SockOptionsTCP, SockOptionsIP)
-    flag = SockFlags
-    how = SockHow
+    family = self.af
+    type = self.stype
+    proto = self.sproto
