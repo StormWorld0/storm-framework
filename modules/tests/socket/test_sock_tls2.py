@@ -14,13 +14,13 @@ except ImportError:
 
 
 metadata = {
-    "Name": "Testing TCP Socket Sendall",
+    "Name": "Testing TCP Socket TLS",
     "Description": """
-Testing Socket
+Testing Socket TLS library python
 """,
     "Author": ["zxelzy"],
     "Action": [["Scan", {"Description": "Testing socket"}]],
-    "DefaultAction": "Post",
+    "DefaultAction": "TLS",
     "License": "SMF License",
     "Date": "2026-09-17",
 }
@@ -33,7 +33,7 @@ def generate_cert(key_type: str = "ed25519"):
         key = ed25519.Ed25519PrivateKey.generate()
         sign_alg = None  # Ed25519 uses no separate hash
 
-    name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "adbkey")])
+    name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "storm")])
     builder = (
         x509.CertificateBuilder()
         .subject_name(name)
@@ -50,7 +50,7 @@ def _make_ssl_context(cert_path: str, key_path: str) -> ssl.SSLContext:
     ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
-    ctx.load_cert_chain(certfile=cert_path, keyfile=key_path
+    ctx.load_cert_chain(certfile=cert_path, keyfile=key_path)
     ctx.minimum_version = ssl.TLSVersion.TLSv1_2
     return ctx
     
