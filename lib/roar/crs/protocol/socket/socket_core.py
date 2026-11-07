@@ -19,6 +19,9 @@ class SocketCore:
     ) -> Self:
         """Open Socket"""
         self._ensure_open("socket")
+        self.family = af
+        self.type = type
+        self.proto = proto if proto is not None else 0
         packet = IPCPayloadBuilder.build(
             state=self,
             addr_fam=af,
@@ -118,6 +121,9 @@ class SocketCore:
     ) -> SocketResponse:
         """Creating a TCP Stream connection"""
         self._ensure_open("create")
+        self.family = 2 # Keep default AF_INET
+        self.type = 1   # Keep default SOCK_STREAM
+        self.proto = 0  # Keep default Kernel
         if is_tuple2(host):
             host, port = host
 
