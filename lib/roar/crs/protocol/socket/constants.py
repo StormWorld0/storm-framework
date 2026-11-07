@@ -143,7 +143,3 @@ class ConstantsMix(
     Menggabungkan seluruh sub-class konstanta via Multiple Inheritance
     agar kompatibel dengan `class Socket`.
     """
-
-    family = self.af
-    type = self.stype
-    proto = self.sproto
