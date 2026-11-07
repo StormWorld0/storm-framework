@@ -89,7 +89,7 @@ def execute(options, net):
         key_tmp.close()
 
         smf.printf(f"[*] Connecting (plain TCP) ...")
-        sock = Socket()
+        sock = net.Socket()
         sock.create_connection((host, port))
 
         smf.printf("[*] Perform a TLS handshake using wrap_socket...")
