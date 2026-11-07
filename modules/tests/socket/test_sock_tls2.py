@@ -11,7 +11,6 @@ try:
     from cryptography.hazmat.primitives.asymmetric import ed25519
 except ImportError:
     smf.printf("[*] Import Error cryptography.")
-    return
 
 
 metadata = {
