@@ -66,8 +66,8 @@ def execute(options, net):
         f"Accept: */*\r\n"
         f"Connection: Close\r\n"
         f"\r\n"
-    )
-
+    ).encode("utf-8")
+    
     key, cert = generate_cert()
 
     cert_pem = cert.public_bytes(serialization.Encoding.PEM)
