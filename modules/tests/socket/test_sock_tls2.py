@@ -3,11 +3,12 @@ import smf
 import ssl
 import tempfile
 import datetime
+
 try:
     from cryptography import x509
     from cryptography.x509.oid import NameOID
-    from cryptography.hazmat.primitives import hashes, serialization
-    from cryptography.hazmat.primitives.asymmetric import ec, ed25519
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import ed25519
 except ImportError:
     smf.printf("[*] Import Error cryptography.")
     return
@@ -46,6 +47,7 @@ def generate_cert(key_type: str = "ed25519"):
     cert = builder.sign(key, sign_alg)
     return key, cert
 
+
 def _make_ssl_context(cert_path: str, key_path: str) -> ssl.SSLContext:
     ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
     ctx.check_hostname = False
@@ -53,7 +55,7 @@ def _make_ssl_context(cert_path: str, key_path: str) -> ssl.SSLContext:
     ctx.load_cert_chain(certfile=cert_path, keyfile=key_path)
     ctx.minimum_version = ssl.TLSVersion.TLSv1_2
     return ctx
-    
+
 
 def execute(options, net):
     host = options.get("HOST")
@@ -68,7 +70,7 @@ def execute(options, net):
         f"Connection: Close\r\n"
         f"\r\n"
     )
-    
+
     key, cert = generate_cert(type)
 
     cert_pem = cert.public_bytes(serialization.Encoding.PEM)
@@ -106,9 +108,7 @@ def execute(options, net):
             return
 
         cipher = tls_sock.cipher()
-        smf.printf(
-            f"[+] TLS Handshake successful!"
-        )
+        smf.printf(f"[+] TLS Handshake successful!")
         smf.printf(f"    Cipher: {cipher[0]} | Protocol: {cipher[1]}")
         smf.printf()
 
@@ -131,7 +131,3 @@ def execute(options, net):
         tls_sock.close()
         os.unlink(cert_tmp.name)
         os.unlink(key_tmp.name)
-        
-            
-
-    
