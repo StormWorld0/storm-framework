@@ -78,4 +78,5 @@ def execute(args, ctx):
             execute(options)
     except (Exception, RuntimeError, AttributeError) as e:
         smf.printf(f"{CC.RED}Module error =>{CC.RESET}", module_name)
+        smf.printd("Module detected error", e, level="ERROR")
         return
