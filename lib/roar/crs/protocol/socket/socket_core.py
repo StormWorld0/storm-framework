@@ -121,8 +121,8 @@ class SocketCore:
     ) -> SocketResponse:
         """Creating a TCP Stream connection"""
         self._ensure_open("create")
-        self.family = 2 # Keep default AF_INET
-        self.type = 1   # Keep default SOCK_STREAM
+        self.family = 2  # Keep default AF_INET
+        self.type = 1  # Keep default SOCK_STREAM
         self.proto = 0  # Keep default Kernel
         if is_tuple2(host):
             host, port = host
