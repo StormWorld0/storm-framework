@@ -7,8 +7,8 @@ import datetime
 try:
     from cryptography import x509
     from cryptography.x509.oid import NameOID
-    from cryptography.hazmat.primitives import serialization
-    from cryptography.hazmat.primitives.asymmetric import ed25519
+    from cryptography.hazmat.primitives import hashes, serialization
+    from cryptography.hazmat.primitives.asymmetric import ec
 except ImportError:
     smf.printf("[*] Import Error cryptography.")
 
@@ -27,11 +27,10 @@ Testing Socket TLS library python
 REQUIRED_OPTIONS = {"HOST": "", "PORT": ""}
 
 
-def generate_cert(key_type: str = "ed25519"):
+def generate_cert():
     """Generate a self-signed TLS certificate with a non-RSA key."""
-    if key_type == "ed25519":
-        key = ed25519.Ed25519PrivateKey.generate()
-        sign_alg = None  # Ed25519 uses no separate hash
+    key = ec.generate_private_key(ec.SECP256R1())
+    sign_alg = hashes.SHA256()
 
     name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "storm")])
     builder = (
@@ -59,7 +58,6 @@ def _make_ssl_context(cert_path: str, key_path: str) -> ssl.SSLContext:
 def execute(options, net):
     host = options.get("HOST")
     port = options.get("PORT")
-    type = "ed25519"
 
     data = (
         f"GET /anything HTTP/1.1\r\n"
@@ -70,7 +68,7 @@ def execute(options, net):
         f"\r\n"
     )
 
-    key, cert = generate_cert(type)
+    key, cert = generate_cert()
 
     cert_pem = cert.public_bytes(serialization.Encoding.PEM)
     key_pem = key.private_bytes(
