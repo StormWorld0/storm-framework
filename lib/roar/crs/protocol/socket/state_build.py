@@ -62,9 +62,9 @@ class SocketState:
         self.infotls = infotls
 
         # AF_* and SOCK_* and IPPROTO_*
-        self.af = af
-        self.stype = type
-        self.sproto = proto
+        self.family = af
+        self.type = type
+        self.proto = proto
 
         # SOL_* and SO_* and value and MSG_*
         self.level = level
@@ -155,9 +155,9 @@ class IPCPayloadBuilder:
             "host": host if host is not None else state.host,
             "port": int(port) if port is not None else state.port,
             "data": data_str,
-            "addr-fam": addr_fam if addr_fam is not None else state.af,
-            "stype": stype if stype is not None else state.stype,
-            "sproto": sproto if sproto is not None else state.sproto,
+            "addr-fam": addr_fam if addr_fam is not None else state.family,
+            "stype": stype if stype is not None else state.type,
+            "sproto": sproto if sproto is not None else state.proto,
             "opt-level": level,
             "opt-name": name,
             "opt-value": int(value) if value is not None else state.value,
