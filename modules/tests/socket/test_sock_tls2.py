@@ -97,7 +97,7 @@ def execute(options, net):
         tls_sock = ssl_ctx.wrap_socket(
             sock,
             server_side=False,
-            server_hostname=target_ip,
+            server_hostname=host,
             do_handshake_on_connect=False,
         )
 
