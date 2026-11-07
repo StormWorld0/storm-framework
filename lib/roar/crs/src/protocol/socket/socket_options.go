@@ -50,15 +50,7 @@ func handleSetsockopt(ctx *ExecutionContext) packet.ResponsePacket {
 	    ctx.SaveSession(ctx.Conn)
 	}
 
-	return packet.ResponsePacket{
-		Status: "SUCCESS",
-		Data: map[string]interface{}{
-			"opt_fd":    targetFD,
-			"level":     level,
-			"opt_name":  optName,
-			"opt_val":   optVal,
-		},
-	}
+	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(targetFD, 0)}
 }
 
 func handleGetSockOpt(ctx *ExecutionContext) packet.ResponsePacket {
@@ -107,9 +99,6 @@ func handleGetSockOpt(ctx *ExecutionContext) packet.ResponsePacket {
 	return packet.ResponsePacket{
 		Status: "SUCCESS",
 		Data: map[string]interface{}{
-			"opt_fd":    targetFD,
-			"level":     level,
-			"opt_name":  optName,
 			"val_opt":   val,
 		},
 	}
