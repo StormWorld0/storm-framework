@@ -27,7 +27,7 @@ type RequestPacket struct {
 	OptVal        int               `json:"opt-value,omitempty"` // Value Integer
 	Flags         any               `json:"flags,omitempty"`     // MSG_OOB, MSG_MORE, ...
 	How           any               `json:"how,omitempty"`       // SHUT_RDWR, SHUT_WR, SHUT_RD
-	Anc           int               `json:"anc-data,omitempty"`  // control messages
+	Oob           *int               `json:"oob,omitempty"`      // control messages
 
 	CltFD         int               `json:"client-fd,omitempty"` // Client FD Socket Accept
 
