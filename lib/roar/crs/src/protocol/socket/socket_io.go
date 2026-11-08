@@ -224,20 +224,6 @@ func handleRecvFrom(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Recvfrom failed: " + err.Error()}
 	}
 
-	// Extract IP and Port from Sender (Remote Address)
-	var senderIP string
-	var senderPort int
-	switch v := sa.(type) {
-	case *unix.SockaddrInet4:
-		senderIP = net.IP(v.Addr[:]).String()
-		senderPort = v.Port
-	case *unix.SockaddrInet6:
-		senderIP = net.IP(v.Addr[:]).String()
-		senderPort = v.Port
-	}
-
-	sender := net.JoinHostPort(senderIP, strconv.Itoa(senderPort))
-
 	if n == 0 {
 		return packet.ResponsePacket{Status: "ERROR", Message: "EOF Recvfrom: " + err.Error()}
 	}
@@ -246,7 +232,7 @@ func handleRecvFrom(ctx *ExecutionContext) packet.ResponsePacket {
 	meta := ctx.GenerateMetadataFD(fd, n)
 	meta["raw_bytes"] = base64.StdEncoding.EncodeToString(buffer[:n])
 	meta["hex_bytes"] = hex.EncodeToString(buffer[:n])
-	meta["remote_ip"] = sender
+	meta["remote_ip"] = formatSockaddr(sa)
 	return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
 }
 
@@ -280,16 +266,13 @@ func handleSendMsg(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: "Sendmsg failed: " + err.Error()}
 	}
 	ctx.SaveSession(fd)
-	return packet.ResponsePacket{
-		Status: "SUCCESS", 
-		Data: ctx.GenerateMetadataFD(fd, 0),
-	}
+	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(fd, 0)}
 }
 
 
 func handleRecvMsg(ctx *ExecutionContext) packet.ResponsePacket {
 	if ctx.RawFD == -1 {
-		return packet.ResponsePacket{Status: "WARN", Message: "No raw socket (FD) found for sendmsg."}
+		return packet.ResponsePacket{Status: "WARN", Message: "No raw socket (FD) found for recvmsg."}
 	}
 
 	fd := ctx.RawFD
@@ -299,33 +282,18 @@ func handleRecvMsg(ctx *ExecutionContext) packet.ResponsePacket {
 	typeInt := ParseSockType(ctx.Req.SType)
 	flag := ParseFlags(ctx.Req.Flags)
 
-	if typeInt == unix.SOCK_STREAM {
-	    buffer, bufPtr, n, ob, rf, _, err := ExecuteRecvMsgStream(fd, buffer, ancData, flag, timeout)
-		defer ReleaseBuffer(bufPtr)
-		
-		if err != nil {
-			ctx.SaveSession(fd)
-		    // Error timeout (EAGAIN / EWOULDBLOCK)
-		    if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
-		        return packet.ResponsePacket{
-			        Status:  "TIMEOUT",
-				    Message: "Recvmsg failed: " + err.Error(),
-				    Data:    ctx.GenerateMetadataFD(fd, 0),
-			    } 
-		    }
-		    return packet.ResponsePacket{Status: "ERROR", Message: "Recvmsg failed: " + err.Error()}
-		}
-		
-		ctx.SaveSession(fd)
-	    meta := ctx.GenerateMetadataFD(fd, n)
-		meta["raw_bytes"] = base64.StdEncoding.EncodeToString(buffer[:n])
-	    meta["hex_bytes"] = hex.EncodeToString(buffer[:n])
-		meta["ancdata"] = ob
-		meta["flags"] = rf
-	    return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
-	}
+	var (
+		n, ob, rf int
+		sa        unix.Sockaddr
+		bufPtr    *[]byte
+		err       error
+	)
 
-	buffer, bufPtr, n, ob, rf, sa, err := ExecuteRecvMsgDgram(fd, buffer, ancData, flag, timeout)
+	if typeInt == unix.SOCK_STREAM {
+		buffer, bufPtr, n, ob, rf, _, err = ExecuteRecvMsgStream(fd, buffer, ancData, flag, timeout)
+	} else {
+		buffer, bufPtr, n, ob, rf, sa, err = ExecuteRecvMsgDgram(fd, buffer, ancData, flag, timeout)
+	}
 	defer ReleaseBuffer(bufPtr)
 	
 	if err != nil {
@@ -340,27 +308,29 @@ func handleRecvMsg(ctx *ExecutionContext) packet.ResponsePacket {
 		}
 		return packet.ResponsePacket{Status: "ERROR", Message: "Recvmsg failed: " + err.Error()}
 	}
-
-	var senderIP string
-	var senderPort int
-	switch v := sa.(type) {
-	case *unix.SockaddrInet4:
-		senderIP = net.IP(v.Addr[:]).String()
-		senderPort = v.Port
-	case *unix.SockaddrInet6:
-		senderIP = net.IP(v.Addr[:]).String()
-		senderPort = v.Port
+	// Construct Multi-tuple Results
+	var results []map[string]interface{}
+	if ob > 0 {
+	    if msgs, parseErr := unix.ParseSocketControlMessage(buffer[:ob]); parseErr == nil {
+	        for _, msg := range(msgs) {
+		        results = append(results, map[string]interface{}{
+			        "msg_level": msg.Header.Level,
+			        "msg_type":  msg.Header.Type,
+			        "msg_data":  base64.StdEncoding.EncodeToString(msg.Data),
+		        })
+	        }
+	    }
 	}
-
-	sender := net.JoinHostPort(senderIP, strconv.Itoa(senderPort))
 	
 	ctx.SaveSession(fd)
 	meta := ctx.GenerateMetadataFD(fd, n)
 	meta["raw_bytes"] = base64.StdEncoding.EncodeToString(buffer[:n])
 	meta["hex_bytes"] = hex.EncodeToString(buffer[:n])
-	meta["ancdata"] = ob
+	meta["ancdata"] = results
 	meta["flags"] = rf
-	meta["remote_ip"] = sender
+	if typeInt != unix.SOCK_STREAM && sa != nil {
+		meta["remote_ip"] = formatSockaddr(sa)
+	}
 	return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
 }
 
