@@ -15,5 +15,6 @@ def run_sign():
         smf.printf(f"[*] Error Exception in signed => {e}", file=sys.stderr)
         return False
 
+
 if __name__ == "__main__":
     run_sign()
