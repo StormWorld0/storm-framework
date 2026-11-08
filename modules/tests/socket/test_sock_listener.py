@@ -34,7 +34,7 @@ def execute(options, net):
             return
 
         host, port = srv_sock.getsockname()
-        
+
         smf.printf("[✓] Bound to Address =>", f"{host}:{port}")
 
         # Listen dengan Backlog 5
