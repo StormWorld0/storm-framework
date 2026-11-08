@@ -33,11 +33,9 @@ def execute(options, net):
             smf.printf("[!] Bind Failed     =>", resp.message)
             return
 
-        smf.printf("[✓] Bound to Address =>", srv_sock.getsockname())
-
-        # Parsing host dan port dinamis dari resp.local_ip ("127.0.0.1:PORT")
-        host, port_str = srv_sock.getsockname().rsplit(":", 1)
-        port = int(port_str)
+        host, port = srv_sock.getsockname()
+        
+        smf.printf("[✓] Bound to Address =>", f"{host}:{port}")
 
         # Listen dengan Backlog 5
         resp = srv_sock.listen(5)
