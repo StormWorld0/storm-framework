@@ -8,11 +8,8 @@ def run_sign():
         bin = call_so("libsigned")
         bin.storm_sign()
         return True
-    except ImportError as e:
-        print("[!] Critical => Binary not found.", file=sys.stderr)
-        return False
-    except Exception as e:
-        smf.printf(f"[*] Error Exception in signed => {e}", file=sys.stderr)
+    except (Exception, ImportError) as e:
+        print(f"[*] Error => {e}", file=sys.stderr)
         return False
 
 
