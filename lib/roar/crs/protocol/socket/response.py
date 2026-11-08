@@ -100,15 +100,7 @@ class SocketResponse:
             ip = item.get("ip", "")
             port = item.get("port", 0)
 
-            # Format sockaddr tuple
-            if family == socket.AF_INET:  # AF_INET
-                sockaddr = (ip, port)
-            elif family == socket.AF_INET6:  # AF_INET6
-                flowinfo = item.get("flowinfo", 0)
-                scope_id = item.get("scope_id", 0)
-                sockaddr = (ip, port, flowinfo, scope_id)
-            else:
-                sockaddr = (ip, port)
+            sockaddr = (ip, int(port))
             parsed.append((family, socktype, protocol, canonname, sockaddr))
         return parsed
 
