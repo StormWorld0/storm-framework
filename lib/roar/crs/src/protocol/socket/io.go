@@ -240,11 +240,7 @@ func ExecuteRecvFrom(fd int, readSize int, timeout time.Duration, flag int) ([]b
 }
 
 
-func ExecuteSendMsg(fd int, p []byte, oob []byte, sa unix.Sockaddr, flag int, timeout time.Duration) error {
-	if p == 0 {
-		return fmt.Errorf("Buffer empty.")
-	}
-	
+func ExecuteSendMsg(fd int, p int, oob int, sa unix.Sockaddr, flag int, timeout time.Duration) error {
 	if timeout > 0 {
 		tv := unix.NsecToTimeval(timeout.Nanoseconds())
 		unix.SetsockoptTimeval(fd, unix.SOL_SOCKET, unix.SO_SNDTIMEO, &tv)
@@ -255,7 +251,7 @@ func ExecuteSendMsg(fd int, p []byte, oob []byte, sa unix.Sockaddr, flag int, ti
 		}()
 	}
 
-	return unix.Sendmsg(fd, p, oob, sa, flag)
+	return unix.Sendmsg(fd, []byte(p), []byte(oob), sa, flag)
 }
 
 func ExecuteRecvMsgStream(fd int, readSize int, oob int, flag int, timeout time.Duration) ([]byte, *[]byte, int, int, int, unix.Sockaddr, error) {
@@ -287,7 +283,7 @@ func ExecuteRecvMsgStream(fd int, readSize int, oob int, flag int, timeout time.
 	var ob int
 	var rf int
 	var sa unix.Sockaddr
-	var err error
+	var e1 error
 	
 	for {
 		n, ob, rf, sa, e1 := unix.Recvmsg(fd, buffer, oob, flag)
