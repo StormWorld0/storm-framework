@@ -35,8 +35,9 @@ class SocketState:
         backlog: int = 0,
         how: str | int = "",
         file: str = "",
+        anc: int = None,
         timeout: float = 0.0,
-        readsize: int = 0,
+        buffer: int = 0,
         ratelimit: int = 0,
         cfd: int = -1,
         sessid: str = "",
@@ -56,7 +57,7 @@ class SocketState:
         self.host = host
         self.port = int(port) if port is not None else None
         self._timeout = float(timeout)
-        self.readsize = int(readsize)
+        self.buffer = int(buffer)
         self.ratelimit = int(ratelimit)
         self.keepalive = keepalive
         self.mode = mode
@@ -73,6 +74,7 @@ class SocketState:
         self.value = int(value)
         self.flag = flags
         self.how = how
+        self.ancdata = anc
 
         # Used by listen
         self.backlog = backlog
@@ -134,12 +136,13 @@ class IPCPayloadBuilder:
         how: str | int = None,
         backlog: int = None,
         file: str = None,
+        ancdata: int = None,
         infotls: bool = None,
         verify: bool = None,
         cert: str = None,
         key: str = None,
         ca: str = None,
-        readsize: int = None,
+        buffer: int = None,
         timeout: float = None,
         ratelimit: int = None,
         cfd: int = None,
@@ -168,8 +171,9 @@ class IPCPayloadBuilder:
             "how": how if how is not None else state.how,
             "backlog": backlog if backlog is not None else state.backlog,
             "file": file if file is not None else state.file,
+            "anc-data": ancdata if ancdata is not None else state.ancdata,
             "timeout": float(timeout) if timeout is not None else state._timeout,
-            "readsize": readsize if readsize is not None else state.readsize,
+            "buffer": buffer if buffer is not None else state.buffer,
             "ratelimit": ratelimit if ratelimit is not None else state.ratelimit,
             "client-fd": cfd if cfd is not None else state.cfd,
             "session_id": state.sessid,
