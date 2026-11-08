@@ -161,4 +161,5 @@ class SocketIO:
         )
 
         resp = CRS.send(packet)
-        return SocketResponse(resp)
+        res = SocketResponse(resp)
+        return res.raw_bytes, res.rmsg, res._flags, res.remote_ip
