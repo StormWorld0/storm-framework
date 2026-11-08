@@ -25,6 +25,7 @@ func ReleaseBuffer(bufPtr *[]byte) {
 	}
 }
 
+// --- READ/WRITE net.conn ---
 
 func ExecuteWrite(conn net.Conn, data string, timeout time.Duration) error {
 	if data == "" {
@@ -43,6 +44,33 @@ func ExecuteWrite(conn net.Conn, data string, timeout time.Duration) error {
 	_, err = conn.Write(dataDec)
 	return err
 }
+
+func ExecuteRead(conn net.Conn, readSize int, timeout time.Duration) ([]byte, int, *[]byte, error) {
+	if readSize <= 0 {
+		readSize = 4096
+	}
+
+	var buffer []byte
+	var bufPtr *[]byte
+
+	if readSize == 4096 {
+		bufPtr = bufferPool.Get().(*[]byte)
+		buffer = *bufPtr
+	} else {
+		buffer = make([]byte, readSize)
+	}
+
+	if timeout > 0 {
+	    conn.SetReadDeadline(time.Now().Add(timeout))
+	    defer conn.SetReadDeadline(time.Time{})
+    }
+	
+	n, err := conn.Read(buffer)
+	return buffer, n, bufPtr, err
+}
+
+
+// --- READ/WRITE RawFD ---
 
 func ExecuteFDWrite(fd int, data string, timeout time.Duration, flags int) error {
 	if data == "" {
@@ -144,32 +172,6 @@ func ExecuteFDWriteFile(outfd int, file string) error {
 		}
 	}
 	return nil
-}
-
-
-
-func ExecuteRead(conn net.Conn, readSize int, timeout time.Duration) ([]byte, int, *[]byte, error) {
-	if readSize <= 0 {
-		readSize = 4096
-	}
-
-	var buffer []byte
-	var bufPtr *[]byte
-
-	if readSize == 4096 {
-		bufPtr = bufferPool.Get().(*[]byte)
-		buffer = *bufPtr
-	} else {
-		buffer = make([]byte, readSize)
-	}
-
-	if timeout > 0 {
-	    conn.SetReadDeadline(time.Now().Add(timeout))
-	    defer conn.SetReadDeadline(time.Time{})
-    }
-	
-	n, err := conn.Read(buffer)
-	return buffer, n, bufPtr, err
 }
 
 
