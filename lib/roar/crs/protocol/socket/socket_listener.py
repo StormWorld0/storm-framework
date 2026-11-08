@@ -54,7 +54,7 @@ class ClientListener(ListenInspect, ListenFD):
 
     def recv(
         self,
-        readsize: int = None,
+        buffer: int = None,
         flags: str | int = None,
         **kwargs,
     ) -> SocketResponse:
@@ -63,7 +63,7 @@ class ClientListener(ListenInspect, ListenFD):
         packet = IPCPayloadBuilder.build(
             state=self.state,
             cfd=self._cfd,
-            readsize=readsize,
+            buffer=buffer,
             flag=flags,
             mode="recv",
         )
@@ -99,9 +99,7 @@ class ClientListener(ListenInspect, ListenFD):
 
     def recvfrom(
         self,
-        readsize: int,
-        host: str | tuple[str, str | int] = None,
-        port: str | int = None,
+        buffer: int,
         flags: str | int = None,
         **kwargs,
     ) -> SocketResponse:
@@ -113,9 +111,7 @@ class ClientListener(ListenInspect, ListenFD):
         packet = IPCPayloadBuilder.build(
             state=self.state,
             cfd=self._cfd,
-            readsize=readsize,
-            host=host,
-            port=port,
+            buffer=buffer,
             flag=flags,
             mode="recvfrom",
         )
