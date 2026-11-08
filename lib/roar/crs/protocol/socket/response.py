@@ -140,7 +140,7 @@ class SocketResponse:
                     data = base64.b64decode(data64)
                 except Exception:
                     data = data64.encode("utf-8")
-                    
+
             parsed.append((level, types, data))
         return parsed
 
