@@ -271,6 +271,7 @@ func ExecuteRecvMsgStream(fd int, readSize int, oob int, flag int, timeout time.
 	} else {
 		buffer = make([]byte, readSize)
 	}
+	anc := make([]byte, oob)
 
 	if timeout > 0 {
 		tv := unix.NsecToTimeval(timeout.Nanoseconds())
@@ -289,7 +290,7 @@ func ExecuteRecvMsgStream(fd int, readSize int, oob int, flag int, timeout time.
 	var e1 error
 	
 	for {
-		n, ob, rf, sa, e1 := unix.Recvmsg(fd, buffer, oob, flag)
+		n, ob, rf, sa, e1 := unix.Recvmsg(fd, buffer, anc, flag)
 		if e1 != nil {
 			if errors.Is(e1, syscall.EINTR) {
 				continue
@@ -315,6 +316,7 @@ func ExecuteRecvMsgDgram(fd int, readSize int, oob int, flag int, timeout time.D
 	} else {
 		buffer = make([]byte, readSize)
 	}
+	anc := make([]byte, oob)
 
 	if timeout > 0 {
 		tv := unix.NsecToTimeval(timeout.Nanoseconds())
@@ -326,9 +328,9 @@ func ExecuteRecvMsgDgram(fd int, readSize int, oob int, flag int, timeout time.D
 		}()
 	}
 	
-	n, ob, rf, sa, e1 := unix.Recvmsg(fd, buffer, oob, flag)
+	n, ob, rf, sa, e1 := unix.Recvmsg(fd, buffer, anc, flag)
 	if e1 != nil {
 		return buffer, bufPtr, n, ob, rf, sa, e1
 	}
-	return buffer, buffPtr, n, ob, rf, sa, e1 
+	return buffer, bufPtr, n, ob, rf, sa, e1 
 }
