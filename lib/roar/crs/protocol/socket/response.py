@@ -69,7 +69,7 @@ class SocketResponse:
     def remote_ip(self) -> str:
         """Mengembalikan IP Server"""
         addr = self._data.get("remote_ip", "unknown")
-        ip, port = addr.rsplit(":", 0)
+        ip, port = addr.rsplit(":", 1)
         return (ip, port)
 
     @property
@@ -81,7 +81,7 @@ class SocketResponse:
             port = val.get("Port", 0)
             return (addr, port)
 
-        ip, port = val.rsplit(":", 0)
+        ip, port = val.rsplit(":", 1)
         return (ip, port)
 
     @property
