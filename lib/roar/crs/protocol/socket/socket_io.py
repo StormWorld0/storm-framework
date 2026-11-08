@@ -25,6 +25,18 @@ class SocketIO:
         resp = CRS.send(packet)
         return SocketResponse(resp)
 
+    def sendfile(self, file: str) -> SocketResponse:
+        """Sending files"""
+        self._ensure_open("sendfile")
+        packet = IPCPayloadBuilder.build(
+            state=self,
+            file=file,
+            mode="sendfile",
+        )
+
+        resp = CRS.send(packet)
+        return SocketResponse(resp)
+
     def send(
         self,
         data: str | bytes,
