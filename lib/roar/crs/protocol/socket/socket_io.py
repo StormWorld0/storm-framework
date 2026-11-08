@@ -129,7 +129,7 @@ class SocketIO:
         self._ensure_open("sendmsg")
         if is_tuple2(host):
             host, port = host
-            
+
         packet = IPCPayloadBuilder.build(
             state=self,
             buffer=buffer,
