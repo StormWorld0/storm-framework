@@ -57,7 +57,7 @@ class SocketIO:
 
     def recv(
         self,
-        readsize: int,
+        buffer: int,
         flags: str | int = None,
         **kwargs,
     ) -> SocketResponse:
@@ -65,7 +65,7 @@ class SocketIO:
         self._ensure_open("recv")
         packet = IPCPayloadBuilder.build(
             state=self,
-            readsize=readsize,
+            buffer=buffer,
             flag=flags,
             mode="recv",
         )
@@ -100,7 +100,7 @@ class SocketIO:
 
     def recvfrom(
         self,
-        readsize: int,
+        buffer: int,
         flags: str | int = None,
         **kwargs,
     ) -> SocketResponse:
@@ -108,9 +108,56 @@ class SocketIO:
         self._ensure_open("recvfrom")
         packet = IPCPayloadBuilder.build(
             state=self,
-            readsize=readsize,
+            buffer=buffer,
             flag=flags,
             mode="recvfrom",
+        )
+
+        resp = CRS.send(packet)
+        return SocketResponse(resp)
+
+    def sendmsg(
+        self,
+        buffer: int,
+        ancdata: int = None,
+        flags: str | int = None,
+        host: str | tuple[str, str | int] = None,
+        port: str | int = None,
+        **kwargs,
+    ) -> SocketResponse:
+        """Sending message"""
+        self._ensure_open("sendmsg")
+        if is_tuple2(host):
+            host, port = host
+            
+        packet = IPCPayloadBuilder.build(
+            state=self,
+            buffer=buffer,
+            ancdata=ancdata,
+            host=host,
+            port=port,
+            flag=flags,
+            mode="sendmsg",
+        )
+
+        resp = CRS.send(packet)
+        return SocketResponse(resp)
+
+    def recvmsg(
+        self,
+        buffer: int,
+        ancdata: int = None,
+        flags: str | int = None,
+        **kwargs,
+    ) -> SocketResponse:
+        """Taking Buffer"""
+        self._ensure_open("recvmsg")
+        packet = IPCPayloadBuilder.build(
+            state=self,
+            buffer=buffer,
+            ancdata=ancdata,
+            flag=flags,
+            mode="recvmsg",
         )
 
         resp = CRS.send(packet)
