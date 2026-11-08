@@ -70,7 +70,7 @@ class SocketResponse:
         """Mengembalikan IP Server"""
         addr = self._data.get("remote_ip", "unknown")
         ip, port = addr.rsplit(":", 1)
-        return (ip, port)
+        return (ip, int(port))
 
     @property
     def local_ip(self) -> str:
@@ -79,10 +79,10 @@ class SocketResponse:
         if isinstance(val, dict):
             addr = val.get("Addr", 0)
             port = val.get("Port", 0)
-            return (addr, port)
+            return (addr, int(port))
 
         ip, port = val.rsplit(":", 1)
-        return (ip, port)
+        return (ip, int(port))
 
     @property
     def addrinfo(self) -> list[tuple]:
