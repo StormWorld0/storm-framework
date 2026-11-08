@@ -240,9 +240,9 @@ func ExecuteRecvFrom(fd int, readSize int, timeout time.Duration, flag int) ([]b
 }
 
 
-func ExecuteSendMsg(fd int, p int, oob int, sa unix.Sockaddr, flag int, timeout time.Duration) error {
+func ExecuteSendMsg(fd int, p int, oob *int, sa unix.Sockaddr, flag int, timeout time.Duration) error {
 	buff := make([]byte, p)
-	anc := make([]byte, oob)
+	ob := make([]byte, *oob)
 	
 	if timeout > 0 {
 		tv := unix.NsecToTimeval(timeout.Nanoseconds())
@@ -254,10 +254,10 @@ func ExecuteSendMsg(fd int, p int, oob int, sa unix.Sockaddr, flag int, timeout 
 		}()
 	}
 
-	return unix.Sendmsg(fd, buff, anc, sa, flag)
+	return unix.Sendmsg(fd, buff, ob, sa, flag)
 }
 
-func ExecuteRecvMsgStream(fd int, readSize int, oob int, flag int, timeout time.Duration) ([]byte, *[]byte, int, int, int, unix.Sockaddr, error) {
+func ExecuteRecvMsgStream(fd int, readSize int, oob *int, flag int, timeout time.Duration) ([]byte, *[]byte, int, int, int, unix.Sockaddr, error) {
 	if readSize <= 0 {
 		readSize = 4096
 	}
@@ -271,7 +271,7 @@ func ExecuteRecvMsgStream(fd int, readSize int, oob int, flag int, timeout time.
 	} else {
 		buffer = make([]byte, readSize)
 	}
-	anc := make([]byte, oob)
+	anc := make([]byte, *oob)
 
 	if timeout > 0 {
 		tv := unix.NsecToTimeval(timeout.Nanoseconds())
@@ -302,7 +302,7 @@ func ExecuteRecvMsgStream(fd int, readSize int, oob int, flag int, timeout time.
 	return buffer, bufPtr, n, ob, rf, sa, e1
 }
 
-func ExecuteRecvMsgDgram(fd int, readSize int, oob int, flag int, timeout time.Duration) ([]byte, *[]byte, int, int, int, unix.Sockaddr, error) {
+func ExecuteRecvMsgDgram(fd int, readSize int, oob *int, flag int, timeout time.Duration) ([]byte, *[]byte, int, int, int, unix.Sockaddr, error) {
 	if readSize <= 0 {
 		readSize = 4096
 	}
@@ -316,7 +316,7 @@ func ExecuteRecvMsgDgram(fd int, readSize int, oob int, flag int, timeout time.D
 	} else {
 		buffer = make([]byte, readSize)
 	}
-	anc := make([]byte, oob)
+	anc := make([]byte, *oob)
 
 	if timeout > 0 {
 		tv := unix.NsecToTimeval(timeout.Nanoseconds())
