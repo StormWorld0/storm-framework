@@ -174,6 +174,7 @@ class SocketResponse:
             return TLSMetadata(tls_data)
         return None
 
+    @property
     def _flags(self):
         return self._data.get("flags", 0)
 
