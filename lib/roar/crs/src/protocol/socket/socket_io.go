@@ -2,8 +2,6 @@ package socket
 
 import (
     "io"
-    "net"
-    "strconv"
     "encoding/hex"
     "encoding/base64"
     "golang.org/x/sys/unix"
@@ -286,6 +284,7 @@ func handleRecvMsg(ctx *ExecutionContext) packet.ResponsePacket {
 		n, ob, rf int
 		sa        unix.Sockaddr
 		bufPtr    *[]byte
+		buffer    []byte
 		err       error
 	)
 
