@@ -34,6 +34,7 @@ class SocketState:
         flags: str | int = 0,
         backlog: int = 0,
         how: str | int = "",
+        file: str = "",
         timeout: float = 0.0,
         readsize: int = 0,
         ratelimit: int = 0,
@@ -75,6 +76,7 @@ class SocketState:
 
         # Used by listen
         self.backlog = backlog
+        self.file = file
         self.cfd = cfd
 
         # CRS session isolation
@@ -131,6 +133,7 @@ class IPCPayloadBuilder:
         flag: str | int = None,
         how: str | int = None,
         backlog: int = None,
+        file: str = None,
         infotls: bool = None,
         verify: bool = None,
         cert: str = None,
@@ -164,6 +167,7 @@ class IPCPayloadBuilder:
             "flags": flag if flag is not None else state.flag,
             "how": how if how is not None else state.how,
             "backlog": backlog if backlog is not None else state.backlog,
+            "file": file if file is not None else state.file,
             "timeout": float(timeout) if timeout is not None else state._timeout,
             "readsize": readsize if readsize is not None else state.readsize,
             "ratelimit": ratelimit if ratelimit is not None else state.ratelimit,
