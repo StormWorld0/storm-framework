@@ -173,7 +173,7 @@ func ExecuteFDWriteFile(outfd int, file string, timeout time.Duration) error {
 		if count > 256*1024 { count = 256*1024 } // Max Chunk 256kb
 		
 	    n1, e1 := unix.Sendfile(outfd, int(f.Fd()), &offset, count)
-		if e1 != 0 {
+		if e1 != nil {
 			if e1 == unix.EINTR {
 				continue
 			}
@@ -240,16 +240,11 @@ func ExecuteRecvFrom(fd int, readSize int, timeout time.Duration, flag int) ([]b
 }
 
 
-func ExecuteSendMsg(fd int, p int, oob int, sa unix.Sockaddr, flag int, timeout time.Duration) error {
-	if data == "" {
-		return nil
+func ExecuteSendMsg(fd int, p []byte, oob []byte, sa unix.Sockaddr, flag int, timeout time.Duration) error {
+	if p == 0 {
+		return fmt.Errorf("Buffer empty.")
 	}
 	
-	dataDec, err := base64.StdEncoding.DecodeString(data)
-	if err != nil {
-		return fmt.Errorf("base64 decode failed: %w", err)
-	}
-
 	if timeout > 0 {
 		tv := unix.NsecToTimeval(timeout.Nanoseconds())
 		unix.SetsockoptTimeval(fd, unix.SOL_SOCKET, unix.SO_SNDTIMEO, &tv)
