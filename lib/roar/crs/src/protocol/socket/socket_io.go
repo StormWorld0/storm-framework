@@ -245,8 +245,8 @@ func handleSendMsg(ctx *ExecutionContext) packet.ResponsePacket {
 	fd := ctx.RawFD
 	buffer := ctx.Req.Buffer
 	ancData := ctx.Req.Anc
-	typeInt := ParseSockType(ctx.Req.SType)
 	timeout := ctx.Timeout
+	flag := ParseFlags(ctx.Req.Flags)
 
 	sockAddr, err := resolveSockAddr(ctx.Req)
 	if err != nil {
