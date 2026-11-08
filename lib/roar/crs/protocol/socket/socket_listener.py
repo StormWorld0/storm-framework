@@ -105,9 +105,6 @@ class ClientListener(ListenInspect, ListenFD):
     ) -> SocketResponse:
         """Taking Buffer"""
         self.state._ensure_open("recvfrom")
-        if is_tuple2(host):
-            host, port = host
-
         packet = IPCPayloadBuilder.build(
             state=self.state,
             cfd=self._cfd,
