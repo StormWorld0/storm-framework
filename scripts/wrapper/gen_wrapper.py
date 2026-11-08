@@ -14,7 +14,7 @@ def Termux():
     if not prefix:
         sys.exit(1)
 
-    path = str(prefix / "bin" / "storm")
+    path = os.path.join(prefix, "bin", "storm")
 
     # Enforce safe TLS context
     context = ssl.create_default_context()
