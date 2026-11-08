@@ -1,5 +1,4 @@
 import base64
-import socket
 
 from typing import Dict, Any, Optional
 from .metadata import TLSMetadata
