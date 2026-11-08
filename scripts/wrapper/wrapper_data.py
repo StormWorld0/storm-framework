@@ -9,7 +9,7 @@ def data():
             index = sys.argv.index("--data")
             if index + 1 < len(sys.argv):
                 wrapper = sys.argv[index + 1]
-                
+
         generate(wrapper)
     except Exception as e:
         print(f"[*] Error Exception Wrapper Data => {e}")
