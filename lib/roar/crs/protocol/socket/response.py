@@ -46,8 +46,7 @@ class SocketResponse:
         if isinstance(raw_val, str) and raw_val:
             try:
                 return base64.b64decode(raw_val)
-            except Exception as e:
-                smf.printd(f"Base64 decode error", e, level="ERROR")
+            except Exception:
                 return raw_val.encode("utf-8")
 
         return b""
@@ -69,19 +68,22 @@ class SocketResponse:
 
     @property
     def remote_ip(self) -> str:
-        """Mengecek IP Server"""
-        return self._data.get("remote_ip", "unknown")
+        """Mengembalikan IP Server"""
+        addr = self._data.get("remote_ip", "unknown")
+        ip, port = addr.rsplit(":", 0)
+        return (ip, port)
 
     @property
     def local_ip(self) -> str:
         """Mengecek IP keluar sebelum ke internet global"""
-        value = self._data.get("local_ip", "unknown")
-        if isinstance(value, dict):
-            addr = value.get("Addr")
-            port = value.get("Port")
-            if addr is not None and port is not None:
-                return f"{'.'.join(map(str, addr))}:{port}"
-        return value
+        val = self._data.get("local_ip", "unknown")
+        if isinstance(val, dict):
+            addr = val.get("Addr", 0)
+            port = val.get("Port", 0)
+            return (addr, port)
+                
+        ip, port = val.rsplit(":", 0)
+        return (ip, port)
 
     @property
     def addrinfo(self) -> list[tuple]:
