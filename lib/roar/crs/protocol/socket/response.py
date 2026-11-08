@@ -1,4 +1,3 @@
-import smf
 import base64
 import socket
 
@@ -81,7 +80,7 @@ class SocketResponse:
             addr = val.get("Addr", 0)
             port = val.get("Port", 0)
             return (addr, port)
-                
+
         ip, port = val.rsplit(":", 0)
         return (ip, port)
 
