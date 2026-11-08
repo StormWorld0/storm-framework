@@ -1,6 +1,7 @@
 package socket
 
 import (
+	"os"
 	"fmt"
 	"net"
 	"sync"
@@ -103,6 +104,44 @@ func ExecuteFDWriteAll(fd int, data string, timeout time.Duration, flags int) er
 		}
 		n := int(r1)
 		total += n
+	}
+	return nil
+}
+
+func ExecuteFDWriteFile(outfd int, file string) error {
+	if file == "" {
+		return nil
+	}
+
+	f, err := os.Open(file)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	md, err := f.Stat()
+	if err != nil {
+		return err
+	}
+	fSize := md.Size() // int64
+
+	var offset int64 = 0
+	for offset < fSize {
+		remaining := fSize - offset
+		count := int(remaining)
+		
+		if count > 256*1024 { count = 256*1024 } // Max Chunk 256kb
+		
+	    n1, e1 := unix.Sendfile(outfd, int(f.Fd()), &offset, count)
+		if e1 != 0 {
+			if e1 == unix.EINTR {
+				continue
+			}
+			return e1
+		}
+		if n1 <= 0 {
+			break
+		}
 	}
 	return nil
 }
