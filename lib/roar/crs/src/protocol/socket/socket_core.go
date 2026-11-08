@@ -24,7 +24,7 @@ func handleSocket(ctx *ExecutionContext) packet.ResponsePacket {
 
 func handleBind(ctx *ExecutionContext) packet.ResponsePacket {
 	if ctx.RawFD == -1 {
-		return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found. Call 'socket' primitive first."}
+		return packet.ResponsePacket{Status: "WARN", Message: "No raw socket (FD) found. Call 'socket' primitive first."}
 	}
 
 	sockAddr, err := resolveSockAddr(ctx.Req)
@@ -43,7 +43,7 @@ func handleBind(ctx *ExecutionContext) packet.ResponsePacket {
 
 func handleListen(ctx *ExecutionContext) packet.ResponsePacket {
 	if ctx.RawFD == -1 {
-		return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found for listen."}
+		return packet.ResponsePacket{Status: "WARN", Message: "No raw socket (FD) found for listen."}
 	}
 
 	backlog := 128
@@ -62,17 +62,7 @@ func handleListen(ctx *ExecutionContext) packet.ResponsePacket {
 
 func handleAccept(ctx *ExecutionContext) packet.ResponsePacket {
 	if ctx.RawFD == -1 {
-		return packet.ResponsePacket{Status: "ERROR", Message: "No raw listener socket (FD) found."}
-	}
-
-	if ctx.Timeout > 0 {
-	    tv := unix.NsecToTimeval(ctx.Timeout.Nanoseconds())
-	    unix.SetsockoptTimeval(ctx.RawFD, unix.SOL_SOCKET, unix.SO_RCVTIMEO, &tv)
-
-		defer func() {
-			zeroTv := unix.Timeval{Sec: 0, Usec: 0}
-		    unix.SetsockoptTimeval(ctx.RawFD, unix.SOL_SOCKET, unix.SO_SNDTIMEO, &zeroTv)
-		}()
+		return packet.ResponsePacket{Status: "WARN", Message: "No raw socket (FD) found for accept."}
 	}
 
 	nFD, _, err := unix.Accept(ctx.RawFD)
@@ -94,12 +84,8 @@ func handleAccept(ctx *ExecutionContext) packet.ResponsePacket {
 
 
 func handleConnect(ctx *ExecutionContext) packet.ResponsePacket {
-	if ctx.Req.SessionID == "" {
-		return packet.ResponsePacket{Status: "ERROR", Message: "SessionID is required for connect"}
-	}
-	
 	if ctx.RawFD == -1 {
-		return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found for this session. Call 'socket' primitive first."}
+		return packet.ResponsePacket{Status: "WARN", Message: "No raw socket (FD) found for this session. Call 'socket' primitive first."}
 	}
 
 	ctx.SaveSessionHost(ctx.Req.Host)
@@ -183,7 +169,7 @@ func handleShutdown(ctx *ExecutionContext) packet.ResponsePacket {
 	}
 
 	if fd == -1 {
-		return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found for shutdown."}
+		return packet.ResponsePacket{Status: "WARN", Message: "No raw socket (FD) found for shutdown."}
 	}
 
 	how := ParseHow(ctx.Req.How)
