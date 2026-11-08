@@ -136,7 +136,7 @@ func ExecuteFDWriteAll(fd int, data string, timeout time.Duration, flags int) er
 	return nil
 }
 
-func ExecuteFDWriteFile(outfd int, file string) error {
+func ExecuteFDWriteFile(outfd int, file string, timeout time.Duration) error {
 	if file == "" {
 		return nil
 	}
@@ -152,6 +152,16 @@ func ExecuteFDWriteFile(outfd int, file string) error {
 		return err
 	}
 	fSize := md.Size() // int64
+
+	if timeout > 0 {
+		tv := unix.NsecToTimeval(timeout.Nanoseconds())
+		unix.SetsockoptTimeval(outfd, unix.SOL_SOCKET, unix.SO_SNDTIMEO, &tv)
+
+		defer func() {
+			zeroTv := unix.Timeval{Sec: 0, Usec: 0}
+		    unix.SetsockoptTimeval(outfd, unix.SOL_SOCKET, unix.SO_SNDTIMEO, &zeroTv)
+		}()
+	}
 
 	var offset int64 = 0
 	for offset < fSize {
