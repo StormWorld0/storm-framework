@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 	"unsafe"
+	"errors"
+	"syscall"
 	"encoding/base64"
 	"golang.org/x/sys/unix"
 )
@@ -235,4 +237,104 @@ func ExecuteRecvFrom(fd int, readSize int, timeout time.Duration, flag int) ([]b
 
 	n, sa, err := unix.Recvfrom(fd, buffer, flag)
 	return buffer, n, sa, bufPtr, err
+}
+
+
+func ExecuteSendMsg(fd int, p int, oob int, sa unix.Sockaddr, flag int, timeout time.Duration) error {
+	if data == "" {
+		return nil
+	}
+	
+	dataDec, err := base64.StdEncoding.DecodeString(data)
+	if err != nil {
+		return fmt.Errorf("base64 decode failed: %w", err)
+	}
+
+	if timeout > 0 {
+		tv := unix.NsecToTimeval(timeout.Nanoseconds())
+		unix.SetsockoptTimeval(fd, unix.SOL_SOCKET, unix.SO_SNDTIMEO, &tv)
+
+		defer func() {
+			zeroTv := unix.Timeval{Sec: 0, Usec: 0}
+		    unix.SetsockoptTimeval(fd, unix.SOL_SOCKET, unix.SO_SNDTIMEO, &zeroTv)
+		}()
+	}
+
+	return unix.Sendmsg(fd, p, oob, sa, flag)
+}
+
+func ExecuteRecvMsgStream(fd int, readSize int, oob int, flag int, timeout time.Duration) ([]byte, *[]byte, int, int, int, unix.Sockaddr, error) {
+	if readSize <= 0 {
+		readSize = 4096
+	}
+	
+	var buffer []byte
+	var bufPtr *[]byte
+
+	if readSize == 4096 {
+		bufPtr = bufferPool.Get().(*[]byte)
+		buffer = *bufPtr
+	} else {
+		buffer = make([]byte, readSize)
+	}
+
+	if timeout > 0 {
+		tv := unix.NsecToTimeval(timeout.Nanoseconds())
+		unix.SetsockoptTimeval(fd, unix.SOL_SOCKET, unix.SO_RCVTIMEO, &tv)
+
+		defer func() {
+			zeroTv := unix.Timeval{Sec: 0, Usec: 0}
+		    unix.SetsockoptTimeval(fd, unix.SOL_SOCKET, unix.SO_RCVTIMEO, &zeroTv)
+		}()
+	}
+
+	var n  int
+	var ob int
+	var rf int
+	var sa unix.Sockaddr
+	var err error
+	
+	for {
+		n, ob, rf, sa, e1 := unix.Recvmsg(fd, buffer, oob, flag)
+		if e1 != nil {
+			if errors.Is(e1, syscall.EINTR) {
+				continue
+			}
+			return buffer, bufPtr, n, ob, rf, sa, e1
+		}
+		break
+	}
+	return buffer, bufPtr, n, ob, rf, sa, e1
+}
+
+func ExecuteRecvMsgDgram(fd int, readSize int, oob int, flag int, timeout time.Duration) ([]byte, *[]byte, int, int, int, unix.Sockaddr, error) {
+	if readSize <= 0 {
+		readSize = 4096
+	}
+	
+	var buffer []byte
+	var bufPtr *[]byte
+
+	if readSize == 4096 {
+		bufPtr = bufferPool.Get().(*[]byte)
+		buffer = *bufPtr
+	} else {
+		buffer = make([]byte, readSize)
+	}
+
+	if timeout > 0 {
+		tv := unix.NsecToTimeval(timeout.Nanoseconds())
+		unix.SetsockoptTimeval(fd, unix.SOL_SOCKET, unix.SO_RCVTIMEO, &tv)
+
+		defer func() {
+			zeroTv := unix.Timeval{Sec: 0, Usec: 0}
+		    unix.SetsockoptTimeval(fd, unix.SOL_SOCKET, unix.SO_RCVTIMEO, &zeroTv)
+		}()
+	}
+	
+	n, ob, rf, sa, e1 := unix.Recvmsg(fd, buffer, oob, flag)
+	if e1 != nil {
+		return buffer, bufPtr, n, ob, rf, sa, e1
+	}
+	return buffer, buffPtr, n, ob, rf, sa, e1 
 }
