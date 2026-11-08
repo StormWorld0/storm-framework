@@ -15,7 +15,7 @@ def Termux():
     if not prefix:
         sys.exit(1)
 
-    path = os.path.join(prefix, "bin", "storm")
+    path = str(prefix / "bin" / "storm")
 
     # Enforce safe TLS context
     context = ssl.create_default_context()
@@ -30,13 +30,12 @@ def Termux():
             f.write(payload)
 
         os.chmod(path, 0o755)
-
     except URLError as e:
-        smf.printf(f"[-] Network error during download: {e.reason}")
+        print(f"[-] Network error during download: {e.reason}")
     except PermissionError:
-        smf.printf(f"[-] Insufficient permissions to write to {path}")
+        print(f"[-] Insufficient permissions to write to {path}")
     except Exception as e:
-        smf.printf("[-] Deployment failed =>", e)
+        print(f"[-] Deployment failed => {e}")
 
 
 # Update wrapper Linux
@@ -61,13 +60,12 @@ def Linux():
             f.write(payload)
 
         os.chmod(path, 0o755)
-
     except URLError as e:
-        smf.printf(f"[-] Network error during download: {e.reason}")
+        print(f"[-] Network error during download: {e.reason}")
     except PermissionError:
-        smf.printf(f"[-] Insufficient permissions to write to {path}")
+        print(f"[-] Insufficient permissions to write to {path}")
     except Exception as e:
-        smf.printf("[-] Deployment failed =>", e)
+        print(f"[-] Deployment failed => {e}")
 
 
 # Update wrapper Venv
@@ -92,18 +90,16 @@ def Venv():
             f.write(payload)
 
         os.chmod(path, 0o755)
-
     except URLError as e:
-        smf.printf(f"[-] Network error during download: {e.reason}")
+        print(f"[-] Network error during download: {e.reason}")
     except PermissionError:
-        smf.printf(f"[-] Insufficient permissions to write to {path}")
+        print(f"[-] Insufficient permissions to write to {path}")
     except Exception as e:
-        smf.printf("[-] Deployment failed =>", e)
+        print(f"[-] Deployment failed => {e}")
 
 
 # Entry Point Generator Wrapper
 def generate(data):
-
     if not data:
         sys.exit(1)
 
@@ -114,4 +110,4 @@ def generate(data):
     elif data == "Venv":
         Venv()
     else:
-        smf.printf("[*] Invalid data:", data)
+        print(f"[*] Invalid data => {data}")
