@@ -251,7 +251,7 @@ func handleSendMsg(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: "ResolveSockAddr: " + err.Error()}
 	}
 	
-	if err := ExecuteSendMsg(fd, buffer, *oob, sockAddr, flag, timeout); err != nil {
+	if err := ExecuteSendMsg(fd, buffer, oob, sockAddr, flag, timeout); err != nil {
 		ctx.SaveSession(fd)
 		// Error timeout (EAGAIN / EWOULDBLOCK)
 		if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
@@ -289,9 +289,9 @@ func handleRecvMsg(ctx *ExecutionContext) packet.ResponsePacket {
 	)
 
 	if typeInt == unix.SOCK_STREAM {
-		buffer, bufPtr, n, ob, rf, _, err = ExecuteRecvMsgStream(fd, buff, *oob, flag, timeout)
+		buffer, bufPtr, n, ob, rf, _, err = ExecuteRecvMsgStream(fd, buff, oob, flag, timeout)
 	} else {
-		buffer, bufPtr, n, ob, rf, sa, err = ExecuteRecvMsgDgram(fd, buff, *oob, flag, timeout)
+		buffer, bufPtr, n, ob, rf, sa, err = ExecuteRecvMsgDgram(fd, buff, oob, flag, timeout)
 	}
 	defer ReleaseBuffer(bufPtr)
 	
