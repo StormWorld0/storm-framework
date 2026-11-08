@@ -274,7 +274,7 @@ func handleRecvMsg(ctx *ExecutionContext) packet.ResponsePacket {
 	}
 
 	fd := ctx.RawFD
-	buffer := ctx.Req.Buffer
+	buff := ctx.Req.Buffer
 	ancData := ctx.Req.Anc
 	timeout := ctx.Timeout
 	typeInt := ParseSockType(ctx.Req.SType)
@@ -289,9 +289,9 @@ func handleRecvMsg(ctx *ExecutionContext) packet.ResponsePacket {
 	)
 
 	if typeInt == unix.SOCK_STREAM {
-		buffer, bufPtr, n, ob, rf, _, err = ExecuteRecvMsgStream(fd, buffer, ancData, flag, timeout)
+		buffer, bufPtr, n, ob, rf, _, err = ExecuteRecvMsgStream(fd, buff, ancData, flag, timeout)
 	} else {
-		buffer, bufPtr, n, ob, rf, sa, err = ExecuteRecvMsgDgram(fd, buffer, ancData, flag, timeout)
+		buffer, bufPtr, n, ob, rf, sa, err = ExecuteRecvMsgDgram(fd, buff, ancData, flag, timeout)
 	}
 	defer ReleaseBuffer(bufPtr)
 	
