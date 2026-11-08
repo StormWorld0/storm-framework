@@ -1,4 +1,3 @@
-import smf
 import os
 import sys
 import ssl
