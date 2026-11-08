@@ -43,6 +43,29 @@ func handleSendAll(ctx *ExecutionContext) packet.ResponsePacket {
 }
 
 
+func handleSendFile(ctx *ExecutionContext) packet.ResponsePacket {
+	if ctx.CFD == -1 {
+		return packet.ResponsePacket{Status: "WARN", Message: "No client socket (FD) found for sendfile."}
+	}
+
+	if err := ExecuteFDWriteFile(ctx.CFD, ctx.Req.File, ctx.Timeout); err != nil {
+		ctx.SaveSessionCFD(ctx.CFD)
+		// Error timeout (EAGAIN / EWOULDBLOCK)
+		if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
+		    return packet.ResponsePacket{
+			    Status:  "TIMEOUT",
+				Message: "Sendfile failed: " + err.Error(),
+				Data:    ctx.GenerateMetadataFD(ctx.CFD, 0),
+		    } 
+	    }
+		return packet.ResponsePacket{Status: "ERROR", Message: "Sendfile failed: " + err.Error()}
+	}
+
+	ctx.SaveSessionCFD(ctx.CFD)
+	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(ctx.CFD, 0)}
+}
+
+
 func handleSend(ctx *ExecutionContext) packet.ResponsePacket {
 	fd := ctx.RawFD
 	if ctx.Req.CltFD >= 0 {
@@ -143,7 +166,7 @@ func handleSendTo(ctx *ExecutionContext) packet.ResponsePacket {
 	}
 	
 	if fd < 0 {
-		return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found for sendto."}
+		return packet.ResponsePacket{Status: "WARN", Message: "No raw socket (FD) found for sendto."}
 	}
 
 	sockAddr, err := resolveSockAddr(ctx.Req)
@@ -181,7 +204,7 @@ func handleRecvFrom(ctx *ExecutionContext) packet.ResponsePacket {
 	}
 	
 	if fd < 0 {
-		return packet.ResponsePacket{Status: "ERROR", Message: "No raw socket (FD) found for recvfrom."}
+		return packet.ResponsePacket{Status: "WARN", Message: "No raw socket (FD) found for recvfrom."}
 	}
 
 	flag := ParseFlags(ctx.Req.Flags)
