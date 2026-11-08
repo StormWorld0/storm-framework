@@ -27,6 +27,7 @@ type RequestPacket struct {
 	OptVal        int               `json:"opt-value,omitempty"` // Value Integer
 	Flags         any               `json:"flags,omitempty"`     // MSG_OOB, MSG_MORE, ...
 	How           any               `json:"how,omitempty"`       // SHUT_RDWR, SHUT_WR, SHUT_RD
+	Anc           any               `json:"anc-data,omitempty"`  // control messages
 
 	CltFD         int               `json:"client-fd,omitempty"` // Client FD Socket Accept
 
@@ -45,7 +46,7 @@ type RequestPacket struct {
 	Frl           int               `json:"frate"`               // Fallback Ratelimit if encounter WAF/429
 	Retry         int               `json:"retry"`               // Retry connection
 	Encoding      string            `json:"encoding,omitempty"`  // Hex
-	ReadSize      int               `json:"readsize"`            // Limit Read Buffer
+	Buffer        int               `json:"buffer"`            // Limit Read Buffer
 	SessionID     string            `json:"session_id,omitempty"`// Session ID to use the same connection
 	KeepAlive     bool              `json:"keep-alive"`          // Keep-Alive to determine whether a stream connection is active or not.
 	CloseSess     bool              `json:"close-session"`       // Boolean to close active session.
