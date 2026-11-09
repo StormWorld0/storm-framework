@@ -65,14 +65,14 @@ class SocketResponse:
         return self._data.get("read_bytes", 0)
 
     @property
-    def remote_ip(self) -> str:
+    def remote_ip(self) -> tuple[str, int]:
         """Mengembalikan IP Server"""
         addr = self._data.get("remote_ip", "unknown")
         ip, port = addr.rsplit(":", 1)
         return (ip, int(port))
 
     @property
-    def local_ip(self) -> str:
+    def local_ip(self) -> tuple[str, int]:
         """Mengecek IP keluar sebelum ke internet global"""
         val = self._data.get("local_ip", "unknown")
         if isinstance(val, dict):
