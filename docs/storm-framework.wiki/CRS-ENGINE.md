@@ -42,17 +42,17 @@ Currently CRS implements a subset of network protocols focused on the system's c
 ### Protocol (available)
 
 **Socket:**  
-- **Library:** [golang.org/x/sys/unix](golang.org/x/sys/unix)
+- **Library:** [golang.org/x/sys/unix](https://golang.org/x/sys/unix)
 - **License:** BSD 3-Clause License
 
 **Http:**
-- **Library:** [github.com/projectdiscovery/rawhttp](github.com/projectdiscovery/rawhttp)
+- **Library:** [github.com/projectdiscovery/rawhttp](https://github.com/projectdiscovery/rawhttp)
 - **License:** MIT License
-- **Library:** [github.com/projectdiscovery/retryablehttp-go](github.com/projectdiscovery/retryablehttp-go)
+- **Library:** [github.com/projectdiscovery/retryablehttp-go](https://github.com/projectdiscovery/retryablehttp-go)
 - **License:** Mozilla Public License, version 2.0
 
 **Dns:**
-- **Library:** [github.com/miekg/dns](github.com/miekg/dns)
+- **Library:** [github.com/miekg/dns](https://github.com/miekg/dns)
 - **License:** BSD 3-Clause License
 
 ---
