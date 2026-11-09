@@ -31,6 +31,33 @@ Currently CRS implements a subset of network protocols focused on the system's c
 
 ---
 
+## 📖 Information
+
+**Name:** CRS Engine  
+**Version:** 1.0.0  
+**Objective:** Network library  
+**Language:** Golang  
+**License:** BSD 3-Clause License  
+
+### Protocol (available)
+
+**Socket:**  
+- **Library:** golang.org/x/sys/unix
+- **License:** BSD 3-Clause License
+
+**Http:**
+- **Library:** github.com/projectdiscovery/rawhttp
+- **License:** MIT License
+
+- **Library:** github.com/projectdiscovery/retryablehttp-go
+- **License:** Mozilla Public License, version 2.0
+
+**Dns:**
+- **Library:** github.com/miekg/dns
+- **License:** BSD 3-Clause License
+
+---
+
 ## 🛠️ Ways of working CRS
 
 ```mermaid
