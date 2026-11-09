@@ -74,14 +74,9 @@ class ListenInspect:
         response = SocketResponse(resp)
         return response.remote_ip
 
-    def timeout(self, value: float):
+    def settimeout(self, value: float | int):
         """Global Timeout"""
         self.state._timeout = float(value)
         return self
 
-    def goroutine(self, value: int):
-        """Global Goroutine"""
-        if not isinstance(value, int):
-            raise TypeError("[!] Goroutine must be integer.")
-        self.state.con = value
-        return self
+    
