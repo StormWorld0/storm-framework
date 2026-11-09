@@ -80,7 +80,7 @@ sequenceDiagram
     C-->>I: Return Result/Status
     I-->>I: Converting Json Response to Dict
     I-->>W: Sending a Response
-    W-->>W: Change Dict Response to DTO
+    W-->>W: Change Dict Response
     W-->>M: Returned Result (Object)
 ```
 
@@ -176,6 +176,16 @@ sock.sendto(data, (host, port), flags)
 - **is_reused:** Returns a Boolean. True=Using the same connection. False=Create a new connection.
 - **rtt_ms:** Returns the Round Trip Time in milliseconds.
 
+```python
+sock.sendfile(file)
+```
+- **file:** Files in the form of video.mp4, foto.jpg, etc.
+
+```python
+sock.sendmsg(buffer, ancdata, flags, (host, port))
+```
+- **ancdata:** control messages
+
 
 **Viewing the buffer**
 ```python
@@ -222,6 +232,15 @@ sock.recvfrom(buffer, flags)
 - **remote_ip:** Returns the target IP:PORT.
 - **is_reused:** Returns a Boolean. True=Using the same connection. False=Create a new connection.
 - **rtt_ms:** Returns the Round Trip Time in milliseconds.
+
+```python
+sock.recvmsg(buffer, ancdata, flags)
+```
+**Description:** Returns 4 different values: bytes, msg, flags, server.
+- **bytes:** In raw bytes form.
+- **msg:** Have a format `list[tuple[int, int, bytes]]` level, type, data.
+- **flags:** Returns Int.
+- **server:** Returns (ip, port) sockaddr format `tuple[str, int]`.
 
 
 **TLS Upgrade**
