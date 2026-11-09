@@ -105,7 +105,6 @@ def execute(options, net):
             smf.printf("\n[✓] SERVER LIFECYCLE TEST PASSED PERFECTLY!")
     except Exception as e:
         smf.printf("[!] Test Exception =>", e)
-        smf.printf("Test Listener Exception", e, level="ERROR")
     finally:
         if conn is not None:
             conn.close()
