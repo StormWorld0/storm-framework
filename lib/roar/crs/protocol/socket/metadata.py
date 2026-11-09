@@ -8,7 +8,7 @@ class TLSMetadata:
 
     def __init__(self, data: Dict[str, Any]):
         self.version: str = data.get("tls_version", "Unknown")
-        self.cipher_suite: str = data.get("cipher_suite", "Unknown")
+        self.cipher: str = data.get("cipher_suite", "Unknown")
         self.protocol: str = data.get("protocol", "")
         self.hostname: str = data.get("hostname", "")
         self.handshake: bool = data.get("handshake", False)
