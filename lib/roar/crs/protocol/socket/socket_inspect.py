@@ -78,5 +78,3 @@ class ListenInspect:
         """Global Timeout"""
         self.state._timeout = float(value)
         return self
-
-    
