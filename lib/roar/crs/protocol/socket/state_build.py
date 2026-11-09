@@ -30,7 +30,7 @@ class SocketState:
         proto: str | int = "",
         level: str | int = "",
         name: str | int = "",
-        value: int = 1,
+        value: int = 0,
         flags: str | int = 0,
         backlog: int = 0,
         how: str | int = "",
