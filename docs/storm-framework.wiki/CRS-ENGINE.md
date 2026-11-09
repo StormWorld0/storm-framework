@@ -75,7 +75,7 @@ All protocols definitely have different parameters, here you can learn what para
 
 ### 🔌 Socket Parameters
 
-**1. Open Socket**
+**Open Socket**
 ```python
 sock = net.Socket()
 sock.socket(af, type, proto)
@@ -87,15 +87,10 @@ sock.socket(af, type, proto)
 **Parameter**
 - **af:** Address Family such as: `sock.AF_INET`, `sock.AF_INET6`, etc.
 - **type:** Sock Type like: `sock.SOCK_STREAM`, `sock.SOCK_DGRAM`, etc.
-- **proto:** Protocols such as: `sock.IPPROTO_IP`, etc. | Default 0 = Determined by Kernel UNIX
-
-**Response**
-- **status:** SUCCESS/WARN/ERROR/TIMEOUT.
-- **message:** Messages adjust to status.
-- **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
+- **proto:** Protocols such as: `sock.IPPROTO_IP`, etc. | Default 0
 
 
-**2. Connect to Socket**
+**Connect to Socket**
 ```python
 sock.connect((host, port))
 ```
@@ -114,7 +109,7 @@ sock.connect((host, port))
 - **status_tls:** Returns a Boolean. If True=TLS is enabled. False=TLS is disabled.
 
 
-**3. Send Data**
+**Send Data**
 ```python
 sock.send(data, flags)
 ```
@@ -151,20 +146,19 @@ sock.sendto(data, (host, port), flags)
 **Response**
 - **status:** SUCCESS/WARN/ERROR/TIMEOUT.
 - **message:** Messages adjust to status.
-
 - **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
 - **is_reused:** Returns a Boolean. True=Using the same connection. False=Create a new connection.
 - **rtt_ms:** Returns the Round Trip Time in milliseconds.
 
 
-**4. Viewing the buffer**
+**Viewing the buffer**
 ```python
-sock.recv(readsize, flags)
+sock.recv(buffer, flags)
 ```
 **Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
 
 **Parameter**
-- **readsize:** To determine how many bytes of buffer to take.
+- **buffer:** To determine how many bytes of buffer to take.
 - **flags:** (Optional) | Default 0
 
 **Response**
@@ -182,12 +176,12 @@ sock.recv(readsize, flags)
 - **status_tls:** Returns a Boolean. If True=TLS is active. False=TLS is disabled.
 
 ```python
-sock.recvfrom(readsize, flags)
+sock.recvfrom(buffer, flags)
 ```
 **Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
 
 **Parameter**
-- **readsize:** To determine how many bytes of buffer to take.
+- **buffer:** To determine how many bytes of buffer to take.
 - **flags:** MSG_* such as: `sock.MSG_OOB`, `sock.MSG_MORE`, etc. | str & int | Default 0.
 
 **Response**
@@ -204,7 +198,7 @@ sock.recvfrom(readsize, flags)
 - **rtt_ms:** Returns the Round Trip Time in milliseconds.
 
 
-**5. TLS Upgrade**
+**TLS Upgrade**
 ```python
 sock.uptls(cert, key, ca, verify)
 ```
@@ -226,8 +220,6 @@ Automatically inherits TLS connections to send/recv and send/recv usage remains 
 - **str_bytes:** Returns Raw Bytes as UTF-8.
 - **hex_bytes:** Returns Hex Bytes.
 - **int_bytes:** Returns the number of Bytes.
-- **remote_ip:** Returns the server IP:PORT.
-- **local_ip:** Returns local IP:PORT.
 - **is_reused:** Returns a Boolean. True=Using the same connection. False=Create a new connection.
 - **rtt_ms:** Returns the Round Trip Time in milliseconds.
 - **checked_type:** Returns the connection status to see if the tls/tcp connection is working. | Debug.
@@ -247,8 +239,10 @@ Automatically inherits TLS connections to send/recv and send/recv usage remains 
 - **expires:** Returns the certificate Expiration Time in RFC3339 format.
 - **cert_chain:** Returns the number of certificate chains that were successfully verified.
 
+>[!Important]
+>You can also use the Python SSL library with `wrap_socket`.
 
-**6. Bind**
+**Bind**
 ```python
 sock.bind((host, port))
 ```
@@ -262,7 +256,7 @@ sock.bind((host, port))
 - **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
 
 
-**7. Listen**
+**Listen**
 ```python
 sock.listen(backlog)
 ```
@@ -275,11 +269,11 @@ sock.listen(backlog)
 - **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
 
 
-**8. Accept**
+**Accept**
 ```python
 conn, resp = sock.accept()
 ```
-**Inheritance:**
+**Conn:**
 - **sendall**
 - **send**
 - **recv**
@@ -290,9 +284,9 @@ conn, resp = sock.accept()
 - **getsockname**
 - **getpeername**
 - **fileno**
-- **timeout**
+- **settimeout**
+- **gettimeout**
 - **close**
-
 
 **Response**
 - **status:** SUCCESS/WARN/ERROR/TIMEOUT.
@@ -300,7 +294,7 @@ conn, resp = sock.accept()
 - **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
 
 
-**9. Set Socket Options**
+**Set Socket Options**
 ```python
 sock.setsockopt(level, name, value)
 ```
@@ -317,7 +311,7 @@ sock.setsockopt(level, name, value)
 - **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
 
 
-**10. Get Socket Options**
+**Get Socket Options**
 ```python
 sock.getsockopt(level, name)
 ```
@@ -326,16 +320,21 @@ sock.getsockopt(level, name)
 **Response:** This function directly returns an int.
 
 
-**10. Timeout**
+**Timeout**
 ```python
-sock.timeout(value)
+sock.settimeout(value)
 ```
 **Description:** The timeout function is created to set a default timeout for all functions executed after it, eliminating the need to apply timeouts repeatedly in each function. Default = 0 Bloking.
 
 **Value:** In this parameter, the input must be in the form of a float such as: 1.0, 10.5, etc.
 
+```python
+sock.gettimout()
+```
+**Description:** Returns float or None.
 
-**11. Creating Connection**
+
+**Creating Connection**
 ```python
 sock.create_connection((host, port))
 ```
@@ -347,7 +346,7 @@ sock.create_connection((host, port))
 - **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
 
 
-**12. Get Address Information**
+**Get Address Information**
 ```python
 sock.getaddrinfo((host, port), af, type, proto, flags)
 ```
@@ -359,38 +358,38 @@ sock.getaddrinfo((host, port), af, type, proto, flags)
 - **proto:** Protocols such as: `sock.IPPROTO_IP`, etc. | Default 0 = Determined by Kernel UNIX
 - **flags:** MSG_* such as: `sock.MSG_OOB`, `sock.MSG_MORE`, etc. | Default 0.
 
-**Response**: Getaddrinfo directly returns a list[tuple] response of 5 elements.
+**Response**: Getaddrinfo directly returns a `list[tuple[str, str, str, str, tuple[str, int]]]` response of 5 elements: `family, type, proto, canonname, sockaddr.
 
 
-**13. Get Name Info**
+**Get Name Info**
 ```python
 sock.getnameinfo((host, port))
 ```
-**Response:** Returns a tuple of host and serv.
+**Response:** Returns a `tuple[str, str]` of (host, serv).
 
 
-**14. Get Socket Name**
+**Get Socket Name**
 ```python
 sock.getsockname()
 ```
-**Response:** Returns the local IP in the format IP:Port.
+**Response:** Returns the local IP in the format `tuple[str, int]` (IP, Port).
 
 
-**15.Get Peer Name**
+**Get Peer Name**
 ```python
 sock.getpeername()
 ```
-**Response:** Returns the server IP in the format IP:Port.
+**Response:** Returns the server IP in the format `tuple[str, int]` (IP, Port).
 
 
-**16. Fileno**
+**Fileno**
 ```python
 sock.fileno()
 ```
 **Response:** Returns Python File Descriptor.
 
 
-**17. Closing the connection**
+**Closing the connection**
 ```python
 resp = sock.close()
 ```
@@ -401,11 +400,14 @@ resp = sock.close()
 - **message:** Messages adjust to status.
 
 
-**18. Exception Socket**
+**Exception Socket**
 ```python
 try:
     ...
-except sock.STrace:
+except sock.SocketError:
+except sock.ConnectionRefused:
+except sock.RuntimeError:
+except sock.Exception:
 ```
 **Description:** This is used to stop the program script when the CRS throws an ERROR/CRITICAL. Capture the ERROR message using smflogd if necessary.
 
