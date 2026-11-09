@@ -76,5 +76,14 @@ class ListenInspect:
 
     def settimeout(self, value: float | int):
         """Global Timeout"""
+        if not isinstance(value, (float, int)):
+            raise ValueError("'settimeout' Argument must be a float or int.")
         self.state._timeout = float(value)
         return self
+
+    def gettimeout(self) -> float:
+        """Taking a timeout"""
+        value = None
+        if self.state._timeout != 0.0:
+            value = self.state._timeout
+        return value
