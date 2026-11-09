@@ -84,10 +84,10 @@ class SocketResponse:
         return (ip, int(port))
 
     @property
-    def addrinfo(self) -> list[tuple]:
+    def addrinfo(self) -> list[tuple[str, str, str, str, tuple[str, str]]]:
         """Mengonversi data 'results' dari getaddrinfo ke daftar tuple standar"""
         if self.status != "SUCCESS":
-            return [("", "", "", "", ("", ""))]
+            return [("", "", "", "", ("", 0))]
 
         results = self._data.get("results", [])
         parsed = []
