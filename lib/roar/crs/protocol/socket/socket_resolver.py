@@ -10,7 +10,7 @@ class SocketResolver:
     def getaddrinfo(
         self,
         address: tuple[str, str | int],
-        af: str | int = None,
+        family: str | int = None,
         type: str | int = None,
         proto: str | int = None,
         flags: str | int = None,
@@ -25,7 +25,7 @@ class SocketResolver:
             state=self,
             host=host,
             port=port,
-            addr_fam=af,
+            addr_fam=family,
             stype=type,
             sproto=proto,
             flag=flags,
@@ -42,7 +42,7 @@ class SocketResolver:
         flags: str | int = None,
         **kwargs,
     ) -> SocketResponse:
-        """Dapatkan Hostname dari IP:PORT"""
+        """Dapatkan Hostname dari (IP, PORT)"""
         self._ensure_open("getnameinfo")
         if is_tuple2(address):
             host, port = address
