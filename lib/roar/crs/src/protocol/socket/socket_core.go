@@ -14,7 +14,7 @@ func handleSocket(ctx *ExecutionContext) packet.ResponsePacket {
 
 	fd, err := unix.Socket(afInt, sInt, protoInt)
 	if err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: "Failed to create socket: " + err.Error()}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "Failed to create socket: " + err.Error()}
 	}
 
 	ctx.SaveSession(fd)
@@ -24,16 +24,16 @@ func handleSocket(ctx *ExecutionContext) packet.ResponsePacket {
 
 func handleBind(ctx *ExecutionContext) packet.ResponsePacket {
 	if ctx.RawFD == -1 {
-		return packet.ResponsePacket{Status: "WARN", Message: "No raw socket (FD) found. Call 'socket' primitive first."}
+		return packet.ResponsePacket{Status: "S-WARN", Message: "No raw socket (FD) found. Call 'socket' primitive first."}
 	}
 
 	sockAddr, err := resolveSockAddr(ctx.Req)
 	if err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: err.Error()}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: err.Error()}
 	}
 
 	if err := unix.Bind(ctx.RawFD, sockAddr); err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: "Bind failed: " + err.Error()}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "Bind failed: " + err.Error()}
 	}
 
 	ctx.SaveSession(ctx.RawFD)
@@ -43,7 +43,7 @@ func handleBind(ctx *ExecutionContext) packet.ResponsePacket {
 
 func handleListen(ctx *ExecutionContext) packet.ResponsePacket {
 	if ctx.RawFD == -1 {
-		return packet.ResponsePacket{Status: "WARN", Message: "No raw socket (FD) found for listen."}
+		return packet.ResponsePacket{Status: "S-WARN", Message: "No raw socket (FD) found for listen."}
 	}
 
 	backlog := 128
@@ -52,7 +52,7 @@ func handleListen(ctx *ExecutionContext) packet.ResponsePacket {
 	}
 
 	if err := unix.Listen(ctx.RawFD, backlog); err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: "Listen failed: " + err.Error()}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "Listen failed: " + err.Error()}
 	}
 
 	ctx.SaveSession(ctx.RawFD)
@@ -62,15 +62,15 @@ func handleListen(ctx *ExecutionContext) packet.ResponsePacket {
 
 func handleAccept(ctx *ExecutionContext) packet.ResponsePacket {
 	if ctx.RawFD == -1 {
-		return packet.ResponsePacket{Status: "WARN", Message: "No raw socket (FD) found for accept."}
+		return packet.ResponsePacket{Status: "S-WARN", Message: "No raw socket (FD) found for accept."}
 	}
 
 	nFD, _, err := unix.Accept(ctx.RawFD)
 	if err != nil {
 		if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
-			return packet.ResponsePacket{Status: "TIMEOUT", Message: "Accept timeout expired. No incoming connections."}
+			return packet.ResponsePacket{Status: "S-TIMEOUT", Message: "Accept timeout expired. No incoming connections."}
 		}
-		return packet.ResponsePacket{Status: "ERROR", Message: "Accept failed: " + err.Error()}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "Accept failed: " + err.Error()}
 	}
 
 	ctx.SaveSessionCFD(nFD)
@@ -85,14 +85,14 @@ func handleAccept(ctx *ExecutionContext) packet.ResponsePacket {
 
 func handleConnect(ctx *ExecutionContext) packet.ResponsePacket {
 	if ctx.RawFD == -1 {
-		return packet.ResponsePacket{Status: "WARN", Message: "No raw socket (FD) found for this session. Call 'socket' primitive first."}
+		return packet.ResponsePacket{Status: "S-WARN", Message: "No raw socket (FD) found for this session. Call 'socket' primitive first."}
 	}
 
 	ctx.SaveSessionHost(ctx.Req.Host)
 
 	sockAddr, err := resolveSockAddr(ctx.Req)
 	if err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: err.Error()}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: err.Error()}
 	}
 
 	errChan := make(chan error, 1)
@@ -108,10 +108,10 @@ func handleConnect(ctx *ExecutionContext) packet.ResponsePacket {
 	select {
 	case err := <-errChan:
 		if err != nil {
-			return packet.ResponsePacket{Status: "ALERT", Message: "OS Connect failed: " + err.Error()}
+			return packet.ResponsePacket{Status: "S-ALERT", Message: "OS Connect failed: " + err.Error()}
 		}
 	case <-timeoutChan:
-		return packet.ResponsePacket{Status: "ERROR", Message: "Connect timeout expired. Socket aborted."}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "Connect timeout expired. Socket aborted."}
 	}
 
 	ctx.SaveSession(ctx.RawFD)
@@ -121,19 +121,19 @@ func handleConnect(ctx *ExecutionContext) packet.ResponsePacket {
 
 func handleCreate(ctx *ExecutionContext) packet.ResponsePacket {
 	if ctx.Req.SessionID == "" {
-		return packet.ResponsePacket{Status: "ERROR", Message: "SessionID is required for connect"}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "SessionID is required for connect"}
 	}
 	
 	ctx.SaveSessionHost(ctx.Req.Host)
 	
 	sockAddr, err := resolveSockAddr(ctx.Req)
 	if err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: err.Error()}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: err.Error()}
 	}
 
 	fd, err := unix.Socket(unix.AF_INET, unix.SOCK_STREAM, 0)
 	if err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: "Failed to create socket: " + err.Error()}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "Failed to create socket: " + err.Error()}
 	}
 	
 	errChan := make(chan error, 1)
@@ -150,11 +150,11 @@ func handleCreate(ctx *ExecutionContext) packet.ResponsePacket {
 	case err := <-errChan:
 		if err != nil {
 			unix.Close(fd)
-			return packet.ResponsePacket{Status: "ALERT", Message: "OS Connect failed: " + err.Error()}
+			return packet.ResponsePacket{Status: "S-ALERT", Message: "OS Connect failed: " + err.Error()}
 		}
 	case <-timeoutChan:
 		unix.Close(fd)
-		return packet.ResponsePacket{Status: "ERROR", Message: "Connect timeout expired. Socket aborted."}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "Connect timeout expired. Socket aborted."}
 	}
 
 	ctx.SaveSession(fd)
@@ -169,12 +169,12 @@ func handleShutdown(ctx *ExecutionContext) packet.ResponsePacket {
 	}
 
 	if fd == -1 {
-		return packet.ResponsePacket{Status: "WARN", Message: "No raw socket (FD) found for shutdown."}
+		return packet.ResponsePacket{Status: "S-WARN", Message: "No raw socket (FD) found for shutdown."}
 	}
 
 	how := ParseHow(ctx.Req.How)
 	if err := unix.Shutdown(fd, how); err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: "Shutdown failed: " + err.Error()}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "Shutdown failed: " + err.Error()}
 	}
 
 	ctx.SaveSession(ctx.RawFD)
