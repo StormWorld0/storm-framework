@@ -257,52 +257,9 @@ func ExecuteSendMsg(fd int, p int, oob *int, sa unix.Sockaddr, flag int, timeout
 	return unix.Sendmsg(fd, buff, ob, sa, flag)
 }
 
-func ExecuteRecvMsgStream(fd int, readSize int, oob *int, flag int, timeout time.Duration) ([]byte, *[]byte, int, int, int, unix.Sockaddr, error) {
-	if readSize <= 0 {
-		readSize = 4096
-	}
-	
-	var buffer []byte
-	var bufPtr *[]byte
 
-	if readSize == 4096 {
-		bufPtr = bufferPool.Get().(*[]byte)
-		buffer = *bufPtr
-	} else {
-		buffer = make([]byte, readSize)
-	}
-	anc := make([]byte, *oob)
 
-	if timeout > 0 {
-		tv := unix.NsecToTimeval(timeout.Nanoseconds())
-		unix.SetsockoptTimeval(fd, unix.SOL_SOCKET, unix.SO_RCVTIMEO, &tv)
-
-		defer func() {
-			zeroTv := unix.Timeval{Sec: 0, Usec: 0}
-		    unix.SetsockoptTimeval(fd, unix.SOL_SOCKET, unix.SO_RCVTIMEO, &zeroTv)
-		}()
-	}
-
-	var n  int
-	var ob int
-	var rf int
-	var sa unix.Sockaddr
-	var e1 error
-	
-	for {
-		n, ob, rf, sa, e1 := unix.Recvmsg(fd, buffer, anc, flag)
-		if e1 != nil {
-			if errors.Is(e1, syscall.EINTR) {
-				continue
-			}
-			return buffer, bufPtr, n, ob, rf, sa, e1
-		}
-		break
-	}
-	return buffer, bufPtr, n, ob, rf, sa, e1
-}
-
-func ExecuteRecvMsgDgram(fd int, readSize int, oob *int, flag int, timeout time.Duration) ([]byte, *[]byte, int, int, int, unix.Sockaddr, error) {
+func ExecuteRecvMsg(fd int, readSize int, oob *int, flag int, timeout time.Duration) ([]byte, *[]byte, int, int, int, unix.Sockaddr, error) {
 	if readSize <= 0 {
 		readSize = 4096
 	}
