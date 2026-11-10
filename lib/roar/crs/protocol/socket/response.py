@@ -114,29 +114,6 @@ class SocketResponse:
         return (host, serv)
 
     @property
-    def rmsg(self) -> list[tuple[int, int, bytes]]:
-        """Mengembalikan 'list[tuple]' Ancillary data"""
-        if self.status != "SUCCESS":
-            return []
-
-        res = self._data.get("ancdata", [])
-        parsed = []
-        for item in res:
-            level = item.get("msg_level", 0)
-            types = item.get("msg_type", 0)
-            data64 = item.get("msg_data")
-
-            data = b""
-            if isinstance(data64, str) and data64:
-                try:
-                    data = base64.b64decode(data64)
-                except Exception:
-                    data = data64.encode("utf-8")
-
-            parsed.append((level, types, data))
-        return parsed
-
-    @property
     def rtt_ms(self) -> int:
         """Round Trip Time dalam millisecond."""
         return self._data.get("rtt_ms", 0)
@@ -164,10 +141,6 @@ class SocketResponse:
         if tls_data and isinstance(tls_data, dict):
             return TLSMetadata(tls_data)
         return None
-
-    @property
-    def _flags(self):
-        return self._data.get("flags", 0)
 
     def _client_fd(self):
         """Mengembalikan CFD tabel Golang"""
