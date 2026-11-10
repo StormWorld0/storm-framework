@@ -31,7 +31,6 @@ def execute(options, net):
 
     sock = net.Socket()
     try:
-        sock.settimeout(5.0)
         obj = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
         if obj:
             smf.printf("[✓] File Decriptor =>", sock.fileno())
@@ -54,7 +53,7 @@ def execute(options, net):
             smf.printf("[✓] Str bytes =>", resp.str_bytes)
     except KeyboardInterrupt:
         pass
-    except sock.Exception as e:
+    except Exception as e:
         smf.printf("[*] Error Socket =>", e)
     finally:
         sock.close()
