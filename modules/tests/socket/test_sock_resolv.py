@@ -21,7 +21,7 @@ def execute(options, net):
     sock = net.Socket()
     try:
         smf.printf(f"[*] Getaddrinfo => {host}:{port}")
-        resp = sock.getaddrinfo((host, port), af=sock.AF_INET, proto=sock.IPPROTO_TCP)
+        resp = sock.getaddrinfo((host, port), family=sock.AF_INET, proto=sock.IPPROTO_TCP)
         smf.printf("[✓] Getaddrinfo Results =>", resp)
 
         addrs = [sockaddr for _, _, _, _, sockaddr in resp if sockaddr]
@@ -33,5 +33,5 @@ def execute(options, net):
                 smf.printf(f"[✓] Getnameinfo > {addr} =>", resp)
     except KeyboardInterrupt:
         pass
-    except sock.Exception as e:
+    except Exception as e:
         smf.printf("Error =>", e)
