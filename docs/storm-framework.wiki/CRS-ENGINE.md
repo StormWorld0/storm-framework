@@ -104,25 +104,24 @@ All protocols definitely have different parameters, here you can learn what para
 **Open Socket**
 ```python
 sock = net.Socket()
-sock.socket(af, type, proto)
+sock.socket(family, type, proto)
 ```
 **Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
 
 **Inheritance:** `net.Socket()` will inherit all the functions below it, and all of those functions will only return Response.
 
 **Parameter**
-- **af:** Address Family such as: `sock.AF_INET`, `sock.AF_INET6`, etc.
+- **family:** Address Family such as: `sock.AF_INET`, `sock.AF_INET6`, etc.
 - **type:** Sock Type like: `sock.SOCK_STREAM`, `sock.SOCK_DGRAM`, etc.
-- **proto:** Protocols such as: `sock.IPPROTO_IP`, etc. | Default 0
+- **proto:** Protocols such as: `sock.IPPROTO_IP`, etc. | Optional Default 0
 
 
 **Connect to Socket**
 ```python
-sock.connect((host, port))
+sock.connect(address)
 ```
 **Parameter**
-- **host:** This can be IP:Port / Hostname. | tuple (host, port) or str host.
-- **port:** This is a typical Port. | Default None
+- **address:** tuple (host, port).
 
 **Response**
 - **status:** SUCCESS/WARN/ERROR/TIMEOUT.
@@ -159,15 +158,14 @@ sock.sendall(data, flags)
 - **status_tls:** Returns a Boolean. If True=TLS is enabled. False=TLS is disabled.
 
 ```python
-sock.sendto(data, (host, port), flags)
+sock.sendto(data, address, flags)
 ```
 **Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
 
 **Parameter**
 - **data:** Can be bytes / http request / payload etc.
-- **host:** This can be IP:Port / Hostname. | tuple (host, port) or str host.
-- **port:** This is a typical Port. | Default None.
-- **flags:** MSG_* such as: `sock.MSG_OOB`, `sock.MSG_MORE`, etc. | str & int | Default 0.
+- **address:** tuple (host, port).
+- **flags:** Optional Default 0.
 
 **Response**
 - **status:** SUCCESS/WARN/ERROR/TIMEOUT.
@@ -180,11 +178,6 @@ sock.sendto(data, (host, port), flags)
 sock.sendfile(file)
 ```
 - **file:** Files in the form of video.mp4, foto.jpg, etc.
-
-```python
-sock.sendmsg(buffer, ancdata, flags, (host, port))
-```
-- **ancdata:** control messages
 
 
 **Viewing the buffer**
@@ -218,7 +211,7 @@ sock.recvfrom(buffer, flags)
 
 **Parameter**
 - **buffer:** To determine how many bytes of buffer to take.
-- **flags:** MSG_* such as: `sock.MSG_OOB`, `sock.MSG_MORE`, etc. | str & int | Default 0.
+- **flags:** Optional | Default 0.
 
 **Response**
 - **status:** SUCCESS/WARN/ERROR/TIMEOUT.
@@ -232,15 +225,6 @@ sock.recvfrom(buffer, flags)
 - **remote_ip:** Returns the target IP:PORT.
 - **is_reused:** Returns a Boolean. True=Using the same connection. False=Create a new connection.
 - **rtt_ms:** Returns the Round Trip Time in milliseconds.
-
-```python
-sock.recvmsg(buffer, ancdata, flags)
-```
-**Description:** Returns 4 different values: bytes, msg, flags, server.
-- **bytes:** In raw bytes form.
-- **msg:** Have a format `list[tuple[int, int, bytes]]` level, type, data.
-- **flags:** Returns Int.
-- **server:** Returns (ip, port) sockaddr format `tuple[str, int]`.
 
 
 **TLS Upgrade**
@@ -289,11 +273,10 @@ Automatically inherits TLS connections to send/recv and send/recv usage remains 
 
 **Bind**
 ```python
-sock.bind((host, port))
+sock.bind(address)
 ```
 **Parameter**
-- **host:** This can be Hostname.
-- **port:** This is a typical Port.
+- **address:** Tuple (host, port).
 
 **Response**
 - **status:** SUCCESS/WARN/ERROR/TIMEOUT.
@@ -381,7 +364,7 @@ sock.gettimout()
 
 **Creating Connection**
 ```python
-sock.create_connection((host, port))
+sock.create_connection(address)
 ```
 **Description:** This function is used to immediately open a connection quickly without having to perform socket() and connect() literacy because this is done automatically by the binary CRS. This makes it faster and requires less code. Send, receive, and uptls still require manual processing afterward.
 
@@ -393,22 +376,22 @@ sock.create_connection((host, port))
 
 **Get Address Information**
 ```python
-sock.getaddrinfo((host, port), af, type, proto, flags)
+sock.getaddrinfo(address, family, type, proto, flags)
 ```
 **Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
 
 **Parameter**
-- **af:** Address Family such as: `sock.AF_INET`, `sock.AF_INET6`, etc.
+- **family:** Address Family such as: `sock.AF_INET`, `sock.AF_INET6`, etc.
 - **type:** Sock Type like: `sock.SOCK_STREAM`, `sock.SOCK_DGRAM`, etc.
 - **proto:** Protocols such as: `sock.IPPROTO_IP`, etc. | Default 0 = Determined by Kernel UNIX
-- **flags:** MSG_* such as: `sock.MSG_OOB`, `sock.MSG_MORE`, etc. | Default 0.
+- **flags:** MSG_* such as: `sock.MSG_OOB`, `sock.MSG_MORE`, etc. | Optional Default 0.
 
 **Response**: Getaddrinfo directly returns a `list[tuple[str, str, str, str, tuple[str, int]]]` response of 5 elements: `family, type, proto, canonname, sockaddr.
 
 
 **Get Name Info**
 ```python
-sock.getnameinfo((host, port))
+sock.getnameinfo(address)
 ```
 **Response:** Returns a `tuple[str, str]` of (host, serv).
 
@@ -453,6 +436,8 @@ except sock.SocketError:
 except sock.ConnectionRefused:
 except sock.RuntimeError:
 except sock.Exception:
+except sock.Timeout:
+except sock.ValueError:
 ```
 **Description:** This is used to stop the program script when the CRS throws an ERROR/CRITICAL. Capture the ERROR message using smflogd if necessary.
 
