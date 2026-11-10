@@ -55,9 +55,9 @@ def execute(options, net):
         smf.printf("File Decriptor =>", sock.fileno())
 
         # Connect to server
-        result = sock.connect(host, port)
+        result = sock.connect((host, port))
         if not result.ok:
-            smf.printd("DNS connect failed", result, level="ERROR")
+            smf.printd("DNS connect failed", result.message, level="ERROR")
             return
 
         # Global timeout
@@ -69,7 +69,7 @@ def execute(options, net):
         # Send data
         result = sock.send(query)
         if not result.ok:
-            smf.printd("DNS query failed", result, level="ERROR")
+            smf.printd("DNS query failed", result.message, level="ERROR")
             return
 
         # Retrieve response Buffer
@@ -81,7 +81,7 @@ def execute(options, net):
             smf.printf("Str Response       =>", result.str_bytes)
     except KeyboardInterrupt:
         pass
-    except sock.Exception as e:
+    except Exception as e:
         smf.printd("UDP DNS testing failed", e, level="ERROR")
     finally:
         sock.close()
