@@ -35,7 +35,6 @@ class SocketState:
         backlog: int = 0,
         how: str | int = "",
         file: str = "",
-        anc: int = None,
         timeout: float = 0.0,
         buffer: int = 0,
         ratelimit: int = 0,
@@ -52,6 +51,7 @@ class SocketState:
         con: int = 1,
         sock_fd: int = -1,
         clt_fd: int = -1,
+        infd: int = -1,
         **kwargs,
     ):
         self.host = host
@@ -74,7 +74,6 @@ class SocketState:
         self.value = int(value)
         self.flag = flags
         self.how = how
-        self.ancdata = anc
 
         # Used by listen
         self.backlog = backlog
@@ -99,6 +98,7 @@ class SocketState:
         # Cache File Descriptor. Operation O(1)
         self._sock_fd = sock_fd
         self._client_fd = clt_fd
+        self._infd = infd
 
         if kwargs:
             smf.printf(
@@ -146,6 +146,7 @@ class IPCPayloadBuilder:
         timeout: float = None,
         ratelimit: int = None,
         cfd: int = None,
+        infd: int = None,
         mode: str = None,
         close_session: bool = None,
     ) -> dict:
@@ -155,6 +156,11 @@ class IPCPayloadBuilder:
         if data:
             data_bytes = data.encode("utf-8") if isinstance(data, str) else data
             data_str = base64.b64encode(data_bytes).decode("utf-8")
+
+        anc_int = None
+        if ancdata:
+            anc_bytes = ancdata.encode("utf-8") if isinstance(ancdata, str) else ancdata
+            anc_str = base64.b64encode(anc_bytes).decode("utf-8")
 
         return {
             "primitive": "SOCKET_SEND",
@@ -171,11 +177,12 @@ class IPCPayloadBuilder:
             "how": how if how is not None else state.how,
             "backlog": backlog if backlog is not None else state.backlog,
             "file": file if file is not None else state.file,
-            "oob": ancdata if ancdata is not None else state.ancdata,
+            "oob": anc_str,
             "timeout": float(timeout) if timeout is not None else state._timeout,
             "buffer": buffer if buffer is not None else state.buffer,
             "ratelimit": ratelimit if ratelimit is not None else state.ratelimit,
             "client-fd": cfd if cfd is not None else state.cfd,
+            "infd": infd if infd is not None else state._infd,
             "session_id": state.sessid,
             "keep-alive": state.keepalive,
             "close-session": (
