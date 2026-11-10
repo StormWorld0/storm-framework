@@ -236,12 +236,12 @@ func handleRecvFrom(ctx *ExecutionContext) packet.ResponsePacket {
 
 
 func handleSendMsg(ctx *ExecutionContext) packet.ResponsePacket {
-	if ctx.RawFD == -1 {
-		return packet.ResponsePacket{Status: "WARN", Message: "No raw socket (FD) found for sendmsg."}
+	if ctx.Req.SockFD == -1 {
+		return packet.ResponsePacket{Status: "WARN", Message: "No (FD) found for sendmsg."}
 	}
 
-	fd := ctx.RawFD
-	buffer := ctx.Req.Buffer
+	fd := ctx.Req.SockFD
+	data := ctx.Req.Data
 	oob := ctx.Req.Oob
 	timeout := ctx.Timeout
 	flag := ParseFlags(ctx.Req.Flags)
@@ -251,7 +251,7 @@ func handleSendMsg(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "ERROR", Message: "ResolveSockAddr: " + err.Error()}
 	}
 	
-	if err := ExecuteSendMsg(fd, buffer, oob, sockAddr, flag, timeout); err != nil {
+	if err := ExecuteSendMsg(fd, data, oob, sockAddr, flag, timeout); err != nil {
 		ctx.SaveSession(fd)
 		// Error timeout (EAGAIN / EWOULDBLOCK)
 		if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
