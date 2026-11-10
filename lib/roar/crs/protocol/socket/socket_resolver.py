@@ -1,5 +1,6 @@
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
+from .validate import is_tuple2
 from ...endpoint import CRS
 
 
@@ -8,8 +9,7 @@ class SocketResolver:
 
     def getaddrinfo(
         self,
-        host: str | tuple[str, str | int],
-        port: str | int = None,
+        address: tuple[str, str | int],
         af: str | int = None,
         type: str | int = None,
         proto: str | int = None,
@@ -18,10 +18,8 @@ class SocketResolver:
     ) -> SocketResponse:
         """Dapatkan informasi alamat"""
         self._ensure_open("getaddrinfo")
-        if isinstance(host, tuple):
-            if len(host) != 2:
-                raise ValueError("Host tuple only accepts 2 elements: (host, port)")
-            host, port = host
+        if is_tuple2(address):
+            host, port = address
 
         packet = IPCPayloadBuilder.build(
             state=self,
@@ -40,17 +38,14 @@ class SocketResolver:
 
     def getnameinfo(
         self,
-        host: str | tuple[str, str | int],
-        port: str | int = None,
+        address: tuple[str, str | int],
         flags: str | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Dapatkan Hostname dari IP:PORT"""
         self._ensure_open("getnameinfo")
-        if isinstance(host, tuple):
-            if len(host) != 2:
-                raise ValueError("Host tuple only accepts 2 elements: (host, port)")
-            host, port = host
+        if is_tuple2(address):
+            host, port = address
 
         packet = IPCPayloadBuilder.build(
             state=self,
