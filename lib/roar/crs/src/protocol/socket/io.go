@@ -7,8 +7,6 @@ import (
 	"sync"
 	"time"
 	"unsafe"
-	"errors"
-	"syscall"
 	"encoding/base64"
 	"golang.org/x/sys/unix"
 )
