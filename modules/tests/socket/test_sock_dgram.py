@@ -30,7 +30,7 @@ def execute(options, net):
         sock.settimeout(2.0)
 
         # Send datagram
-        resp = sock.sendto(dns_query, host, port)
+        resp = sock.sendto(dns_query, (host, port))
         if not resp.ok:
             smf.printf("[!] Failed sendto =>", resp.message)
             return
@@ -50,7 +50,7 @@ def execute(options, net):
         smf.printf("[!] Failed recvfrom =>", resp.message)
     except KeyboardInterrupt:
         pass
-    except sock.Exception as e:
+    except Exception as e:
         smf.printd("Connection error", e, level="ERROR")
     finally:
         sock.close()
