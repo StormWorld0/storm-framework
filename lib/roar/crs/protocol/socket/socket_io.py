@@ -118,8 +118,8 @@ class SocketIO:
 
     def sendmsg(
         self,
-        buffer: int,
-        ancdata: int = None,
+        buffer: bytes,
+        ancdata: bytes = None,
         flags: str | int = None,
         host: str | tuple[str, str | int] = None,
         port: str | int = None,
@@ -132,7 +132,7 @@ class SocketIO:
 
         packet = IPCPayloadBuilder.build(
             state=self,
-            buffer=buffer,
+            data=buffer,
             ancdata=ancdata,
             host=host,
             port=port,
