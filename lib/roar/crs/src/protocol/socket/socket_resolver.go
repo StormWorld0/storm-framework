@@ -8,7 +8,7 @@ import (
 func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
 	h1, p2, r1, r2, e1 := getAddrInfo(ctx)
 	if e1 != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: e1.Error()}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: e1.Error()}
 	}
 	
 	return packet.ResponsePacket{
@@ -27,7 +27,7 @@ func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
 func handleGetNameInfo(ctx *ExecutionContext) packet.ResponsePacket {
 	host, serv, err := getNameInfo(ctx)
 	if err != nil {
-		return packet.ResponsePacket{Status: "SUCCESS", Message: err.Error()}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: err.Error()}
 	}
 	
 	return packet.ResponsePacket{
