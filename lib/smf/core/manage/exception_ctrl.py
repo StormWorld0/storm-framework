@@ -6,8 +6,11 @@ from lib.smf.exception import (
     CRSRuntimeError,
     CRSException,
     CRSBrokenError,
-    CRSConnectionRefused,
     CRSKeyboardInterrupt,
+    SocketConnectionRefused,
+    SocketTimeout,
+    SocketValueError,
+    SocketError,
 )
 
 
@@ -49,14 +52,19 @@ class ExceptionManager:
                     exc_to_raise = CRSException(_status, _message)
                 elif _status == "INTER":
                     exc_to_raise = CRSKeyboardInterrupt(_status, _message)
-                elif _status == "ALERT":
-                    exc_to_raise = CRSConnectionRefused(_status, _message)
+                elif _status == "S-ALERT":
+                    exc_to_raise = SocketConnectionRefused(_message)
+                elif _status == "S-TIMEOUT":
+                    exc_to_raise = SocketTimeout(_message)
+                elif _status == "S-ERROR":
+                    exc_to_raise = SocketError(_message)
+                elif _status == "S-WARN":
+                    exc_to_raise = SocketValueError(_message)
 
                 if exc_to_raise:
                     with cls._local_lock:
                         if not cls._error_holder:
                             cls._error_holder.append(exc_to_raise)
-
             except Exception as e:
                 smf.printd("Unexpected parsing error in worker", e, level="ERROR")
             finally:
