@@ -74,15 +74,14 @@ class ClientListener(ListenInspect, ListenFD):
     def sendto(
         self,
         data: str | bytes,
-        host: str | tuple[str, str | int],
-        port: str | int = None,
+        address: tuple[str, str | int],
         flags: str | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Send datagram along with Host & Port"""
         self.state._ensure_open("sendto")
-        if is_tuple2(host):
-            host, port = host
+        if is_tuple2(address):
+            host, port = address
 
         packet = IPCPayloadBuilder.build(
             state=self.state,
