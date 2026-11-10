@@ -56,13 +56,13 @@ func Socket(req packet.RequestPacket) packet.ResponsePacket {
 
 	// Load Active Session Data
 	if err := ctx.LoadSessionState(); err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: err.Error()}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: err.Error()}
 	}
 
 	// Dispatcher Router
 	handler, exists := handlers[ctx.Mode]
 	if !exists {
-		return packet.ResponsePacket{Status: "ERROR", Message: "Unknown socket primitive: " + ctx.Mode}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "Unknown socket primitive: " + ctx.Mode}
 	}
 
 	return handler(ctx)
