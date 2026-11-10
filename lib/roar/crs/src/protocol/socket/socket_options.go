@@ -9,7 +9,7 @@ import (
 
 func handleSetsockopt(ctx *ExecutionContext) packet.ResponsePacket {
 	if ctx.Req.SessionID == "" {
-		return packet.ResponsePacket{Status: "ERROR", Message: "SessionID is required for setsockopt"}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "SessionID is required for setsockopt"}
 	}
 
 	var targetFD int = -1
@@ -22,14 +22,14 @@ func handleSetsockopt(ctx *ExecutionContext) packet.ResponsePacket {
 		if sc, ok := ctx.Conn.(interface{ SyscallConn() (syscall.RawConn, error) }); ok {
 			raw, err := sc.SyscallConn()
 			if err != nil {
-				return packet.ResponsePacket{Status: "ERROR", Message: "Failed to get SyscallConn: " + err.Error()}
+				return packet.ResponsePacket{Status: "S-ERROR", Message: "Failed to get SyscallConn: " + err.Error()}
 			}
 
 			err = raw.Control(func(fd uintptr) {
 				targetFD = int(fd)
 			})
 			if err != nil {
-				return packet.ResponsePacket{Status: "ERROR", Message: "FD Control failed: " + err.Error()}
+				return packet.ResponsePacket{Status: "S-ERROR", Message: "FD Control failed: " + err.Error()}
 			}
 		}
 	}
@@ -39,7 +39,7 @@ func handleSetsockopt(ctx *ExecutionContext) packet.ResponsePacket {
 	optVal := int(ctx.Req.OptVal)
 
 	if err := unix.SetsockoptInt(targetFD, level, optName, optVal); err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: "Setsockopt failed: " + err.Error()}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "Setsockopt failed: " + err.Error()}
 	}
 
 	if ctx.Req.CltFD != -1 {
@@ -55,7 +55,7 @@ func handleSetsockopt(ctx *ExecutionContext) packet.ResponsePacket {
 
 func handleGetSockOpt(ctx *ExecutionContext) packet.ResponsePacket {
 	if ctx.Req.SessionID == "" {
-		return packet.ResponsePacket{Status: "ERROR", Message: "SessionID is required for getsockopt"}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "SessionID is required for getsockopt"}
 	}
 
 	var targetFD int = -1
@@ -68,14 +68,14 @@ func handleGetSockOpt(ctx *ExecutionContext) packet.ResponsePacket {
 		if sc, ok := ctx.Conn.(interface{ SyscallConn() (syscall.RawConn, error) }); ok {
 			raw, err := sc.SyscallConn()
 			if err != nil {
-				return packet.ResponsePacket{Status: "ERROR", Message: "Failed to get SyscallConn: " + err.Error()}
+				return packet.ResponsePacket{Status: "S-ERROR", Message: "Failed to get SyscallConn: " + err.Error()}
 			}
 
 			err = raw.Control(func(fd uintptr) {
 				targetFD = int(fd)
 			})
 			if err != nil {
-				return packet.ResponsePacket{Status: "ERROR", Message: "FD Control failed: " + err.Error()}
+				return packet.ResponsePacket{Status: "S-ERROR", Message: "FD Control failed: " + err.Error()}
 			}
 		}
 	}
@@ -85,7 +85,7 @@ func handleGetSockOpt(ctx *ExecutionContext) packet.ResponsePacket {
 
 	val, err := unix.GetsockoptInt(targetFD, level, optName)
 	if err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: "Getsockopt failed: " + err.Error()}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "Getsockopt failed: " + err.Error()}
 	}
 	
 	if ctx.Req.CltFD != -1 {
