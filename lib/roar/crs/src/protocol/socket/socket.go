@@ -24,8 +24,6 @@ var handlers = map[string]CommandHandler{
 	"sendto":      handleSendTo,
 	"recvfrom":    handleRecvFrom,
 	"sendfile":    handleSendFile,
-	"sendmsg":     handleSendMsg,
-	"recvmsg":     handleRecvMsg,
 	"setsockopt":  handleSetsockopt,
 	"getsockopt":  handleGetSockOpt,
 	"getaddrinfo": handleGetAddrInfo,
