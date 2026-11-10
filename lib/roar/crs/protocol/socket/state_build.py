@@ -5,8 +5,10 @@ from apps.utility.colors import CC
 from lib.smf.exception import (
     CRSRuntimeError,
     CRSException,
-    CRSConnectionRefused,
+    SocketConnectionRefused,
     SocketError,
+    SocketTimeout,
+    SocketValueError,
 )
 
 
@@ -17,7 +19,9 @@ class SocketState:
     """
 
     SocketError
-    ConnectionRefused = CRSConnectionRefused
+    Timeout = SocketTimeout
+    ValueError = SocketValueError
+    ConnectionRefused = SocketConnectionRefused
     RuntimeError = CRSRuntimeError
     Exception = CRSException
 
