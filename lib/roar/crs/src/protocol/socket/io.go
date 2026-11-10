@@ -240,9 +240,21 @@ func ExecuteRecvFrom(fd int, readSize int, timeout time.Duration, flag int) ([]b
 }
 
 
-func ExecuteSendMsg(fd int, p int, oob *int, sa unix.Sockaddr, flag int, timeout time.Duration) error {
-	buff := make([]byte, p)
-	ob := make([]byte, *oob)
+func ExecuteSendMsg(fd int, data string, oob *int, sa unix.Sockaddr, flag int, timeout time.Duration) error {
+	if data == "" {
+		return nil
+	}
+	
+	buff, err := base64.StdEncoding.DecodeString(data)
+	if err != nil {
+		return fmt.Errorf("base64 decode failed: %w", err)
+	}
+
+	oobSize := 0
+	if oob != nil {
+		oobSize = *oob
+	}
+	ob := make([]byte, oobSize)
 	
 	if timeout > 0 {
 		tv := unix.NsecToTimeval(timeout.Nanoseconds())
@@ -273,7 +285,12 @@ func ExecuteRecvMsg(fd int, readSize int, oob *int, flag int, timeout time.Durat
 	} else {
 		buffer = make([]byte, readSize)
 	}
-	anc := make([]byte, *oob)
+	
+	oobSize := 0
+	if oob != nil {
+		oobSize = *oob
+	}
+	ob := make([]byte, oobSize)
 
 	if timeout > 0 {
 		tv := unix.NsecToTimeval(timeout.Nanoseconds())
@@ -285,7 +302,7 @@ func ExecuteRecvMsg(fd int, readSize int, oob *int, flag int, timeout time.Durat
 		}()
 	}
 	
-	n, ob, rf, sa, e1 := unix.Recvmsg(fd, buffer, anc, flag)
+	n, ob, rf, sa, e1 := unix.Recvmsg(fd, buffer, ob, flag)
 	if e1 != nil {
 		return buffer, bufPtr, n, ob, rf, sa, e1
 	}
