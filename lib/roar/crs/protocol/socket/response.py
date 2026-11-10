@@ -87,7 +87,7 @@ class SocketResponse:
     def addrinfo(self) -> list[tuple[int, int, int, str, tuple[str, int]]]:
         """Mengonversi data 'results' dari getaddrinfo ke daftar tuple standar"""
         if self.status != "SUCCESS":
-            return [(None, None, None, "", ("", None))]
+            return []
 
         results = self._data.get("results", [])
         parsed = []
@@ -117,7 +117,7 @@ class SocketResponse:
     def rmsg(self) -> list[tuple[int, int, bytes]]:
         """Mengembalikan 'list[tuple]' Ancillary data"""
         if self.status != "SUCCESS":
-            return [(None, None, b"")]
+            return []
 
         res = self._data.get("ancdata", [])
         parsed = []
