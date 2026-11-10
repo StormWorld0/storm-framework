@@ -24,7 +24,7 @@ class SocketCore:
         self.proto = proto if proto is not None else 0
         packet = IPCPayloadBuilder.build(
             state=self,
-            addr_fam=af,
+            addr_fam=family,
             stype=type,
             sproto=proto,
             mode="socket",
