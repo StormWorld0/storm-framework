@@ -277,22 +277,9 @@ func handleRecvMsg(ctx *ExecutionContext) packet.ResponsePacket {
 	buff := ctx.Req.Buffer
 	oob := ctx.Req.Oob
 	timeout := ctx.Timeout
-	typeInt := ParseSockType(ctx.Req.SType)
 	flag := ParseFlags(ctx.Req.Flags)
 
-	var (
-		n, ob, rf int
-		sa        unix.Sockaddr
-		bufPtr    *[]byte
-		buffer    []byte
-		err       error
-	)
-
-	if typeInt == unix.SOCK_STREAM {
-		buffer, bufPtr, n, ob, rf, _, err = ExecuteRecvMsgStream(fd, buff, oob, flag, timeout)
-	} else {
-		buffer, bufPtr, n, ob, rf, sa, err = ExecuteRecvMsgDgram(fd, buff, oob, flag, timeout)
-	}
+	buffer, bufPtr, n, ob, rf, sa, err := ExecuteRecvMsg(fd, buff, oob, flag, timeout)
 	defer ReleaseBuffer(bufPtr)
 	
 	if err != nil {
@@ -327,7 +314,7 @@ func handleRecvMsg(ctx *ExecutionContext) packet.ResponsePacket {
 	meta["hex_bytes"] = hex.EncodeToString(buffer[:n])
 	meta["ancdata"] = results
 	meta["flags"] = rf
-	if typeInt != unix.SOCK_STREAM && sa != nil {
+	if sa != nil {
 		meta["remote_ip"] = formatSockaddr(sa)
 	}
 	return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
