@@ -22,4 +22,4 @@ class TLSMetadata:
         self.cert_chain: int = data.get("cert_chain", 0)
 
     def __repr__(self):
-        return f"<TLSMetadata {self.version} Cipher={self.cipher_suite} Host={self.hostname}>"
+        return f"<TLSMetadata {self.version} Cipher={self.cipher} Host={self.hostname}>"
