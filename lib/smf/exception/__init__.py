@@ -24,4 +24,5 @@ from .sock_exc import (
     SocketError,
     SocketConnectionRefused,
     SocketTimeout,
+    SocketValueError,
 )  # noqa
