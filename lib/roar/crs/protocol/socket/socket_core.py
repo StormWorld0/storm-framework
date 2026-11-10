@@ -37,15 +37,14 @@ class SocketCore:
 
     def bind(
         self,
-        host: str | tuple[str, str | int],
-        port: str | int = None,
+        address: tuple[str, str | int],
         **kwargs,
     ) -> SocketResponse:
         """Binding local connection"""
         self._ensure_open("bind")
-        if is_tuple2(host):
-            host, port = host
-
+        if is_tuple2(address):
+            host, port = address
+            
         packet = IPCPayloadBuilder.build(
             state=self,
             host=host,
@@ -93,15 +92,14 @@ class SocketCore:
 
     def connect(
         self,
-        host: str | tuple[str, str | int],
-        port: str | int = None,
+        address: tuple[str, str | int],
         **kwargs,
     ) -> SocketResponse:
         """Open Connection"""
         self._ensure_open("connect")
-        if is_tuple2(host):
-            host, port = host
-
+        if is_tuple2(address):
+            host, port = address
+            
         packet = IPCPayloadBuilder.build(
             state=self,
             host=host,
@@ -114,8 +112,7 @@ class SocketCore:
 
     def create_connection(
         self,
-        host: str | tuple[str, str | int],
-        port: str | int = None,
+        address: tuple[str, str | int],
         timeout: float | int = None,
         **kwargs,
     ) -> SocketResponse:
@@ -124,9 +121,9 @@ class SocketCore:
         self.family = 2  # Keep default AF_INET
         self.type = 1  # Keep default SOCK_STREAM
         self.proto = 0  # Keep default Kernel
-        if is_tuple2(host):
-            host, port = host
-
+        if is_tuple2(address):
+            host, port = address
+            
         packet = IPCPayloadBuilder.build(
             state=self,
             host=host,
