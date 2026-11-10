@@ -44,7 +44,7 @@ class SocketCore:
         self._ensure_open("bind")
         if is_tuple2(address):
             host, port = address
-            
+
         packet = IPCPayloadBuilder.build(
             state=self,
             host=host,
@@ -99,7 +99,7 @@ class SocketCore:
         self._ensure_open("connect")
         if is_tuple2(address):
             host, port = address
-            
+
         packet = IPCPayloadBuilder.build(
             state=self,
             host=host,
@@ -123,7 +123,7 @@ class SocketCore:
         self.proto = 0  # Keep default Kernel
         if is_tuple2(address):
             host, port = address
-            
+
         packet = IPCPayloadBuilder.build(
             state=self,
             host=host,
