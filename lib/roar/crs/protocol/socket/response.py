@@ -117,7 +117,7 @@ class SocketResponse:
     def rmsg(self) -> list[tuple[int, int, bytes]]:
         """Mengembalikan 'list[tuple]' Ancillary data"""
         if self.status != "SUCCESS":
-            return [(0, 0, b"")]
+            return [(None, None, b"")]
 
         res = self._data.get("ancdata", [])
         parsed = []
