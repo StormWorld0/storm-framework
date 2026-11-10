@@ -107,7 +107,7 @@ def execute(options, net):
                 smf.printf("[!] Failed Upgrade TLS =>", resp.message)
                 return
 
-            smf.printf("[✓] Cipher     =>", resp.tls.cipher_suite)
+            smf.printf("[✓] Cipher     =>", resp.tls.cipher)
             smf.printf("[✓] Version    =>", resp.tls.version)
             smf.printf("[✓] Protocol   =>", resp.tls.protocol)
             smf.printf("[✓] Handshake  =>", resp.tls.handshake)
