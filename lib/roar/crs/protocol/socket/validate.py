@@ -1,6 +1,6 @@
 def is_tuple2(value) -> bool:
     if isinstance(value, tuple):
         if len(value) != 2:
-            raise ValueError("Host tuple only accepts 2 elements: (host, port)")
+            raise ValueError("address tuple only accepts 2 elements: (host, port)")
         return True
-    return False
+    raise ValueError("address must be a tuple of host and port.")
