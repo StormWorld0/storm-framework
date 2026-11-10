@@ -12,7 +12,7 @@ class SocketCore:
 
     def socket(
         self,
-        af: str | int,
+        family: str | int,
         type: str | int,
         proto: str | int = None,
         **kwargs,
