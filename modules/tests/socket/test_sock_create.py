@@ -22,7 +22,7 @@ def execute(options, net):
     try:
         res = sock.create_connection((host, port), timeout=2.0)
         if not res.ok:
-            smf.printd("Connect failed", res, level="ERROR")
+            smf.printd("Connect failed", res.message, level="ERROR")
             return
 
         smf.printf("Socket created =>", sock.fileno())
@@ -50,7 +50,7 @@ def execute(options, net):
             smf.printf("Str response    =>", res.str_bytes)
     except KeyboardInterrupt:
         pass
-    except sock.Exception as e:
+    except Exception as e:
         smf.printd("Socket testing failed", e, level="ERROR")
     finally:
         sock.close()
