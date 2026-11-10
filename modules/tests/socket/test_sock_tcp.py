@@ -20,13 +20,12 @@ def execute(options, net):
 
     sock = net.Socket()
     try:
-        obj = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
-        if obj:
-            smf.printf("Socket created:", sock.fileno())
+        sock.socket(sock.AF_INET, sock.SOCK_STREAM)
+        smf.printf("Socket created:", sock.fileno())
 
-        result = sock.connect(host, port)
+        result = sock.connect((host, port))
         if not result.ok:
-            smf.printd("Connect failed", result, level="ERROR")
+            smf.printd("Connect failed", result.message, level="ERROR")
             return
 
         smf.printf("IP Local  =>", sock.getsockname())
@@ -39,15 +38,12 @@ def execute(options, net):
             f"\r\n"
         )
 
-        sock.settimeout(1.0)
         result = sock.send(data)
-
         if not result.ok:
-            smf.printd("Send failed", result, level="ERROR")
+            smf.printd("Send failed", result.message, level="ERROR")
             return
 
         result = sock.recv(1024)
-
         if result.ok:
             smf.printf("Int response    =>", result.int_bytes)
             smf.printf("Hex response    =>", result.hex_bytes)
@@ -55,7 +51,7 @@ def execute(options, net):
             smf.printf("Str response    =>", result.str_bytes)
     except KeyboardInterrupt:
         pass
-    except sock.Exception as e:
+    except Exception as e:
         smf.printd("Socket testing failed", e, level="ERROR")
     finally:
         sock.close()
