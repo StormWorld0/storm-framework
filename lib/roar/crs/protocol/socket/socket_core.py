@@ -19,7 +19,7 @@ class SocketCore:
     ) -> Self:
         """Open Socket"""
         self._ensure_open("socket")
-        self.family = af
+        self.family = family
         self.type = type
         self.proto = proto if proto is not None else 0
         packet = IPCPayloadBuilder.build(
