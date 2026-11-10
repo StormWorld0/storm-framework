@@ -42,7 +42,7 @@ func handleUpgradeTLS(ctx *ExecutionContext) packet.ResponsePacket {
 	    rawConn, err := net.FileConn(file)
     	file.Close()
     	if err != nil {
-		    return packet.ResponsePacket{Status: "ERROR", Message: "Failed to wrap net.Conn: " + err.Error()}
+		    return packet.ResponsePacket{Status: "S-ERROR", Message: "Failed to wrap net.Conn: " + err.Error()}
 	    }
 	    ctx.Conn = rawConn
 	}
@@ -52,7 +52,7 @@ func handleUpgradeTLS(ctx *ExecutionContext) packet.ResponsePacket {
 
 	addr, port, err := BuildTarget(ctx.Host, ctx.Req.Port)
 	if err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: "Failed build host & port: " + err.Error()}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "Failed build host & port: " + err.Error()}
 	}
 
 	addrStr := DerefString(addr, "")
@@ -61,7 +61,7 @@ func handleUpgradeTLS(ctx *ExecutionContext) packet.ResponsePacket {
 	
 	tlsConn, err := performTLSHandshake(tCtx, ctx.Conn, host, ctx.Req)
 	if err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: "TLS Upgrade failed: " + err.Error()}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "TLS Upgrade failed: " + err.Error()}
 	}
 
 	ctx.Conn = tlsConn
