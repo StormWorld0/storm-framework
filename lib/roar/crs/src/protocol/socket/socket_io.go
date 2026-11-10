@@ -22,19 +22,19 @@ func handleSendAll(ctx *ExecutionContext) packet.ResponsePacket {
 		    // Error timeout (EAGAIN / EWOULDBLOCK)
 		    if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
 		    	return packet.ResponsePacket{
-			    	Status:  "TIMEOUT",
+			    	Status:  "S-TIMEOUT",
 				    Message: "SendAll failed: " + err.Error(),
 				    Data:    ctx.GenerateMetadataFD(fd, 0),
 		    	} 
 	    	}
-	    	return packet.ResponsePacket{Status: "ERROR", Message: "SendAll failed: " + err.Error()}
+	    	return packet.ResponsePacket{Status: "S-ERROR", Message: "SendAll failed: " + err.Error()}
     	}
 	    ctx.SaveSession(ctx.RawFD)
 	    return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(fd, 0)}
 	}
 	
 	if err := ExecuteWrite(ctx.Conn, ctx.Req.Data, ctx.Timeout); err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: "SendAll failed: " + err.Error()}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "SendAll failed: " + err.Error()}
 	}
 	ctx.SaveSession(ctx.Conn)
     return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadata(0)}
@@ -43,7 +43,7 @@ func handleSendAll(ctx *ExecutionContext) packet.ResponsePacket {
 
 func handleSendFile(ctx *ExecutionContext) packet.ResponsePacket {
 	if ctx.CFD == -1 {
-		return packet.ResponsePacket{Status: "WARN", Message: "No client socket (FD) found for sendfile."}
+		return packet.ResponsePacket{Status: "S-WARN", Message: "No client socket (FD) found for sendfile."}
 	}
 
 	if err := ExecuteFDWriteFile(ctx.CFD, ctx.Req.File, ctx.Timeout); err != nil {
@@ -51,12 +51,12 @@ func handleSendFile(ctx *ExecutionContext) packet.ResponsePacket {
 		// Error timeout (EAGAIN / EWOULDBLOCK)
 		if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
 		    return packet.ResponsePacket{
-			    Status:  "TIMEOUT",
+			    Status:  "S-TIMEOUT",
 				Message: "Sendfile failed: " + err.Error(),
 				Data:    ctx.GenerateMetadataFD(ctx.CFD, 0),
 		    } 
 	    }
-		return packet.ResponsePacket{Status: "ERROR", Message: "Sendfile failed: " + err.Error()}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "Sendfile failed: " + err.Error()}
 	}
 
 	ctx.SaveSessionCFD(ctx.CFD)
@@ -77,19 +77,19 @@ func handleSend(ctx *ExecutionContext) packet.ResponsePacket {
 		    // Error timeout (EAGAIN / EWOULDBLOCK)
 		    if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
 			    return packet.ResponsePacket{
-				    Status:  "TIMEOUT",
+				    Status:  "S-TIMEOUT",
 				    Message: "Send failed: " + err.Error(),
 				    Data:    ctx.GenerateMetadataFD(fd, 0),
 			    } 
 		    }
-			return packet.ResponsePacket{Status: "ERROR", Message: "Send failed: " + err.Error()}
+			return packet.ResponsePacket{Status: "S-ERROR", Message: "Send failed: " + err.Error()}
 		}
 		ctx.SaveSession(ctx.RawFD)
 		return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(fd, 0)}
     }
 	
 	if err := ExecuteWrite(ctx.Conn, ctx.Req.Data, ctx.Timeout); err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: "Send failed: " + err.Error()}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "Send failed: " + err.Error()}
 	}
 	ctx.SaveSession(ctx.Conn)
     return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadata(0)}	
@@ -112,16 +112,16 @@ func handleRecv(ctx *ExecutionContext) packet.ResponsePacket {
 		    // Error timeout (EAGAIN / EWOULDBLOCK)
 		    if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
 			    return packet.ResponsePacket{
-				    Status:  "TIMEOUT",
+				    Status:  "S-TIMEOUT",
 				    Message: "Recv failed: " + err.Error(),
 				    Data:    ctx.GenerateMetadataFD(fd, 0),
 			    } 
 		    }
-			return packet.ResponsePacket{Status: "ERROR", Message: "Recv failed: " + err.Error()}
+			return packet.ResponsePacket{Status: "S-ERROR", Message: "Recv failed: " + err.Error()}
 		}
 
 		if n == 0 {
-		    return packet.ResponsePacket{Status: "ERROR", Message: "EOF Recv: " + err.Error()}
+		    return packet.ResponsePacket{Status: "S-ERROR", Message: "EOF Recv: " + err.Error()}
 	    }
 		
 		ctx.SaveSession(ctx.RawFD)
@@ -138,7 +138,7 @@ func handleRecv(ctx *ExecutionContext) packet.ResponsePacket {
 		if n == 0 {
 			ctx.SaveSession(ctx.Conn)
 			return packet.ResponsePacket{
-				Status:  "TIMEOUT",
+				Status:  "S-TIMEOUT",
 				Message: "Recv failed: " + err.Error(),
 				Data:    ctx.GenerateMetadata(0),
 			}
@@ -146,7 +146,7 @@ func handleRecv(ctx *ExecutionContext) packet.ResponsePacket {
 	}
 	
 	if err == io.EOF {
-		return packet.ResponsePacket{Status: "ERROR", Message: "EOF Recv: " + err.Error()}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "EOF Recv: " + err.Error()}
 	}
 
 	ctx.SaveSession(ctx.Conn)
@@ -164,12 +164,12 @@ func handleSendTo(ctx *ExecutionContext) packet.ResponsePacket {
 	}
 	
 	if fd < 0 {
-		return packet.ResponsePacket{Status: "WARN", Message: "No raw socket (FD) found for sendto."}
+		return packet.ResponsePacket{Status: "S-WARN", Message: "No raw socket (FD) found for sendto."}
 	}
 
 	sockAddr, err := resolveSockAddr(ctx.Req)
 	if err != nil {
-		return packet.ResponsePacket{Status: "ERROR", Message: "ResolveSockAddr: " + err.Error()}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "ResolveSockAddr: " + err.Error()}
 	}
 
 	flag := ParseFlags(ctx.Req.Flags)
@@ -179,12 +179,12 @@ func handleSendTo(ctx *ExecutionContext) packet.ResponsePacket {
 		// Error timeout (EAGAIN / EWOULDBLOCK)
 		if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
 			return packet.ResponsePacket{
-				Status:  "TIMEOUT",
+				Status:  "S-TIMEOUT",
 				Message: "Sendto failed: " + err.Error(),
 				Data:    ctx.GenerateMetadataFD(fd, 0),
 			} 
 		}
-		return packet.ResponsePacket{Status: "ERROR", Message: "Sendto failed: " + err.Error()}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "Sendto failed: " + err.Error()}
 	}
 	
 	ctx.SaveSession(ctx.RawFD)
@@ -202,7 +202,7 @@ func handleRecvFrom(ctx *ExecutionContext) packet.ResponsePacket {
 	}
 	
 	if fd < 0 {
-		return packet.ResponsePacket{Status: "WARN", Message: "No raw socket (FD) found for recvfrom."}
+		return packet.ResponsePacket{Status: "S-WARN", Message: "No raw socket (FD) found for recvfrom."}
 	}
 
 	flag := ParseFlags(ctx.Req.Flags)
@@ -214,16 +214,16 @@ func handleRecvFrom(ctx *ExecutionContext) packet.ResponsePacket {
 		ctx.SaveSession(ctx.RawFD)
 		if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
 		    return packet.ResponsePacket{
-			    Status:  "TIMEOUT",
+			    Status:  "S-TIMEOUT",
 			    Message: "Recvfrom Failed: " + err.Error(),
 			    Data:    ctx.GenerateMetadataFD(fd, 0),
 		    }
 		}
-		return packet.ResponsePacket{Status: "ERROR", Message: "Recvfrom failed: " + err.Error()}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "Recvfrom failed: " + err.Error()}
 	}
 
 	if n == 0 {
-		return packet.ResponsePacket{Status: "ERROR", Message: "EOF Recvfrom: " + err.Error()}
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "EOF Recvfrom: " + err.Error()}
 	}
 
 	ctx.SaveSession(ctx.RawFD)
