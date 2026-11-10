@@ -65,7 +65,7 @@ func DerefString[T any](ptr *T, defaultValue string) string {
 		return defaultValue
 	}
 
-	// Type switch untuk performa maksimal
+	// Switch type for maximum performance
 	switch v := any(*ptr).(type) {
 	case string:
 		return v
@@ -81,7 +81,7 @@ func DerefString[T any](ptr *T, defaultValue string) string {
 
 // Build UDS Path File-Decriptor
 func BuildUdsPath(fd int, name string) (string, error) {
-	// Menghindari format string verb bug
+	// Avoiding verb string format bugs
 	udsPath := name
 	realPath := strings.Replace(udsPath, "@", "\x00", 1)
 
@@ -90,22 +90,20 @@ func BuildUdsPath(fd int, name string) (string, error) {
 		return "", fmt.Errorf("failed to resolve UDS address: %w", err)
 	}
 
-	// Inisialisasi Listen secara sinkron di fungsi utama.
-	// Klien dijamin tidak akan mengalami 'connection refused' saat path di-return.
+	// Initialize Listen synchronously in the main function.
+	// Clients are guaranteed not to experience a 'connection refused' when the path is returned.
 	l, err := net.ListenUnix("unix", addr)
 	if err != nil {
 		return "", fmt.Errorf("failed to listen on UDS: %w", err)
 	}
 
-	// Lempar proses penerimaan dan syscall ke background
+	// The process of receiving and syscalling to the background
 	go func() {
 		defer l.Close()
 		
 		l.SetDeadline(time.Now().Add(3 * time.Second))
 		unxConn, err := l.AcceptUnix()
 		if err != nil {
-			// Pertimbangkan logging sentral di sini alih-alih channel,
-			// karena FD transfer gagal tidak bisa selalu membatalkan eksekusi utama.
 			return 
 		}
 		defer unxConn.Close()
@@ -116,10 +114,6 @@ func BuildUdsPath(fd int, name string) (string, error) {
 		}
 
 		_ = rawConn.Control(func(sysFd uintptr) {
-			// SECURITY ARCHITECT NOTE: 
-			// Implementasikan syscall unix.GetsockoptUcred(int(sysFd), unix.SOL_SOCKET, unix.SO_PEERCRED) 
-			// di sini untuk memvalidasi UID/GID yang terkoneksi sebelum mengirim file descriptor berhak istimewa.
-			
 			rights := unix.UnixRights(fd)
 			unix.Sendmsg(int(sysFd), []byte("F"), rights, nil, 0)
 		})
@@ -128,7 +122,7 @@ func BuildUdsPath(fd int, name string) (string, error) {
 	return udsPath, nil
 }
 
-// helper untuk mengonversi unix.Sockaddr ke string IP:Port
+// helper to convert unix.Sockaddr to IP:Port string
 func formatSockaddr(sa unix.Sockaddr) string {
 	switch v := sa.(type) {
 	case *unix.SockaddrInet4:
