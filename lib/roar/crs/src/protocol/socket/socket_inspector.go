@@ -15,7 +15,7 @@ func handleGetPeerName(ctx *ExecutionContext) packet.ResponsePacket {
         remoteAddr, err := unix.Getpeername(fd)
         ctx.SaveSession(ctx.RawFD)
         if err != nil {
-		    return packet.ResponsePacket{Status: "ERROR", Message: "Getpeername failed: " + err.Error()}
+		    return packet.ResponsePacket{Status: "S-ERROR", Message: "Getpeername failed: " + err.Error()}
 	    }
         meta := ctx.GenerateMetadataFD(fd, 0)
         if addr := formatSockaddr(remoteAddr); addr != "" {
@@ -42,7 +42,7 @@ func handleGetSockName(ctx *ExecutionContext) packet.ResponsePacket {
         ctx.SaveSession(ctx.RawFD)
         localAddr, err := unix.Getsockname(fd)
         if err != nil {
-            return packet.ResponsePacket{Status: "ERROR", Message: "Getsockname failed: " + err.Error()}
+            return packet.ResponsePacket{Status: "S-ERROR", Message: "Getsockname failed: " + err.Error()}
         }
         meta := ctx.GenerateMetadataFD(fd, 0)
 		if addr := formatSockaddr(localAddr); addr != "" {
