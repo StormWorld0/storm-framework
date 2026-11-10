@@ -30,7 +30,7 @@ type RequestPacket struct {
 	Oob           *int               `json:"oob,omitempty"`      // control messages
 
 	CltFD         int               `json:"client-fd,omitempty"` // Client FD Socket Accept
-	SockFD        int               `json:"sock-fd,omitempty"`   // Sendmsg SocketFD
+	SockFD        int               `json:"infd,omitempty"`   // Sendmsg SocketFD
 
 	// Standard parameters
 	Host          string            `json:"host,omitempty"`      // URL / IP / Domain
