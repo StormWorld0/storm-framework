@@ -24,6 +24,14 @@ class SocketState:
     ConnectionRefused = SocketConnectionRefused
     RuntimeError = CRSRuntimeError
     Exception = CRSException
+    SocketException = (
+        CRSException, 
+        CRSRuntimeError, 
+        SocketConnectionRefused,
+        SocketValueError,
+        SocketTimeout,
+        SocketError,
+    )
 
     def __init__(
         self,
