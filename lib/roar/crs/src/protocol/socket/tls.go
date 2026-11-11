@@ -14,6 +14,7 @@ import (
 func buildCustomTLSConfig(req packet.RequestPacket) (*tls.Config, error) {
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: !req.Verify,
+		NextProtos:         []string{"h2", "http/1.1"},
 		MinVersion:         tls.VersionTLS10,
 	}
 
