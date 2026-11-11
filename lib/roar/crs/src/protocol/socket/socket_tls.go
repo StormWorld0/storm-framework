@@ -5,29 +5,36 @@ import (
     "net"
     "fmt"
     "context"
-    "crypto/tls"
+	"github.com/refraction-networking/utls"
     "github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 	ctls "github.com/StormWorld0/storm-framework/lib/roar/crs/src/tls"
 )
 
-// performTLSHandshake membungkus logika upgrade TLS
+// performTLSHandshake wraps the TLS upgrade logic
 func performTLSHandshake(ctx context.Context, conn net.Conn, addr string, req packet.RequestPacket) (net.Conn, error) {
-	tlsConfig, err := buildCustomTLSConfig(req)
+	utlsConfig, err := buildCustomTLSConfig(req)
 	if err != nil {
 		return nil, fmt.Errorf("TLS Config Error: %w", err)
 	}
 
-	if tlsConfig.ServerName == "" {
+	if utlsConfig.ServerName == "" {
 		hostOnly, _, _ := net.SplitHostPort(addr)
-		tlsConfig.ServerName = hostOnly
+		utlsConfig.ServerName = hostOnly
 	}
 
-	tlsConn := tls.Client(conn, tlsConfig)
-	if err := tlsConn.HandshakeContext(ctx); err != nil {
+	if deadline, ok := ctx.Deadline(); ok {
+		if err := conn.SetDeadline(deadline); err != nil {
+			return nil, fmt.Errorf("Failed to set timeout: %w", err)
+		}
+		defer conn.SetDeadline(time.Time{}) // Reset deadline
+	}
+	
+	utlsConn := utls.UClient(conn, utlsConfig, utls.HelloChrome_Auto)
+	if err := utlsConn.Handshake(); err != nil {
 		return nil, fmt.Errorf("handshake failed: %w", err)
 	}
 
-	return tlsConn, nil
+	return utlsConn, nil
 }
 
 
@@ -66,6 +73,5 @@ func handleUpgradeTLS(ctx *ExecutionContext) packet.ResponsePacket {
 
 	ctx.Conn = tlsConn
 	ctx.SaveSession(ctx.Conn)
-
 	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadata(0)}
 }
