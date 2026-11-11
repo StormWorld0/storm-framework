@@ -26,7 +26,7 @@ def execute(args, ctx):
     _net = ctx.net
 
     if not current_module:
-        smf.printf(f"{CC.YELLOW}[!] No modules selected. (use <module>) first.{CC.RESET}")
+        smf.printf(f"[!] {CC.YELLOW}No modules selected. (use <module>) first.{CC.RESET}")
         return
 
     # Validate options
@@ -54,7 +54,7 @@ def execute(args, ctx):
 
     if missing:
         smf.printf(
-            f"{CC.YELLOW}[!] Failed to run. Variabel null: {', '.join(missing)}{CC.RESET}"
+            f"[!]{CC.YELLOW} Failed to run. Variabel null:{CC.RESET} {', '.join(missing)}"
         )
         return
 
