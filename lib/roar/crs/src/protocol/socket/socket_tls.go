@@ -39,7 +39,7 @@ func performTLSHandshake(ctx context.Context, conn net.Conn, addr string, req pa
 
 
 func handleUpgradeTLS(ctx *ExecutionContext) packet.ResponsePacket {
-	if ctls.IsTLSConn(ctx.Conn) {
+	if ctls.IsUTLSConn(ctx.Conn) {
 		ctx.SaveSession(ctx.Conn)
 		return packet.ResponsePacket{Status: "WARN", Message: "Connection is already TLS"}
 	}
