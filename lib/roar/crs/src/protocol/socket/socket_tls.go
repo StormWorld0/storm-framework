@@ -5,7 +5,7 @@ import (
     "net"
     "fmt"
     "context"
-	"github.com/refraction-networking/utls"
+	utls "github.com/refraction-networking/utls"
     "github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 	ctls "github.com/StormWorld0/storm-framework/lib/roar/crs/src/tls"
 )
