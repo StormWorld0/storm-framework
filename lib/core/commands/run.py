@@ -6,6 +6,9 @@ import apps.utility.utils as utils
 from apps.utility.colors import CC
 
 
+def sexc(net):
+    return net.Socket()
+
 # Run command to run a module that we want to execute
 # The workflow is as below;
 #
@@ -19,7 +22,7 @@ def execute(args, ctx):
     module_name = ctx.current_module_name
     options = ctx.options
     manager = ctx.plugin
-    mod_net = ctx.net
+    _net = ctx.net
 
     if not current_module:
         smf.printf(f"{CC.YELLOW}[!] No modules selected. (use <module>) first.{CC.RESET}")
@@ -60,6 +63,12 @@ def execute(args, ctx):
         if full_path:
             options["PASS"] = full_path
 
+
+    # A set of custom exceptions
+    # to handle forced module termination if something is detected on the network
+    # The final security if the module does not use exceptions.
+    sock = sexc(_net)
+    
     # Execution module
     try:
         execute = current_module.execute
@@ -73,9 +82,13 @@ def execute(args, ctx):
         ]
 
         if len(valid_params) >= 2:
-            execute(options, mod_net)
+            execute(options, _net)
         else:
             execute(options)
+    except sock.SocketException as e:
+        smf.printf(f"{CC.RED}Module error =>{CC.RESET}", module_name)
+        smf.printd("Module detected error", e, level="ERROR")
+        return
     except (Exception, RuntimeError, AttributeError) as e:
         smf.printf(f"{CC.RED}Module error =>{CC.RESET}", module_name)
         smf.printd("Module detected error", e, level="ERROR")
