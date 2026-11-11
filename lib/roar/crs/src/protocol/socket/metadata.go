@@ -18,7 +18,7 @@ func (ctx *ExecutionContext) GenerateMetadata(readBytes int) map[string]interfac
 	}
 
 	if ctx.Req.InfoTLS {
-		meta["info_tls"] = ctls.ExtractTLSInfo(ctx.Conn)
+		meta["info_tls"] = ctls.ExtractUTLSInfo(ctx.Conn)
 	}
 
 	return meta
@@ -32,9 +32,9 @@ func (ctx *ExecutionContext) GenerateMetadataFD(fd int, readBytes int) map[strin
 		"read_bytes":   readBytes,
 	}
 
-	// Ambil RTT Asli dari Kernel TCP Stack Linux (TCP_INFO)
+	// Get Original RTT from Linux Kernel TCP Stack (TCP_INFO)
 	if tcpInfo, err := unix.GetsockoptTCPInfo(fd, unix.IPPROTO_TCP, unix.TCP_INFO); err == nil {
-		// tcpInfo.Rtt menyimpan nilai Microsecond (µs) dari TCP ACK
+		// tcpInfo.Rtt stores the Microsecond (µs) value of the TCP ACK
 		meta["kernel_rtt_ms"] = tcpInfo.Rtt / 1000
 	}
 	
