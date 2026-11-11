@@ -1,21 +1,20 @@
 package socket
 
 import (
-	"crypto/tls"
-	"crypto/x509"
-	"fmt"
 	"os"
+	"fmt"
 	"strings"
-
+	"crypto/x509"
+	"github.com/refraction-networking/utls"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 )
 
 
-func buildCustomTLSConfig(req packet.RequestPacket) (*tls.Config, error) {
-	tlsConfig := &tls.Config{
+func buildCustomTLSConfig(req packet.RequestPacket) (*utls.Config, error) {
+	utlsConfig := &utls.Config{
 		InsecureSkipVerify: !req.Verify,
 		NextProtos:         []string{"h2", "http/1.1"},
-		MinVersion:         tls.VersionTLS10,
+		MinVersion:         utls.VersionTLS10,
 	}
 
 	getPEMBytes := func(input string) ([]byte, error) {
@@ -44,11 +43,11 @@ func buildCustomTLSConfig(req packet.RequestPacket) (*tls.Config, error) {
 		if err != nil {
 			return nil, fmt.Errorf("process tls-key failed: %w", err)
 		}
-		cert, err := tls.X509KeyPair(certBytes, keyBytes)
+		cert, err := utls.X509KeyPair(certBytes, keyBytes)
 		if err != nil {
 			return nil, fmt.Errorf("load x509 key pair: %w", err)
 		}
-		tlsConfig.Certificates = []tls.Certificate{cert}
+		utlsConfig.Certificates = []utls.Certificate{cert}
 	}
 
 	if req.TLSCA != "" {
@@ -60,8 +59,8 @@ func buildCustomTLSConfig(req packet.RequestPacket) (*tls.Config, error) {
 		if !caCertPool.AppendCertsFromPEM(caBytes) {
 			return nil, fmt.Errorf("failed to parse custom CA PEM")
 		}
-		tlsConfig.RootCAs = caCertPool
+		utlsConfig.RootCAs = caCertPool
 	}
 
-	return tlsConfig, nil
+	return utlsConfig, nil
 }
