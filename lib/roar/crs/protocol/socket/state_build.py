@@ -25,8 +25,8 @@ class SocketState:
     RuntimeError = CRSRuntimeError
     Exception = CRSException
     SocketException = (
-        CRSException, 
-        CRSRuntimeError, 
+        CRSException,
+        CRSRuntimeError,
         SocketConnectionRefused,
         SocketValueError,
         SocketTimeout,
