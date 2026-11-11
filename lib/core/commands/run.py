@@ -9,6 +9,7 @@ from apps.utility.colors import CC
 def sexc(net):
     return net.Socket()
 
+
 # Run command to run a module that we want to execute
 # The workflow is as below;
 #
@@ -63,12 +64,11 @@ def execute(args, ctx):
         if full_path:
             options["PASS"] = full_path
 
-
     # A set of custom exceptions
     # to handle forced module termination if something is detected on the network
     # The final security if the module does not use exceptions.
     sock = sexc(_net)
-    
+
     # Execution module
     try:
         execute = current_module.execute
