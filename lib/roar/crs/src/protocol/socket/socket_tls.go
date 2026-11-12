@@ -30,7 +30,9 @@ func performTLSHandshake(ctx context.Context, conn net.Conn, addr string, req pa
 		defer conn.SetDeadline(time.Time{}) // Reset deadline
 	}
 
-	utlsConn := utls.UClient(conn, utlsConfig)
+	clientHello := utls.HelloRandomizedNoALPN
+	utlsConn := utls.UClient(conn, utlsConfig, clientHello)
+	
 	if err := utlsConn.Handshake(); err != nil {
 		return nil, err
 	}
