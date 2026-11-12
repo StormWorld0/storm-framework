@@ -65,7 +65,7 @@ class CRSD:
                 cls._reader_thread = threading.Thread(
                     target=cls._background_reader,
                     args=(cls._process,),
-                    name="crs_stdout",
+                    name="_crs_stdout",
                     daemon=True,
                 )
                 cls._reader_thread.start()
@@ -75,7 +75,7 @@ class CRSD:
                 cls._stderr_thread = threading.Thread(
                     target=cls._stderr_reader,
                     args=(cls._process,),
-                    name="crs_stderr",
+                    name="_crs_stderr",
                     daemon=True,
                 )
                 cls._stderr_thread.start()
