@@ -24,7 +24,7 @@ def _db_worker():
 
 
 # Jalankan Worker Daemon Thread saat module di-import
-worker_thread = Thread(target=_db_worker, daemon=True)
+worker_thread = Thread(target=_db_worker, name="_db_psql", daemon=True)
 worker_thread.start()
 
 
