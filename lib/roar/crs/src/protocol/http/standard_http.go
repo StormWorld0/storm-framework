@@ -29,6 +29,11 @@ func ExecuteStandard(req packet.RequestPacket, timeout time.Duration) packet.Res
 	    }
     }
 
+	dialer := &net.Dialer{
+        Timeout:   30 * time.Second,
+        KeepAlive: 30 * time.Second,
+    }
+
 	// Transport Architecture for resource optimization
 	tr := &http.Transport{
 		Proxy:                 http.ProxyFromEnvironment,
@@ -36,6 +41,7 @@ func ExecuteStandard(req packet.RequestPacket, timeout time.Duration) packet.Res
 		MaxIdleConnsPerHost:   10,
 		IdleConnTimeout:       90 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
+		DialContext:           dialer.DialContext,
 	}
 
 	tr.DialTLSContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
