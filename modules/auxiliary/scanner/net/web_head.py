@@ -2,7 +2,7 @@ import requests
 import re
 import sys
 import smf
-from apps.utility.colors import *
+from apps.utility.colors import CC, C
 
 metadata = {
     "Name": "Searching for website header",
@@ -130,11 +130,11 @@ def execute(options, net):
 
     except KeyboardInterrupt:
         return
-    except requests.exceptions.RequestException as e:
+    except http.HttpException as e:
         smf.printf(
             f"{C.ERROR}[!] ERROR WHILE CONNECTING TO {url} =>",
             e,
             file=sys.stderr,
             flush=True,
         )
-        smf.printf()
+        return
