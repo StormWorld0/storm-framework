@@ -15,7 +15,18 @@ from lib.smf.exception import (
 
 
 class ExceptionManager:
-    TARGET_STATUSES = {"ERROR", "CRITICAL", "BROKEN", "INTER", "ALERT"}
+    # Mapping table: O(1) Lookup
+    EXCEPTION_MAP = {
+        "CRITICAL": lambda status, msg: CRSRuntimeError(status, msg),
+        "BROKEN": lambda status, msg: CRSBrokenError(status, msg),
+        "ERROR": lambda status, msg: CRSException(status, msg),
+        "INTER": lambda status, msg: CRSKeyboardInterrupt(status, msg),
+        "S-ALERT": lambda _, msg: SocketConnectionRefused(msg),
+        "S-TIMEOUT": lambda _, msg: SocketTimeout(msg),
+        "S-ERROR": lambda _, msg: SocketError(msg),
+        "S-WARN": lambda _, msg: SocketValueError(msg),
+        # --> Later if it increases.
+    }
     _error_holder: List[Exception] = []
     _local_lock = threading.Lock()
     _data_queue = queue.Queue(maxsize=10000)
@@ -33,7 +44,7 @@ class ExceptionManager:
                 _message: str = resp.get("message", "UNKNOWN")
                 _msg_id: str = resp.get("msg_id", "UNKNOWN")
 
-                if _status not in cls.TARGET_STATUSES:
+                if _status not in cls.EXCEPTION_MAP.get(_status):
                     continue
 
                 smf.printd(
@@ -43,23 +54,9 @@ class ExceptionManager:
                 )
 
                 # Define exceptions by status
-                exc_to_raise = None
-                if _status == "CRITICAL":
-                    exc_to_raise = CRSRuntimeError(_status, _message)
-                elif _status == "BROKEN":
-                    exc_to_raise = CRSBrokenError(_status, _message)
-                elif _status == "ERROR":
-                    exc_to_raise = CRSException(_status, _message)
-                elif _status == "INTER":
-                    exc_to_raise = CRSKeyboardInterrupt(_status, _message)
-                elif _status == "S-ALERT":
-                    exc_to_raise = SocketConnectionRefused(_message)
-                elif _status == "S-TIMEOUT":
-                    exc_to_raise = SocketTimeout(_message)
-                elif _status == "S-ERROR":
-                    exc_to_raise = SocketError(_message)
-                elif _status == "S-WARN":
-                    exc_to_raise = SocketValueError(_message)
+                # O(1) Exception Dispatcher
+                exc_factory = cls.EXCEPTION_MAP.get(_status)
+                exc_to_raise = exc_factory(_status, _message) if exc_factory else None
 
                 if exc_to_raise:
                     with cls._local_lock:
