@@ -19,7 +19,6 @@ def execute(options, net):
 
     http = net.HTTPR()
     try:
-        http.concurrency(50)
         http.timeout(10.0)
         http.setoptions(retry=2, verify=False)
 
@@ -35,9 +34,8 @@ def execute(options, net):
             smf.printf("Server =>", resp.get_headers("server", "UNKNOWN"))
             smf.printf("Status =>", resp.status_code)
             smf.printf("Body   =>", resp.body[:1000])
-    except http.HTrace as e:
-        smf.printf("Error http requests =>", e)
     except KeyboardInterrupt:
         pass
-    except Exception as e:
-        smf.printf("Error exception =>", e)
+    except http.HttpException as e:
+        smf.printf("Error http requests =>", e)
+        return
