@@ -10,7 +10,6 @@ from typing import Dict, Any, Optional, Union
 from lib.smf.ingest import DataBuilder
 
 from .parse import parse_url, domain_to_ip
-from .exception import StackTrace, TimeoutTrace
 from .metadata import HTTPTLSMetadata
 
 
