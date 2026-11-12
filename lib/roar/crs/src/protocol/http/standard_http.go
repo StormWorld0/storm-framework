@@ -1,13 +1,12 @@
 package http
 
 import (
-	"net"
-	"time"
-	"errors"
-	"context"
-	"net/http"
 	"crypto/x509"
-	utls "github.com/refraction-networking/utls"
+	"crypto/tls"
+	"net/http"
+	"errors"
+	"time"
+	"net"
 	"github.com/projectdiscovery/retryablehttp-go"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/utils"
@@ -29,56 +28,20 @@ func ExecuteStandard(req packet.RequestPacket, timeout time.Duration) packet.Res
 	    }
     }
 
-	dialer := &net.Dialer{
-        Timeout:   30 * time.Second,
-        KeepAlive: 30 * time.Second,
-    }
-
-	// Transport Architecture for resource optimization
-	tr := &http.Transport{
-		Proxy:                 http.ProxyFromEnvironment,
+	// Transport Architecture for resource optimization and TLS handling
+	client.HTTPClient.Transport = &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		TLSClientConfig: &tls.Config{
+			RootCAs:            tlsCA,
+			InsecureSkipVerify: !req.Verify,
+			MinVersion:         tls.VersionTLS10,
+			Renegotiation:      tls.RenegotiateOnceAsClient,
+		},
 		MaxIdleConns:          100,
 		MaxIdleConnsPerHost:   10,
 		IdleConnTimeout:       90 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
-		DialContext:           dialer.DialContext,
 	}
-
-	tr.DialTLSContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
-		// Runs the transport's built-in TCP dial (automatically handles ProxyFromEnvironment)
-		rawConn, err := tr.DialContext(ctx, network, addr)
-		if err != nil {
-			return nil, err
-		}
-
-		// Extract hostname for SNI
-		host, _, err := net.SplitHostPort(addr)
-		if err != nil {
-			host = addr
-		}
-
-		// utls.Config configuration
-		uConfig := &utls.Config{
-			RootCAs:            tlsCA,
-			InsecureSkipVerify: !req.Verify,
-			MinVersion:         utls.VersionTLS10,
-			ServerName:         host,
-		}
-
-		clientHello := utls.HelloChrome_Auto // Disguised as Chromium
-		uConn := utls.UClient(rawConn, uConfig, clientHello)
-
-		// Manually execute uTLS Handshake
-		if err := uConn.Handshake(); err != nil {
-			rawConn.Close()
-			return nil, err
-		}
-
-		return uConn, nil
-	}
-
-	// Install custom transport to retryablehttp
-	client.HTTPClient.Transport = tr
 
 	if !req.Redirect {
 		client.HTTPClient.CheckRedirect = func(r *http.Request, via []*http.Request) error {
