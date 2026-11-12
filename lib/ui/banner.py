@@ -19,11 +19,10 @@ from apps.banners.uib import banner_live
 def banner():
     try:
         os.system("clear")
-        time.sleep(0.6)
-        smf.printf(banner_live())
         time.sleep(0.4)
-        ui.stormUI()
+        smf.printf(banner_live())
         time.sleep(0.2)
+        ui.stormUI()
         check_update()
     except Exception as e:
         smf.printf(f"[!] Banner error => {e}")
