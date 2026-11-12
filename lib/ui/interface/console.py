@@ -8,7 +8,7 @@ import sys
 import smf
 
 try:
-    from lib.smf.core.booting.free_boot import systemb as sysb
+    from lib.smf.core.booting.free_boot import sysboot
     from .control_ifc import systemctl as sysctl
     from ..banner import banner as style
 except ImportError as e:
@@ -21,6 +21,6 @@ except ImportError as e:
 # Loading banner for style framework
 # call main to activate (Read Eval Print Loop) interface
 def main():
-    sysb()  # Running the boot system
-    style()  # Displays the UI/UX style of the REPL session
-    sysctl()  # Run the main control system
+    sysboot()  # Running the boot system
+    style()    # Displays the UI/UX style of the REPL session
+    sysctl()   # Run the main control system
