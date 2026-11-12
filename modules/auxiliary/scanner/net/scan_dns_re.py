@@ -146,8 +146,6 @@ def execute(options, net):
         for record_type in DNS_RECORDS:
             dns.query.tcp(target_domain, record_type)
             dns.timeout(0.3)
-            dns.concurrency(50)
-            dns.setlimit(150, 50)
             resp = dns.run()
 
             valid = resp.ok
@@ -175,8 +173,5 @@ def execute(options, net):
 
     except KeyboardInterrupt:
         pass
-    except dns.DTrace as e:
+    except dns.DnsException as e:
         smf.printd("Error exception DTrace", e, level="ERROR")
-    except Exception as e:
-        smf.printf(f"{CC.RED}[!] Global ERROR =>", e, file=sys.stderr, flush=True)
-        smf.printd("Global error dns lookup", e, level="ERROR")
