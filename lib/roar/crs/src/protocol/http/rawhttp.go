@@ -5,7 +5,6 @@ import (
 	"errors"
 	"time"
 	"net"
-
 	"github.com/projectdiscovery/rawhttp"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/utils"
@@ -19,7 +18,7 @@ func ExecuteRaw(req packet.RequestPacket, timeout time.Duration) packet.Response
 
 	parsedURL, err := url.Parse(req.URL)
 	if err != nil {
-		return BuildErrorResponse("ERROR", "rawhttp", "Invalid URL: "+err.Error())
+		return BuildErrorResponse("H-ERROR", "rawhttp", "Invalid URL: "+err.Error())
 	}
 
 	uriPath := parsedURL.RequestURI()
@@ -30,7 +29,7 @@ func ExecuteRaw(req packet.RequestPacket, timeout time.Duration) packet.Response
 	// Otomatis konversi body (string/bytes/json) menjadi io.Reader
 	bodyReader, err := ParseBody(req.Encoding, req.Body)
 	if err != nil {
-		return BuildErrorResponse("ERROR", "rawhttp", "Body parse error: "+err.Error())
+		return BuildErrorResponse("H-ERROR", "rawhttp", "Body parse error: "+err.Error())
 	}
 
 	// Normalisasi Headers: Injeksi manual ke map[string][]string sesuai standar ProjectDiscovery
@@ -47,9 +46,9 @@ func ExecuteRaw(req packet.RequestPacket, timeout time.Duration) packet.Response
 	if err != nil {
 		var netErr net.Error
 		if errors.As(err, &netErr) && netErr.Timeout() {
-			return BuildErrorResponse("TIMEOUT", "rawhttp", "Execution failed: "+err.Error())
+			return BuildErrorResponse("H-TIMEOUT", "rawhttp", "Execution failed: "+err.Error())
 		}
-		return BuildErrorResponse("ERROR", "rawhttp", "Execution failed: "+err.Error())
+		return BuildErrorResponse("H-ERROR", "rawhttp", "Execution failed: "+err.Error())
 	}
 	defer resp.Body.Close()
 
