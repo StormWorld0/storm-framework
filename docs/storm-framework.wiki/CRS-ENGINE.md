@@ -108,8 +108,6 @@ sock.socket(family, type, proto)
 ```
 **Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
 
-**Inheritance:** `net.Socket()` will inherit all the functions below it, and all of those functions will only return Response.
-
 **Parameter**
 - **family:** Address Family such as: `sock.AF_INET`, `sock.AF_INET6`, etc.
 - **type:** Sock Type like: `sock.SOCK_STREAM`, `sock.SOCK_DGRAM`, etc.
@@ -301,7 +299,7 @@ sock.listen(backlog)
 ```python
 conn, resp = sock.accept()
 ```
-**Conn:**
+**Conn:** Returns a special object:
 - **sendall**
 - **send**
 - **recv**
@@ -386,7 +384,7 @@ sock.getaddrinfo(address, family, type, proto, flags)
 - **proto:** Protocols such as: `sock.IPPROTO_IP`, etc. | Default 0 = Determined by Kernel UNIX
 - **flags:** MSG_* such as: `sock.MSG_OOB`, `sock.MSG_MORE`, etc. | Optional Default 0.
 
-**Response**: Getaddrinfo directly returns a `list[tuple[str, str, str, str, tuple[str, int]]]` response of 5 elements: `family, type, proto, canonname, sockaddr.
+**Response**: Getaddrinfo directly returns a `list[tuple[int, int, int, str, tuple[str, int]]]` response of 5 elements: `family, type, proto, canonname, sockaddr. Whether IPv4 or IPv6 sockaddr will still return 2 elements, because it does not provide flowinfo and scope_id.
 
 
 **Get Name Info**
@@ -438,6 +436,9 @@ except sock.RuntimeError:
 except sock.Exception:
 except sock.Timeout:
 except sock.ValueError:
+
+# Or use a single exception that covers everything.
+except sock.SocketException:
 ```
 **Description:** This is used to stop the program script when the CRS throws an ERROR/CRITICAL. Capture the ERROR message using smflogd if necessary.
 
