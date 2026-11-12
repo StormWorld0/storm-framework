@@ -62,8 +62,8 @@ class RawHttp:
     def post(
         self,
         url: str,
-        body: Optional[Union[str, bytes, Dict[str, Any]]] = None,
         headers: Optional[Dict[str, str]] = None,
+        body: Optional[Union[str, bytes, Dict[str, Any]]] = None,
         **kwargs,
     ) -> "HTTPState":
         return self._set_state("POST", url, body=body, headers=headers, **kwargs)
