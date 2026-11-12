@@ -11,6 +11,8 @@ from lib.smf.exception import (
     SocketTimeout,
     SocketValueError,
     SocketError,
+    HttpError,
+    HttpTimeout,
 )
 
 
@@ -25,6 +27,8 @@ class ExceptionManager:
         "S-TIMEOUT": lambda _, msg: SocketTimeout(msg),
         "S-ERROR": lambda _, msg: SocketError(msg),
         "S-WARN": lambda _, msg: SocketValueError(msg),
+        "H-TIMEOUT": lambda _, msg: HttpTimeout(msg),
+        "H-ERROR": lambda _, msg: HttpError(msg),
         # --> Later if it increases.
     }
     _error_holder: List[Exception] = []
