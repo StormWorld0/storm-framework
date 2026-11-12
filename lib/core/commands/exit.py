@@ -10,7 +10,7 @@ from lib.smf.postgresql import close_db
 # This will minimize the possibility of a crash to prevent damage.
 def execute(args, ctx):
     # Kill all running process PIDs
-    pid.cleanup(timeout=1.0)
+    pid.cleanall(timeout=1.0)
     # Closing the database connection to PostgreSQL
     close_db()
     # Mutate state exit in-place
