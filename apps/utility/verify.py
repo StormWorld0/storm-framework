@@ -2,7 +2,6 @@ import subprocess
 import os
 import sys
 import smf
-
 from rootmap import ROOT
 from lib.roar.calling import call_bin
 
@@ -48,16 +47,16 @@ def run_verif():
         smf.printf("\n[*] Booting successfully stopped.")
         sys.exit(11)
     except Exception as e:
-        smf.printd("INTEGRITY VERIFICATION", e, level="CRITICAL")
-        smf.printf("[!] ERROR INTEGRITY CHECK =>", e, file=sys.stderr, flush=True)
-        sys.exit(201)
+        smf.printd("Integrity Verification", e, level="CRITICAL")
+        smf.printf("[!] Error unable to verify =>", e, file=sys.stderr, flush=True)
+        sys.exit(2)
 
 
 # Check the binary integrity check file
 def validate_binary_files():
     # Path to bin folder
     smf_dir = os.path.join(ROOT, "external", "source", "out", "core")
-    bin_name = ["libsigned.so", "verified", "crs_engine"]
+    bin_name = ["crs_engine"]
 
     found_map = {name: False for name in bin_name}
     failed = False
@@ -74,7 +73,7 @@ def validate_binary_files():
     # Binary check loop
     for file_name, is_found in found_map.items():
         if not is_found:
-            smf.printd("BINARY CORE MISSING", file_name, level="CRITICAL")
+            smf.printd("Binary core missing", file_name, level="CRITICAL")
             smf.printf("[!] Binary core missing =>", file_name)
             failed = True
 
