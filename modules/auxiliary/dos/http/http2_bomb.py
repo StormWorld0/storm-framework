@@ -391,7 +391,7 @@ def run_connection(conn_id: int, args: Namespace, block: bytes, net) -> None:
     try:
         sock.close()
     except sock.SocketError:
-        smf.printd("CONNECTION FAILED", e, level="ERROR")
+        pass
 
 
 def execute(options, net):
@@ -458,7 +458,3 @@ def execute(options, net):
 
     for thread in threads:
         thread.join()
-
-
-if __name__ == "__main__":
-    main()
