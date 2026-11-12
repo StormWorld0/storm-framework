@@ -6,7 +6,6 @@
 
 import os
 import smf
-import time
 import apps.base.config_ui as ui
 from apps.base.config_update import check_update
 from apps.banners.uib import banner_live
