@@ -150,9 +150,6 @@ cd "$INSTALL_DIR" || { echo -e "${RED}[x] ERROR: Lost track of directory!${NC}";
 # sync binary signed
 "$PYTHON_CMD" -c "from lib.roar.callbin.manager import BinaryManager; BinaryManager().sync_bin()"
 
-# Sign all files
-"$PYTHON_CMD" -m scripts.security.sign
-
 # Creating a Dynamic Wrapper Script
 "$PYTHON_CMD" -m scripts.wrapper.wrapper_data --data Termux
 
