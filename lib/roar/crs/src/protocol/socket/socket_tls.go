@@ -47,14 +47,15 @@ func handleUpgradeTLS(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "WARN", Message: "Connection is already TLS"}
 	}
 
-	if ctx.RawFD != -1 {
-    	file := os.NewFile(uintptr(ctx.RawFD), fmt.Sprintf("socket_tls_%d", ctx.RawFD))
-	    rawConn, err := net.FileConn(file)
-    	file.Close()
-    	if err != nil {
-		    return packet.ResponsePacket{Status: "S-ERROR", Message: "Failed to wrap net.Conn: " + err.Error()}
-	    }
-	    ctx.Conn = rawConn
+	if ctx.RawFD == -1 {
+    	return packet.ResponsePacket{Status: "S-WARN", Message: "No raw socket (FD) found for upgrade tls."}
+	}
+
+	file := os.NewFile(uintptr(ctx.RawFD), fmt.Sprintf("socket_tls_%d", ctx.RawFD))
+	rawConn, err := net.FileConn(file)
+    file.Close()
+    if err != nil {
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "Failed to wrap net.Conn: " + err.Error()}
 	}
 
 	tCtx, cancel := context.WithTimeout(context.Background(), ctx.Timeout)
@@ -69,7 +70,7 @@ func handleUpgradeTLS(ctx *ExecutionContext) packet.ResponsePacket {
 	portStr := DerefString(port, "")
 	host := net.JoinHostPort(addrStr, portStr) 
 	
-	tlsConn, err := performTLSHandshake(tCtx, ctx.Conn, host, ctx.Req)
+	tlsConn, err := performTLSHandshake(tCtx, rawConn, host, ctx.Req)
 	if err != nil {
 		return packet.ResponsePacket{Status: "S-ERROR", Message: "TLS Upgrade failed: " + err.Error()}
 	}
