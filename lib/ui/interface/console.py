@@ -22,5 +22,5 @@ except ImportError as e:
 # call main to activate (Read Eval Print Loop) interface
 def main():
     sysboot()  # Running the boot system
-    style()    # Displays the UI/UX style of the REPL session
-    sysctl()   # Run the main control system
+    style()  # Displays the UI/UX style of the REPL session
+    sysctl()  # Run the main control system
