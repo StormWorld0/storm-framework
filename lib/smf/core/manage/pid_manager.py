@@ -55,7 +55,7 @@ class PIDManager:
     def cleanall(cls, timeout: float = 3.0) -> None:
         """Perform parallel process cleanup with broadcast mechanism"""
         with cls._lock:
-            if not cls._tracked_pids:
+            if not cls._tracked_processes:
                 return
 
             pids_to_kill = list(cls._tracked_processes.values())
@@ -93,7 +93,7 @@ class PIDManager:
                 pass
 
         with cls._lock:
-            cls._tracked_pids.clear()
+            cls._tracked_processes.clear()
 
     @classmethod
     def prepare(cls, id: str, pid: int) -> None:
