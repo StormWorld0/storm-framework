@@ -47,14 +47,6 @@ class HTTPClient(HTTPState, HTTPMethod):
 
         return self
 
-    def concurrency(self, con: int, **kwargs):
-        """Storing Concurrency values (Strict Int & Bounds)"""
-        if con <= 0:
-            raise ValueError("Concurrency must be greater than 0")
-
-        self.goroutine = int(con)
-        return self
-
     def setlimit(self, ratelimit: int, frate: int | None = None, **kwargs):
         """Save ratelimiting value with type and bound checks"""
         limits = {"ratelimit": ratelimit, "fixed_ratelimit": frate}
@@ -93,8 +85,6 @@ class HTTPClient(HTTPState, HTTPMethod):
 
         raw_res = CRS.send(packet)
         res = HTTPResponse(raw_res)
-        res._trace()
-        res._timeout()
 
         try:
             db_payload = res._to_db_payload(
@@ -103,7 +93,6 @@ class HTTPClient(HTTPState, HTTPMethod):
             push_to_queue(db_payload)
         except Exception as e:
             smf.printd("Failed to push HTTP payload to queue", e, level="ERROR")
-
         return res
 
     def __enter__(self):
