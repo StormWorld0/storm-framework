@@ -41,22 +41,10 @@ def update():
         compiler.start_build()
     except ImportError as e:
         print(f"Error import compiler => {e}")
-        sys.exit(100)
+        sys.exit(1)
     except Exception as e:
         print(f"Error when running the compiler => {e}")
-        sys.exit(100)
-
-    try:
-        from scripts.security.sign import run_sign
-
-        run_sign()
-    except ImportError as e:
-        print(f"Error import => {e}")
-        sys.exit(100)
-    except Exception as e:
-        print(f"Error executing signature => {e}")
-        sys.exit(100)
-
+        sys.exit(1)
 
 if __name__ == "__main__":
     update()
