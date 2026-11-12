@@ -105,8 +105,9 @@ def execute(options, net):
             return
 
         cipher = tls_sock.cipher()
+        alpn = tls_sock.selected_alpn_protocol()
         smf.printf(f"[+] TLS Handshake successful!")
-        smf.printf(f"    Cipher: {cipher[0]} | Protocol: {cipher[1]}")
+        smf.printf(f"    Cipher: {cipher[0]} | Protocol: {cipher[1]} | Protos: {alpn}")
         smf.printf()
 
         smf.printf("[*] Sending data using TLS sendall!")
