@@ -6,8 +6,13 @@ import apps.utility.utils as utils
 from apps.utility.colors import CC
 
 
-def sexc(net):
-    return net.Socket()
+def aexc(net):
+    sock = net.Socket()
+    http = net.HTTPR()
+    return (
+        sock,
+        http,
+    )
 
 
 # Run command to run a module that we want to execute
@@ -67,7 +72,7 @@ def execute(args, ctx):
     # A set of custom exceptions
     # to handle forced module termination if something is detected on the network
     # The final security if the module does not use exceptions.
-    sock = sexc(_net)
+    sock, http = aexc(_net)
 
     # Execution module
     try:
@@ -85,6 +90,10 @@ def execute(args, ctx):
             execute(options, _net)
         else:
             execute(options)
+    except sock.HttpException as e:
+        smf.printf(f"{CC.RED}Module error =>{CC.RESET}", module_name)
+        smf.printd("Module detected error", e, level="ERROR")
+        return
     except sock.SocketException as e:
         smf.printf(f"{CC.RED}Module error =>{CC.RESET}", module_name)
         smf.printd("Module detected error", e, level="ERROR")
