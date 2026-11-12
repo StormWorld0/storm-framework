@@ -65,6 +65,7 @@ class CRSD:
                 cls._reader_thread = threading.Thread(
                     target=cls._background_reader,
                     args=(cls._process,),
+                    name="crs_stdout",
                     daemon=True,
                 )
                 cls._reader_thread.start()
@@ -74,6 +75,7 @@ class CRSD:
                 cls._stderr_thread = threading.Thread(
                     target=cls._stderr_reader,
                     args=(cls._process,),
+                    name="crs_stderr",
                     daemon=True,
                 )
                 cls._stderr_thread.start()
@@ -132,7 +134,7 @@ class CRSD:
 
                     line_str = line.strip()
                     if line_str:
-                        smf.printd("CRS Engine STDERR", line_str, level="CRITICAL")
+                        smf.printd("CRS Engine STDERR", line_str, level="WARN")
                         with cls._dict_lock:
                             # Broadcast stderr to all active/pending requests
                             for err_list in cls._pending_stderr.values():
