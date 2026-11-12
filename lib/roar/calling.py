@@ -17,7 +17,7 @@ def call_cty(query_name: str) -> ctypes.CDLL:
     """ONLY use this for pure C/C++ libraries."""
     lib_path = resolve_bin_path(query_name)
     try:
-        smf.printd(f"Loading ctypes: {query_name}", lib_path, level="INFO")
+        smf.printd(f"Loading ctypes: {query_name} from", lib_path, level="INFO")
         return ctypes.CDLL(lib_path)
     except OSError as e:
         smf.printd(
