@@ -25,7 +25,7 @@ def domain_to_ip(domain):
     """Returning IPV4 and IPV6"""
     try:
         sock = Socket()
-        resp = sock.getaddrinfo((domain, None), None, proto=sock.IPPROTO_TCP)
+        resp = sock.getaddrinfo((domain, None), proto=sock.IPPROTO_TCP)
 
         ipv4 = set()
         ipv6 = set()
