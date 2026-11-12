@@ -49,6 +49,9 @@ def sysboot():
             if (config_path := Path.home() / ".smf" / "database.yml").exists():
                 db = DBManager(config_path)
                 db.current_workspace = "default"
+
+            # Countdown to pause and start
+            time.sleep(2)
     except KeyboardInterrupt:
         smf.printf("\n[*] Booting successfully stopped.")
         sys.exit(2)
