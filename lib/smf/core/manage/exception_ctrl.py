@@ -85,5 +85,7 @@ class ExceptionManager:
 
 
 # Consumer Worker Thread
-worker_thread = threading.Thread(target=ExceptionManager._worker, name="_exc_mng", daemon=True)
+worker_thread = threading.Thread(
+    target=ExceptionManager._worker, name="_exc_mng", daemon=True
+)
 worker_thread.start()
