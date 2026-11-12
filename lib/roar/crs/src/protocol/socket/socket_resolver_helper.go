@@ -161,7 +161,7 @@ func getAddrInfo(ctx *ExecutionContext) (string, string, []map[string]interface{
 
 	// SockType & Protocol Inference Matrix
 	// POSIX getaddrinfo fills in concreted socktype & protocol if hints is 0
-	combinations, err := resolveAddrCombination(int(sockType), int(protocol))
+	combinations, err := resolveAddrCombination(sockType, protocol)
     if err != nil {
 	    return "", "", nil, 0, fmt.Errorf("getaddrinfo: %w", err)
     }
