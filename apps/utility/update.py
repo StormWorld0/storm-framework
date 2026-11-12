@@ -40,6 +40,7 @@ def run_update():
     except Exception as e:
         print(f"Error when running the compiler => {e}")
         return False
-        
+
+
 if __name__ == "__main__":
     run_update()
