@@ -71,8 +71,8 @@ class RawHttp:
     def put(
         self,
         url: str,
-        body: Optional[Union[str, bytes, Dict[str, Any]]] = None,
         headers: Optional[Dict[str, str]] = None,
+        body: Optional[Union[str, bytes, Dict[str, Any]]] = None,
         **kwargs,
     ) -> "HTTPState":
         return self._set_state("PUT", url, body=body, headers=headers, **kwargs)
@@ -80,8 +80,8 @@ class RawHttp:
     def patch(
         self,
         url: str,
-        body: Optional[Union[str, bytes, Dict[str, Any]]] = None,
         headers: Optional[Dict[str, str]] = None,
+        body: Optional[Union[str, bytes, Dict[str, Any]]] = None,
         **kwargs,
     ) -> "HTTPState":
         return self._set_state("PATCH", url, body=body, headers=headers, **kwargs)
@@ -89,8 +89,8 @@ class RawHttp:
     def delete(
         self,
         url: str,
-        body: Optional[Union[str, bytes, Dict[str, Any]]] = None,
         headers: Optional[Dict[str, str]] = None,
+        body: Optional[Union[str, bytes, Dict[str, Any]]] = None,
         **kwargs,
     ) -> "HTTPState":
         return self._set_state("DELETE", url, body=body, headers=headers, **kwargs)
