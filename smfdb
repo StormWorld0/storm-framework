@@ -9,7 +9,6 @@
 import sys
 import shutil
 import smf
-
 from config import DB_DATA_DIR, CONFIG_FILE
 from lib.smf.postgresql import PostgresManager
 
@@ -66,7 +65,7 @@ def smfdb():
     elif command == "status":
         pg_mgr.status()
     else:
-        smf.printf("[*] Arguments not found.")
+        smf.printf("[!] Arguments not found =>", command)
         sys.exit(1)
 
 if __name__ == "__main__":
