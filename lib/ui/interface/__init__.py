@@ -1,1 +1,1 @@
-from .sys_boot import main  # noqa
+from .console import main  # noqa
