@@ -3,16 +3,10 @@ requests>=2.32.5
 urllib3>=2.6.3
 colorama>=0.4.6
 python-nmap>=0.7.1
-python-whois>=0.9.6
-
-dnspython>=2.8.0
 paramiko>=4.0.0
 scapy>=2.7.0
-
-ipwhois
 ipaddress>=1.0.23
-whoisdomain
-telnetlib3
+
 python-dotenv
 sqlalchemy
 psycopg2-binary
