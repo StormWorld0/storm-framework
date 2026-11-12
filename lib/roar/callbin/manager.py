@@ -90,8 +90,8 @@ class BinaryManager:
                                 "mtime": st_mtime,
                             }
                             smf.printd(
-                                f"Binary extracted: {entry_path.name}",
-                                category,
+                                f"Binary extracted {category}",
+                                entry_path.name,
                                 level="DEBUG",
                             )
         except Exception as e:
