@@ -90,7 +90,7 @@ def execute(args, ctx):
             execute(options, _net)
         else:
             execute(options)
-    except sock.HttpException as e:
+    except http.HttpException as e:
         smf.printf(f"{CC.RED}Module error =>{CC.RESET}", module_name)
         smf.printd("Module detected error", e, level="ERROR")
         return
