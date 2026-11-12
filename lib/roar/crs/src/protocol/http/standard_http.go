@@ -2,12 +2,11 @@ package http
 
 import (
 	"crypto/x509"
-	"crypto/tls"
 	"net/http"
 	"errors"
 	"time"
 	"net"
-
+	utls "github.com/refraction-networking/utls"
 	"github.com/projectdiscovery/retryablehttp-go"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/utils"
@@ -25,24 +24,54 @@ func ExecuteStandard(req packet.RequestPacket, timeout time.Duration) packet.Res
 		var err error
 	    tlsCA, err = buildCaTLS(req)
 	    if err != nil {
-		    return BuildErrorResponse("ERROR", "retryablehttp", "Failed build CA: "+err.Error())
+		    return BuildErrorResponse("H-ERROR", "retryablehttp", "Failed build CA: "+err.Error())
 	    }
     }
 
-	// Arsitektur Transport untuk optimalisasi resource dan penanganan TLS bypass
-	client.HTTPClient.Transport = &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		TLSClientConfig: &tls.Config{
-			RootCAs:            tlsCA,
-			InsecureSkipVerify: !req.Verify,
-			MinVersion:         tls.VersionTLS10,
-			Renegotiation:      tls.RenegotiateOnceAsClient, // Penting untuk beberapa bypass WAF
-		},
+	// Transport Architecture for resource optimization
+	tr := &http.Transport{
+		Proxy:                 http.ProxyFromEnvironment,
 		MaxIdleConns:          100,
 		MaxIdleConnsPerHost:   10,
 		IdleConnTimeout:       90 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
 	}
+
+	tr.DialTLSContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
+		// Runs the transport's built-in TCP dial (automatically handles ProxyFromEnvironment)
+		rawConn, err := tr.DialContext(ctx, network, addr)
+		if err != nil {
+			return nil, err
+		}
+
+		// Extract hostname for SNI
+		host, _, err := net.SplitHostPort(addr)
+		if err != nil {
+			host = addr
+		}
+
+		// utls.Config configuration
+		uConfig := &utls.Config{
+			RootCAs:            tlsCA,
+			InsecureSkipVerify: !req.Verify,
+			MinVersion:         utls.VersionTLS10,
+			ServerName:         host,
+		}
+
+		clientHello := utls.HelloChrome_Auto // Disguised as Chromium
+		uConn := utls.UClient(rawConn, uConfig, clientHello)
+
+		// Manually execute uTLS Handshake
+		if err := uConn.Handshake(); err != nil {
+			rawConn.Close()
+			return nil, err
+		}
+
+		return uConn, nil
+	}
+
+	// Install custom transport to retryablehttp
+	client.HTTPClient.Transport = tr
 
 	if !req.Redirect {
 		client.HTTPClient.CheckRedirect = func(r *http.Request, via []*http.Request) error {
@@ -52,12 +81,12 @@ func ExecuteStandard(req packet.RequestPacket, timeout time.Duration) packet.Res
 
 	bodyReader, err := ParseBody(req.Encoding, req.Body)
 	if err != nil {
-		return BuildErrorResponse("ERROR", "retryablehttp", "Body parse error: "+err.Error())
+		return BuildErrorResponse("H-ERROR", "retryablehttp", "Body parse error: "+err.Error())
 	}
 
 	httpReq, err := retryablehttp.NewRequest(req.Method, req.URL, bodyReader)
 	if err != nil {
-		return BuildErrorResponse("ERROR", "retryablehttp", "Request creation failed: "+err.Error())
+		return BuildErrorResponse("H-ERROR", "retryablehttp", "Request creation failed: "+err.Error())
 	}
 
 	for key, value := range req.Headers {
@@ -68,9 +97,9 @@ func ExecuteStandard(req packet.RequestPacket, timeout time.Duration) packet.Res
 	if err != nil {
 		var netErr net.Error
 		if errors.As(err, &netErr) && netErr.Timeout() {
-			return BuildErrorResponse("TIMEOUT", "retryablehttp", "Execution failed: "+err.Error())
+			return BuildErrorResponse("H-TIMEOUT", "retryablehttp", "Execution failed: "+err.Error())
 		}
-		return BuildErrorResponse("ERROR", "retryablehttp", "Execution failed: "+err.Error())
+		return BuildErrorResponse("H-ERROR", "retryablehttp", "Execution failed: "+err.Error())
 	}
 	defer resp.Body.Close()
 
