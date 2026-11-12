@@ -18,7 +18,7 @@ class PIDManager:
         """Internal helper to kill a specific PID with a grace period."""
         try:
             os.kill(pid, signal.SIGTERM)
-            
+
             # Give yourself a moment to exit gracefully
             start_time = time.time()
             while time.time() - start_time < 2.0:
@@ -111,7 +111,7 @@ class PIDManager:
                 old_pid = cls._tracked_processes[id]
                 smf.printd(
                     f"Process '{id}' already exists (PID {old_pid}). Replacing with new PID {pid}.",
-                    level="WARN"
+                    level="WARN",
                 )
                 cls._kill_process_safely(old_pid)
 
@@ -128,6 +128,6 @@ class PIDManager:
             smf.printd(f"Terminating target process '{id}' (PID {pid})", level="INFO")
             cls._kill_process_safely(pid)
             return True
-        
+
         smf.printd(f"Process ID '{id}' not found in registry.", level="DEBUG")
         return False
