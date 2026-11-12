@@ -33,9 +33,8 @@ func performTLSHandshake(ctx context.Context, conn net.Conn, addr string, req pa
 	clientHello := utls.HelloChrome_Auto
 	utlsConn := utls.UClient(conn, utlsConfig, clientHello)
 
-	var spec []utls.TLSExtension
-	spec, err = utls.UTLSIdToSpec(clientHello)
-    if err != nil {
+	var spec utls.ALPNExtension
+	if spec, err := utls.UTLSIdToSpec(clientHello); err != nil {
         return nil, err
     }
 
