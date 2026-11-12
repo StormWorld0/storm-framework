@@ -30,29 +30,7 @@ func performTLSHandshake(ctx context.Context, conn net.Conn, addr string, req pa
 		defer conn.SetDeadline(time.Time{}) // Reset deadline
 	}
 
-	clientHello := utls.HelloChrome_Auto
-	utlsConn := utls.UClient(conn, utlsConfig, clientHello)
-
-	spec, err := utls.UTLSIdToSpec(clientHello)
-	if err != nil {
-        return nil, err
-    }
-
-	var cleanedExtensions []utls.TLSExtension
-    for _, ext := range spec.Extensions {
-        // Check ALPN extension
-        if _, ok := ext.(*utls.ALPNExtension); ok {
-            // Skip/remove ALPN extension
-            continue
-        }
-        cleanedExtensions = append(cleanedExtensions, ext)
-    }
-    spec.Extensions = cleanedExtensions
-
-	if err := utlsConn.ApplyPreset(&spec); err != nil {
-        return nil, err
-    }
-	
+	utlsConn := utls.UClient(conn, utlsConfig)
 	if err := utlsConn.Handshake(); err != nil {
 		return nil, err
 	}
