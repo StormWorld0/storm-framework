@@ -8,17 +8,28 @@ import base64
 
 from typing import Dict
 from apps.utility.colors import CC
-
-from .exception import StackTrace, TimeoutTrace
 from .rawhttp import RawHttp
+from lib.smf.exception import (
+    CRSRuntimeError,
+    CRSException,
+    HttpTimeout,
+    HttpError,
+)
 
 
 class HTTPState:
     """Configuration Management & Session State."""
 
-    # To be used as an Exception
-    HTrace = StackTrace
-    Timeout = TimeoutTrace
+    HttpError
+    Timeout = HttpTimeout
+    RuntimeError = CRSRuntimeError
+    Exception = CRSException
+    HttpException = (
+        HttpError,
+        HttpTimeout,
+        CRSRuntimeError,
+        CRSException,
+    )
 
     def __init__(
         self,
