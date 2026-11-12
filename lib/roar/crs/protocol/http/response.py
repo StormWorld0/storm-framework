@@ -91,7 +91,7 @@ class HTTPResponse:
     @property
     def tls(self) -> Optional[HTTPTLSMetadata]:
         """Objek HTTPTLSMetadata jika info_tls diaktifkan dan tersedia."""
-        tls_data = self._data.get("info_tls")
+        tls_data = self._data.get("info_tls", "")
         if tls_data and isinstance(tls_data, dict):
             return HTTPTLSMetadata(tls_data)
         return None
@@ -201,20 +201,6 @@ class HTTPResponse:
             .build()
         )
         return payload
-
-    def _trace(self):
-        """Melempar stack trace"""
-        if (sts := self.status.upper()) in {"ERROR", "CRITICAL"}:
-            msg = self.message
-            raise StackTrace(sts, msg)
-        return None
-
-    def _timeout(self):
-        """Melempar timeout trace"""
-        if (sts := self.status.upper()) == "TIMEOUT":
-            msg = self.message
-            raise TimeoutTrace(sts, msg)
-        return None
 
     def __bool__(self):
         """Membuka syntax: if r.ok:"""
