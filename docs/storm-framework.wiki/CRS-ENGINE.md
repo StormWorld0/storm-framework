@@ -495,7 +495,7 @@ except dns.NXDOMAIN:
 ```python
 http = net.HTTPR()
 http.get(url, headers)
-http.post(url, body, headers)
+http.post(url, headers, body)
 # http methods provided: get, post, put, patch, etc.
 ```
 **Parameter**
@@ -507,7 +507,7 @@ http.post(url, body, headers)
 **Raw HTTP**
 ```python
 http.rawhttp.get(url, headers)
-http.rawhttp.post(url, body, headers)
+http.rawhttp.post(url, headers, body)
 # http methods provided: get, post, put, patch, etc.
 ```
 **Description:** Raw HTTP freely accepts custom or malformed headers or bodies.
@@ -522,7 +522,6 @@ http.rawhttp.post(url, body, headers)
 ```python
 http.setoptions(ca, retry, redirect, verify, tls)
 http.timeout(value)
-http.setlimit(ratelimit, frate)
 
 # Only runing returns a response
 resp = http.run()
@@ -534,11 +533,9 @@ resp = http.run()
 - **tls:** To display TLS information in the Response. | Default False | Boolean.
 - **verify:** True=Verifying client certificate. False=Skip verification. | Default True. | Boolean.
 - **retry:** Performs Retryable http / Retry connection if failed. | Default 2. | int.
-- **rl:** Blocking requests if the token runs out. | Default 150/1s. | int.
 - **timeout:** To limit the open connection time. | Default 5s.
-- **con:** Number of Goroutines for Concurrency, allows to run parallel connections. | int.
 - **ca:** Can path, can raw pem string, can base64. | Default Empty | str.
-- 
+
 **Response**
 - **status:** ERROR/SUCCESS/TIMEOUT/WARNING.
 - **message:** Messages adjust to status.
@@ -572,8 +569,13 @@ resp = http.run()
 ```python
 try:
     ...
-except http.HTrace:
+except http.HttpError:
 except http.Timeout:
+except http.Exception:
+except http.RuntimeError:
+
+# Or use a single exception that covers everything.
+except http.HttpException:
 ```
 **Description:** This is used to stop the program script when the CRS throws an ERROR/CRITICAL. Capture the ERROR message using smflogd if necessary.
 
@@ -639,18 +641,26 @@ res, var = r.read(expected, timeout, raw)
 sock = net.Socket()
 
 # Open Socket
-sock.socket(af, type, proto)
+sock.socket(family, type, proto)
+
+# Get Python table FD
+sock.fileno()
 
 # Open connection to Socket
-sock.connect(host, port)
+sock.connect(("127.0.0.1", 0))
+
+sock.getsockname()
+sock.getpeername()
+sock.setsockopt(level, name, value)
+sock.getsockopt(level, name)
 
 # Send Data
-sock.send(data, flag)
-sock.sendto(data, host, port, flag)
+sock.send(data, flags)
+sock.sendto(data, ("127.0.0.1", 443), flags)
 
 # Buffer Fetching
-sock.recv(readsize, flag)
-sock.recvfrom(readsize, flag)
+sock.recv(buffer, flags)
+sock.recvfrom(buffer, flags)
 
 # TLS Upgrade has legacy
 sock.uptls(cert, key, ca, verify)
@@ -663,10 +673,11 @@ sock.recv()
 sock.close()
 
 # Timeout function
-sock.timeout(value)
+sock.settimeout(value)
+sock.gettimeout() # Returns float or None
 
 # Create a tcp stream connection
-sock.create_connection(host, port)
+sock.create_connection((address))
 
 # socket argument function
 sock.AF_*
@@ -674,7 +685,6 @@ sock.SOCK_*
 sock.IPPROTO_*
 ```
 ```python
-# Explicit
 sock = net.Socket()
 resp = sock.getaddrinfo(...)
 
@@ -691,7 +701,7 @@ smf.printf(r.status, r.message)
 smf.printf(r.isreused, r.rtt_ms, etc.)
 
 # read buffer
-r = sock.recv(readsize)
+r = sock.recv(buffer)
 smf.printf(r.status, r.message)
 smf.printf(r.raw_bytes, r.hex_bytes, etc.)
 
@@ -708,9 +718,7 @@ smf.printf(r.tls.version, r.tls.cipher, etc.)
 ```python
 dns = net.DNSL()
 dns.timeout(0.2)       # Set Timeout
-dns.setlimit(150, 50)  # Set Ratelimit and update ratelimit
-
-resp = dns.run() # Runing DNS and return response
+resp = dns.run()       # Runing DNS and return response
 
 # Show response
 smf.printf(resp.status, resp.message)
@@ -725,13 +733,13 @@ if resp.ok:
 - **Status:** `Stateless`
 - **Response**
 ```python
-path_ca = "/path/path/cert.pem"
+path_ca = "/path/path/ca.pem"
 
 http = net.HTTPR(...)
 http.setoptions(path_ca, 2, true, true, true) # Set CA, retry, redirect, verify tls, tls response
-http.timeout(5.0)      # Set Timeout
-http.setlimit(150, 80) # Set Ratelimit and update ratelimit
-
+http.timeout(5.0)
+http.get()
+http.rawhttp.post()
 resp = http.run() # Runing HTTP and return response
 
 # Show response
