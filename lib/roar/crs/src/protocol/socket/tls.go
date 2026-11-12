@@ -13,7 +13,7 @@ import (
 func buildCustomTLSConfig(req packet.RequestPacket) (*utls.Config, error) {
 	utlsConfig := &utls.Config{
 		InsecureSkipVerify: !req.Verify,
-		NextProtos:         []string{"h2", "http/1.1"},
+		NextProtos:         []string{"http/1.1"},
 		MinVersion:         utls.VersionTLS10,
 	}
 
