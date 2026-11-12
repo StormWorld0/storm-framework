@@ -107,7 +107,7 @@ class PIDManager:
 
         with cls._lock:
             # If the ID already exists, clear the old process.
-            if custom_id in cls._tracked_processes:
+            if id in cls._tracked_processes:
                 old_pid = cls._tracked_processes[id]
                 smf.printd(
                     f"Process '{id}' already exists (PID {old_pid}). Replacing with new PID {pid}.",
