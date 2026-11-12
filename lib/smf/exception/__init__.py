@@ -26,3 +26,8 @@ from .sock_exc import (
     SocketTimeout,
     SocketValueError,
 )  # noqa
+from .http_exc import (
+    HttpValueError,
+    HttpError,
+    HttpTimeout,
+)  # noqa
