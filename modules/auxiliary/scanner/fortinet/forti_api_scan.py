@@ -1,4 +1,3 @@
-import urllib3
 import sys
 import smf
 
@@ -45,7 +44,7 @@ def execute(options, net):
         "Node-Type": "fgfm",
         "Authorization": "Basic Og==",
     }
-    
+
     http = net.HTTPR()
     try:
         res = http.get(url, headers).run()
