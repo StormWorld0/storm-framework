@@ -46,5 +46,6 @@ def update():
         print(f"Error when running the compiler => {e}")
         sys.exit(1)
 
+
 if __name__ == "__main__":
     update()
