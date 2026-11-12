@@ -3,10 +3,10 @@ import smf
 metadata = {
     "Name": "Testing HTTP GET",
     "Description": """
-Testing HTTPR
+Testing HTTPR GET
 """,
     "Author": ["zxelzy"],
-    "Action": [["Scan", {"Description": "Testing HTTP"}]],
+    "Action": [["Testing", {"Description": "Testing HTTP"}]],
     "DefaultAction": "Testing",
     "License": "SMF License",
     "Date": "2026-09-28",
@@ -16,10 +16,8 @@ REQUIRED_OPTIONS = {"URL": ""}
 
 def execute(options, net):
     url = options.get("URL")
-
     http = net.HTTPR()
     try:
-        http.concurrency(50)
         http.timeout(10.0)
         http.setoptions(retry=2, verify=False)
         http.get(url)
@@ -29,7 +27,7 @@ def execute(options, net):
             smf.printf("Server =>", resp.get_headers("server", "UNKNOWN"))
             smf.printf("Status =>", resp.status_code)
             smf.printf("Body   =>", resp.body[:1000])
-    except http.HTrace as e:
+    except http.HttpException as e:
         smf.printf("Error http requests =>", e)
     except KeyboardInterrupt:
         pass
