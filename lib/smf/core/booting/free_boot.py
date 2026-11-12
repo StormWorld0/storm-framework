@@ -16,7 +16,7 @@ from lib.smf.exception.handler import exception_handler
 from ..security.syscall import is_this_docker
 
 
-def systemb():
+def sysboot():
     smf.printd("Booting Storm Framework", level="INFO")
     sys.excepthook = exception_handler
     threading.excepthook = lambda args: exception_handler(
