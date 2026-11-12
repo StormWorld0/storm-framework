@@ -19,7 +19,7 @@ from apps.banners.uib import banner_live
 def banner():
     try:
         os.system("clear")
-        time.sleep(0.2)
+        time.sleep(0.8)
         smf.printf(banner_live())
         ui.stormUI()
         check_update()
