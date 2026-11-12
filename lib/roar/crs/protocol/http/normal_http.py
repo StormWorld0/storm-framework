@@ -51,8 +51,8 @@ class HTTPMethod:
     def post(
         self,
         url: str,
-        body: Optional[Union[str, bytes, Dict[str, Any]]] = None,
         headers: Optional[Dict[str, str]] = None,
+        body: Optional[Union[str, bytes, Dict[str, Any]]] = None,
         **kwargs,
     ):
         return self._set_state("POST", url, body=body, headers=headers, **kwargs)
@@ -60,8 +60,8 @@ class HTTPMethod:
     def put(
         self,
         url: str,
-        body: Optional[Union[str, bytes, Dict[str, Any]]] = None,
         headers: Optional[Dict[str, str]] = None,
+        body: Optional[Union[str, bytes, Dict[str, Any]]] = None,
         **kwargs,
     ):
         return self._set_state("PUT", url, body=body, headers=headers, **kwargs)
@@ -69,8 +69,8 @@ class HTTPMethod:
     def patch(
         self,
         url: str,
-        body: Optional[Union[str, bytes, Dict[str, Any]]] = None,
         headers: Optional[Dict[str, str]] = None,
+        body: Optional[Union[str, bytes, Dict[str, Any]]] = None,
         **kwargs,
     ):
         return self._set_state("PATCH", url, body=body, headers=headers, **kwargs)
@@ -78,8 +78,8 @@ class HTTPMethod:
     def delete(
         self,
         url: str,
-        body: Optional[Union[str, bytes, Dict[str, Any]]] = None,
         headers: Optional[Dict[str, str]] = None,
+        body: Optional[Union[str, bytes, Dict[str, Any]]] = None,
         **kwargs,
     ):
         return self._set_state("DELETE", url, body=body, headers=headers, **kwargs)
