@@ -23,14 +23,14 @@ REQUIRED_OPTIONS = {"IP": "", "PORT": "", "PASS": ""}
 
 def test_grafana(target_ip, port, username, password, net):
     """Trying to login to grafana using requests (HTTP POST)."""
-    login_url = f"http://{target_ip}:{port}/login"
+    url = f"http://{target_ip}:{port}/login"
     payload = {"user": username, "password": password}
     headers = {"Content-Type": "application/json"}
+    http = net.HTTPR()
     try:
-        response = net.http_request(
-            "post", login_url, json=payload, headers=headers, timeout=3, redirect=False
-        )
-
+        http.setoptions(redirect=False)
+        http.timeout(3)
+        response = http.post(url, headers, payload).run()
         if response.status_code == 302 and "location" in response.headers:
             return True
         else:
