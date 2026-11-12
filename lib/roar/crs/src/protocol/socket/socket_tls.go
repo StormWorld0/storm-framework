@@ -15,7 +15,7 @@ import (
 func performTLSHandshake(ctx context.Context, conn net.Conn, addr string, req packet.RequestPacket) (net.Conn, error) {
 	utlsConfig, err := buildCustomTLSConfig(req)
 	if err != nil {
-		return nil, fmt.Errorf("TLS Config Error: %w", err)
+		return nil, err
 	}
 
 	if utlsConfig.ServerName == "" {
@@ -25,14 +25,37 @@ func performTLSHandshake(ctx context.Context, conn net.Conn, addr string, req pa
 
 	if deadline, ok := ctx.Deadline(); ok {
 		if err := conn.SetDeadline(deadline); err != nil {
-			return nil, fmt.Errorf("Failed to set timeout: %w", err)
+			return nil, err
 		}
 		defer conn.SetDeadline(time.Time{}) // Reset deadline
 	}
+
+	clientHello := utls.HelloChrome_Auto
+	utlsConn := utls.UClient(conn, utlsConfig, clientHello)
+
+	var spec []utls.TLSExtension
+	spec, err = utls.UTLSIdToSpec(clientHello)
+    if err != nil {
+        return nil, err
+    }
+
+	var cleanedExtensions []utls.TLSExtension
+    for _, ext := range spec.Extensions {
+        // Check ALPN extension
+        if _, ok := ext.(*utls.ALPNExtension); ok {
+            // Skip/remove ALPN extension
+            continue
+        }
+        cleanedExtensions = append(cleanedExtensions, ext)
+    }
+    spec.Extensions = cleanedExtensions
+
+	if err := utlsConn.ApplyPreset(&spec); err != nil {
+        return nil, err
+    }
 	
-	utlsConn := utls.UClient(conn, utlsConfig, utls.HelloChrome_Auto)
 	if err := utlsConn.Handshake(); err != nil {
-		return nil, fmt.Errorf("handshake failed: %w", err)
+		return nil, err
 	}
 
 	return utlsConn, nil
