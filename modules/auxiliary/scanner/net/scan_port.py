@@ -21,28 +21,28 @@ to find vulnerabilities, do a quick scan of.
 }
 
 
-def get_service_banner(ip, port, sock):
+def get_service_banner(ip, port, net):
     """
     Checking port status and parsing banner/version information via Go CRS Engine.
     """
     try:
+        sock = net.Socket()
         # Jika port HTTP, kita langsung titip payload 'HEAD /' di field Bod
         payload_body = ""
         if port in [80, 443, 8080]:
             payload_body = f"HEAD / HTTP/1.1\r\nHost: {ip}\r\nConnection: close\r\n\r\n"
 
-        sock.goroutine(100)
-        sock.timeout(0.2)
-        s = sock.create_connection(ip, port)
+        sock.settimeout(1.2)
+        s = sock.create_connection((ip, port))
         if not s.ok:
             return f"{C.ERROR} CLOSED " + STATUS_CLOSED, None
 
-        sock.timeout(1)
-        r = sock.send(payload_body)
-        if r.ok:
-            res = sock.recv(1024)
-
-        # Jika Go berhasil melakukan Dial (Socket Terbuka)
+        sock.settimeout(1)
+        r = sock.sendall(payload_body)
+        if not r.ok:
+            return f"{C.ERROR} CLOSED " + STATUS_CLOSED, None
+            
+        res = sock.recv(1024)
         if res.ok:
             status_color = f"{C.SUCCESS} OPEN " + STATUS_OPEN
             banner_info = "No version information."
@@ -81,12 +81,13 @@ def get_service_banner(ip, port, sock):
         # Jika Go mengembalikan Error (Port Tertutup / Timeout)
         else:
             return f"{C.ERROR} CLOSED " + STATUS_CLOSED, None
-
     except KeyboardInterrupt:
         return
     except Exception as e:
-        smf.printd("Global error service", e, level="ERROR")
+        smf.printf("[!] Error =>", e)
         return f"{C.ERROR} ERROR ", None
+    finally:
+        sock.Close()
 
 
 REQUIRED_OPTIONS = {"IP": ""}
@@ -171,9 +172,8 @@ def execute(options, net):
     smf.printf(f"{C.HEADER} SCANNING: PORT & VERSION in {target_ip}")
     MAX_TOTAL_WIDTH = 30
     try:
-        sock = net.Socket()
         for port in ports_to_check:
-            status_line, banner = get_service_banner(target_ip, port, sock)
+            status_line, banner = get_service_banner(target_ip, port, net)
             service_name = port_names.get(port, "Unknown Service")
 
             port_info_string = f"  Port {port} ({service_name})"
@@ -200,5 +200,3 @@ def execute(options, net):
     except Exception as e:
         smf.printf(f"{C.ERROR}[!] ERROR =>", e, file=sys.stderr, flush=True)
         smf.printd("Global Exception", e, level="ERROR")
-    finally:
-        sock.close()
