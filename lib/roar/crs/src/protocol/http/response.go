@@ -9,11 +9,11 @@ import (
 	ctls "github.com/StormWorld0/storm-framework/lib/roar/crs/src/tls"
 )
 
-const MaxResponseBodySize = 2 << 20 // 2MB Hard Limit mencegah Memory Exhaustion/DoS
+const MaxResponseBodySize = 2 << 20 // 2MB Hard Limit prevents Memory Exhaustion/DoS
 
 func BuildErrorResponse(status string, engine string, message string) packet.ResponsePacket {
 	switch status {
-    case "ERROR", "TIMEOUT":
+    case "H-ERROR", "H-TIMEOUT":
 	    return packet.ResponsePacket{
 		    Status:  status,
 		    Message: "[" + engine + "] " + message,
@@ -26,7 +26,7 @@ func BuildErrorResponse(status string, engine string, message string) packet.Res
     }
 }
 
-// BuildSuccessResponse menangani normalisasi output untuk kedua engine
+// BuildSuccessResponse handles output normalization for both engines
 func BuildSuccessResponse(resp *http.Response, infoTLS bool, engine string) packet.ResponsePacket {
 	bodyBytes, _ := io.ReadAll(io.LimitReader(resp.Body, MaxResponseBodySize))
 
@@ -35,7 +35,7 @@ func BuildSuccessResponse(resp *http.Response, infoTLS bool, engine string) pack
 		if len(v) == 1 {
 			headers[k] = v[0]
 		} else {
-			// Mengatasi slice duplikasi dari raw engine
+			// Overcoming duplicate slices from raw engine
 			headers[k] = strings.Join(v, ", ")
 		}
 	}
@@ -55,8 +55,5 @@ func BuildSuccessResponse(resp *http.Response, infoTLS bool, engine string) pack
 		meta["info_tls"] = ctls.ExtractTLSInfoFromState(resp.TLS)
 	}
 
-	return packet.ResponsePacket{
-		Status: "SUCCESS",
-		Data:   meta,
-	}
+	return packet.ResponsePacket{Status: "SUCCESS", Data:   meta}
 }
