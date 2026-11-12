@@ -58,7 +58,7 @@ class CRSD:
                 text=True,
                 bufsize=1,
             )
-            pid.prepare(cls._process.pid)
+            pid.prepare("crs_engine", cls._process.pid)
 
             # Turn on Background Reader
             if cls._reader_thread is None or not cls._reader_thread.is_alive():
@@ -245,11 +245,13 @@ class CRSD:
                 pass
             return {"status": "INTER", "message": "KeyboardInterrupt detected"}, {}
         except (BrokenPipeError, OSError):
+            pid.reap_zombie()
             return {
                 "status": "BROKEN",
                 "message": "(CRS.send) experienced BrokenPipe",
             }, {}
         except Exception as e:
+            pid.reap_zombie()
             smf.printd("Error send IPC CRS", e, level="ERROR")
             return {"status": "ERROR", "message": str(e)}, {}
         finally:
