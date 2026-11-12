@@ -44,7 +44,7 @@ class ExceptionManager:
                 _message: str = resp.get("message", "UNKNOWN")
                 _msg_id: str = resp.get("msg_id", "UNKNOWN")
 
-                if _status not in cls.EXCEPTION_MAP.get(_status):
+                if not cls.EXCEPTION_MAP.get(_status):
                     continue
 
                 smf.printd(
@@ -81,8 +81,7 @@ class ExceptionManager:
 
         with cls._local_lock:
             if cls._error_holder:
-                err = cls._error_holder.pop(0)
-                raise err
+                raise cls._error_holder.pop(0)
 
 
 # Consumer Worker Thread
