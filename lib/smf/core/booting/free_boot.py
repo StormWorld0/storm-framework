@@ -23,7 +23,6 @@ def sysboot():
         args.exc_type, args.exc_value, args.exc_traceback
     )
     try:
-        count = 0
         with SpinBoot():
             # Check core startup security
             smf.printd("System synchronization is running", level="INFO")
@@ -52,18 +51,6 @@ def sysboot():
             if (config_path := Path.home() / ".smf" / "database.yml").exists():
                 db = DBManager(config_path)
                 db.current_workspace = "default"
-
-            # Checking the environment
-            if not is_this_docker():
-                count += 5
-                smf.printd("Integrity verification is running", level="INFO")
-                run_verif()
-
-        # Countdown to pause and start
-        for i in range(count, 0, -1):
-            sys.stdout.write(f"\r[✓] Successfully Starting Storm Framework [{i}]")
-            sys.stdout.flush()
-            time.sleep(1)
     except KeyboardInterrupt:
         smf.printf("\n[*] Booting successfully stopped.")
         sys.exit(2)
