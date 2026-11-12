@@ -14,7 +14,7 @@ def run_restart(options):
     # save old variables
     svch.session(options)
     # Kill the active process
-    pid.cleanup(1.0)
+    pid.cleanall(1.0)
     # Restart the storm
     executable = sys.argv[0]
     args = sys.argv
