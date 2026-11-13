@@ -228,6 +228,12 @@ const (
 	ni_Nofqdn      = 0x10 // Return only hostname without domain (before first dot)
 )
 
+var (
+	serviceMapOnce sync.Once
+	serviceMap map[int]map[string]string
+	serviceErr error
+)
+
 func loadService(path string) (map[int]map[string]string, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -317,6 +323,8 @@ func getNameInfo(ctx *ExecutionContext) (string, string, error) {
 	}
 
 	// -- Service / Port --
+	// Set default fallback global
+	serv = portFinal
 	if flags&ni_Numericserv != 0 {
 		serv = portFinal
 	} else {
@@ -324,25 +332,24 @@ func getNameInfo(ctx *ExecutionContext) (string, string, error) {
 		if flags&ni_Dgram != 0 {
 			protocol = "udp"
 		}
-
-		var serviceMapOnce sync.Once
-		var serviceMap map[int]map[string]string
-		var serviceErr error
 		
 		serviceMapOnce.Do(func() {
 			serviceMap, serviceErr = loadService("/etc/services")
 		})
+		
 		if serviceErr != nil {
 			serv = portFinal // Fallback to port number
 		} 
-		
-		portNum, _ := strconv.Atoi(portFinal)
-		if proto, ok := serviceMap[portNum]; ok {
-			if name, ok := proto[protocol]; ok {
-				serv = name
+
+		if serviceErr == nil {
+		    if portNum, err := strconv.Atoi(portFinal); err == nil {
+		        if proto, ok := serviceMap[portNum]; ok {
+			        if name, ok := proto[protocol]; ok {
+				        serv = name
+			        }
+		        }
 			}
 		}
 	}
-
 	return host, serv, nil
 }
