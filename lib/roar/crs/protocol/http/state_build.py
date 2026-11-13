@@ -103,7 +103,7 @@ class IPCPayloadBuilder:
             encode = "bytes"
 
         return {
-            "primitive": "HTTP_SEND",
+            "primitive": "HTTP",
             "method": state._method,
             "url": state._url,
             "headers": state._headers or {},
