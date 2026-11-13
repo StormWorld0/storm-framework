@@ -31,7 +31,7 @@ type RequestPacket struct {
 	CltFD         int               `json:"client-fd,omitempty"` // Client FD Socket Accept
 
 	// Standard parameters
-	Host          string            `json:"host,omitempty"`      // URL / IP / Domain
+	Host          *string           `json:"host,omitempty"`      // URL / IP / Domain
 	Ip            string            `json:"ip,omitempty"`        // 127.0.0.1
 	Port          *int              `json:"port,omitempty"`      // PORT 1 - 65535
 	
