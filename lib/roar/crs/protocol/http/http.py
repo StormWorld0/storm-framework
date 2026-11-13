@@ -47,21 +47,6 @@ class HTTPClient(HTTPState, HTTPMethod):
 
         return self
 
-    def setlimit(self, ratelimit: int, frate: int | None = None, **kwargs):
-        """Save ratelimiting value with type and bound checks"""
-        limits = {"ratelimit": ratelimit, "fixed_ratelimit": frate}
-        for k, v in limits.items():
-            if v is not None:
-                if not isinstance(v, int):
-                    raise TypeError(
-                        f"Limit '{k}' must be an integer, got {type(v).__name__}"
-                    )
-                if v < 0:
-                    raise ValueError(f"Limit '{k}' cannot be negative")
-
-                setattr(self, f"_{k}", v)
-        return self
-
     def timeout(self, value: float, **kwargs):
         """Timeout value settings (Coerces int to float safely)"""
         v = float(value)
