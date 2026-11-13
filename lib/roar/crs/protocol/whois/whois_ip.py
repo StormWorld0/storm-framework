@@ -238,21 +238,16 @@ class WhoisIP:
     def whois(
         ip: str,
         timeout: float = 3.0,
-        rl: int = 150,
-        frl: int = 10,
-        con: int = 0,
         **kwargs,
     ) -> WHOISResponse:
         """Menyiapkan packet WHOIS_SEND"""
 
         packet = {
-            "primitive": "WHOIS_SEND",
+            "primitive": "WHOIS",
             "mode": "IPWhois",
             "ip": ip,
             "timeout": timeout,
-            "ratelimit": rl,
-            "frate": frl,
-            "goroutine": con,
+            "goroutine": 1,
         }
 
         if kwargs:
@@ -269,7 +264,6 @@ class WhoisIP:
             push_to_queue(db_payload)
         except Exception as e:
             smf.printd("Failed to push WHOISIP payload to queue", e, level="ERROR")
-
         return res
 
 
