@@ -1,6 +1,6 @@
 import base64
-
-from typing import Dict, Any, Optional
+import socket
+from typing import Dict, Any, Optional, List, Tuple, Union
 from .metadata import TLSMetadata
 
 
@@ -83,23 +83,31 @@ class SocketResponse:
         ip, port = val.rsplit(":", 1)
         return (ip, int(port))
 
+    SockAddr = Union[Tuple[str, int], Tuple[str, int, int, int]]
     @property
-    def addrinfo(self) -> list[tuple[int, int, int, str, tuple[str, int]]]:
+    def addrinfo(self) -> List[Tuple[int, int, int, str, SockAddr]]:
         """Mengonversi data 'results' dari getaddrinfo ke daftar tuple standar"""
         if self.status != "SUCCESS":
             return []
 
         results = self._data.get("results", [])
-        parsed = []
+        parsed: List[Tuple[int, int, int, str, SockAddr]] = []
+        
         for item in results:
             family = item.get("family", 0)
             socktype = item.get("socktype", 0)
             protocol = item.get("protocol", 0)
             canonname = item.get("canonname", "")
             ip = item.get("ip", "")
-            port = item.get("port", 0)
-
-            sockaddr = (ip, int(port))
+            port = int(item.get("port", 0))
+            
+            if family == socket.AF_INET6:
+                flow = item.get("flowinfo", 0)
+                scope = item.get("scope_id", 0)
+                sockaddr: SockAddr = (ip, port, flow, scope)
+            else:
+                sockaddr = (ip, port)
+            
             parsed.append((family, socktype, protocol, canonname, sockaddr))
         return parsed
 
