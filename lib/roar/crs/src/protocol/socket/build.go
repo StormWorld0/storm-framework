@@ -11,21 +11,33 @@ import (
 )
 
 func BuildTarget(host *string, port *int) (*string, *int, error) {
+	if host == nil {
+		return nil, nil, fmt.Errorf("Host pointer cannot be nil")
+	}
+	
 	rawHost := strings.TrimSpace(*host)
 	if rawHost == "" {
-		return nil, nil, fmt.Errorf("target host cannot be empty")
+		return nil, nil, fmt.Errorf("Host cannot be empty")
 	}
 
 	// Tangani Unix Domain Socket secara eksplisit
-	if strings.HasPrefix(rawHost, "unix://") || strings.HasPrefix(rawHost, "/") {
-		cleanPath := strings.TrimPrefix(rawHost, "unix://")
-		return &cleanPath, nil, nil
+	if strings.HasPrefix(rawHost, "unix://") || 
+	   strings.HasPrefix(rawHost, "/") || 
+	   strings.HasPrefix(rawHost, "./") || 
+	   strings.HasPrefix(rawHost, "../") {
+	 cleanPath := strings.TrimPrefix(rawHost, "unix://")
+	 return &cleanPath, nil, nil
 	}
-
-	// Berikan dummy scheme jika tidak ada, agar url.Parse tidak gagal
+	
+	// Normalisasi target untuk url.Parse
 	parseTarget := rawHost
 	if !strings.Contains(parseTarget, "://") {
-		parseTarget = "tcp://" + parseTarget
+		// Deteksi apakah ini alamat IPv6 mentah (memiliki > 1 titik dua dan belum dibungkus '[' ')')
+		if strings.Count(parseTarget, ":") > 1 && !strings.HasPrefix(parseTarget, "[") {
+			parseTarget = "tcp://[" + parseTarget + "]"
+		} else {
+			parseTarget = "tcp://" + parseTarget
+		}
 	}
 
 	u, err := url.Parse(parseTarget)
