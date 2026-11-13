@@ -83,16 +83,14 @@ class SocketResponse:
         ip, port = val.rsplit(":", 1)
         return (ip, int(port))
 
-    SockAddr = Union[Tuple[str, int], Tuple[str, int, int, int]]
-
     @property
-    def addrinfo(self) -> List[Tuple[int, int, int, str, SockAddr]]:
+    def addrinfo(self) -> list[tuple]:
         """Mengonversi data 'results' dari getaddrinfo ke daftar tuple standar"""
         if self.status != "SUCCESS":
             return []
 
         results = self._data.get("results", [])
-        parsed: List[Tuple[int, int, int, str, SockAddr]] = []
+        parsed = []
 
         for item in results:
             family = item.get("family", 0)
@@ -105,7 +103,7 @@ class SocketResponse:
             if family == socket.AF_INET6:
                 flow = item.get("flowinfo", 0)
                 scope = item.get("scope_id", 0)
-                sockaddr: SockAddr = (ip, port, flow, scope)
+                sockaddr = (ip, port, flow, scope)
             else:
                 sockaddr = (ip, port)
 
