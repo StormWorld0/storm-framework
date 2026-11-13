@@ -254,21 +254,16 @@ class WhoisDomain:
     def whois(
         domain: str,
         timeout: float = 3.0,
-        rl: int = 150,
-        frl: int = 10,
-        con: int = 0,
         **kwargs,
     ) -> WHOISResponse:
         """Menyiapkan packet WHOIS_SEND"""
 
         packet = {
-            "primitive": "WHOIS_SEND",
+            "primitive": "WHOIS",
             "mode": "DOMWhois",
             "domain": domain,
             "timeout": timeout,
-            "ratelimit": rl,
-            "frate": frl,
-            "goroutine": con,
+            "goroutine": 1,
         }
 
         if kwargs:
@@ -285,7 +280,6 @@ class WhoisDomain:
             push_to_queue(db_payload)
         except Exception as e:
             smf.printd("Failed to push WHOISD payload to queue", e, level="ERROR")
-
         return res
 
 
