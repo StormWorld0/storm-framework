@@ -12,7 +12,7 @@ import (
 
 type ExecutionContext struct {
 	Req         packet.RequestPacket
-	Host        string
+	Host        *string
 	Mode        string
 	Timeout     time.Duration
 	StartTime   time.Time
@@ -54,7 +54,7 @@ func (ctx *ExecutionContext) LoadSessionState() error {
 	}
 
 	if hostVal, ok := utils.SessionHosts.Load(ctx.Req.SessionID); ok {
-		ctx.Host = hostVal.(string) // Load the saved host
+		ctx.Host = hostVal.(*string) // Load the saved host
 	}
 
 	val, ok := utils.ActiveSessions.Load(ctx.Req.SessionID)
