@@ -46,17 +46,6 @@ class DNSResolver(DNState):
         self.protocol = "udp"
         return self
 
-    def concurrency(self, con: int, **kwargs):
-        """store Concurrency values"""
-        self.goroutine = con
-        return self
-
-    def setlimit(self, ratelimit: int, frate: int, **kwargs):
-        """set limit options"""
-        self.ratelimit = ratelimit
-        self.fixed_ratelimit = frate
-        return self
-
     def timeout(self, value: float, **kwargs):
         """Stores global timeout state"""
         self._timeout = value
