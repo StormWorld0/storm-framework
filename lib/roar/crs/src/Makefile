@@ -16,7 +16,7 @@ all: $(TARGET)
 
 $(TARGET): $(ALL_SRCS)
 	@mkdir -p "$(OUT)"
-	@go build -o "$(TARGET)" "$(MAIN_DIR)"
+	@CGO_ENABLED=1 go build -o "$(TARGET)" "$(MAIN_DIR)"
 
 clean:
 	rm -rf "$(OUT)"
