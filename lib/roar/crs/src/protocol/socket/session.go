@@ -84,9 +84,9 @@ func (ctx *ExecutionContext) SaveSessionCFD(val int) {
 }
 
 // Save Host taken from Connect
-func (ctx *ExecutionContext) SaveSessionHost(host string) {
+func (ctx *ExecutionContext) SaveSessionHost(host *string) {
 	if ctx.Req.SessionID != "" && ctx.Req.KeepAlive {
-		utils.SessionHosts.Store(ctx.Req.SessionID, host)
+		utils.SessionHosts.Store(ctx.Req.SessionID, *host)
 	}
 }
 
