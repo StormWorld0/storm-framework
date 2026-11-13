@@ -163,7 +163,7 @@ func getAddrInfo(ctx *ExecutionContext) (string, string, []map[string]interface{
 		}
 	}
 
-	hasValidPort := targetPort != nil && targetPort != 0
+	hasValidPort := targetPort != nil && *targetPort != 0
 
 	// SockType & Protocol Inference Matrix
 	// POSIX getaddrinfo fills in concreted socktype & protocol if hints is 0
@@ -190,6 +190,11 @@ func getAddrInfo(ctx *ExecutionContext) (string, string, []map[string]interface{
 			resFamily = unix.AF_INET6
 		}
 
+		var portVal interface{} = nil
+        if targetPort != nil {
+            portVal = *targetPort
+        }
+
 		for _, combo := range combinations {
 			resItem := map[string]interface{}{
 				"family":   int(resFamily),
@@ -197,7 +202,7 @@ func getAddrInfo(ctx *ExecutionContext) (string, string, []map[string]interface{
 				"protocol": combo.Protocol,
 				"flags":    int(flags),
 				"ip":       ip.String(),
-				"port":     targetPort,
+				"port":     portVal,
 			}
 			if canonName != "" {
 				resItem["canonname"] = canonName
