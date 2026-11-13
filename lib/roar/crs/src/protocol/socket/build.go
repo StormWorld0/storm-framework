@@ -10,8 +10,8 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func BuildTarget(host string, port *int) (*string, *int, error) {
-	rawHost := strings.TrimSpace(host)
+func BuildTarget(host *string, port *int) (*string, *int, error) {
+	rawHost := strings.TrimSpace(*host)
 	if rawHost == "" {
 		return nil, nil, fmt.Errorf("target host cannot be empty")
 	}
