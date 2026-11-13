@@ -54,7 +54,12 @@ func (ctx *ExecutionContext) LoadSessionState() error {
 	}
 
 	if hostVal, ok := utils.SessionHosts.Load(ctx.Req.SessionID); ok {
-		ctx.Host = hostVal.(*string) // Load the saved host
+		switch h := hostVal.(type) {
+		case *string:
+			ctx.Host = h
+		case string:
+			ctx.Host = &h
+		}
 	}
 
 	val, ok := utils.ActiveSessions.Load(ctx.Req.SessionID)
@@ -86,7 +91,7 @@ func (ctx *ExecutionContext) SaveSessionCFD(val int) {
 // Save Host taken from Connect
 func (ctx *ExecutionContext) SaveSessionHost(host *string) {
 	if ctx.Req.SessionID != "" && ctx.Req.KeepAlive {
-		utils.SessionHosts.Store(ctx.Req.SessionID, *host)
+		utils.SessionHosts.Store(ctx.Req.SessionID, host)
 	}
 }
 
