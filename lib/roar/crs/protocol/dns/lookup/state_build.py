@@ -3,7 +3,6 @@
 # -- Author zxelzy
 
 import smf
-
 from apps.utility.colors import CC
 
 
@@ -47,7 +46,7 @@ class IPCPayloadBuilder:
     def build(state: DNState) -> dict:
 
         return {
-            "primitive": "DNS_SEND",
+            "primitive": "DNS",
             "mode": "DNSLookup",
             "domain": state.domains,
             "type": state.types,
