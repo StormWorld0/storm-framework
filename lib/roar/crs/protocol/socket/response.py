@@ -84,6 +84,7 @@ class SocketResponse:
         return (ip, int(port))
 
     SockAddr = Union[Tuple[str, int], Tuple[str, int, int, int]]
+
     @property
     def addrinfo(self) -> List[Tuple[int, int, int, str, SockAddr]]:
         """Mengonversi data 'results' dari getaddrinfo ke daftar tuple standar"""
@@ -92,7 +93,7 @@ class SocketResponse:
 
         results = self._data.get("results", [])
         parsed: List[Tuple[int, int, int, str, SockAddr]] = []
-        
+
         for item in results:
             family = item.get("family", 0)
             socktype = item.get("socktype", 0)
@@ -100,14 +101,14 @@ class SocketResponse:
             canonname = item.get("canonname", "")
             ip = item.get("ip", "")
             port = int(item.get("port", 0))
-            
+
             if family == socket.AF_INET6:
                 flow = item.get("flowinfo", 0)
                 scope = item.get("scope_id", 0)
                 sockaddr: SockAddr = (ip, port, flow, scope)
             else:
                 sockaddr = (ip, port)
-            
+
             parsed.append((family, socktype, protocol, canonname, sockaddr))
         return parsed
 
