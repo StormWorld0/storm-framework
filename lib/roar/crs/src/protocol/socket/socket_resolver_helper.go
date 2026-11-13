@@ -34,12 +34,16 @@ func resolveCanonicalName(ctx context.Context, host string, flags int) string {
 	return cname
 }
 
-func resolveAddrCombination(sockType, protocol int) ([]addrResult, error) {
+func resolveAddrCombination(sockType int, protocol int, hasPort bool) ([]addrResult, error) {
 	switch {
 	case sockType == 0 && protocol == 0:
+		if hasPort {
+			return []addrResult{
+                {SockType: unix.SOCK_STREAM, Protocol: unix.IPPROTO_TCP},
+            }, nil
+		}
 		return []addrResult{
-			{SockType: unix.SOCK_STREAM, Protocol: unix.IPPROTO_TCP},
-			{SockType: unix.SOCK_DGRAM, Protocol: unix.IPPROTO_UDP},
+			{SockType: 0, Protocol: 0},
 		}, nil
 
 	case sockType == unix.SOCK_STREAM && protocol == 0:
@@ -91,12 +95,12 @@ func getAddrInfo(ctx *ExecutionContext) (string, string, []map[string]interface{
 	protocol := ParseProtocol(ctx.Req.SProto)
 	flags := ParseFlags(ctx.Req.Flags)
 
-	var targetPort int
+	var targetPort *int
 
 	// Port Resolution (Service) with AI_NUMERICSERV & Dynamic Transport Protocol
 	if portFinal != "" {
 		if p, err := strconv.Atoi(portFinal); err == nil {
-			targetPort = p
+			targetPort = &p
 		} else {
 			// AI_NUMERICSERV evaluation: Abort if input is not a number
 			if (flags & aiNumericServ) != 0 {
@@ -110,7 +114,7 @@ func getAddrInfo(ctx *ExecutionContext) (string, string, []map[string]interface{
 			}
 
 			if p, err := net.LookupPort(lookupProto, portFinal); err == nil {
-				targetPort = p
+				targetPort = &p
 			} else {
 				return "", "", nil, 0, fmt.Errorf("Servname not supported for ai_socktype")
 			}
@@ -159,9 +163,11 @@ func getAddrInfo(ctx *ExecutionContext) (string, string, []map[string]interface{
 		}
 	}
 
+	hasValidPort := targetPort != nil && targetPort != 0
+
 	// SockType & Protocol Inference Matrix
 	// POSIX getaddrinfo fills in concreted socktype & protocol if hints is 0
-	combinations, err := resolveAddrCombination(sockType, protocol)
+	combinations, err := resolveAddrCombination(sockType, protocol, hasValidPort)
     if err != nil {
 	    return "", "", nil, 0, fmt.Errorf("getaddrinfo: %w", err)
     }
