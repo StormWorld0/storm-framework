@@ -166,7 +166,7 @@ class IPCPayloadBuilder:
             data_str = base64.b64encode(data_bytes).decode("utf-8")
 
         return {
-            "primitive": "SOCKET_SEND",
+            "primitive": "SOCKET",
             "host": host if host is not None else state.host,
             "port": int(port) if port is not None else state.port,
             "data": data_str,
