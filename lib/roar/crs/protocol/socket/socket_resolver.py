@@ -52,7 +52,7 @@ class SocketResolver:
         host, port = address[:2]
         flowinfo = address[2] if len(address) == 4 else None
         scopeid = address[3] if len(address) == 4 else None
-        if flags not None:
+        if flags is not None:
             flags = parse_flags(flags)
         
         packet = IPCPayloadBuilder.build(
