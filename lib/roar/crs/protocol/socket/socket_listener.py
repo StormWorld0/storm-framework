@@ -16,8 +16,8 @@ class ClientListener(ListenInspect, ListenFD):
 
     def sendall(
         self,
-        data: str | bytes,
-        flags: str | int = None,
+        data: bytes,
+        flags: int | None = None,
         **kwargs,
     ) -> SocketResponse:
         """Sending all data"""
@@ -38,8 +38,8 @@ class ClientListener(ListenInspect, ListenFD):
 
     def send(
         self,
-        data: str | bytes,
-        flags: str | int = None,
+        data: bytes,
+        flags: int | None = None,
         **kwargs,
     ) -> SocketResponse:
         """Sending data"""
@@ -61,7 +61,7 @@ class ClientListener(ListenInspect, ListenFD):
     def recv(
         self,
         buffer: int = None,
-        flags: str | int = None,
+        flags: int | None = None,
         **kwargs,
     ) -> SocketResponse:
         """Taking Buffer"""
@@ -82,9 +82,9 @@ class ClientListener(ListenInspect, ListenFD):
 
     def sendto(
         self,
-        data: str | bytes,
+        data: bytes,
         address: tuple[str, str | int],
-        flags: str | int = None,
+        flags: int | None = None,
         **kwargs,
     ) -> SocketResponse:
         """Send datagram along with Host & Port"""
@@ -110,7 +110,7 @@ class ClientListener(ListenInspect, ListenFD):
     def recvfrom(
         self,
         buffer: int,
-        flags: str | int = None,
+        flags: int | None = None,
         **kwargs,
     ) -> SocketResponse:
         """Taking Buffer"""
