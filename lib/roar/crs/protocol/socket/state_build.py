@@ -60,6 +60,8 @@ class SocketState:
         cert: str = "",
         key: str = "",
         ca: str = "",
+        flowinfo: int = 0,
+        scopeid: int = 0,
         con: int = 1,
         sock_fd: int = -1,
         clt_fd: int = -1,
@@ -85,6 +87,10 @@ class SocketState:
         self.value = int(value)
         self.flag = flags
         self.how = how
+
+        # IPv6 by getnameinfo
+        self.flowinfo = flowinfo
+        self.scopeid = scopeid
 
         # Used by listen
         self.backlog = backlog
@@ -151,6 +157,8 @@ class IPCPayloadBuilder:
         cert: str = None,
         key: str = None,
         ca: str = None,
+        flowinfo: int = None,
+        scopeid: int = None,
         buffer: int = None,
         timeout: float = None,
         ratelimit: int = None,
@@ -195,5 +203,7 @@ class IPCPayloadBuilder:
             "tls-cert": cert,
             "tls-key": key,
             "tls-ca": ca,
+            "flowinfo": int(flowinfo) if flowinfo is not None else state.flowinfo,
+            "scope_id": int(scopeid) if scopeid is not None else state.scopeid,
             "goroutine": state.con,
         }
