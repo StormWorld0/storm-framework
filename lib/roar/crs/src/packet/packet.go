@@ -28,6 +28,9 @@ type RequestPacket struct {
 	Flags         any               `json:"flags,omitempty"`     // MSG_OOB, MSG_MORE, ...
 	How           any               `json:"how,omitempty"`       // SHUT_RDWR, SHUT_WR, SHUT_RD
 
+	FlowInfo      int               `json:"flowinfo,omitempty"`  // IPv6
+	ScopeID       int               `json:"scope_id,omitempty"`  // IPv6
+
 	CltFD         int               `json:"client-fd,omitempty"` // Client FD Socket Accept
 
 	// Standard parameters
