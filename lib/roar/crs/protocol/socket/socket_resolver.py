@@ -20,6 +20,8 @@ class SocketResolver:
         self._ensure_open("getaddrinfo")
         if is_tuple2(address):
             host, port = address
+        if flags is not None:
+            flags = parse_flags(flags)
 
         packet = IPCPayloadBuilder.build(
             state=self,
