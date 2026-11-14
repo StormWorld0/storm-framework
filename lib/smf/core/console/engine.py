@@ -18,7 +18,6 @@ from lib.roar.crs import net_api as api
 from lib.smf.postgresql import DBManager
 from lib.smf.postgresql.db_api import db as global_db
 from .ignore import IGNORED_SYSTEM_COMMANDS
-
 from typing import Any, Optional
 from dataclasses import dataclass, field
 
@@ -59,7 +58,7 @@ class Context:
 
     def __post_init__(self) -> None:
         smf.printd("CONTEXT PLUGIN", self.plugin, level="DEBUG")
-        smf.printd("CONTEXT RUNTIME", self.net, level="DEBUG")
+        smf.printd("CONTEXT NETWORK", self.net, level="DEBUG")
         smf.printd("CONTEXT DATABASE", self.db, level="DEBUG")
 
     def _execute_external(self, cmd: str, args: list[str]) -> bool:
@@ -105,16 +104,14 @@ class Context:
     def console(self, cmd: str, args: list[str]) -> None:
         """
         This method is the gateway to the handler.
-        Pipeline: Input -> Core (self) -> Handler -> Commands
+        Pipeline: Input -> Console -> Handler -> Commands
         """
-        # Log all to internal
-        smf.printd("Capture cmd dispatch", cmd, level="DEBUG")
-        smf.printd("Capture dispatch args", args, level="DEBUG")
+        # Log all to smflogd
+        smf.printd("Capture console", f"{cmd} | {args}", level="DEBUG")
 
         # Pass 'self' (this context object itself) to the handler.
         # ex.execute now does not need to return a new dict,
         handled = i.execute(cmd, args, self)
-
         if not handled:
             success = self._execute_external(cmd, args)
             if not success:
