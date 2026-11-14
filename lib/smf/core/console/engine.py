@@ -13,10 +13,12 @@ from apps.utility.colors import CC
 from apps.utility.helper import get_home
 from data.option import default_options
 from lib.console import handler as i
+from lib.smf.base.logger import Logger
 from lib.roar.plugin_api import plugin
 from lib.roar.crs import net_api as api
 from lib.smf.postgresql import DBManager
 from lib.smf.postgresql.db_api import db as global_db
+
 from .ignore import IGNORED_SYSTEM_COMMANDS
 from typing import Any, Optional
 from dataclasses import dataclass, field
@@ -55,6 +57,7 @@ class Context:
     plugin: Any = plugin
     net: NetContext = field(default_factory=NetContext)
     db: Optional[DBManager] = global_db
+    logger: any = Logger()
 
     def __post_init__(self) -> None:
         smf.printd("CONTEXT PLUGIN", self.plugin, level="DEBUG")
