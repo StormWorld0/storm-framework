@@ -12,7 +12,7 @@ import subprocess
 from apps.utility.colors import CC
 from apps.utility.helper import get_home
 from data.option import default_options
-from lib.core import handler as i
+from lib.console import handler as i
 from lib.roar.plugin_api import plugin
 from lib.roar.crs import net_api as api
 from lib.smf.postgresql import DBManager
