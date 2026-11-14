@@ -1,6 +1,6 @@
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
-from .validate import is_tuple2
+from .validate import is_tuple2, parse_flags
 from ...endpoint import CRS
 
 
@@ -9,12 +9,15 @@ class SocketIO:
 
     def sendall(
         self,
-        data: str | bytes,
-        flags: str | int = None,
+        data: bytes,
+        flags: int | None = None,
         **kwargs,
     ) -> SocketResponse:
         """Sending all data"""
         self._ensure_open("sendall")
+        if flags is not None:
+            flags = parse_flags(flags)
+            
         packet = IPCPayloadBuilder.build(
             state=self,
             data=data,
@@ -39,12 +42,15 @@ class SocketIO:
 
     def send(
         self,
-        data: str | bytes,
-        flags: str | int = None,
+        data: bytes,
+        flags: int | None = None,
         **kwargs,
     ) -> SocketResponse:
         """Sending data"""
         self._ensure_open("send")
+        if flags is not None:
+            flags = parse_flags(flags)
+            
         packet = IPCPayloadBuilder.build(
             state=self,
             data=data,
@@ -58,11 +64,14 @@ class SocketIO:
     def recv(
         self,
         buffer: int,
-        flags: str | int = None,
+        flags: int | None = None,
         **kwargs,
     ) -> SocketResponse:
         """Taking Buffer"""
         self._ensure_open("recv")
+        if flags is not None:
+            flags = parse_flags(flags)
+            
         packet = IPCPayloadBuilder.build(
             state=self,
             buffer=buffer,
@@ -75,15 +84,17 @@ class SocketIO:
 
     def sendto(
         self,
-        data: str | bytes,
+        data: bytes,
         address: tuple[str, str | int],
-        flags: str | int = None,
+        flags: int | None = None,
         **kwargs,
     ) -> SocketResponse:
         """Send datagram along with Host & Port"""
         self._ensure_open("sendto")
         if is_tuple2(address):
             host, port = address
+        if flags is not None:
+            flags = parse_flags(flags)
 
         packet = IPCPayloadBuilder.build(
             state=self,
@@ -100,11 +111,14 @@ class SocketIO:
     def recvfrom(
         self,
         buffer: int,
-        flags: str | int = None,
+        flags: int | None = None,
         **kwargs,
     ) -> SocketResponse:
         """Taking Buffer"""
         self._ensure_open("recvfrom")
+        if flags is not None:
+            flags = parse_flags(flags)
+            
         packet = IPCPayloadBuilder.build(
             state=self,
             buffer=buffer,
