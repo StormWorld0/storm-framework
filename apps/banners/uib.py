@@ -2,15 +2,15 @@ import os
 import smf
 import random
 import importlib
-
 from rootmap import ROOT
 
 
 def banner_live():
-    banner_dir = os.path.join(ROOT, "lib", "ui", "console")
+    banner_dir = os.path.join(ROOT, "lib", "ui", "banner")
     try:
         if not os.path.exists(banner_dir):
             return f"[!] Folder Not Found => {banner_dir}"
+            
         all_files = [
             f for f in os.listdir(banner_dir) if f.endswith(".py") and f != "__init__.py"
         ]
@@ -37,4 +37,4 @@ def banner_live():
         return result
     except Exception as e:
         smf.printd("Live banner failed to load", e, level="ERROR")
-        return
+        return None
