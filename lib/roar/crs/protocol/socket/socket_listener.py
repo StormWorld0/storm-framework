@@ -2,7 +2,7 @@ from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
 from .socket_inspect import ListenInspect
 from .socket_fd import ListenFD
-from .validate import is_tuple2
+from .validate import is_tuple2, parse_flags
 from ...endpoint import CRS
 
 
@@ -22,6 +22,9 @@ class ClientListener(ListenInspect, ListenFD):
     ) -> SocketResponse:
         """Sending all data"""
         self.state._ensure_open("sendall")
+        if flags is not None:
+            flags = parse_flags(flags)
+            
         packet = IPCPayloadBuilder.build(
             state=self.state,
             cfd=self._cfd,
@@ -41,6 +44,9 @@ class ClientListener(ListenInspect, ListenFD):
     ) -> SocketResponse:
         """Sending data"""
         self.state._ensure_open("send")
+        if flags is not None:
+            flags = parse_flags(flags)
+            
         packet = IPCPayloadBuilder.build(
             state=self.state,
             cfd=self._cfd,
@@ -60,6 +66,9 @@ class ClientListener(ListenInspect, ListenFD):
     ) -> SocketResponse:
         """Taking Buffer"""
         self.state._ensure_open("recv")
+        if flags is not None:
+            flags = parse_flags(flags)
+            
         packet = IPCPayloadBuilder.build(
             state=self.state,
             cfd=self._cfd,
@@ -82,6 +91,8 @@ class ClientListener(ListenInspect, ListenFD):
         self.state._ensure_open("sendto")
         if is_tuple2(address):
             host, port = address
+        if flags is not None:
+            flags = parse_flags(flags)
 
         packet = IPCPayloadBuilder.build(
             state=self.state,
@@ -104,6 +115,9 @@ class ClientListener(ListenInspect, ListenFD):
     ) -> SocketResponse:
         """Taking Buffer"""
         self.state._ensure_open("recvfrom")
+        if flags is not None:
+            flags = parse_flags(flags)
+            
         packet = IPCPayloadBuilder.build(
             state=self.state,
             cfd=self._cfd,
