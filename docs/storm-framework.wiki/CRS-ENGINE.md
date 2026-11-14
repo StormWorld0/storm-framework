@@ -384,13 +384,15 @@ sock.getaddrinfo(address, family, type, proto, flags)
 - **proto:** Protocols such as: `sock.IPPROTO_IP`, etc. | Default 0 = Determined by Kernel UNIX
 - **flags:** MSG_* such as: `sock.MSG_OOB`, `sock.MSG_MORE`, etc. | Optional Default 0.
 
-**Response**: Getaddrinfo directly returns a `list[tuple[int, int, int, str, tuple[str, int]]]` response of 5 elements: `family, type, proto, canonname, sockaddr. Whether IPv4 or IPv6 sockaddr will still return 2 elements, because it does not provide flowinfo and scope_id.
+**Response**: This function can return IPv4 with the format: `list[tuple[int, int, int, str, tuple[str, int]]]` or IPv6 with the format: `list[tuple[int, int, int, str, tuple[str, int, int, int]]]` and the order is family, socktype, protocol, cannonname, sockaddr.
 
 
 **Get Name Info**
 ```python
-sock.getnameinfo(address)
+sock.getnameinfo(address, flags)
 ```
+- **address:** You can use two host and port elements, or four host, port, flowinfo, and scopeid elements. We recommend using only two host and port elements for future compatibility.
+
 **Response:** Returns a `tuple[str, str]` of (host, serv).
 
 
@@ -690,7 +692,6 @@ resp = sock.getaddrinfo(...)
 
 # The response from getaddrinfo returns a `list[tuple]` with 5 elements
 # that is: [0]family, [1]socktype, [2]protocol, [3]canonname, [4]sockaddr
-for x in resp: # or (for x in resp:)
 ```
 
 - **Response**
