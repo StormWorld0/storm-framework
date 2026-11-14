@@ -10,7 +10,7 @@ def banner_live():
     try:
         if not os.path.exists(banner_dir):
             return f"[!] Folder Not Found => {banner_dir}"
-            
+
         all_files = [
             f for f in os.listdir(banner_dir) if f.endswith(".py") and f != "__init__.py"
         ]
