@@ -1,4 +1,3 @@
-import smf
 from .logger_manager import LoggerManager as lm
 
 
@@ -16,4 +15,3 @@ class Logger:
 
     def print_error(self, label, *args) -> None:
         lm.error(label, *args)
-        
