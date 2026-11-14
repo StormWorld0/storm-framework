@@ -1,6 +1,7 @@
 import smf
 from apps.utility.colors import CC
 
+
 class LoggerManager:
     """Managing style logger"""
 
@@ -55,4 +56,3 @@ class LoggerManager:
             smf.printf(f"[-] {CC.RED}{label}{CC.RESET}", args)
             return True
         return False
-        
