@@ -18,7 +18,7 @@ func handleSetsockopt(ctx *ExecutionContext) packet.ResponsePacket {
 		targetFD = ctx.Req.CltFD
 	} else if ctx.RawFD != -1 {  // FD Socket
 		targetFD = ctx.RawFD
-	} else if ctx.Conn != nil {  // FD net.Conn / utls.Conn
+	} else if ctx.Conn != nil {  // FD net.Conn / tls.UConn
 		if sc, ok := ctx.Conn.(interface{ SyscallConn() (syscall.RawConn, error) }); ok {
 			raw, err := sc.SyscallConn()
 			if err != nil {
@@ -64,7 +64,7 @@ func handleGetSockOpt(ctx *ExecutionContext) packet.ResponsePacket {
 		targetFD = ctx.Req.CltFD
 	} else if ctx.RawFD != -1 {    // FD Socket
 		targetFD = ctx.RawFD
-	} else if ctx.Conn != nil {    // FD net.Conn / utls.Conn
+	} else if ctx.Conn != nil {    // FD net.Conn / tls.UConn
 		if sc, ok := ctx.Conn.(interface{ SyscallConn() (syscall.RawConn, error) }); ok {
 			raw, err := sc.SyscallConn()
 			if err != nil {
