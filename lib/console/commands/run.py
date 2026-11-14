@@ -87,21 +87,23 @@ def execute(args, ctx):
             if p.kind in (p.POSITIONAL_OR_KEYWORD, p.POSITIONAL_ONLY)
         ]
 
-        if len(valid_params) >= 3:
+        if len(valid_params) == 3:
             execute(options, _net, _logger)
         elif len(valid_params) == 2:
             execute(options, _net)
-        else:
+        elif len(valid_params) == 1:
             execute(options)
+        else:
+            raise TypeError("Invalid signature modules")
     except http.HttpException as e:
-        smf.printf(f"{CC.RED}Module error =>{CC.RESET}", module_name)
+        smf.printf(f"{CC.RED}Module '{module_name}' error =>{CC.RESET}", e)
         smf.printd("Module detected error", e, level="ERROR")
         return
     except sock.SocketException as e:
-        smf.printf(f"{CC.RED}Module error =>{CC.RESET}", module_name)
+        smf.printf(f"{CC.RED}Module '{module_name}' error =>{CC.RESET}", e)
         smf.printd("Module detected error", e, level="ERROR")
         return
     except (Exception, RuntimeError, AttributeError) as e:
-        smf.printf(f"{CC.RED}Module error =>{CC.RESET}", module_name)
+        smf.printf(f"{CC.RED}Module '{module_name}' error =>{CC.RESET}", e)
         smf.printd("Module detected error", e, level="ERROR")
         return
