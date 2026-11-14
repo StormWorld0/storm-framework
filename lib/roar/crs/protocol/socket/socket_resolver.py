@@ -1,6 +1,6 @@
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
-from .validate import is_tuple2
+from .validate import is_tuple2, parse_flags
 from ...endpoint import CRS
 
 
@@ -38,20 +38,30 @@ class SocketResolver:
 
     def getnameinfo(
         self,
-        address: tuple[str, str | int],
+        address: tuple[str, int, int, int],
         flags: str | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Dapatkan Hostname dari (IP, PORT)"""
         self._ensure_open("getnameinfo")
-        if is_tuple2(address):
-            host, port = address
-
+        if not isinstance(address, tuple):
+            raise TypeError("address must be a tuple")
+        if len(address) not in (2, 4):
+            raise ValueError("Expected 2 or 4 arguments")
+            
+        host, port = address[:2]
+        flowinfo = address[2] if len(address) == 4 else None
+        scopeid = address[3] if len(address) == 4 else None
+        if flags not None:
+            flag = parse_flags(flags)
+        
         packet = IPCPayloadBuilder.build(
             state=self,
             host=host,
             port=port,
-            flag=flags,
+            flowinfo=flowinfo,
+            scopeid=scopeid,
+            flag=flag,
             mode="getnameinfo",
         )
 
