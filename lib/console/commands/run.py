@@ -2,7 +2,6 @@
 # -- SMF License
 import smf
 import inspect
-import apps.utility.utils as utils
 from apps.utility.colors import CC
 
 
