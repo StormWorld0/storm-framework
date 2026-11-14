@@ -64,12 +64,6 @@ def execute(args, ctx):
         )
         return
 
-    # Path Resolution for local files
-    if options.get("PASS"):
-        full_path = utils.resolve_path(options["PASS"])
-        if full_path:
-            options["PASS"] = full_path
-
     # A set of custom exceptions
     # to handle forced module termination if something is detected on the network
     # The final security if the module does not use exceptions.
