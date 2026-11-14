@@ -1,4 +1,4 @@
-from .logger_manager import LoggerManager as lm
+from .log_style import LoggerManager as lm
 
 
 class Logger:
