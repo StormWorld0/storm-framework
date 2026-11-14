@@ -28,6 +28,7 @@ def execute(args, ctx):
     module_name = ctx.current_module_name
     options = ctx.options
     manager = ctx.plugin
+    _logger = ctx.logger
     _net = ctx.net
 
     if not current_module:
@@ -86,7 +87,9 @@ def execute(args, ctx):
             if p.kind in (p.POSITIONAL_OR_KEYWORD, p.POSITIONAL_ONLY)
         ]
 
-        if len(valid_params) >= 2:
+        if len(valid_params) >= 3:
+            execute(options, _net, _logger)
+        elif len(valid_params) == 2:
             execute(options, _net)
         else:
             execute(options)
