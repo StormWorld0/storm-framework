@@ -94,7 +94,6 @@ class Plugin:
 
                 for row in rows:
                     row_ts = float(row["timestamp"])
-
                     if row_ts <= self.last_timestamp and self.last_timestamp != 0.0:
                         continue
 
@@ -160,7 +159,7 @@ class Plugin:
         }
         try:
             http = HTTPR()
-            res = http.post(self.api_url, payload, headers).timeout(5.0).run()
+            res = http.post(self.api_url, headers, payload).timeout(5.0).run()
             res_data = res.json()
             if res.status_code == 200:
                 try:
@@ -193,7 +192,7 @@ class Plugin:
         except http.Timeout:
             smf.printd("Request timeout sendlog", level="WARN")
             return False
-        except http.HTrace as e:
+        except http.HttpException as e:
             smf.printd("API sendlog request failed", e, level="ERROR")
             return False
 
