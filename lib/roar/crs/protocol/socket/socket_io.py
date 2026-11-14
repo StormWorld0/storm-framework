@@ -17,7 +17,7 @@ class SocketIO:
         self._ensure_open("sendall")
         if flags is not None:
             flags = parse_flags(flags)
-            
+
         packet = IPCPayloadBuilder.build(
             state=self,
             data=data,
@@ -50,7 +50,7 @@ class SocketIO:
         self._ensure_open("send")
         if flags is not None:
             flags = parse_flags(flags)
-            
+
         packet = IPCPayloadBuilder.build(
             state=self,
             data=data,
@@ -71,7 +71,7 @@ class SocketIO:
         self._ensure_open("recv")
         if flags is not None:
             flags = parse_flags(flags)
-            
+
         packet = IPCPayloadBuilder.build(
             state=self,
             buffer=buffer,
@@ -118,7 +118,7 @@ class SocketIO:
         self._ensure_open("recvfrom")
         if flags is not None:
             flags = parse_flags(flags)
-            
+
         packet = IPCPayloadBuilder.build(
             state=self,
             buffer=buffer,
