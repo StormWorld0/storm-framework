@@ -39,7 +39,7 @@ class SocketResolver:
     def getnameinfo(
         self,
         address: tuple[str, int, int, int],
-        flags: str | int = None,
+        flags: int = None,
         **kwargs,
     ) -> SocketResponse:
         """Dapatkan Hostname dari (IP, PORT)"""
@@ -53,7 +53,7 @@ class SocketResolver:
         flowinfo = address[2] if len(address) == 4 else None
         scopeid = address[3] if len(address) == 4 else None
         if flags not None:
-            flag = parse_flags(flags)
+            flags = parse_flags(flags)
         
         packet = IPCPayloadBuilder.build(
             state=self,
@@ -61,7 +61,7 @@ class SocketResolver:
             port=port,
             flowinfo=flowinfo,
             scopeid=scopeid,
-            flag=flag,
+            flag=flags,
             mode="getnameinfo",
         )
 
