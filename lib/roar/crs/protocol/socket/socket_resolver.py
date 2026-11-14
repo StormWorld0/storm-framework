@@ -13,7 +13,7 @@ class SocketResolver:
         family: str | int = None,
         type: str | int = None,
         proto: str | int = None,
-        flags: str | int = None,
+        flags: int | None = None,
         **kwargs,
     ) -> SocketResponse:
         """Dapatkan informasi alamat"""
@@ -41,7 +41,7 @@ class SocketResolver:
     def getnameinfo(
         self,
         address: tuple[str, int, int, int],
-        flags: int = None,
+        flags: int | None = None,
         **kwargs,
     ) -> SocketResponse:
         """Dapatkan Hostname dari (IP, PORT)"""
