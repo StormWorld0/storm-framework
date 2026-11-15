@@ -1,5 +1,6 @@
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
+from .socket_tls_obj import ObjectTLS
 from ...endpoint import CRS
 
 
@@ -18,7 +19,7 @@ class SocketTLS:
         self._ensure_open("uptls")
         if self.is_tls:
             return SocketResponse(
-                {"status": "WARN", "message": "Already TLS", "data": {}}
+                {"status": "WARN", "message": "Already TLS"}
             )
 
         packet = IPCPayloadBuilder.build(
@@ -34,4 +35,4 @@ class SocketTLS:
         resp = CRS.send(packet)
         if resp.get("status") == "SUCCESS":
             self.is_tls = True
-        return SocketResponse(resp)
+        return ObjectTLS(state=self), SocketResponse(resp)
