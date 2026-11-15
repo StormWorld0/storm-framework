@@ -1,6 +1,6 @@
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
-from .validate import is_tuple2, parse_flags
+from .validate import parse_flags
 from ...endpoint import CRS
 
 
@@ -105,8 +105,9 @@ class ObjectTLS:
         if self.state._is_closed:
             return SocketResponse({"status": "closed", "session_id": self.state.sessid})
 
-        packet = IPCPayloadBuilder.build(state=self.state, mode="close", close_session=True)
+        packet = IPCPayloadBuilder.build(
+            state=self.state, mode="close", close_session=True
+        )
         resp = CRS.send(packet)
         self.state._is_closed = True
         return SocketResponse(resp)
-        
