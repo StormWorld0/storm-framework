@@ -18,9 +18,7 @@ class SocketTLS:
         """Upgrade connection to TLS/SSL"""
         self._ensure_open("uptls")
         if self.is_tls:
-            return SocketResponse(
-                {"status": "WARN", "message": "Already TLS"}
-            )
+            return SocketResponse({"status": "WARN", "message": "Already TLS"})
 
         packet = IPCPayloadBuilder.build(
             state=self,
