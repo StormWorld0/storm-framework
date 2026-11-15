@@ -30,7 +30,15 @@ func performTLSHandshake(ctx context.Context, conn net.Conn, addr string, req pa
 		defer conn.SetDeadline(time.Time{}) // Reset deadline
 	}
 
+	weights := utls.DefaultWeights
+	// Avoid X25519MLKEM768 on SupportedCurves.
+    weights.CurveIDs_Append_X25519 = 0
+	// Avoid adding Key Shares randomly,
+    // including X25519MLKEM768.
+    weights.KeyShare_Append_RandomGroups = 0
+	
 	clientHello := utls.HelloRandomizedNoALPN
+	clientHello.Weights = &weights
 	utlsConn := utls.UClient(conn, utlsConfig, clientHello)
 	
 	if err := utlsConn.Handshake(); err != nil {
