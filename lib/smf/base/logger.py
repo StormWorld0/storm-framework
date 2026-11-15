@@ -9,7 +9,7 @@ class Logger:
         if not label:
             smf.printf()
             return
-            
+
         if not args:
             smf.printf(f"[+] {CC.GREEN}{label}{CC.RESET}")
         else:
@@ -19,7 +19,7 @@ class Logger:
         if not label:
             smf.printf()
             return
-            
+
         if not args:
             smf.printf(f"[*] {CC.CYAN}{label}{CC.RESET}")
         else:
@@ -29,7 +29,7 @@ class Logger:
         if not label:
             smf.printf()
             return
-            
+
         if not args:
             smf.printf(f"[!] {CC.YELLOW}{label}{CC.RESET}")
         else:
@@ -39,9 +39,8 @@ class Logger:
         if not label:
             smf.printf()
             return
-            
+
         if not args:
             smf.printf(f"[-] {CC.RED}{label}{CC.RESET}")
         else:
             smf.printf(f"[-] {CC.RED}{label}{CC.RESET}", *args)
-            
