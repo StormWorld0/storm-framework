@@ -10,7 +10,7 @@ import smf
 try:
     from lib.smf.core.booting.free_boot import sysboot
     from .control_ifc import systemctl as sysctl
-    from ..banner import banner as style
+    from ..banner_hlp import banner as style
 except ImportError as e:
     smf.printf(f"Error import interface =>", e, file=sys.stderr)
     sys.exit(2)
