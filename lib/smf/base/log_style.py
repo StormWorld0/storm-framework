@@ -9,6 +9,7 @@ class LoggerManager:
     def success(label, *args) -> None:
         """Function for logger success"""
         if not label:
+            smf.printf()
             return
 
         if not args:
@@ -20,6 +21,7 @@ class LoggerManager:
     def info(label, *args) -> None:
         """Function for logger info"""
         if not label:
+            smf.printf()
             return
 
         if not args:
@@ -31,6 +33,7 @@ class LoggerManager:
     def warning(label, *args) -> None:
         """Function for logger warning"""
         if not label:
+            smf.printf()
             return
 
         if not args:
@@ -42,6 +45,7 @@ class LoggerManager:
     def error(label, *args) -> None:
         """Function for logger error"""
         if not label:
+            smf.printf()
             return
 
         if not args:
