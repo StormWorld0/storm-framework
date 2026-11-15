@@ -19,7 +19,7 @@ def banner_live():
             return f"Storm Framework"
 
         random_file = random.choice(all_files)
-        module_path = f"lib.ui.console.{random_file.replace('.py', '')}"
+        module_path = f"lib.ui.banner.{random_file.replace('.py', '')}"
 
         # Reload module if necessary or import normally
         banner_module = importlib.import_module(module_path)
