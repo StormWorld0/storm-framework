@@ -1,5 +1,4 @@
 import os
-import smf
 import tempfile
 
 from datetime import datetime, timedelta, timezone
