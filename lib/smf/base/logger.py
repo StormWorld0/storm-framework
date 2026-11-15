@@ -10,33 +10,33 @@ class Logger:
             smf.printf()
             return
 
-        label = *args[:1]
-        arg = *args[1:]
-        lm.success(label, arg)
+        label = args[:1]
+        arg = args[1:]
+        lm.success(*label, *arg)
 
     def printi(self, *args) -> None:
         if not args:
             smf.printf()
             return
 
-        label = *args[:1]
-        arg = *args[1:]
-        lm.info(label, arg)
+        label = args[:1]
+        arg = args[1:]
+        lm.info(*label, *arg)
 
     def printw(self, *args) -> None:
         if not args:
             smf.printf()
             return
 
-        label = *args[:1]
-        arg = *args[1:]
-        lm.warning(label, arg)
+        label = args[:1]
+        arg = args[1:]
+        lm.warning(*label, *arg)
 
     def printe(self, *args) -> None:
         if not args:
             smf.printf()
             return
 
-        label = *args[:1]
-        arg = *args[1:]
-        lm.error(label, arg)
+        label = args[:1]
+        arg = args[1:]
+        lm.error(*label, *arg)
