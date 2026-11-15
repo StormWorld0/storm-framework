@@ -1,5 +1,3 @@
-import smf
-
 metadata = {
     "Name": "Testing Getaddrinfo Socket",
     "Description": """
