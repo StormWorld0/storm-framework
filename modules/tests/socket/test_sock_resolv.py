@@ -19,7 +19,7 @@ def execute(options, net, log):
     sock = net.Socket()
     try:
         log.printi(f"Getaddrinfo =>", f"{host}:{port}")
-        resp = sock.getaddrinfo((host, port), family=sock.AF_INET, proto=sock.IPPROTO_TCP)
+        resp = sock.getaddrinfo((host, port))
         log.prints("Getaddrinfo Results =>", resp)
 
         addrs = [sockaddr for _, _, _, _, sockaddr in resp if sockaddr]
