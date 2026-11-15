@@ -1,6 +1,6 @@
 import smf
-from .log_style import LoggerManager
 from apps.utility.colors import CC
+
 
 class Logger:
     """Logger instances used by modules"""
@@ -12,7 +12,7 @@ class Logger:
 
         label = args[:1]
         arg = args[1:]
-        
+
         if not arg:
             smf.printf(f"[+] {CC.GREEN}{*label}{CC.RESET}")
         else:
@@ -25,7 +25,7 @@ class Logger:
 
         label = args[:1]
         arg = args[1:]
-        
+
         if not arg:
             smf.printf(f"[*] {CC.CYAN}{*label}{CC.RESET}")
         else:
@@ -38,7 +38,7 @@ class Logger:
 
         label = args[:1]
         arg = args[1:]
-        
+
         if not arg:
             smf.printf(f"[!] {CC.YELLOW}{*label}{CC.RESET}")
         else:
@@ -48,10 +48,10 @@ class Logger:
         if not args:
             smf.printf()
             return
-            
+
         label = args[:1]
         arg = args[1:]
-        
+
         if not args:
             smf.printf(f"[-] {CC.RED}{*label}{CC.RESET}")
         else:
