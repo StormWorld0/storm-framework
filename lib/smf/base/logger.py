@@ -11,9 +11,9 @@ class Logger:
             return
 
         if not args:
-            smf.printf(f"[+] {CC.GREEN}{label}{CC.RESET}")
+            smf.printf(f"[✓] {CC.GREEN}{label}{CC.RESET}")
         else:
-            smf.printf(f"[+] {CC.GREEN}{label}{CC.RESET}", *args)
+            smf.printf(f"[✓] {CC.GREEN}{label}{CC.RESET}", *args)
 
     def printi(self, label: str = "", *args) -> None:
         if not label:
@@ -41,6 +41,6 @@ class Logger:
             return
 
         if not args:
-            smf.printf(f"[-] {CC.RED}{label}{CC.RESET}")
+            smf.printf(f"[~] {CC.RED}{label}{CC.RESET}")
         else:
-            smf.printf(f"[-] {CC.RED}{label}{CC.RESET}", *args)
+            smf.printf(f"[~] {CC.RED}{label}{CC.RESET}", *args)
