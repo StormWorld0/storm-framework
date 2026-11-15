@@ -227,16 +227,23 @@ sock.recvfrom(buffer, flags)
 
 **TLS Upgrade**
 ```python
-sock.uptls(cert, key, ca, verify)
+tls_obj, resp = sock.uptls(cert, key, ca, verify)
 ```
 **Parameter**
 - **cert:** Path to the certificate file.
 - **key:** Path to the Key certificate file.
 - **ca:** Path to the CA certificate file.
-- **verify:** Boolean. True=Verifying client certificate. False=Skip verification. | Default True.
+- **verify:** Boolean. verify=True client certificate. False=Skip verification. | Default True.
 
-**Inheritance**  
-Automatically inherits TLS connections to send/recv and send/recv usage remains the same.
+**tls_obj**
+- **sendall**
+- **send**
+- **recv**
+- **setsockopt**
+- **getsockopt**
+- **getsockname**
+- **getpeername**
+- **close**
 
 **Response**
 - **status:** SUCCESS/WARN/ERROR/TIMEOUT.
@@ -362,7 +369,7 @@ sock.gettimout()
 
 **Creating Connection**
 ```python
-sock.create_connection(address)
+sock.create_connection(address, timeout)
 ```
 **Description:** This function is used to immediately open a connection quickly without having to perform socket() and connect() literacy because this is done automatically by the binary CRS. This makes it faster and requires less code. Send, receive, and uptls still require manual processing afterward.
 
