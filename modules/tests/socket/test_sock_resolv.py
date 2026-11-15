@@ -14,24 +14,24 @@ Testing Socket
 REQUIRED_OPTIONS = {"HOST": "", "PORT": ""}
 
 
-def execute(options, net):
+def execute(options, net, log):
     host = options.get("HOST")
     port = options.get("PORT")
 
     sock = net.Socket()
     try:
-        smf.printf(f"[*] Getaddrinfo => {host}:{port}")
+        log.printi(f"Getaddrinfo => {host}:{port}")
         resp = sock.getaddrinfo((host, port), family=sock.AF_INET, proto=sock.IPPROTO_TCP)
-        smf.printf("[✓] Getaddrinfo Results =>", resp)
+        log.prints("Getaddrinfo Results =>", resp)
 
         addrs = [sockaddr for _, _, _, _, sockaddr in resp if sockaddr]
 
         if addrs is not None:
-            smf.printf()
+            log.printi()
             for addr in addrs:
                 resp = sock.getnameinfo(addr)
-                smf.printf(f"[✓] Getnameinfo > {addr} =>", resp)
+                log.prints(f"Getnameinfo > {addr} =>", resp)
     except KeyboardInterrupt:
         pass
     except Exception as e:
-        smf.printf("Error =>", e)
+        log.printe("Error =>", e)
