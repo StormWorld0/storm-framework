@@ -70,7 +70,7 @@ def generate_temp_tls_files(target_dir, common_name="localhost"):
     return cert_path, key_path
 
 
-def execute(options, net):
+def execute(options, net, log):
     host = options.get("HOST")
     port = options.get("PORT")
 
@@ -88,56 +88,56 @@ def execute(options, net):
         sock.settimeout(5.0)
         obj = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
         if obj:
-            smf.printf("[✓] File Decriptor =>", sock.fileno())
+            log.prints("File Decriptor =>", sock.fileno())
 
         resp = sock.connect((host, port))
         if not resp.ok:
-            smf.printf("[!] Failed connect =>", resp.message)
+            log.printw("Failed connect =>", resp.message)
             return
 
-        smf.printf("[✓] Checked Type =>", resp.checked_type)
-        smf.printf("[✓] Status TLS   =>", resp.status_tls)
-        smf.printf()
+        log.prints("Checked Type =>", resp.checked_type)
+        log.prints("Status TLS   =>", resp.status_tls)
+        log.prints()
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             cert_file, key_file = generate_temp_tls_files(tmp_dir, common_name=host)
 
-            resp = sock.uptls(cert_file, key_file, verify=False)
+            tls, resp = sock.uptls(cert_file, key_file, verify=False)
             if not resp.ok:
-                smf.printf("[!] Failed Upgrade TLS =>", resp.message)
+                log.printw("Failed Upgrade TLS =>", resp.message)
                 return
 
-            smf.printf("[✓] Cipher     =>", resp.tls.cipher)
-            smf.printf("[✓] Version    =>", resp.tls.version)
-            smf.printf("[✓] Protocol   =>", resp.tls.protocol)
-            smf.printf("[✓] Handshake  =>", resp.tls.handshake)
-            smf.printf("[✓] Hostname   =>", resp.tls.hostname)
-            smf.printf("[✓] Subject    =>", resp.tls.subject)
-            smf.printf("[✓] Issuer     =>", resp.tls.issuer)
-            smf.printf("[✓] DNS Name   =>", resp.tls.dns_name)
-            smf.printf("[✓] Expires    =>", resp.tls.expires)
-            smf.printf("[✓] Cert Chain =>", resp.tls.cert_chain)
-            smf.printf("[✓] Checked Type =>", resp.checked_type)
-            smf.printf("[✓] Status TLS   =>", resp.status_tls)
-            smf.printf()
+            log.prints("Cipher     =>", resp.tls.cipher)
+            log.prints("Version    =>", resp.tls.version)
+            log.prints("Protocol   =>", resp.tls.protocol)
+            log.prints("Handshake  =>", resp.tls.handshake)
+            log.prints("Hostname   =>", resp.tls.hostname)
+            log.prints("Subject    =>", resp.tls.subject)
+            log.prints("Issuer     =>", resp.tls.issuer)
+            log.prints("DNS Name   =>", resp.tls.dns_name)
+            log.prints("Expires    =>", resp.tls.expires)
+            log.prints("Cert Chain =>", resp.tls.cert_chain)
+            log.prints("Checked Type =>", resp.checked_type)
+            log.prints("Status TLS   =>", resp.status_tls)
+            log.prints()
 
-            resp = sock.send(data)
+            resp = tls.sendall(data)
             if not resp.ok:
-                smf.printf("[!] Failed Send TLS =>", resp.message)
+                log.printw("Failed Send TLS =>", resp.message)
                 return
 
-            resp = sock.recv(4096)
+            resp = tls.recv(4096)
             if not resp.ok:
-                smf.printf("[!] Failed Recv TLS =>", resp.message)
+                log.printw("Failed Recv TLS =>", resp.message)
                 return
 
-            smf.printf("[✓] Checked Type =>", resp.checked_type)
-            smf.printf("[✓] Status TLS   =>", resp.status_tls)
-            smf.printf("[✓] Int bytes =>", resp.int_bytes)
-            smf.printf("[✓] Str bytes =>", resp.str_bytes)
+            log.prints("Checked Type =>", resp.checked_type)
+            log.prints("Status TLS   =>", resp.status_tls)
+            log.prints("Int bytes =>", resp.int_bytes)
+            log.prints("Str bytes =>", resp.str_bytes)
     except KeyboardInterrupt:
         pass
     except sock.Exception as e:
-        smf.printf("[*] Error Socket =>", e)
+        log.printe("Error Socket =>", e)
     finally:
         sock.close()
