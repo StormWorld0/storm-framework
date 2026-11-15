@@ -9,7 +9,7 @@ class Logger:
         if not args:
             smf.printf()
             return
-            
+
         label = args[:1]
         lm.success(label, *args)
 
@@ -17,7 +17,7 @@ class Logger:
         if not args:
             smf.printf()
             return
-            
+
         label = args[:1]
         lm.info(label, *args)
 
@@ -25,7 +25,7 @@ class Logger:
         if not args:
             smf.printf()
             return
-            
+
         label = args[:1]
         lm.warning(label, *args)
 
@@ -33,6 +33,6 @@ class Logger:
         if not args:
             smf.printf()
             return
-            
+
         label = args[:1]
         lm.error(label, *args)
