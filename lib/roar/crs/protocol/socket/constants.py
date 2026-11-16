@@ -23,7 +23,7 @@ _SOCK_PREFIXED = (
 
 
 class ConstantsMix:
-    """Constant Integration Sub-Class."""
+    """Sub-Class Constants."""
 
     _CONSTANTS = {
         name: value
