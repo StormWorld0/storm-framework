@@ -73,8 +73,48 @@ class ObjectTLS:
         resp = CRS.send(packet)
         return SocketResponse(resp)
 
+    def setsockopt(
+        self,
+        level: str | int,
+        name: str | int,
+        value: int = None,
+        **kwargs,
+    ) -> SocketResponse:
+        """Socket Options Configuration"""
+        self.state._ensure_open("setsockopt")
+        packet = IPCPayloadBuilder.build(
+            state=self.state,
+            level=level,
+            name=name,
+            value=value,
+            mode="setsockopt",
+        )
+
+        resp = CRS.send(packet)
+        return SocketResponse(resp)
+
+    def getsockopt(
+        self,
+        level: str | int,
+        name: str | int,
+        **kwargs,
+    ) -> SocketResponse:
+        """Getting socket options"""
+        self.state._ensure_open("getsockopt")
+        packet = IPCPayloadBuilder.build(
+            state=self.state,
+            level=level,
+            name=name,
+            mode="getsockopt",
+        )
+
+        resp = CRS.send(packet)
+        response = SocketResponse(resp)
+        val = response._data.get("val_opt", -1)
+        return val
+
     def getsockname(self, **kwargs) -> SocketResponse:
-        """Dapatkan IP local socket"""
+        """Get local socket IP"""
         self.state._ensure_open("getsockname")
         packet = IPCPayloadBuilder.build(
             state=self.state,
@@ -86,7 +126,7 @@ class ObjectTLS:
         return response.local_ip
 
     def getpeername(self, **kwargs) -> SocketResponse:
-        """Dapatkan IP server socket"""
+        """Get socket server IP"""
         self.state._ensure_open("getpeername")
         packet = IPCPayloadBuilder.build(
             state=self.state,
