@@ -17,11 +17,7 @@ _SOCK_PREFIXED = (
 
 
 class ConstantsMix:
-    """
-    Class Pusat Integrasi Konstanta.
-    Menggabungkan seluruh sub-class konstanta via Multiple Inheritance
-    agar kompatibel dengan `class Socket`.
-    """
+    """Sub-Class Integrasi Konstanta."""
 
     _CONSTANTS = {
         name: value
