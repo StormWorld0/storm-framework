@@ -129,19 +129,20 @@ class SockHow:
 
 
 _PREFIXES = (
-        "AF_",
-        "PF_",
-        "SOCK_",
-        "IPPROTO_",
-        "SOL_",
-        "SO_",
-        "TCP_",
-        "UDP_",
-        "IP_",
-        "IPV6_",
-        "MSG_",
-        "SHUT_",
+    "AF_",
+    "PF_",
+    "SOCK_",
+    "IPPROTO_",
+    "SOL_",
+    "SO_",
+    "TCP_",
+    "UDP_",
+    "IP_",
+    "IPV6_",
+    "MSG_",
+    "SHUT_",
 )
+
 
 class ConstantsMix:
     """
