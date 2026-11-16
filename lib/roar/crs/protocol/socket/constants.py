@@ -1,7 +1,7 @@
 # -- https://github.com/StormWorld0/storm-framework
 # -- License SMF
 # -- Author zxelzy
-import socket as _socket
+import socket
 
 
 class AddrFamily:
@@ -152,7 +152,7 @@ class ConstantsMix:
 
     _CONSTANTS = {
         name: value
-        for name, value in vars(_socket).items()
+        for name, value in vars(socket).items()
         if (name.startswith(_PREFIXES) and isinstance(value, int))
     }
 
