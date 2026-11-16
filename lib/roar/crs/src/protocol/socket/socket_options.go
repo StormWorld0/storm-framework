@@ -12,21 +12,20 @@ func handleSetsockopt(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "S-ERROR", Message: "SessionID is required for setsockopt"}
 	}
 
-	var targetFD int = -1
+	var intFD int = -1
 
 	if ctx.Req.CltFD != -1 {     // FD Client Listener
-		targetFD = ctx.Req.CltFD
+		intFD = ctx.Req.CltFD
 	} else if ctx.RawFD != -1 {  // FD Socket
-		targetFD = ctx.RawFD
+		intFD = ctx.RawFD
 	} else if ctx.Conn != nil {  // FD net.Conn / tls.UConn
 		if sc, ok := ctx.Conn.(interface{ SyscallConn() (syscall.RawConn, error) }); ok {
 			raw, err := sc.SyscallConn()
 			if err != nil {
 				return packet.ResponsePacket{Status: "S-ERROR", Message: "Failed to get SyscallConn: " + err.Error()}
 			}
-
 			err = raw.Control(func(fd uintptr) {
-				targetFD = int(fd)
+				intFD = int(fd)
 			})
 			if err != nil {
 				return packet.ResponsePacket{Status: "S-ERROR", Message: "FD Control failed: " + err.Error()}
@@ -34,11 +33,15 @@ func handleSetsockopt(ctx *ExecutionContext) packet.ResponsePacket {
 		}
 	}
 
+	if intFD == -1 {
+        return packet.ResponsePacket{Status:  "S-ERROR", Message: "Setsockopt no valid socket descriptor available"}
+    }
+
 	level := ParseOptLevel(ctx.Req.OptLevel)
 	optName := ParseOptName(ctx.Req.OptName)
 	optVal := int(ctx.Req.OptVal)
 
-	if err := unix.SetsockoptInt(targetFD, level, optName, optVal); err != nil {
+	if err := unix.SetsockoptInt(intFD, level, optName, optVal); err != nil {
 		return packet.ResponsePacket{Status: "S-ERROR", Message: "Setsockopt failed: " + err.Error()}
 	}
 
@@ -49,8 +52,7 @@ func handleSetsockopt(ctx *ExecutionContext) packet.ResponsePacket {
 	} else if ctx.Conn != nil {
 	    ctx.SaveSession(ctx.Conn)
 	}
-
-	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(targetFD, 0)}
+	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(intFD, 0)}
 }
 
 func handleGetSockOpt(ctx *ExecutionContext) packet.ResponsePacket {
@@ -58,21 +60,20 @@ func handleGetSockOpt(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "S-ERROR", Message: "SessionID is required for getsockopt"}
 	}
 
-	var targetFD int = -1
+	var intFD int = -1
 
 	if ctx.Req.CltFD != -1 {       // FD Client Listener
-		targetFD = ctx.Req.CltFD
+		intFD = ctx.Req.CltFD
 	} else if ctx.RawFD != -1 {    // FD Socket
-		targetFD = ctx.RawFD
+		intFD = ctx.RawFD
 	} else if ctx.Conn != nil {    // FD net.Conn / tls.UConn
 		if sc, ok := ctx.Conn.(interface{ SyscallConn() (syscall.RawConn, error) }); ok {
 			raw, err := sc.SyscallConn()
 			if err != nil {
 				return packet.ResponsePacket{Status: "S-ERROR", Message: "Failed to get SyscallConn: " + err.Error()}
 			}
-
 			err = raw.Control(func(fd uintptr) {
-				targetFD = int(fd)
+				intFD = int(fd)
 			})
 			if err != nil {
 				return packet.ResponsePacket{Status: "S-ERROR", Message: "FD Control failed: " + err.Error()}
@@ -80,10 +81,14 @@ func handleGetSockOpt(ctx *ExecutionContext) packet.ResponsePacket {
 		}
 	}
 
+	if intFD == -1 {
+        return packet.ResponsePacket{Status:  "S-ERROR", Message: "Getsockopt no valid socket descriptor available"}
+    }
+
 	level := ParseOptLevel(ctx.Req.OptLevel)
 	optName := ParseOptName(ctx.Req.OptName)
 
-	val, err := unix.GetsockoptInt(targetFD, level, optName)
+	val, err := unix.GetsockoptInt(intFD, level, optName)
 	if err != nil {
 		return packet.ResponsePacket{Status: "S-ERROR", Message: "Getsockopt failed: " + err.Error()}
 	}
@@ -95,12 +100,6 @@ func handleGetSockOpt(ctx *ExecutionContext) packet.ResponsePacket {
 	} else if ctx.Conn != nil {
 		ctx.SaveSession(ctx.Conn)
 	}
-
-	return packet.ResponsePacket{
-		Status: "SUCCESS",
-		Data: map[string]interface{}{
-			"val_opt":   val,
-		},
-	}
+	return packet.ResponsePacket{Status: "SUCCESS", Data: map[string]interface{}{"val_opt": val}}
 }
 
