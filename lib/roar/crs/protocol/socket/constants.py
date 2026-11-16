@@ -29,13 +29,15 @@ class ConstantsMix:
         if (name.startswith(_SOCK_PREFIXED) and isinstance(value, int))
     }
 
-    _CONSTANTS.update({
-        "SO_NO_CHECK": "SO_NO_CHECK",
-        "SO_BSDCOMPAT": "SO_BSDCOMPAT",
-        "SO_ATTACH_FILTER": "SO_ATTACH_FILTER",
-        "SO_DETACH_FILTER": "SO_DETACH_FILTER",
-        "SO_TIMESTAMP": "SO_TIMESTAMP",
-    })
+    _CONSTANTS.update(
+        {
+            "SO_NO_CHECK": "SO_NO_CHECK",
+            "SO_BSDCOMPAT": "SO_BSDCOMPAT",
+            "SO_ATTACH_FILTER": "SO_ATTACH_FILTER",
+            "SO_DETACH_FILTER": "SO_DETACH_FILTER",
+            "SO_TIMESTAMP": "SO_TIMESTAMP",
+        }
+    )
 
     def __getattr__(self, name):
         try:
