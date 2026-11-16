@@ -128,14 +128,7 @@ class SockHow:
     SHUT_RDWR = socket.SHUT_RDWR
 
 
-class ConstantsMix:
-    """
-    Class Pusat Integrasi Konstanta.
-    Menggabungkan seluruh sub-class konstanta via Multiple Inheritance
-    agar kompatibel dengan `class Socket`.
-    """
-
-    _PREFIXES = (
+_PREFIXES = (
         "AF_",
         "PF_",
         "SOCK_",
@@ -148,7 +141,14 @@ class ConstantsMix:
         "IPV6_",
         "MSG_",
         "SHUT_",
-    )
+)
+
+class ConstantsMix:
+    """
+    Class Pusat Integrasi Konstanta.
+    Menggabungkan seluruh sub-class konstanta via Multiple Inheritance
+    agar kompatibel dengan `class Socket`.
+    """
 
     _CONSTANTS = {
         name: value
