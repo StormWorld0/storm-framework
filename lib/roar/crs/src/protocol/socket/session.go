@@ -129,6 +129,7 @@ func (ctx *ExecutionContext) CloseSession() packet.ResponsePacket {
 
 // Close ClientFD Accept Listener's Close mode
 func (ctx *ExecutionContext) CloseCFD() packet.ResponsePacket {
+	ctx.KeepSession = true
 	if ctx.Req.SessionID != "" {
 		if val, ok := utils.ClientFD.LoadAndDelete(ctx.Req.SessionID); ok {
 			unix.Close(val.(int))
