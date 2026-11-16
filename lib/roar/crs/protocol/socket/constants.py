@@ -1,7 +1,7 @@
 # -- https://github.com/StormWorld0/storm-framework
 # -- License SMF
 # -- Author zxelzy
-import socket
+import socket as _socket
 
 
 class AddrFamily:
@@ -128,18 +128,37 @@ class SockHow:
     SHUT_RDWR = socket.SHUT_RDWR
 
 
-class ConstantsMix(
-    AddrFamily,
-    SockType,
-    IPProto,
-    SockOptionsSO,
-    SockOptionsTCP,
-    SockOptionsIP,
-    SockFlags,
-    SockHow,
-):
+class ConstantsMix:
     """
     Class Pusat Integrasi Konstanta.
     Menggabungkan seluruh sub-class konstanta via Multiple Inheritance
     agar kompatibel dengan `class Socket`.
     """
+    
+    _PREFIXES = (
+        "AF_", "PF_",
+        "SOCK_",
+        "IPPROTO_",
+        "SOL_", "SO_",
+        "TCP_", "UDP_",
+        "IP_", "IPV6_",
+        "MSG_",
+        "SHUT_",
+    )
+
+    _CONSTANTS = {
+        name: value
+        for name, value in vars(_socket).items()
+        if (
+            name.startswith(_PREFIXES)
+            and isinstance(value, int)
+        )
+    }
+
+    def __getattr__(self, name):
+        try:
+            return self._CONSTANTS[name]
+        except KeyError:
+            raise AttributeError(
+                f"{type(self).__name__!s} has no attribute {name!r}"
+            ) from None
