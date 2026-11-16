@@ -106,8 +106,6 @@ All protocols definitely have different parameters, here you can learn what para
 sock = net.Socket()
 sock.socket(family, type, proto)
 ```
-**Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
-
 **Parameter**
 - **family:** Address Family such as: `sock.AF_INET`, `sock.AF_INET6`, etc.
 - **type:** Sock Type like: `sock.SOCK_STREAM`, `sock.SOCK_DGRAM`, etc.
@@ -139,8 +137,6 @@ sock.send(data, flags)
 ```python
 sock.sendall(data, flags)
 ```
-**Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
-
 **Parameter**
 - **data:** Can be bytes / http request / payload etc.
 - **flags:** (Optional) | Default 0
@@ -158,8 +154,6 @@ sock.sendall(data, flags)
 ```python
 sock.sendto(data, address, flags)
 ```
-**Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
-
 **Parameter**
 - **data:** Can be bytes / http request / payload etc.
 - **address:** tuple (host, port).
@@ -182,8 +176,6 @@ sock.sendfile(file)
 ```python
 sock.recv(buffer, flags)
 ```
-**Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
-
 **Parameter**
 - **buffer:** To determine how many bytes of buffer to take.
 - **flags:** (Optional) | Default 0
@@ -205,8 +197,6 @@ sock.recv(buffer, flags)
 ```python
 sock.recvfrom(buffer, flags)
 ```
-**Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
-
 **Parameter**
 - **buffer:** To determine how many bytes of buffer to take.
 - **flags:** Optional | Default 0.
@@ -331,8 +321,6 @@ conn, resp = sock.accept()
 ```python
 sock.setsockopt(level, name, value)
 ```
-**Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
-
 **Parameter**
 - **level:** OptLevel such as: `sock.SOL_SOCKET`, etc.
 - **name:** OptName such as: `sock.SO_REUSEADDR`, `sock.TCP_NODELAY`, etc.
@@ -348,8 +336,6 @@ sock.setsockopt(level, name, value)
 ```python
 sock.getsockopt(level, name)
 ```
-**Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
-
 **Response:** This function directly returns an int.
 
 
@@ -383,8 +369,6 @@ sock.create_connection(address, timeout)
 ```python
 sock.getaddrinfo(address, family, type, proto, flags)
 ```
-**Description:** Collection of available argument lists [here.](https://storm-framework.pages.dev/storm-framework.wiki/CONSTANTS-MIXIN-SOCKET)
-
 **Parameter**
 - **family:** Address Family such as: `sock.AF_INET`, `sock.AF_INET6`, etc.
 - **type:** Sock Type like: `sock.SOCK_STREAM`, `sock.SOCK_DGRAM`, etc.
