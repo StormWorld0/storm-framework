@@ -134,14 +134,18 @@ class ConstantsMix:
     Menggabungkan seluruh sub-class konstanta via Multiple Inheritance
     agar kompatibel dengan `class Socket`.
     """
-    
+
     _PREFIXES = (
-        "AF_", "PF_",
+        "AF_",
+        "PF_",
         "SOCK_",
         "IPPROTO_",
-        "SOL_", "SO_",
-        "TCP_", "UDP_",
-        "IP_", "IPV6_",
+        "SOL_",
+        "SO_",
+        "TCP_",
+        "UDP_",
+        "IP_",
+        "IPV6_",
         "MSG_",
         "SHUT_",
     )
@@ -149,10 +153,7 @@ class ConstantsMix:
     _CONSTANTS = {
         name: value
         for name, value in vars(_socket).items()
-        if (
-            name.startswith(_PREFIXES)
-            and isinstance(value, int)
-        )
+        if (name.startswith(_PREFIXES) and isinstance(value, int))
     }
 
     def __getattr__(self, name):
