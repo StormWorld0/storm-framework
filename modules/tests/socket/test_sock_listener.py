@@ -101,7 +101,8 @@ def execute(options, net, log):
             # Client terima balasan
             reply = clt_sock.recv(1024)
             log.prints("Client Received  =>", reply.raw_bytes)
-            log.printi("\nSERVER LIFECYCLE TEST PASSED PERFECTLY!")
+            log.prints()
+            log.printi("SERVER LIFECYCLE TEST PASSED PERFECTLY!")
     except Exception as e:
         log.printw("Test Exception =>", e)
     finally:
