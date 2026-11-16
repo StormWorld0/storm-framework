@@ -5,6 +5,8 @@ _SOCK_PREFIXED = (
     "PF_",
     "SOCK_",
     "IPPROTO_",
+    "IPPORT_",
+    "INADDR_",
     "SOL_",
     "SO_",
     "TCP_",
@@ -13,11 +15,15 @@ _SOCK_PREFIXED = (
     "IPV6_",
     "MSG_",
     "SHUT_",
+    "SOMAXCONN",
+    "AI_",
+    "EAI_",
+    "NI_",
 )
 
 
 class ConstantsMix:
-    """Sub-Class Integrasi Konstanta."""
+    """Constant Integration Sub-Class."""
 
     _CONSTANTS = {
         name: value
