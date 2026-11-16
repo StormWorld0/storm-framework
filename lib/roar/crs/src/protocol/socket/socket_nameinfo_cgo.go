@@ -33,7 +33,6 @@ int call_getnameinfo(const char *ip_str, int port, uint32_t flowinfo, uint32_t s
             return -1; // Format IP tidak valid
         }
     }
-
     return getnameinfo((struct sockaddr *)&sa, salen, host_buf, host_len, serv_buf, serv_len, flags);
 }
 */
@@ -55,10 +54,10 @@ func getNameInfo(ctx *ExecutionContext) (string, string, error) {
 
 	portInt, err := strconv.Atoi(portFinal)
 	if err != nil {
-		portInt = 0
+		return "", "", fmt.Errorf("Invalid port: %w", err)
 	}
 
-	// Ekstrak parameter IPv6 dan flags standar POSIX
+	// Extract POSIX standard IPv6 parameters and flags
 	flowinfo := C.uint32_t(ctx.Req.FlowInfo)
 	scopeid := C.uint32_t(ctx.Req.ScopeID)
 	flags := C.int(ParseFlags(ctx.Req.Flags))
@@ -66,11 +65,11 @@ func getNameInfo(ctx *ExecutionContext) (string, string, error) {
 	cHostIP := C.CString(hostFinal)
 	defer C.free(unsafe.Pointer(cHostIP))
 
-	// Buffer standar POSIX untuk host dan service
+	// POSIX standard buffers for host and service
 	var hostBuf [C.NI_MAXHOST]C.char
 	var servBuf [C.NI_MAXSERV]C.char
 
-	// Panggil helper C yang mengeksekusi getnameinfo native
+	// Call a C helper that executes native POSIX getnameinfo
 	ret := C.call_getnameinfo(
 		cHostIP,
 		C.int(portInt),
