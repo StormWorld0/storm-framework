@@ -55,7 +55,7 @@ def _make_ssl_context(cert_path: str, key_path: str) -> ssl.SSLContext:
     return ctx
 
 
-def execute(options, net):
+def execute(options, net, log):
     host = options.get("HOST")
     port = options.get("PORT")
 
@@ -85,11 +85,11 @@ def execute(options, net):
         key_tmp.write(key_pem)
         key_tmp.close()
 
-        smf.printf(f"[*] Connecting (plain TCP) ...")
+        log.printi(f"Connecting (plain TCP) ...")
         sock = net.Socket()
         sock.create_connection((host, port))
 
-        smf.printf("[*] Perform a TLS handshake using wrap_socket...")
+        log.printi("Perform a TLS handshake using wrap_socket...")
         ssl_ctx = _make_ssl_context(cert_tmp.name, key_tmp.name)
         tls_sock = ssl_ctx.wrap_socket(
             sock,
@@ -101,30 +101,30 @@ def execute(options, net):
         try:
             tls_sock.do_handshake()
         except ssl.SSLError as e:
-            smf.printf("[!] TLS Handshake failed =>", e)
+            log.printw("TLS Handshake failed =>", e)
             return
 
         cipher = tls_sock.cipher()
         alpn = tls_sock.selected_alpn_protocol()
-        smf.printf(f"[+] TLS Handshake successful!")
-        smf.printf(f"    Cipher: {cipher[0]} | Protocol: {cipher[1]} | Protos: {alpn}")
-        smf.printf()
+        log.printi(f"TLS Handshake successful!")
+        log.prints(f"Cipher: {cipher[0]} | Protocol: {cipher[1]} | Protos: {alpn}")
+        log.prints()
 
-        smf.printf("[*] Sending data using TLS sendall!")
+        log.printi("Sending data using TLS sendall!")
         tls_sock.settimeout(5)
         tls_sock.sendall(data)
         resp = tls_sock.recv(4096)
         if not resp:
-            smf.printf("[!] Failed to perform TLS Recv!")
+            log.printw("Failed to perform TLS Recv!")
             return
 
-        smf.printf("[✓] Raw Bytes =>", resp)
+        log.prints("Raw Bytes =>", resp)
     except ssl.SSLError as e:
-        smf.printf("[!] TLS Error =>", e)
+        log.printw("TLS Error =>", e)
     except ConnectionRefusedError as e:
-        smf.printf("[!] Connection error =>", e)
+        log.printw("Connection error =>", e)
     except OSError as e:
-        smf.printf("[!] OS Error =>", e)
+        log.printw("OS Error =>", e)
     finally:
         tls_sock.close()
         os.unlink(cert_tmp.name)
