@@ -6,9 +6,19 @@
 # Complete information about the License is in the root directory.
 # Author: zxelzy
 
-import readline  # noqa: F401
 import sys
 import smf
+import signal
+import termios
+import readline  # noqa: F401
+
+def disable_ctrl_z():
+    fd = sys.stdin.fileno()
+    settings = termios.tcgetattr(fd)
+    settings[6][termios.VSUSP] = b"\x00"
+    termios.tcsetattr(fd, termios.TCSANOW, settings)
+    signal.signal(signal.SIGTSTP, signal.SIG_IGN)
+
 
 try:
     from lib.ui.interface import main
