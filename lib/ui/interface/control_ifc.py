@@ -29,11 +29,14 @@ def systemctl():
             user_input = input(promp).strip().split()
         except KeyboardInterrupt:
             smf.printf(
-                f"\n[*]{CC.YELLOW} KeyboardInterrupt detected. Type 'exit' to quit.{CC.RESET}"
+                f"\n[!]{CC.YELLOW} KeyboardInterrupt detected. Type 'exit' to quit.{CC.RESET}"
             )
             continue
         except EOFError:
-            break
+            smf.printf(
+                f"\n[!]{CC.YELLOW} EOF detected. Type 'exit' to quit.{CC.RESET}"
+            )
+            continue
 
         if not user_input:
             continue
