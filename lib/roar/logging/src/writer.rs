@@ -4,8 +4,8 @@ use pyo3::prelude::*;
 use std::io::{self, Write};
 use crate::errors::{PrintError, PrintResult};
 
-// 1. UBAH: Enum sekarang menyimpan entitas Bound pointer yang secara intrinsik 
-// membawa token lifetime GIL ('py).
+// Enums now store Bound pointer entities that are intrinsically 
+// carries a lifetime GIL token ('py).
 pub enum OutputDestination<'py> {
     Stdout,
     Stderr,
@@ -13,16 +13,16 @@ pub enum OutputDestination<'py> {
 }
 
 impl<'py> OutputDestination<'py> {
-    // 2. UBAH: Signature menerima referensi ke Bound object
+    // Signature accepts a reference to a Bound object
     pub fn from_py_object(obj: Option<&Bound<'py, PyAny>>, _py: Python<'py>) -> PrintResult<Self> {
         match obj {
             None => Ok(OutputDestination::Stdout),
             Some(o) => {
-                // Pengecekan atribut secara aman di dalam Bound context
+                // Safe attribute checking in Bound context
                 if o.hasattr("write")? {
-                    // .clone() pada Bound tidak melakukan deep-copy data Python!
-                    // Ia hanya mengeksekusi operasi C-API `Py_INCREF` (O(1) complexity) 
-                    // untuk menduplikasi pointer secara aman dan menyimpannya di Enum.
+                    // .clone() on Bound does not deep-copy Python data!
+                    // It only executes the C-API `Py_INCREF` operation (O(1) complexity) 
+                    // to safely duplicate pointers and store them in an Enum.
                     Ok(OutputDestination::File(o.clone()))
                 } else {
                     Err(PrintError::TypeError("Object lacks write method".into()))
@@ -35,7 +35,7 @@ impl<'py> OutputDestination<'py> {
         match self {
             OutputDestination::Stdout => {
                 let stdout = io::stdout();
-                let mut handle = stdout.lock(); // Efisiensi: Lock manual
+                let mut handle = stdout.lock(); // Efficiency: Manual lock
                 handle.write_all(data.as_bytes())?;
             }
             OutputDestination::Stderr => {
@@ -44,9 +44,9 @@ impl<'py> OutputDestination<'py> {
                 handle.write_all(data.as_bytes())?;
             }
             OutputDestination::File(obj) => {
-                // 3. OPTIMASI KRITIKAL: Penghapusan Python::with_gil!
-                // Kompilator Rust tahu bahwa 'obj' (Bound) hanya eksis jika GIL valid.
-                // call_method1 sekarang bisa dipanggil langsung tanpa context switch FFI tambahan.
+                // Python::with_gil removal!
+                // The Rust compiler knows that 'obj' (Bound) only exists if the GIL is valid.
+                // call_method1 can now be called directly without additional FFI context switch.
                 obj.call_method1("write", (data,))?;
             }
         }
@@ -58,7 +58,7 @@ impl<'py> OutputDestination<'py> {
             OutputDestination::Stdout => io::stdout().flush()?,
             OutputDestination::Stderr => io::stderr().flush()?,
             OutputDestination::File(obj) => {
-                // Penghapusan Python::with_gil
+                // Python::with_gil removal
                 obj.call_method0("flush")?;
             }
         }
