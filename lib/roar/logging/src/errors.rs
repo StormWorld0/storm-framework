@@ -31,6 +31,8 @@ impl std::error::Error for PrintError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             PrintError::IOError(err) => Some(err),
+            PrintError::SqliteError(err) => Some(err),
+            PrintError::PythonError(err) => Some(err),
             _ => None,
         }
     }
