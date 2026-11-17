@@ -4,38 +4,38 @@ use pyo3::prelude::*;
 use pyo3::types::{PyString, PyBytes};
 use crate::errors::{PrintError, PrintResult};
 
-// 1. UBAH: Parameter menerima Bound object reference
+// The parameter accepts a Bound object reference
 pub fn object_to_string(obj: &Bound<'_, PyAny>) -> PrintResult<String> {
-    // 1. Jalur Cepat (Fast-path): Jika objek secara native adalah PyString.
-    // downcast() pada Bound akan mengembalikan Result<&Bound<'_, PyString>, DowncastError>.
+    // Fast-path: If the object is natively a PyString.
+    // downcast() on Bound will return Result<&Bound<'_, PyString>, DowncastError>.
     if let Ok(s) = obj.cast::<PyString>() {
         return Ok(s.to_string_lossy().into_owned());
     }
     
-    // 2. Handling None (Singleton)
-    // is_none() sekarang beroperasi secara aman di atas Bound smart pointer.
+    // Handling None (Singleton)
+    // is_none() now operates safely on Bound smart pointers.
     if obj.is_none() {
         return Ok("None".to_string());
     }
 
-    // 3. Handling Bytes (Bypass konversi encoding, inspeksi memori secara langsung)
-    // as_bytes() meminjam pointer internal PyBytes langsung ke buffer C/Rust.
+    // Handling Bytes (Bypass encoding conversion, direct memory inspection)
+    // as_bytes() borrows PyBytes' internal pointer directly to the Rust buffer.
     if let Ok(b) = obj.cast::<PyBytes>() {
         return Ok(format!("b'{}'", escape_bytes(b.as_bytes())));
     }
     
-    // 4. Jalur Standar: FFI call ke slot __str__ atau __repr__ objek Python.
-    // Method .str() dan .repr() sekarang mengalokasikan string baru di sisi Python
-    // dan mengembalikannya terbungkus dalam Bound<'_, PyString>.
+    // Standard Path: FFI call to the __str__ or __repr__ slot of a Python object.
+    // The .str() and .repr() methods now allocate new strings on the Python side.
+    // and returns it wrapped in a Bound<'_, PyString>.
     match obj.str() {
         Ok(s) => Ok(s.to_string_lossy().into_owned()),
         Err(_) => {
-            // Fallback: Resolusi ke representasi debugging.
+            // Fallback: Resolution to debugging representation.
             match obj.repr() {
                 Ok(r) => Ok(r.to_string_lossy().into_owned()),
                 Err(_) => {
-                    // .get_type() mereturn Bound<'_, PyType>.
-                    // .name() secara aman mengekstrak identifier tanpa alokasi tak perlu (mengembalikan Cow<str>).
+                    // .get_type() returns Bound<'_, PyType>.
+                    // .name() safely extracts the identifier without unnecessary allocation (returns Cow<str>).
                     Err(PrintError::TypeError(format!(
                         "Object of type {} is not string-convertible", 
                         obj.get_type().name()?
@@ -46,9 +46,9 @@ pub fn object_to_string(obj: &Bound<'_, PyAny>) -> PrintResult<String> {
     }
 }
 
-// FUNGSI INI TIDAK BERUBAH: Operasi pure-Rust, nol intervensi FFI PyO3.
+// Pure-Rust operation, zero FFI PyO3 intervention.
 fn escape_bytes(bytes: &[u8]) -> String {
-    // Pre-allocate memori untuk mengurangi re-alokasi saat string tumbuh
+    // Pre-allocate memory to reduce reallocation as strings grow.
     let mut result = String::with_capacity(bytes.len());
     for &b in bytes {
         match b {
@@ -57,10 +57,10 @@ fn escape_bytes(bytes: &[u8]) -> String {
             b'\t' => result.push_str("\\t"),
             b'\\' => result.push_str("\\\\"),
             b'\'' => result.push_str("\\'"),
-            // ASCII Graphic: karakter yang bisa diprint (32-126)
+            // ASCII Graphic: printable characters (32-126)
             0x20..=0x7E => result.push(b as char),
             _ => {
-                // Format hex untuk karakter non-ASCII
+                // Hex format for non-ASCII characters
                 result.push_str(&format!("\\x{:02x}", b));
             }
         }
