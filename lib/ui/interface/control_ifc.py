@@ -33,9 +33,7 @@ def systemctl():
             )
             continue
         except EOFError:
-            smf.printf(
-                f"\n[!]{CC.YELLOW} EOF detected. Type 'exit' to quit.{CC.RESET}"
-            )
+            smf.printf(f"\n[!]{CC.YELLOW} EOF detected. Type 'exit' to quit.{CC.RESET}")
             continue
 
         if not user_input:
