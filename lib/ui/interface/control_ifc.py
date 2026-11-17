@@ -7,6 +7,7 @@
 import sys
 import smf
 import signal
+import termios
 
 try:
     from apps.utility.colors import CC
@@ -14,6 +15,12 @@ try:
 except ImportError as e:
     smf.printf(f"Error import interface =>", e, file=sys.stderr)
     sys.exit(1)
+
+def disable_ctrl_z():
+    fd = sys.stdin.fileno()
+    settings = termios.tcgetattr(fd)
+    settings[6][termios.VSUSP] = b'\x00'
+    termios.tcsetattr(fd, termios.TCSANOW, settings)
 
 signal.signal(signal.SIGTSTP, 0)
 
@@ -51,4 +58,5 @@ def systemctl():
 
 
 if __name__ == "__main__":
+    disable_ctrl_z()
     systemctl()
