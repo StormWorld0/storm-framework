@@ -6,6 +6,7 @@
 
 import sys
 import smf
+import signal
 
 try:
     from apps.utility.colors import CC
@@ -17,7 +18,8 @@ except ImportError as e:
 
 def systemctl():
     core = Context()
-
+    signal.signal(signal.SIGTSTP, None)
+    
     while not core.exit:
         p_mod = core.current_module_name if core.current_module else "~"
 
