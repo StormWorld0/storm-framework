@@ -6,8 +6,6 @@
 
 import sys
 import smf
-import signal
-import termios
 
 try:
     from apps.utility.colors import CC
