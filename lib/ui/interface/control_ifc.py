@@ -13,12 +13,12 @@ try:
     from lib.smf.core.console.engine import Context
 except ImportError as e:
     smf.printf(f"Error import interface =>", e, file=sys.stderr)
-    sys.exit(100)
+    sys.exit(1)
 
+signal.signal(signal.SIGTSTP, 0)
 
 def systemctl():
     core = Context()
-    signal.signal(signal.SIGTSTP, 0)
 
     while not core.exit:
         p_mod = core.current_module_name if core.current_module else "~"
