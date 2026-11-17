@@ -17,16 +17,6 @@ except ImportError as e:
     sys.exit(1)
 
 
-def disable_ctrl_z():
-    fd = sys.stdin.fileno()
-    settings = termios.tcgetattr(fd)
-    settings[6][termios.VSUSP] = b"\x00"
-    termios.tcsetattr(fd, termios.TCSANOW, settings)
-
-
-signal.signal(signal.SIGTSTP, 0)
-
-
 def systemctl():
     core = Context()
 
@@ -60,5 +50,4 @@ def systemctl():
 
 
 if __name__ == "__main__":
-    disable_ctrl_z()
     systemctl()
