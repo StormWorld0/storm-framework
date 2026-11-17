@@ -18,7 +18,7 @@ except ImportError as e:
 
 def systemctl():
     core = Context()
-    signal.signal(signal.SIGTSTP, None)
+    signal.signal(signal.SIGTSTP, 0)
 
     while not core.exit:
         p_mod = core.current_module_name if core.current_module else "~"
