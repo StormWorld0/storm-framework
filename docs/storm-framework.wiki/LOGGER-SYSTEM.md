@@ -38,11 +38,11 @@ import smf
 2. Then use the function:
 
 ```python
-smf.printf("example", err, file=sys.stderr, flush=True)
-smf.printf("example", a, b, c)
+smf.printf(*args, sep=" ", end="\n", file=None, flush=False) # Default
+smf.printf("label", payload, sep, end, file, flush)
 
-smf.printd("example", err, level="ERROR")
-smf.printd("example", a, b, c, level="DEBUG")
+smf.printd(*args, level="DEBUG") # Default
+smf.printd("label", payload, level="DEBUG")
 ```
 
 ## Export Log
