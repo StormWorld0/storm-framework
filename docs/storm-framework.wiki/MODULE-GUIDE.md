@@ -103,13 +103,13 @@ We have made documentation [CRS ENGINE](https://storm-framework.pages.dev/storm-
 The way to use CRS is to call the API of the required protocol and send data there. Implementation example:
 
 ```python
-def execute(options, net):
+def execute(options, net, log):
     host = options.get("HOST")
     port = options.get("PORT")
 
     sock = net.Socket()
     res = sock.socket(sock.AF_INET, sock.SOCK_STREAM, sock.IPPROTO_IP) # Open Socket
-    smf.printf(res.fileno) # Print File-Decryptor (FD)
+    log.prints(res.fileno) # Print File-Decryptor (FD)
 
     sock.timeout(2.0) # Set global timeout
     sock.connect(host, port) # Connected to Socket
@@ -120,11 +120,12 @@ def execute(options, net):
     resp = sock.recv(1024) # Read buffer
 
     if resp.ok:
-        smf.printf("Raw Bytes", resp.raw_bytes)
-        smf.printf("String Bytes", resp.str_bytes)
-        smf.printf("Amount Bytes", resp.read_bytes)
+        log.prints("Raw Bytes", resp.raw_bytes)
+        log.prints("Str Bytes", resp.str_bytes)
+        log.prints("Int Bytes", resp.int_bytes)
+        log.prints("Hex Bytes", resp.hex_bytes)
     else:
-        smf.printf("Message ERROR/SUCCESS", resp.message)
+        log.printi("Message ERROR/SUCCESS", resp.message)
 
     cert = path/to/file/cert
     key = path/to/file/key
@@ -138,15 +139,23 @@ def execute(options, net):
         sock.send()
         sock.recv()
     except Exception as e:
-        smf.printd("Label message", e, level="ERROR") # Enter error exception into database
+        log.printe("Label message", e) # Enter error exception
     finally:
         sock.close() # Stop the connection so it doesn't hang
 
-    smf.printf("Cipher Suite", r.tls.cipher)
-    smf.printf("Version TLS 1.0/1.1/1.2/1.3", r.tls.version)
+    log.printi("Cipher Suite", r.tls.cipher)
+    log.printi("Version TLS 1.0/1.1/1.2/1.3", r.tls.version)
 ```
 
 If you want to know what data is issued by the existing protocols, you can see it at [CRS ENGINE DOCS](https://storm-framework.pages.dev/storm-framework.wiki/CRS-ENGINE)
+
+>[!important]
+>mandatory entry point function name and valid arguments:
+>1. def execute(options) No def execute()
+>2. def execute(options, net) No def execute(net, options)
+>3. def execute(options, net, log) No def execute(options, log) And def execute(options, log, net)
+
+---
 
 
 
