@@ -56,7 +56,7 @@ export default withMermaid(
           items: [
             { text: 'CRS Engine', link: '/storm-framework.wiki/CRS-ENGINE' },
             { text: 'Caller Binary', link: '/storm-framework.wiki/CALLER-BINARY' },
-            { text: 'Logger System', link: '/storm-framework.wiki/LOGGER' },
+            { text: 'Logger System', link: '/storm-framework.wiki/LOGGER-SYSTEM' },
           ]
         },
         {
