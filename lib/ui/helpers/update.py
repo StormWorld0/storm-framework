@@ -14,7 +14,7 @@ def update():
     url = "https://raw.githubusercontent.com/StormWorld0/storm-framework/main/data/data.json"
     try:
         latest_version = HTTPR().get(url).run().json()["version"]
-        pid.cleanall()
+        pid.cleanall(1.0)
     except Exception as e:
         print(f"ERROR VERSION UPDATE => {e}")
 
