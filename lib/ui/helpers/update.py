@@ -4,7 +4,6 @@
 # Complete information about the License is in the root directory.
 # Author: zxelzy
 
-import requests
 import subprocess
 import sys
 from lib.roar.crs.net_api import HTTPR
