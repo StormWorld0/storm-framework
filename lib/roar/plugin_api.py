@@ -40,8 +40,8 @@ class PluginAPI:
         Connecting managers to monitoring.
         """
         # API retrieves 'State/Data' from Manager
-        pluginpath = manager.PLUGIN_DIR
-        data = manager.REGISTRY
+        pluginpath = LP._PLUGIN_DIR
+        data = LP._REGISTRY
 
         # Inject the data into the Monitoring function.
         # Monitoring will process it and return a report.
