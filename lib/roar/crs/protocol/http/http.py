@@ -47,13 +47,12 @@ class HTTPClient(HTTPState, HTTPMethod):
 
         return self
 
-    def timeout(self, value: float, **kwargs):
+    def timeout(self, value: int | float, **kwargs):
         """Timeout value settings (Coerces int to float safely)"""
-        v = float(value)
-        if v <= 0:
-            raise ValueError("Timeout must be greater than 0")
+        if value <= 0:
+            raise ValueError(f"Timeout must be greater than {value}")
 
-        self._timeout = v
+        self._timeout = float(value)
         return self
 
     def _validate_state(self):
