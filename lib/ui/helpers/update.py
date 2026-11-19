@@ -7,12 +7,15 @@
 import requests
 import subprocess
 import sys
+from lib.roar.crs.net_api import HTTPR
+from lib.smf.core.manage import PIDManager as pid
 
 
 def update():
     url = "https://raw.githubusercontent.com/StormWorld0/storm-framework/main/data/data.json"
     try:
-        latest_version = requests.get(url).json()["version"]
+        latest_version = HTTPR().get(url).run().json()["version"]
+        pid.cleanall()
     except Exception as e:
         print(f"ERROR VERSION UPDATE => {e}")
 
