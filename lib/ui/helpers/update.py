@@ -9,7 +9,6 @@ import sys
 from lib.roar.crs.net_api import HTTPR
 
 
-
 def update():
     url = "https://raw.githubusercontent.com/StormWorld0/storm-framework/main/data/data.json"
     try:
