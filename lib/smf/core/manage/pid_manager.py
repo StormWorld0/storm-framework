@@ -71,7 +71,7 @@ class PIDManager:
         start_time = time.time()
         alive_pids = set(pids_to_kill)
 
-        while alive_pids and (time.time() - start_time < timeout):
+        while alive_pids and (time.time() - start_time < float(timeout)):
             for pid in list(alive_pids):
                 try:
                     pid_reaped, _ = os.waitpid(pid, os.WNOHANG)
