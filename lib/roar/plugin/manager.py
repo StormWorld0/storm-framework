@@ -26,10 +26,9 @@ class PluginManager:
         self._store = PluginStateStore()
         self._lock = threading.RLock()
         self._plugin_index: Dict[str, Path] = {}
-        
+
         self._REGISTRY: Dict[str, Any] = {}
         self._ACTIVE_PLUGINS: Set[str] = self._store.load_active_plugins()
-
 
     # ==========================================
     # CORE LOGIC OBJECT
@@ -49,11 +48,9 @@ class PluginManager:
             elif child.is_file() and child.suffix == ".py":
                 self._plugin_index[child.stem] = child
 
-
     def resolve_plugin_path(self, plugin_name: str) -> Optional[Path]:
         """O(1) Directory Traversal via Hash Map."""
         return self._plugin_index.get(plugin_name)
-
 
     def purge_module_from_memory(self, plugin_name: str) -> None:
         """Hard Cleanup: Removes the main module AND all its submodules."""
@@ -62,9 +59,8 @@ class PluginManager:
         ]
         for k in keys_to_remove:
             del sys.modules[k]
-            
-        importlib.invalidate_caches()
 
+        importlib.invalidate_caches()
 
     def load_module(self, plugin_name: str) -> bool:
         """Fungsi kompilasi AST & Memory Allocation tingkat rendah."""
@@ -79,7 +75,9 @@ class PluginManager:
             try:
                 smf.printd("Resolving module path", plugin_name, level="INFO")
 
-                spec = importlib.util.spec_from_file_location(plugin_name, str(plugin_path))
+                spec = importlib.util.spec_from_file_location(
+                    plugin_name, str(plugin_path)
+                )
                 if spec is None or spec.loader is None:
                     smf.printd(f"Cannot create module spec for {plugin_path}")
                     return False
@@ -94,7 +92,9 @@ class PluginManager:
                 if plugin_type == "BROKEN":
                     self.purge_module_from_memory(plugin_name)
                     smf.printd(
-                        "Plugin does not pass OOP/FUNC validation", plugin_type, level="ERROR"
+                        "Plugin does not pass OOP/FUNC validation",
+                        plugin_type,
+                        level="ERROR",
                     )
                     return False
 
@@ -128,13 +128,18 @@ class PluginManager:
 
                     runner = threading.Thread(
                         target=daemon_runner,
-                        args=(plugin_obj.execute, plugin_name),  # Passing target ke wrapper
+                        args=(
+                            plugin_obj.execute,
+                            plugin_name,
+                        ),  # Passing target ke wrapper
                         name=f"Daemon-{plugin_name}",
                         daemon=True,
                     )
                     runner.start()
 
-                elif plugin_type == "FUNCTIONAL" and getattr(module, "__autorun__", False):
+                elif plugin_type == "FUNCTIONAL" and getattr(
+                    module, "__autorun__", False
+                ):
                     start_routine = getattr(module, "execute", None)
                     if start_routine:
                         smf.printd(
@@ -143,7 +148,10 @@ class PluginManager:
 
                         runner = threading.Thread(
                             target=daemon_runner,
-                            args=(start_routine, plugin_name),  # Passing target ke wrapper
+                            args=(
+                                start_routine,
+                                plugin_name,
+                            ),  # Passing target ke wrapper
                             name=f"Daemon-{plugin_name}",
                             daemon=True,
                         )
@@ -152,7 +160,9 @@ class PluginManager:
                 smf.printd("Plugin loaded successfully", plugin_name, level="INFO")
                 return True
             except Exception as e:
-                smf.printf(f"[!]{CC.YELLOW} Failed to load plugin =>{CC.RESET}", plugin_name)
+                smf.printf(
+                    f"[!]{CC.YELLOW} Failed to load plugin =>{CC.RESET}", plugin_name
+                )
                 smf.printd(f"Failed to load plugin [{plugin_name}]", e, level="ERROR")
 
                 # Delete from Memory (existing or not) on validation error
@@ -170,9 +180,9 @@ class LoadPlugin:
         self._REGISTRY = self.pm._REGISTRY
         self._ACTIVE_PLUGINS = self.pm._ACTIVE_PLUGINS
         self._store = self.pm._store
-        
+
         self._lock = threading.RLock()
-    
+
     def load(self, plugin_name: str) -> bool:
         with self._lock:
             self.pm.build_index()
@@ -184,7 +194,6 @@ class LoadPlugin:
                     f"[✓]{CC.GREEN} Plugin loaded successfully =>{CC.RESET}", plugin_name
                 )
             return success
-
 
     def unload(self, plugin_name: str) -> bool:
         with self._lock:
@@ -200,7 +209,9 @@ class LoadPlugin:
                         # Execute (teardown) the plugin's properties
                         plugin_instance.teardown()
                     except Exception as e:
-                        smf.printd(f"Error during {plugin_name} teardown", e, level="ERROR")
+                        smf.printd(
+                            f"Error during {plugin_name} teardown", e, level="ERROR"
+                        )
 
                 # Remove from Register
                 del self._REGISTRY[plugin_name]
@@ -220,7 +231,6 @@ class LoadPlugin:
                 smf.printd(f"Failed to unload plugin {plugin_name}", e, level="ERROR")
                 return False
 
-
     def boot(self) -> bool | None:
         smf.printd("Plugin service is running", level="INFO")
         try:
@@ -230,17 +240,19 @@ class LoadPlugin:
         except Exception:
             return None
 
-
     def get_plugin(self, plugin_name: str) -> Any:
         """Mengambil proxy plugin dari RAM."""
         plugin = self._REGISTRY.get(plugin_name)
         if plugin is None:
-            smf.printd("Caller requested inactive/missing plugin", plugin_name, level="WARN")
+            smf.printd(
+                "Caller requested inactive/missing plugin", plugin_name, level="WARN"
+            )
             return NullPlugin(plugin_name)
         return plugin
- 
 
-    def broadcast(self, event_name: str, *args: Any, **kwargs: Any) -> Dict[str, PluginResult]:
+    def broadcast(
+        self, event_name: str, *args: Any, **kwargs: Any
+    ) -> Dict[str, PluginResult]:
         """Sends events to all active and compatible Plugins"""
 
         results: Dict[str, PluginResult] = {}
