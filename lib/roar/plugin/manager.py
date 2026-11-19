@@ -103,7 +103,7 @@ class PluginManager:
                 self._REGISTRY[plugin_name] = safe_instance
 
                 # --- WRAPPER DAEMON UNTUK ISOLASI CRASH ---
-                def daemon_runner(self, target_func, p_name):
+                def daemon_runner(target_func, p_name):
                     """Wrapper thread untuk menangkap runtime exception & melakukan teardown."""
                     try:
                         target_func()
