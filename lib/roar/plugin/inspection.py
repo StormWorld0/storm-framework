@@ -59,9 +59,7 @@ def extract_plugin(module: Any, plugin_name: str) -> tuple[Any, str]:
 
     # [VALIDASI 1] Cek apakah benar Class?
     if not inspect.isclass(plugin_class):
-        smf.printd(
-            f"[{plugin_name}] The 'Plugin' attribute is not a Class", level="WARN"
-        )
+        smf.printd(f"[{plugin_name}] The 'Plugin' attribute is not a Class", level="WARN")
         return NullPlugin(plugin_name), "BROKEN"
 
     # [VALIDASI 2] Cek entry point 'execute()'
