@@ -177,6 +177,7 @@ class LoadPlugin:
 
     def __init__(self):
         self.pm = PluginManager()
+        self._PLUGIN_DIR = self.pm._PLUGIN_DIR
         self._REGISTRY = self.pm._REGISTRY
         self._ACTIVE_PLUGINS = self.pm._ACTIVE_PLUGINS
         self._store = self.pm._store
@@ -282,5 +283,5 @@ class LoadPlugin:
 # ==========================================
 # AUTO-EXECUTION (Early Life Cycle)
 # ==========================================
-# Membangun indeks otomatis saat `import manager` dipanggil pertama kali
 PluginManager().build_index()
+LP = LoadPlugin()
