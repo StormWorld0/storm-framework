@@ -4,7 +4,7 @@ import smf
 
 from typing import Any, List, Dict, Callable, Optional
 
-from .plugin import manager
+from .plugin.manager import LP
 from .plugin import monitoring
 from .plugin import introspection
 from .plugin.result import PluginResult
@@ -16,22 +16,22 @@ class PluginAPI:
     @staticmethod
     def boot() -> None:
         """Registering Plugin to database"""
-        return manager.boot()
+        return LP.boot()
 
     @staticmethod
     def load(plugin_name: str) -> bool:
         """Registering Plugins and Execution"""
-        return manager.load(plugin_name)
+        return LP.load(plugin_name)
 
     @staticmethod
     def unload(plugin_name: str) -> bool:
         """Removing Plugins from Register"""
-        return manager.unload(plugin_name)
+        return LP.unload(plugin_name)
 
     @staticmethod
     def broadcast(event_name: str, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         """Calling a Plugin without knowing the Plugin name"""
-        return manager.broadcast(event_name, *args, **kwargs)
+        return LP.broadcast(event_name, *args, **kwargs)
 
     @staticmethod
     def monitor() -> List[dict]:
@@ -45,9 +45,7 @@ class PluginAPI:
 
         # Inject the data into the Monitoring function.
         # Monitoring will process it and return a report.
-        laporan = monitoring.get_status_map(pluginpath, data)
-        # Returning data report
-        return laporan
+        return monitoring.get_status_map(pluginpath, data)
 
     @staticmethod
     def inspect(plugin_name: str) -> List[dict]:
@@ -56,17 +54,16 @@ class PluginAPI:
         Connecting managers to introspection.
         """
         # API requests specific 1 plugin from Manager
-        target_plugin = manager.get_plugin(plugin_name)
+        plugin = LP.get_plugin(plugin_name)
         # Dissecting Plugin metadata
-        manifest = introspection.get_plugin_manifest(target_plugin)
-        return manifest
+        return introspection.get_plugin_manifest(plugin)
 
     @staticmethod
     def get_plugin(plugin_name: str) -> Optional[Callable[[Any], PluginResult]]:
         """Retrieve a callable handler for the specified plugin."""
 
         # Calling the plugin from the register, to find out if the plugin exists
-        plugin = manager.get_plugin(plugin_name)
+        plugin = LP.get_plugin(plugin_name)
         if not plugin or isinstance(plugin, manager.NullPlugin):
             smf.printd(
                 f"Plugin '{plugin_name}' could not be found or initialized.",
