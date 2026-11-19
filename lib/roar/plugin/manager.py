@@ -162,7 +162,7 @@ class PluginManager:
                 return False
 
 
-class LoadPlugin;
+class LoadPlugin:
     """Called by API"""
 
     def __init__(self):
