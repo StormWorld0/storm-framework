@@ -61,7 +61,8 @@ class PluginManager:
             k for k in sys.modules if k == plugin_name or k.startswith(f"{plugin_name}.")
         ]
         for k in keys_to_remove:
-        del sys.modules[k]
+            del sys.modules[k]
+            
         importlib.invalidate_caches()
 
 
