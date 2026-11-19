@@ -60,7 +60,7 @@ def extract_plugin(module: Any, plugin_name: str) -> tuple[Any, str]:
     # [VALIDASI 1] Cek apakah benar Class?
     if not inspect.isclass(plugin_class):
         smf.printd(
-            f"[{plugin_name}] The 'Plugin' attribute is not a Class", level="ERROR"
+            f"[{plugin_name}] The 'Plugin' attribute is not a Class", level="WARN"
         )
         return NullPlugin(plugin_name), "BROKEN"
 
@@ -69,7 +69,7 @@ def extract_plugin(module: Any, plugin_name: str) -> tuple[Any, str]:
         getattr(plugin_class, "execute")
     ):
         smf.printd(
-            f"OOP Plugin [{plugin_name}] has no entry point 'execute()'", level="ERROR"
+            f"OOP Plugin [{plugin_name}] has no entry point 'execute()'", level="WARN"
         )
         return NullPlugin(plugin_name), "BROKEN"
 
@@ -80,7 +80,7 @@ def extract_plugin(module: Any, plugin_name: str) -> tuple[Any, str]:
             smf.printd(
                 f"Plugin [{plugin_name}] uses threading/asyncio",
                 f"but has no teardown()",
-                level="ERROR",
+                level="WARN",
             )
             return NullPlugin(plugin_name), "BROKEN"
 
