@@ -5,6 +5,7 @@ import smf
 from typing import Any, List, Dict, Callable, Optional
 
 from .plugin.manager import LP
+from .plugin.safe import NullPlugin
 from .plugin import monitoring
 from .plugin import introspection
 from .plugin.result import PluginResult
@@ -64,7 +65,7 @@ class PluginAPI:
 
         # Calling the plugin from the register, to find out if the plugin exists
         plugin = LP.get_plugin(plugin_name)
-        if not plugin or isinstance(plugin, manager.NullPlugin):
+        if not plugin or isinstance(plugin, NullPlugin):
             smf.printd(
                 f"Plugin '{plugin_name}' could not be found or initialized.",
                 level="ERROR",
