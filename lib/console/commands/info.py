@@ -186,8 +186,8 @@ def execute(args, ctx):
 
         try:
             width = 84
-            left = 13
-            right = 10
+            left = 15
+            right = 5
 
             smf.printf()
             smf.printf(f"{CC.MAGENTA}{'='*width}{CC.RESET}")
