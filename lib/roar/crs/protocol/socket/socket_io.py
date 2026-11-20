@@ -1,6 +1,6 @@
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
-from .validate import is_tuple2, parse_flags
+from .validate import is_tuple2, parse_flags, parse_addr
 from ...endpoint import CRS
 
 
@@ -85,14 +85,13 @@ class SocketIO:
     def sendto(
         self,
         data: bytes,
-        address: tuple[str, str | int],
+        address: tuple[str, int],
         flags: int | None = None,
         **kwargs,
     ) -> SocketResponse:
         """Send datagram along with Host & Port"""
         self._ensure_open("sendto")
-        if is_tuple2(address):
-            host, port = address
+        host, port, _, _ = parse_addr(address)
         if flags is not None:
             flags = parse_flags(flags)
 
