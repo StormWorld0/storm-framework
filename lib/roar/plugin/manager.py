@@ -230,27 +230,30 @@ class LoadPlugin:
                 smf.printd(f"Failed to unload plugin {plugin_name}", e, level="ERROR")
                 return False
 
-    def boot(self) -> bool | None:
+    def boot(self) -> bool:
         smf.printd("Plugin service is running", level="INFO")
         try:
             for p_name in tuple(self._ACTIVE_PLUGINS):
                 self.pm.load_module(p_name)
             return True
         except Exception:
-            return None
+            return False
 
     def get_plugin(self, plugin_name: str) -> Any:
         """Mengambil proxy plugin dari RAM."""
         plugin = self._REGISTRY.get(plugin_name)
         if plugin is None:
             smf.printd(
-                "Caller requested inactive/missing plugin", plugin_name, level="WARN"
+                "Caller requested inactive plugin", plugin_name, level="INFO"
             )
             return NullPlugin(plugin_name)
         return plugin
 
     def broadcast(
-        self, event_name: str, *args: Any, **kwargs: Any
+        self, 
+        event_name: str,
+        *args: Any,
+        **kwargs: Any,
     ) -> Dict[str, PluginResult]:
         """Sends events to all active and compatible Plugins"""
 
