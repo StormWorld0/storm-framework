@@ -54,8 +54,9 @@ class PluginAPI:
         REPL command: `info <plugin_name>`
         Connecting managers to introspection.
         """
+        plugin = LP.get_plugin(plugin_name)
         # Dissecting Plugin metadata
-        return introspection.metadata_plugin(plugin_name)
+        return introspection.metadata_plugin(plugin)
 
     @staticmethod
     def get_plugin(plugin_name: str) -> Optional[Callable[[Any], PluginResult]]:
