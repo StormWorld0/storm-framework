@@ -6,6 +6,7 @@
 
 import sys
 import smf
+import signal
 
 try:
     from apps.utility.colors import CC
@@ -17,11 +18,12 @@ except ImportError as e:
 
 def systemctl():
     core = Context()
-
+    
     while not core.exit:
         p_mod = core.current_module_name if core.current_module else "~"
 
         try:
+            print("After:", signal.getsignal(signal.SIGINT))
             print(
                 f"{CC.CYAN}┌─({CC.BLUE}storm{CC.YELLOW}<⚡>{CC.BLUE}framework{CC.CYAN}){CC.RESET}-{CC.RED}[{p_mod}]{CC.RESET}"
             )
