@@ -1,6 +1,7 @@
 # -- https://github.com/StormWorld0/storm-framework
 # -- SMF License
 
+import smf
 import sys
 import inspect
 import importlib.util
@@ -15,7 +16,6 @@ class Introspection:
         self.func = "metadata"
         self.clas = ("Metadata", "PluginMetadata")
         self.atrb = ("metadata", "meta")
-        self.index: Dict[str, Path] = {}
 
     def _dict_format(self, data: Dict[Any, Any]) -> Dict[str, str]:
         return {
@@ -47,6 +47,7 @@ class Introspection:
             idx = getattr(pm, "_plugin_index", None)
 
             if idx and isinstance(idx, dict):
+                smf.printd("Indexing dict format", idx, level="INFO")
                 return idx
         except Exception:
             pass
@@ -55,6 +56,8 @@ class Introspection:
     def _plugin_path(self, plugin: str) -> Path | None:
         if not (obj := self._take_plugin()):
             return None
+
+        smf.printd("The value of `_plugin_index` is retrieved", obj, level="INFO")
 
         pgpath = obj.get(plugin)
         if pgpath and isinstance(pgpath, Path):
@@ -102,6 +105,7 @@ class Introspection:
         for cls_name in self.clas:
             found = getattr(obj, cls_name, None)
             if found is not None:
+                smf.printd("Class plugin found", found, level="INFO")
                 return found
         return None
 
