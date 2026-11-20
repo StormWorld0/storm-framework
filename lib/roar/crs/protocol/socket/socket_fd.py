@@ -46,7 +46,7 @@ class SocketFD:
         resp = CRS.send(packet)
         response = SocketResponse(resp)
 
-        if uds := response._data.get("uds_path"):
+        if uds := response._data.get("socket_uds"):
             fd = real_fd(uds)
             self._sock_fd = fd
             return self._sock_fd
