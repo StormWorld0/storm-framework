@@ -3,6 +3,7 @@
 
 import sys
 import inspect
+import importlib.util
 from pathlib import Path
 from typing import Tuple, Any, Dict, get_type_hints
 
@@ -37,26 +38,27 @@ class Introspection:
     def _is_valid_meta(self, meta: Dict[str, str]) -> bool:
         return bool(meta["name"].strip() and meta["action"].strip())
 
-    def _take_plugin(self) -> Any | None:
+    def _take_plugin(self) -> Dict[str, Any] | None:
         try:
             from . import manager
 
             lp = getattr(manager, "LP", None)
-            gt = getattr(lp, "get_plugin", None)
+            pm = getattr(lp, "pm", None)
+            idx = getattr(pm, "_plugin_index", None)
 
-            if callable(gt):
-                return gt
+            if idx and isinstance(idx, dict):
+                return idx
         except Exception:
             pass
         return None
 
-    def _plugin_get(self, plugin: str) -> Dict[str, Any] | None:
+    def _plugin_path(self, plugin: str) -> Path | None:
         if not (obj := self._take_plugin()):
             return None
 
-        pgdict = obj(plugin)
-        if pgdict:
-            return pgdict
+        pgpath = obj.get(plugin)
+        if pgpath and isinstance(pgpath, Path):
+            return pgpath
         return None
 
     def _can_call_meta_func(self, obj: Any) -> Tuple[bool, Any]:
@@ -137,7 +139,7 @@ class Introspection:
 
         return None
 
-    def metadata_plugin(self, plugin: str | None = None) -> Dict[str, str] | None:
+    def metadata_plugin(self, plugin: str) -> Dict[str, str] | None:
         if not plugin:
             return None
 
@@ -147,12 +149,16 @@ class Introspection:
             if parsed:
                 return parsed
 
-        # Find path from index (`Dict[str, Path]`)
-        pgdict = self._plugin_get(plugin)
-        if not pgdict:
+        # Find path from index (`Path`)
+        pgpath = self._plugin_path(plugin)
+        if not pgpath:
             return None
 
-        return self._parse_plugin_metadata(pgdict)
+        spec = importlib.util.spec_from_file_location(plugin, str(pgpath))
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        
+        return self._parse_plugin_metadata(module)
 
 
 introspection = Introspection()
