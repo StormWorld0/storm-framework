@@ -11,11 +11,11 @@ from typing import Tuple, Any, Dict, get_type_hints
 class Introspection:
     """Retrieving Plugin metadata"""
 
-    def __init__(self, plugin_index: Dict[str, Path] | None = None) -> None:
+    def __init__(self):
         self.func = "metadata"
         self.clas = ("Metadata", "PluginMetadata")
         self.atrb = ("metadata", "meta")
-        self.index: Dict[str, Path] = plugin_index if plugin_index is not None else {}
+        self.index: Dict[str, Path] = {}
 
     def _dict_format(self, data: Dict[Any, Any]) -> Dict[str, str]:
         return {
@@ -164,3 +164,6 @@ class Introspection:
         spec.loader.exec_module(module)
 
         return self._parse_plugin_metadata(module)
+
+
+introspection = Introspection()
