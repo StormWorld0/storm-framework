@@ -13,10 +13,10 @@ def show_about():
         VERSION = json.load(f)["version"]
 
     smf.printf(
-        f"\n{CC.MAGENTA}=========================================================================="
+        f"\n{CC.MAGENTA}===================================================================================="
     )
     smf.printf(
-        f"{CC.MAGENTA}=========================================================================="
+        f"{CC.MAGENTA}===================================================================================="
     )
     smf.printf(f"{CC.YELLOW}      Tool                      : Storm Framework")
     smf.printf(f"{CC.YELLOW}      Organization              : StormWorld0")
@@ -27,13 +27,13 @@ def show_about():
         f"{CC.YELLOW}      Documentation             : https://storm-framework.pages.dev"
     )
     smf.printf(
-        f"{CC.YELLOW}      GitHub                    : github.com/StormWorld0/storm-framework"
+        f"{CC.YELLOW}      GitHub                    : https://github.com/StormWorld0/storm-framework"
     )
     smf.printf(
-        f"{CC.YELLOW}      DockerHub                 : hub.docker.com/r/stormworld0/storm-framework"
+        f"{CC.YELLOW}      DockerHub                 : https://hub.docker.com/r/stormworld0/storm-framework"
     )
     smf.printf(
-        f"{CC.MAGENTA}==========================================================================\n"
+        f"{CC.MAGENTA}====================================================================================\n"
     )
 
 
