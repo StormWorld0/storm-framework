@@ -49,7 +49,7 @@ def extract_plugin(module: Any, plugin_name: str) -> Tuple[Any, str]:
     Validasi ketat arsitektur plugin.
     Jika plugin OOP cacat/gagal inisialisasi, kembalikan NullPlugin agar runtime tetap stabil.
     """
-    if not intros.metadata_plugin(plugin_name):
+    if not intros.metadata_plugin(module):
         smf.printd("Plugin failed metadata validation", plugin_name, level="WARN")
         return NullPlugin(plugin_name), "INVALID"
 
