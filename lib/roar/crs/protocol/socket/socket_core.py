@@ -1,7 +1,7 @@
 from .socket_listener import ClientListener
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
-from .validate import is_tuple2, parse_addr
+from .validate import parse_addr
 from ...endpoint import CRS
 from typing import Self
 from lib.smf.exception import SocketError
@@ -117,8 +117,8 @@ class SocketCore:
         """Creating a TCP Stream connection"""
         self._ensure_open("create")
         self.family = 2  # Keep default AF_INET
-        self.type = 1    # Keep default SOCK_STREAM
-        self.proto = 0   # Keep default Kernel
+        self.type = 1  # Keep default SOCK_STREAM
+        self.proto = 0  # Keep default Kernel
         host, port, _, _ = parse_addr(address)
 
         packet = IPCPayloadBuilder.build(
