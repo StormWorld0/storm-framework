@@ -4,7 +4,7 @@
 import sys
 import inspect
 import importlib
-from typing import List, Any, Path, Dict, Optional, get_type_hints
+from typing import Any, Path, Dict, get_type_hints
 
 
 class Introspection:
@@ -38,6 +38,7 @@ class Introspection:
 
     def _plugin_path(self, plugin: str) -> str | None:
         from .manager import PluginManager
+
         self.index = PluginManager()._plugin_index
         if not self.index:
             return None
@@ -114,7 +115,5 @@ class Introspection:
         spec = importlib.util.spec_from_file_location(plugin, pgpath)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
-        
+
         return self._parse_plugin_metadata(module)
-        
-        
