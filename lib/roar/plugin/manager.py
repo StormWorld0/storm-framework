@@ -181,13 +181,10 @@ class LoadPlugin:
         self._REGISTRY = self.pm._REGISTRY
         self._ACTIVE_PLUGINS = self.pm._ACTIVE_PLUGINS
         self._store = self.pm._store
-        self._plugin_index = self.pm._plugin_index
-
         self._lock = threading.RLock()
 
     def load(self, plugin_name: str) -> bool:
         with self._lock:
-            self.pm.build_index()
             success = self.pm.load_module(plugin_name)
             if success:
                 self._ACTIVE_PLUGINS.add(plugin_name)
@@ -285,4 +282,5 @@ class LoadPlugin:
 # AUTO-EXECUTION (Early Life Cycle)
 # ==========================================
 PM = PluginManager()
+PM.build_index()
 LP = LoadPlugin()
