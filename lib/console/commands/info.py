@@ -19,23 +19,26 @@ def execute(args, ctx):
         smf.printf(f"[!] {CC.YELLOW}Input: info <var> <val> or help!{CC.RESET}")
         return
 
-    
     if args[0] in ("modules", "mod"):
         query = args[1] if len(args) == 2 else ""
         if not query:
-            smf.printf(f"[!] {CC.YELLOW}Invalid argument. Example of valid argument:{CC.RESET} info mod <modules>")
-            return 
-            
+            smf.printf(
+                f"[!] {CC.YELLOW}Invalid argument. Example of valid argument:{CC.RESET} info mod <modules>"
+            )
+            return
+
         # This is a special logic to know where the CVE is located.
         # Make sure CVE is always in the vulnerability folder
         vuln_path = "modules/"
         file_path = path(query)
         found_path = f"{vuln_path}{file_path}.py"
-    
+
         if not os.path.isfile(found_path):
-            smf.printf(f"[!] {CC.YELLOW}Modules >{CC.RESET} {query} {CC.YELLOW}=> Not found {CC.RESET}")
+            smf.printf(
+                f"[!] {CC.YELLOW}Modules >{CC.RESET} {query} {CC.YELLOW}=> Not found {CC.RESET}"
+            )
             return
-            
+
         # To display information about a specific module
         # Command => info <modules_name> / info <modules_path>
         try:
@@ -185,9 +188,11 @@ def execute(args, ctx):
     elif args[0] in ("plugin", "pg"):
         query = args[1] if len(args) == 2 else ""
         if not query:
-            smf.printf(f"[!] {CC.YELLOW}Invalid argument. Example of valid argument:{CC.RESET} info pg <plugin>")
+            smf.printf(
+                f"[!] {CC.YELLOW}Invalid argument. Example of valid argument:{CC.RESET} info pg <plugin>"
+            )
             return
-            
+
         meta = ctx.plugin.inspect(query)
         if not meta:
             smf.printf(
