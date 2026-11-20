@@ -52,7 +52,7 @@ def extract_plugin(module: Any, plugin_name: str) -> Tuple[Any, str]:
     if not intros.metadata_plugin(plugin_name):
         smf.printd("Plugin failed metadata validation", plugin_name, level="WARN")
         return NullPlugin(plugin_name), "INVALID"
-        
+
     # If there is no 'Plugin' attribute, 100% Functional
     if not hasattr(module, "Plugin"):
         return module, "FUNCTIONAL"
