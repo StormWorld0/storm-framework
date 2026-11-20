@@ -38,7 +38,7 @@ class SocketState:
         host: str | None = None,
         port: int | None = None,
         af: int | None = None,
-        type: int | = None,
+        type: int | None = None,
         proto: int | None = None,
         level: int | None = None,
         name: int | None = None,
