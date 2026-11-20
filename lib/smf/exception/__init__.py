@@ -19,6 +19,7 @@ from .storm_exc import (
     SMFDatabaseError,
     SMFConnectionError,
     SMFMemoryError,
+    SMFSyncError,
 )  # noqa
 from .sock_exc import (
     SocketError,
