@@ -1,93 +1,120 @@
 # -- https://github.com/StormWorld0/storm-framework
 # -- SMF License
 
+import sys
 import inspect
-from typing import List, Any, TypedDict, Optional
-from .safe import NullPlugin
+import importlib
+from typing import List, Any, Path, Dict, Optional, get_type_hints
 
 
-class PluginMethodManifest(TypedDict):
-    """Kontrak struktur data hasil introspeksi."""
+class Introspection:
+    """Retrieving Plugin metadata"""
 
-    action: str
-    parameters: str
-    description: Optional[str]
+    def __init__(self):
+        self.func = "metadata"
+        self.clas = ("Metadata", "PluginMetadata")
+        self.atrb = ("metadata", "meta")
+        self.index = Dict[str, Path] = {}
 
+    def _dict_format(self, data: Dict[Any, Any]) -> Dict[str, str] | None:
+        meta = {
+            "name": str(data.get("name", "")),
+            "description": str(data.get("description", "")),
+            "action": str(data.get("action", "")),
+            "author": str(data.get("author", "")),
+            "version": str(data.get("version", "")),
+        }
+        return meta
 
-def get_plugin_manifest(
-    plugin_instance: Any, require_class: bool = False, expected_class_name: str = "Plugin"
-) -> List[PluginMethodManifest]:
-    """
-    Mengekstrak manifest dari plugin.
+    def _dict_format_class(self, meta_obj: Any) -> Dict[str, str] | None:
+        meta = {
+            "name": str(getattr(meta_obj, "name", "")),
+            "description": str(getattr(meta_obj, "description", "")),
+            "action": str(getattr(meta_obj, "action", "")),
+            "author": str(getattr(meta_obj, "author", "")),
+            "version": str(getattr(meta_obj, "version", "")),
+        }
+        return meta
 
-    :param plugin_instance: Modul atau instance plugin (akan menembus proxy).
-    :param require_class: Flag untuk memvalidasi apakah target HARUS berupa Class/Instance.
-    :param expected_class_name: Nama class yang diharapkan jika require_class=True.
-    """
-    # 1. Early Exit: Proteksi null object
-    if isinstance(plugin_instance, NullPlugin) or not plugin_instance:
-        return []
+    def _plugin_path(self, plugin: str) -> str | None:
+        from .manager import PluginManager
+        self.index = PluginManager()._plugin_index
+        if not self.index:
+            return None
 
-    # 2. Proxy Unwrapping
-    actual_target = getattr(plugin_instance, "_instance", plugin_instance)
+        pgpath = self.index.get(plugin, "")
+        if pgpath != "":
+            return pgpath
+        return None
 
-    # 3. Validasi Structure (Class/Instance vs Module)
-    target_to_scan = actual_target
-
-    if require_class:
-        # Pengecekan A: Apakah target ini adalah Class Uninstantiated atau Instance dari sebuah Class?
-        is_class_obj = inspect.isclass(actual_target)
-        is_instance_obj = hasattr(actual_target, "__class__") and not inspect.ismodule(
-            actual_target
-        )
-
-        if not (is_class_obj or is_instance_obj):
-            # Target bukan class maupun instance (misal: murni modul Python)
-            return []
-
-        # Pengecekan B: Validasi Nama Class
-        class_name = (
-            actual_target.__name__ if is_class_obj else actual_target.__class__.__name__
-        )
-        if class_name != expected_class_name:
-            # Nama class tidak sesuai spesifikasi (bukan "Plugin")
-            return []
-
-        target_to_scan = actual_target
-
-    # 4. Scanning (Mendukung 'isfunction' untuk Modul & 'ismethod/isfunction' untuk Class)
-    manifest: List[PluginMethodManifest] = []
-
-    for name, member in inspect.getmembers(target_to_scan):
-        # Abaikan private/protected/dunder
-        if name.startswith("_"):
-            continue
-
-        # Memastikan member adalah callable function atau method
-        if not (inspect.isfunction(member) or inspect.ismethod(member)):
-            continue
-
-        # 5. Resolusi Signature
+    def _getfuncname(self, plugin: str) -> bool:
+        fn = getattr(plugin, self.func)
         try:
-            sig = inspect.signature(member)
+            sig = inspect.signature(fn)
+            hints = get_type_hints(fn)
+        except Exception:
+            return False
 
-            # Jika memindai Uninstantiated Class, hapus parameter 'self' dari signature
-            # agar output manifest tetap bersih bagi caller.
-            params = list(sig.parameters.values())
-            if params and params[0].name == "self":
-                sig = sig.replace(parameters=params[1:])
-
-            clean_params = str(sig)
-        except (ValueError, TypeError):
-            clean_params = "(...)"
-
-        # 6. Ekstraksi Metadata
-        manifest.append(
-            {
-                "action": name,
-                "parameters": clean_params,
-                "description": inspect.getdoc(member),
-            }
+        required_kinds = (
+            inspect.Parameter.POSITIONAL_ONLY,
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            inspect.Parameter.KEYWORD_ONLY,
         )
+        zero_req_args = all(
+            not (p.default is inspect.Parameter.empty and p.kind in required_kinds)
+            for p in sig.parameters.values()
+        )
+        return zero_req_args and hints.get("return") == dict[str, str]
 
-    return manifest
+    def _parse_plugin_metadata(self, plugin: str) -> Dict[str, str] | None:
+        clas = getattr(plugin, self.clas)
+        is_cls = inspect.isclass(clas)
+        is_fn = callable(plugin) and not is_cls
+
+        if not is_cls and not is_fn:
+            return None
+
+        # Cek atribut `metadata` berbentuk dict
+        for attr in self.atrb:
+            raw_dict = getattr(plugin, attr, None)
+            if isinstance(raw_dict, dict):
+                parsed = self._dict_format(raw_dict)
+                if parsed:
+                    return parsed
+
+        # Cek `class Metadata`
+        meta_cls = getattr(plugin, self.clas, None)
+        if meta_cls is not None:
+            parsed = self._dict_format_class(meta_cls)
+            if parsed:
+                return parsed
+
+        # Jika fungsi dengan type hint -> dict[str, str]
+        if is_fn and self._getfuncname(plugin):
+            runner = getattr(plugin, self.func)
+            try:
+                result = runner()
+            except Exception:
+                return None
+
+            if isinstance(result, dict):
+                parsed = self._dict_format(result)
+                if parsed:
+                    return parsed
+        return None
+
+    def metadata_plugin(self, plugin: Any = None) -> Dict[str, str] | None:
+        if not plugin:
+            return None
+
+        if pgspec := sys.modules.get(plugin):
+            return self._parse_plugin_metadata(pgspec)
+
+        pgpath = self._plugin_path(plugin)
+        spec = importlib.util.spec_from_file_location(plugin, pgpath)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        
+        return self._parse_plugin_metadata(module)
+        
+        
