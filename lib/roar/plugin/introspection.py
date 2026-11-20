@@ -38,28 +38,26 @@ class Introspection:
     def _is_valid_meta(self, meta: Dict[str, str]) -> bool:
         return bool(meta["name"].strip() and meta["action"].strip())
 
-    def _index_plugin(self) -> Dict[str, Path] | None:
+    def _take_plugin(self) -> Dict[str, Path] | None:
         try:
             from . import manager
 
             lp = getattr(manager, "LP", None)
-            pm = getattr(lp, "pm", None) if lp is not None else None
-            idx = getattr(pm, "_plugin_index", None) if pm is not None else None
+            gt = getattr(lp, "get_plugin", None)
 
-            if idx and isinstance(idx, dict):
-                self.index = idx
-                return self.index
+            if gt and isinstance(gt, object):
+                return gt
         except Exception:
             pass
         return None
 
-    def _plugin_path(self, plugin: str) -> Path | None:
-        if not self._index_plugin():
+    def _plugin_get(self, plugin: str) -> Dict[str, Any] | None:
+        if not obj := self._take_plugin():
             return None
 
-        pgpath = self.index.get(plugin)
+        pgpath = obj(plugin)
         if pgpath:
-            return Path(pgpath)
+            return pgpath
         return None
 
     def _can_call_meta_func(self, obj: Any) -> Tuple[bool, Any]:
@@ -151,19 +149,11 @@ class Introspection:
                 return parsed
 
         # Find path from index (`Dict[str, Path]`)
-        pgpath = self._plugin_path(plugin)
-        if pgpath is None or not pgpath.exists():
+        pgdict = self._plugin_get(plugin)
+        if not pgdict:
             return None
 
-        spec = importlib.util.spec_from_file_location(plugin, str(pgpath))
-        if spec is None or spec.loader is None:
-            return None
-
-        module = importlib.util.module_from_spec(spec)
-        sys.modules[plugin] = module
-        spec.loader.exec_module(module)
-
-        return self._parse_plugin_metadata(module)
+        return self._parse_plugin_metadata(pgdict)
 
 
 introspection = Introspection()
