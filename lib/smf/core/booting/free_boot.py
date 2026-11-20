@@ -13,6 +13,7 @@ from lib.roar.cache import cache_modules as cache
 from lib.roar.callbin.manager import BinaryManager
 from lib.smf.postgresql import DBManager
 from lib.smf.exception.handler import exception_handler
+from lib.smf.exception import SMFSyncError
 
 
 def sysboot():
@@ -30,7 +31,7 @@ def sysboot():
             # Cache Binary synchronization
             if not BinaryManager().sync_bin():
                 smf.printd("Failed to synchronize Binary", level="ERROR")
-                raise
+                raise SMFSyncError("Failed to synchronize Binary")
 
             # Connection Runtime Service Daemon
             if not CRSD._turn_on_process():
