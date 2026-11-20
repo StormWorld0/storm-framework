@@ -181,6 +181,7 @@ class LoadPlugin:
         self._REGISTRY = self.pm._REGISTRY
         self._ACTIVE_PLUGINS = self.pm._ACTIVE_PLUGINS
         self._store = self.pm._store
+        self._plugin_index = self.pm._plugin_index
 
         self._lock = threading.RLock()
 
