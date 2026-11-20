@@ -197,19 +197,19 @@ def execute(args, ctx):
             if isinstance(meta.get("name"), str) and meta["name"].strip():
                 pgname = meta.get("name", query)
                 smf.printf(style("Name", pgname, left, right))
-                
+
             if isinstance(meta.get("description"), str) and meta["description"].strip():
                 pgdes = meta.get("description", "No Plugin description")
                 smf.printf(style("Description", pgdes, left, right))
-                
+
             if isinstance(meta.get("action"), str) and meta["action"].strip():
                 pgact = meta.get("action", "No Plugin action")
                 smf.printf(style("Action", pgact, left, right))
-                
+
             if isinstance(meta.get("author"), str) and meta["author"].strip():
                 pgath = meta.get("author", "No Plugin author")
                 smf.printf(style("Author", pgath, left, right))
-                
+
             if isinstance(meta.get("version"), str) and meta["version"].strip():
                 pgvsn = meta.get("version", "No Plugin version")
                 smf.printf(style("Version", pgvsn, left, right))
