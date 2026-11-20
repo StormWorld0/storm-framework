@@ -55,16 +55,8 @@ class PluginAPI:
         REPL command: `info <plugin_name>`
         Connecting managers to introspection.
         """
-        index = LP._plugin_index
-        if not index:
-            smf.printd("_plugin_index containing", index, level="WARN")
-            return None
-
-        if not isinstance(index, dict):
-            smf.printd("index is not a type dict", index, level="WARN")
-            return None
-
-        pgpath = index.get(plugin_name, None)
+        LP.pm.build_index()
+        pgpath = LP.pm.resolve_plugin_path(plugin_name)
         if not pgpath:
             smf.printd(f"[{plugin_name}] not in the index", level="WARN")
             return None
