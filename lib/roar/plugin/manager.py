@@ -156,7 +156,7 @@ class PluginManager:
                             daemon=True,
                         )
                         runner.start()
-            
+
                 smf.printd("Plugin loaded successfully", plugin_name, level="INFO")
                 return True
             except Exception as e:
