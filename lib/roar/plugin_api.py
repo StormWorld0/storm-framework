@@ -1,6 +1,7 @@
 # -- https://github.com/StormWorld0/storm-framework
 # -- SMF License
 import smf
+import importlib.util
 
 from typing import Any, List, Dict, Callable, Optional
 
@@ -49,13 +50,33 @@ class PluginAPI:
         return monitoring.get_status_map(pluginpath, data)
 
     @staticmethod
-    def inspect(plugin_name: str) -> List[dict]:
+    def inspect(plugin_name: str) -> Dict[str, str] | None:
         """
         REPL command: `info <plugin_name>`
         Connecting managers to introspection.
         """
-        # Dissecting Plugin metadata
-        return introspection.metadata_plugin(plugin_name)
+        index = LP._plugin_index
+        if not index:
+            smf.printd("_plugin_index containing", index, level="WARN")
+            return None
+
+        if not isinstance(index, dict):
+            smf.printd("index is not a type dict", index, level="WARN")
+            return None
+
+        pgpath = index.get(plugin_name, None)
+        if not pgpath:
+            smf.printd(f"[{plugin_name}] not in the index", level="WARN")
+            return None
+
+        spec = importlib.util.spec_from_file_location(plugin_name, str(pgpath))
+        if spec is None or spec.loader is None:
+            smf.printd(f"Cannot create module spec for", pgpath, level="WARN")
+            return None
+
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return introspection.metadata_plugin(module)
 
     @staticmethod
     def get_plugin(plugin_name: str) -> Optional[Callable[[Any], PluginResult]]:
