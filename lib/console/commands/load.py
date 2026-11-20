@@ -1,8 +1,7 @@
 # -- https://github.com/StormWorld0/storm-framework
 # -- SMF License
 import smf
-
-from apps.utility.colors import *
+from apps.utility.colors import CC
 
 
 # This command is used to activate the plugin.
@@ -16,7 +15,7 @@ def execute(args, ctx):
 
     # Input validation
     if not args:
-        smf.printf(f"{CC.YELLOW}[!] Use the command > load <plugin_name>{CC.RESET}")
+        smf.printf(f"[!] {CC.YELLOW}Use the command > load <plugin_name>{CC.RESET}")
         return
 
     # Get plugin name from input
