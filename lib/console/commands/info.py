@@ -176,9 +176,11 @@ def execute(args, ctx):
     elif query is not None:
         meta = ctx.plugin.inspect(query)
         if not meta:
-            smf.printf(f"[!] {CC.YELLOW}Gagal menampilkan informasi Plugin =>{CC.RESET}", query)
+            smf.printf(
+                f"[!] {CC.YELLOW}Gagal menampilkan informasi Plugin =>{CC.RESET}", query
+            )
             return
-            
+
         try:
             width = 80
             label_w = 13
@@ -191,25 +193,37 @@ def execute(args, ctx):
 
             if "name" in meta["name"]:
                 pgname = meta.get("name", query)
-                smf.printf(f"{CC.CYAN}{'Name':<{label_w}} : {CC.YELLOW}{pgname}{CC.RESET}")
+                smf.printf(
+                    f"{CC.CYAN}{'Name':<{label_w}} : {CC.YELLOW}{pgname}{CC.RESET}"
+                )
             if "description" in meta["description"]:
                 pgdes = meta.get("description", "No Plugin description")
-                smf.printf(f"{CC.CYAN}{'Description':<{label_w}} : {CC.YELLOW}{pgdes}{CC.RESET}")
+                smf.printf(
+                    f"{CC.CYAN}{'Description':<{label_w}} : {CC.YELLOW}{pgdes}{CC.RESET}"
+                )
             if "action" in meta["action"]:
                 pgact = meta.get("action", "No Plugin action")
-                smf.printf(f"{CC.CYAN}{'Action':<{label_w}} : {CC.YELLOW}{pgact}{CC.RESET}")
+                smf.printf(
+                    f"{CC.CYAN}{'Action':<{label_w}} : {CC.YELLOW}{pgact}{CC.RESET}"
+                )
             if "author" in meta["author"]:
                 pgath = meta.get("author", "No Plugin author")
-                smf.printf(f"{CC.CYAN}{'Author':<{label_w}} : {CC.YELLOW}{pgath}{CC.RESET}")
+                smf.printf(
+                    f"{CC.CYAN}{'Author':<{label_w}} : {CC.YELLOW}{pgath}{CC.RESET}"
+                )
             if "version" in meta["version"]:
                 pgvsn = meta.get("version", "No Plugin version")
-                smf.printf(f"{CC.CYAN}{'Version':<{label_w}} : {CC.YELLOW}{pgvsn}{CC.RESET}")
-            
+                smf.printf(
+                    f"{CC.CYAN}{'Version':<{label_w}} : {CC.YELLOW}{pgvsn}{CC.RESET}"
+                )
+
             smf.printf(f"{CC.MAGENTA}{'='*width}{CC.RESET}")
             smf.printf()
         except Exception as e:
             smf.printd("Failed to display plugin information", e, level="ERROR")
-            smf.printf(f"[!] {CC.YELLOW}Failed to display plugin information =>{CC.RESET}", query)
+            smf.printf(
+                f"[!] {CC.YELLOW}Failed to display plugin information =>{CC.RESET}", query
+            )
             return
     else:
         smf.printf(
