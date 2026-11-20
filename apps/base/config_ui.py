@@ -97,7 +97,8 @@ UTILITY
   show <categories>             : Display full contents of a specific category
   log export <val>              : Export logs from internal database to a .txt file
   log dump                      : Dump raw internal logs directly to the terminal
-  info <module_name>            : Show detailed information about a module
+  info <var> <val>              : Displays detailed information about a module and plugin
+                                  by input: info mod <path or name module> or info pg <plugin name>
   search <module_name>          : Search for modules with advanced filter support
                                   Filters: (act:...) / (defact:...) /
                                   (severity:...) / (cve:...) / (author:...)
