@@ -41,6 +41,7 @@ class Introspection:
     def _index_plugin(self) -> Dict[str, Path] | None:
         try:
             from . import manager
+
             lp = getattr(manager, "LP", None)
             pm = getattr(lp, "pm", None) if lp is not None else None
             idx = getattr(pm, "_plugin_index", None) if pm is not None else None
@@ -51,11 +52,11 @@ class Introspection:
         except Exception:
             pass
         return None
-            
+
     def _plugin_path(self, plugin: str) -> Path | None:
         if not self._index_plugin():
             return None
-        
+
         pgpath = self.index.get(plugin)
         if pgpath:
             return Path(pgpath)
@@ -65,7 +66,9 @@ class Introspection:
         # Check whether obj itself is a function with the hint dict[str, str],
         # or has a method/attr self.func
         candidates = []
-        if inspect.isfunction(obj) or (callable(obj) and not inspect.isclass(obj) and not inspect.ismodule(obj)):
+        if inspect.isfunction(obj) or (
+            callable(obj) and not inspect.isclass(obj) and not inspect.ismodule(obj)
+        ):
             candidates.append(obj)
 
         attr_fn = getattr(obj, self.func, None)
