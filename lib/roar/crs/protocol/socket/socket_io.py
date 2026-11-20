@@ -1,6 +1,6 @@
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
-from .validate import is_tuple2, parse_flags, parse_addr
+from .validate import parse_flags, parse_addr
 from ...endpoint import CRS
 
 
