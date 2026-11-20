@@ -12,7 +12,7 @@ import signal
 import readline  # noqa: F401
 
 signal.signal(signal.SIGTSTP, signal.SIG_IGN)
-signal.signal(signal.SIGINT, signal.SIG_IGN)
+signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 try:
     from lib.ui.interface import main
