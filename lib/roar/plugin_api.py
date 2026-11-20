@@ -55,7 +55,6 @@ class PluginAPI:
         REPL command: `info <plugin_name>`
         Connecting managers to introspection.
         """
-        LP.pm.build_index()
         pgpath = LP.pm.resolve_plugin_path(plugin_name)
         if not pgpath:
             smf.printd(f"[{plugin_name}] not in the index", level="WARN")
