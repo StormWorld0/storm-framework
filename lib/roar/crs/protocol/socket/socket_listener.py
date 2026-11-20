@@ -2,7 +2,7 @@ from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
 from .socket_inspect import ListenInspect
 from .socket_fd import ListenFD
-from .validate import is_tuple2, parse_flags
+from .validate import is_tuple2, parse_flags, parse_addr
 from ...endpoint import CRS
 
 
@@ -60,7 +60,7 @@ class ClientListener(ListenInspect, ListenFD):
 
     def recv(
         self,
-        buffer: int = None,
+        buffer: int,
         flags: int | None = None,
         **kwargs,
     ) -> SocketResponse:
@@ -83,14 +83,13 @@ class ClientListener(ListenInspect, ListenFD):
     def sendto(
         self,
         data: bytes,
-        address: tuple[str, str | int],
+        address: tuple[str, int],
         flags: int | None = None,
         **kwargs,
     ) -> SocketResponse:
         """Send datagram along with Host & Port"""
         self.state._ensure_open("sendto")
-        if is_tuple2(address):
-            host, port = address
+        host, port, _, _ = parse_addr(address)
         if flags is not None:
             flags = parse_flags(flags)
 
