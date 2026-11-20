@@ -189,7 +189,6 @@ def execute(args, ctx):
             smf.printf(f"{CC.MAGENTA}{'='*width}{CC.RESET}")
             smf.printf(f"{CC.CYAN}{'STORM INFORMATION PLUGIN':^80}{CC.RESET}")
             smf.printf(f"{CC.MAGENTA}{'='*width}{CC.RESET}")
-            smf.printf()
 
             if isinstance(meta.get("name"), str) and meta["name"].strip():
                 pgname = meta.get("name", query)
