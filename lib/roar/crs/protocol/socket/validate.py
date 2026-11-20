@@ -35,11 +35,10 @@ def parse_addr(addr: object) -> tuple[str | None, int | None, int | None, int | 
     parsed_flowinfo = _validate_optional_int(flowinfo, "flowinfo")
     parsed_scope_id = _validate_optional_int(scope_id, "scope_id")
 
-    if parsed_host is None and  parsed_port is None:
+    if parsed_host is None and parsed_port is None:
         raise ValueError("At least one of 'host' or 'port' must be provided")
 
     return (parsed_host, parsed_port, parsed_flowinfo, parsed_scope_id)
-    
 
 
 def is_tuple2(value) -> bool:
