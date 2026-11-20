@@ -15,18 +15,27 @@ from apps.utility.load_db import resolve_module_path as path
 # The most important thing is to make sure that the CVE uses the example data format that has been provided.
 # Otherwise the output will be messy and not according to storm rules.
 def execute(args, ctx):
-    query = args[0] if args else ""
-    if not query:
-        smf.printf(f"[!] {CC.YELLOW}Enter file name or file path to info!{CC.RESET}")
+    if not len(args) == 2:
+        smf.printf(f"[!] {CC.YELLOW}Input: info <var> <val> or help!{CC.RESET}")
         return
 
-    # This is a special logic to know where the CVE is located.
-    # Make sure CVE is always in the vulnerability folder
-    vuln_path = "modules/"
-    file_path = path(query)
-    found_path = f"{vuln_path}{file_path}.py"
-
-    if os.path.isfile(found_path):
+    
+    if args[0] in ("modules", "mod"):
+        query = args[1] if len(args) == 2 else ""
+        if not query:
+            smf.printf(f"[!] {CC.YELLOW}Invalid argument. Example of valid argument:{CC.RESET} info mod <modules>")
+            return 
+            
+        # This is a special logic to know where the CVE is located.
+        # Make sure CVE is always in the vulnerability folder
+        vuln_path = "modules/"
+        file_path = path(query)
+        found_path = f"{vuln_path}{file_path}.py"
+    
+        if not os.path.isfile(found_path):
+            smf.printf(f"[!] {CC.YELLOW}Modules >{CC.RESET} {query} {CC.YELLOW}=> Not found {CC.RESET}")
+            return
+            
         # To display information about a specific module
         # Command => info <modules_name> / info <modules_path>
         try:
@@ -173,7 +182,12 @@ def execute(args, ctx):
             smf.printf(f"[!] {CC.YELLOW}Failed to read =>{CC.RESET}", query)
             return
 
-    elif query is not None:
+    elif args[0] in ("plugin", "pg"):
+        query = args[1] if len(args) == 2 else ""
+        if not query:
+            smf.printf(f"[!] {CC.YELLOW}Invalid argument. Example of valid argument:{CC.RESET} info pg <plugin>")
+            return
+            
         meta = ctx.plugin.inspect(query)
         if not meta:
             smf.printf(
@@ -224,5 +238,5 @@ def execute(args, ctx):
             return
     else:
         smf.printf(
-            f"[!] {CC.YELLOW}WARN =>{CC.RESET} {query} {CC.YELLOW}> not found.{CC.RESET}"
+            f"[!] {CC.YELLOW}WARN =>{CC.RESET} {args[0]} {CC.YELLOW}> not found.{CC.RESET}"
         )
