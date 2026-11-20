@@ -191,27 +191,27 @@ def execute(args, ctx):
             smf.printf(f"{CC.MAGENTA}{'='*width}{CC.RESET}")
             smf.printf()
 
-            if "name" in meta["name"]:
+            if isinstance(meta.get("name"), str) and meta["name"].strip():
                 pgname = meta.get("name", query)
                 smf.printf(
                     f"{CC.CYAN}{'Name':<{label_w}} : {CC.YELLOW}{pgname}{CC.RESET}"
                 )
-            if "description" in meta["description"]:
+            if isinstance(meta.get("description"), str) and meta["description"].strip():
                 pgdes = meta.get("description", "No Plugin description")
                 smf.printf(
                     f"{CC.CYAN}{'Description':<{label_w}} : {CC.YELLOW}{pgdes}{CC.RESET}"
                 )
-            if "action" in meta["action"]:
+            if isinstance(meta.get("action"), str) and meta["action"].strip():
                 pgact = meta.get("action", "No Plugin action")
                 smf.printf(
                     f"{CC.CYAN}{'Action':<{label_w}} : {CC.YELLOW}{pgact}{CC.RESET}"
                 )
-            if "author" in meta["author"]:
+            if isinstance(meta.get("author"), str) and meta["author"].strip():
                 pgath = meta.get("author", "No Plugin author")
                 smf.printf(
                     f"{CC.CYAN}{'Author':<{label_w}} : {CC.YELLOW}{pgath}{CC.RESET}"
                 )
-            if "version" in meta["version"]:
+            if isinstance(meta.get("version"), str) and meta["version"].strip():
                 pgvsn = meta.get("version", "No Plugin version")
                 smf.printf(
                     f"{CC.CYAN}{'Version':<{label_w}} : {CC.YELLOW}{pgvsn}{CC.RESET}"
