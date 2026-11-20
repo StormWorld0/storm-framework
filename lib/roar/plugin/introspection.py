@@ -37,15 +37,15 @@ class Introspection:
     def _is_valid_meta(self, meta: Dict[str, str]) -> bool:
         return bool(meta["name"].strip() and meta["action"].strip())
 
-    def _take_plugin(self) -> Dict[str, Path] | None:
+    def _take_plugin(self) -> Any | None:
         try:
             from . import manager
 
             lp = getattr(manager, "LP", None)
             gt = getattr(lp, "get_plugin", None)
 
-            if gt and isinstance(gt, object):
-                return callable(gt)
+            if callable(gt):
+                return gt
         except Exception:
             pass
         return None
