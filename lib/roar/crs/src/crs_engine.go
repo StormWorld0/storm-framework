@@ -23,7 +23,8 @@ func main() {
 	defer cancel()
 
 	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(sigChan, syscall.SIGTERM)
+	signal.Ignore(syscall.SIGINT)
 	go func() {
 		<-sigChan
 		cancel() // Cancel all worker contexts if the OS sends SIGTERM
