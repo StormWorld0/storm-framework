@@ -17,7 +17,7 @@ from apps.utility.load_db import resolve_module_path as path
 def execute(args, ctx):
     query = args[0] if args else ""
     if not query:
-        smf.printf(f"{CC.YELLOW}[!] Enter file name or file path to info!{CC.RESET}")
+        smf.printf(f"[!] {CC.YELLOW}Enter file name or file path to info!{CC.RESET}")
         return
 
     # This is a special logic to know where the CVE is located.
@@ -177,7 +177,7 @@ def execute(args, ctx):
         meta = ctx.plugin.inspect(query)
         if not meta:
             smf.printf(
-                f"[!] {CC.YELLOW}Gagal menampilkan informasi Plugin =>{CC.RESET}", query
+                f"[!] {CC.YELLOW}Failed to display Plugin information =>{CC.RESET}", query
             )
             return
 
@@ -227,5 +227,5 @@ def execute(args, ctx):
             return
     else:
         smf.printf(
-            f"{CC.YELLOW}[!] WARN =>{CC.RESET} {query} {CC.YELLOW}> not found.{CC.RESET}"
+            f"[!] {CC.YELLOW}WARN =>{CC.RESET} {query} {CC.YELLOW}> not found.{CC.RESET}"
         )
