@@ -181,40 +181,38 @@ def execute(args, ctx):
             )
             return
 
+        def style(label, value, left, right):
+            return f"{CC.CYAN}{' ' * left}{label:<{right}} : {CC.YELLOW}{value}{CC.RESET}"
+
         try:
-            width = 80
-            label_w = 13
+            width = 84
+            left = 13
+            right = 10
 
             smf.printf()
             smf.printf(f"{CC.MAGENTA}{'='*width}{CC.RESET}")
-            smf.printf(f"{CC.CYAN}{'STORM INFORMATION PLUGIN':^80}{CC.RESET}")
+            smf.printf(f"{CC.CYAN}{'PLUGIN INFORMATION':^84}{CC.RESET}")
             smf.printf(f"{CC.MAGENTA}{'='*width}{CC.RESET}")
 
             if isinstance(meta.get("name"), str) and meta["name"].strip():
                 pgname = meta.get("name", query)
-                smf.printf(
-                    f"{CC.CYAN}{'Name':<{label_w}} : {CC.YELLOW}{pgname}{CC.RESET}"
-                )
+                smf.printf(style("Name", pgname, left, right))
+                
             if isinstance(meta.get("description"), str) and meta["description"].strip():
                 pgdes = meta.get("description", "No Plugin description")
-                smf.printf(
-                    f"{CC.CYAN}{'Description':<{label_w}} : {CC.YELLOW}{pgdes}{CC.RESET}"
-                )
+                smf.printf(style("Description", pgdes, left, right))
+                
             if isinstance(meta.get("action"), str) and meta["action"].strip():
                 pgact = meta.get("action", "No Plugin action")
-                smf.printf(
-                    f"{CC.CYAN}{'Action':<{label_w}} : {CC.YELLOW}{pgact}{CC.RESET}"
-                )
+                smf.printf(style("Action", pgact, left, right))
+                
             if isinstance(meta.get("author"), str) and meta["author"].strip():
                 pgath = meta.get("author", "No Plugin author")
-                smf.printf(
-                    f"{CC.CYAN}{'Author':<{label_w}} : {CC.YELLOW}{pgath}{CC.RESET}"
-                )
+                smf.printf(style("Author", pgath, left, right))
+                
             if isinstance(meta.get("version"), str) and meta["version"].strip():
                 pgvsn = meta.get("version", "No Plugin version")
-                smf.printf(
-                    f"{CC.CYAN}{'Version':<{label_w}} : {CC.YELLOW}{pgvsn}{CC.RESET}"
-                )
+                smf.printf(style("Version", pgvsn, left, right))
 
             smf.printf(f"{CC.MAGENTA}{'='*width}{CC.RESET}")
             smf.printf()
