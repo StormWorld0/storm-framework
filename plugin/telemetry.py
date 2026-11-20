@@ -25,10 +25,7 @@ class Metadata:
 
 
 class Plugin:
-    def __init__(self):
-        self.name = ""
-        self.descript
-        
+    def __init__(self): 
         load_dotenv()
         self.api_url = os.getenv("STORM_API")
         self.db_path = os.path.join(ROOT, "lib", "sqlite", "logging", "log.db")
