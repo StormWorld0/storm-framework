@@ -16,7 +16,7 @@ from apps.utility.load_db import resolve_module_path as path
 # Otherwise the output will be messy and not according to storm rules.
 def execute(args, ctx):
     if not len(args) == 2:
-        smf.printf(f"[!] {CC.YELLOW}Input: info <var> <val> or help!{CC.RESET}")
+        smf.printf(f"[!] {CC.YELLOW}Enter help to manual command!{CC.RESET}")
         return
 
     if args[0] in ("modules", "mod"):
