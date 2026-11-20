@@ -5,7 +5,7 @@ import importlib.util
 
 from typing import Any, List, Dict, Callable, Optional
 
-from .plugin.manager import LP
+from .plugin.manager import LP, PM
 from .plugin.safe import NullPlugin
 from .plugin import monitoring
 from .plugin.introspection import introspection
@@ -55,7 +55,7 @@ class PluginAPI:
         REPL command: `info <plugin_name>`
         Connecting managers to introspection.
         """
-        pgpath = LP.pm.resolve_plugin_path(plugin_name)
+        pgpath = PM.resolve_plugin_path(plugin_name)
         if not pgpath:
             smf.printd(f"[{plugin_name}] not in the index", level="WARN")
             return None
