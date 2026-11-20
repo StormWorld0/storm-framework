@@ -89,12 +89,12 @@ class PluginManager:
                 # Validasi dan ekstrak instance OOP atau modul biasa
                 plugin_obj, plugin_type = extract_plugin(module, plugin_name)
 
-                if plugin_type == "BROKEN":
+                if plugin_type in ("BROKEN", "INVALID"):
                     self.purge_module_from_memory(plugin_name)
                     smf.printd(
                         "Plugin does not pass OOP/FUNC validation",
-                        plugin_type,
-                        level="ERROR",
+                        f"[{plugin_name}] | [{plugin_type}]",
+                        level="INFO",
                     )
                     return False
 
@@ -156,7 +156,7 @@ class PluginManager:
                             daemon=True,
                         )
                         runner.start()
-
+            
                 smf.printd("Plugin loaded successfully", plugin_name, level="INFO")
                 return True
             except Exception as e:
