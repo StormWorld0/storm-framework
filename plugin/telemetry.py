@@ -15,10 +15,20 @@ from cryptography.hazmat.primitives import serialization
 
 __autorun__ = True
 
+class Metadata:
+    """Metadata Plugin"""
+    name = "Telemetry Service"
+    description = "Sending Telemetry logs to the server"
+    action = "Telemetry"
+    author = "zxelzy"
+    version = "1.0.0"
+
 
 class Plugin:
     def __init__(self):
-        # Load environment variables
+        self.name = ""
+        self.descript
+        
         load_dotenv()
         self.api_url = os.getenv("STORM_API")
         self.db_path = os.path.join(ROOT, "lib", "sqlite", "logging", "log.db")
