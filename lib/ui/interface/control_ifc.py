@@ -6,7 +6,6 @@
 
 import sys
 import smf
-import signal
 
 try:
     from apps.utility.colors import CC
