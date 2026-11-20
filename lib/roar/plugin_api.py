@@ -7,7 +7,7 @@ from typing import Any, List, Dict, Callable, Optional
 from .plugin.manager import LP
 from .plugin.safe import NullPlugin
 from .plugin import monitoring
-from .plugin import introspection
+from .plugin.introspection import introspection
 from .plugin.result import PluginResult
 
 
@@ -54,10 +54,8 @@ class PluginAPI:
         REPL command: `info <plugin_name>`
         Connecting managers to introspection.
         """
-        # API requests specific 1 plugin from Manager
-        plugin = LP.get_plugin(plugin_name)
         # Dissecting Plugin metadata
-        return introspection.get_plugin_manifest(plugin)
+        return introspection.metadata_plugin(plugin_name)
 
     @staticmethod
     def get_plugin(plugin_name: str) -> Optional[Callable[[Any], PluginResult]]:
