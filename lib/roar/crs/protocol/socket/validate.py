@@ -1,3 +1,47 @@
+def _is_strict_int(value: object) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def _validate_optional_str(value: object, name: str) -> str | None:
+    if value is None or value == "":
+        return None
+    if not isinstance(value, str):
+        raise TypeError(f"{name} must be a str or None, got {type(value).__name__}")
+    return value
+
+
+def _validate_optional_int(value: object, name: str) -> int | None:
+    if value is None:
+        return None
+    if not _is_strict_int(value):
+        raise TypeError(f"{name} must be an int or None, got {type(value).__name__}")
+    return value
+
+
+def parse_addr(addr: object) -> tuple[str | None, int | None, int | None, int | None]:
+    if not isinstance(addr, tuple):
+        raise TypeError("Address must be a tuple")
+
+    if len(addr) == 2:
+        host, port = addr
+        flowinfo, scope_id = None, None
+    elif len(addr) == 4:
+        host, port, flowinfo, scope_id = addr
+    else:
+        raise ValueError(f"Address tuple must have 2 or 4 elements, got {len(addr)}")
+
+    parsed_host = _validate_optional_str(host, "host")
+    parsed_port = _validate_optional_int(port, "port")
+    parsed_flowinfo = _validate_optional_int(flowinfo, "flowinfo")
+    parsed_scope_id = _validate_optional_int(scope_id, "scope_id")
+
+    if parsed_host is None and  parsed_port is None:
+        raise ValueError("At least one of 'host' or 'port' must be provided")
+
+    return (parsed_host, parsed_port, parsed_flowinfo, parsed_scope_id)
+    
+
+
 def is_tuple2(value) -> bool:
     if isinstance(value, bool):
         raise TypeError("Boolean is not a valid address")
