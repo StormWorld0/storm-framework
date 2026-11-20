@@ -23,8 +23,7 @@ def systemctl():
         p_mod = core.current_module_name if core.current_module else "~"
 
         try:
-            print("After:", signal.getsignal(signal.SIGINT))
-            print(
+            smf.printf(
                 f"{CC.CYAN}┌─({CC.BLUE}storm{CC.YELLOW}<⚡>{CC.BLUE}framework{CC.CYAN}){CC.RESET}-{CC.RED}[{p_mod}]{CC.RESET}"
             )
             promp = f"{CC.CYAN}└─{CC.BLUE}➤ {CC.RESET}"
