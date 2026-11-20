@@ -1,9 +1,11 @@
 def is_tuple2(value) -> bool:
+    if isinstance(value, bool):
+        raise TypeError("Boolean is not a valid address")
     if isinstance(value, tuple):
         if len(value) != 2:
-            raise ValueError("address tuple only accepts 2 elements: (host, port)")
+            raise ValueError("address tuple only")
         return True
-    raise ValueError("address must be a tuple of host and port.")
+    raise TypeError("address must be a tuple")
 
 
 def parse_flags(*flags):
