@@ -40,7 +40,7 @@ func handleFileno(ctx *ExecutionContext) packet.ResponsePacket {
 	} else if ctx.Conn != nil {
 		ctx.SaveSession(ctx.Conn)
 	}
-    return packet.ResponsePacket{Status: "SUCCESS", Data: map[string]interface{}{"uds_path": udsPath}}
+    return packet.ResponsePacket{Status: "SUCCESS", Data: map[string]interface{}{"socket_uds": udsPath}}
 }
 
 func handleFilenoClt(ctx *ExecutionContext) packet.ResponsePacket {
