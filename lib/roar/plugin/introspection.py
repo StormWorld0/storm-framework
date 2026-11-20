@@ -38,32 +38,6 @@ class Introspection:
     def _is_valid_meta(self, meta: Dict[str, str]) -> bool:
         return bool(meta["name"].strip() and meta["action"].strip())
 
-    def _take_plugin(self) -> Dict[str, Any] | None:
-        try:
-            from . import manager
-
-            lp = getattr(manager, "LP", None)
-            idx = getattr(lp, "_plugin_index", None)
-
-            if idx and isinstance(idx, dict):
-                smf.printd("Indexing dict format", idx, level="INFO")
-                return idx
-        except Exception as e:
-            smf.printd("Import manager and object index retrieval", e, level="ERROR")
-            return None
-        return None
-
-    def _plugin_path(self, plugin: str) -> Path | None:
-        if not (obj := self._take_plugin()):
-            return None
-
-        smf.printd("The value of `_plugin_index` is retrieved", obj, level="INFO")
-
-        pgpath = obj.get(plugin)
-        if pgpath and isinstance(pgpath, Path):
-            return pgpath
-        return None
-
     def _can_call_meta_func(self, obj: Any) -> Tuple[bool, Any]:
         # Check whether obj itself is a function with the hint dict[str, str],
         # or has a method/attr self.func
@@ -143,26 +117,16 @@ class Introspection:
 
         return None
 
-    def metadata_plugin(self, plugin: str) -> Dict[str, str] | None:
+    def metadata_plugin(self, plugin: Any) -> Dict[str, str] | None:
         if not plugin:
             return None
 
-        # Get `plugin` in sys.modules if it exists
-        if mod := sys.modules.get(plugin):
-            parsed = self._parse_plugin_metadata(mod)
+        if isinstance(plugin, object):
+            parsed = self._parse_plugin_metadata(plugin)
             if parsed:
                 return parsed
 
-        # Find path from index (`Path`)
-        pgpath = self._plugin_path(plugin)
-        if not pgpath:
-            return None
-
-        spec = importlib.util.spec_from_file_location(plugin, str(pgpath))
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-
-        return self._parse_plugin_metadata(module)
+        return None
 
 
 introspection = Introspection()
