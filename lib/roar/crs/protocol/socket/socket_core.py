@@ -1,7 +1,7 @@
 from .socket_listener import ClientListener
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
-from .validate import is_tuple2
+from .validate import is_tuple2, parse_addr
 from ...endpoint import CRS
 from typing import Self
 from lib.smf.exception import SocketError
@@ -37,13 +37,12 @@ class SocketCore:
 
     def bind(
         self,
-        address: tuple[str, str | int],
+        address: tuple[str, int],
         **kwargs,
     ) -> SocketResponse:
         """Binding local connection"""
         self._ensure_open("bind")
-        if is_tuple2(address):
-            host, port = address
+        host, port, _, _ = parse_addr(address)
 
         packet = IPCPayloadBuilder.build(
             state=self,
@@ -92,13 +91,12 @@ class SocketCore:
 
     def connect(
         self,
-        address: tuple[str, str | int],
+        address: tuple[str, int],
         **kwargs,
     ) -> SocketResponse:
         """Open Connection"""
         self._ensure_open("connect")
-        if is_tuple2(address):
-            host, port = address
+        host, port, _, _ = parse_addr(address)
 
         packet = IPCPayloadBuilder.build(
             state=self,
@@ -112,17 +110,16 @@ class SocketCore:
 
     def create_connection(
         self,
-        address: tuple[str, str | int],
+        address: tuple[str, int],
         timeout: float | int = None,
         **kwargs,
     ) -> SocketResponse:
         """Creating a TCP Stream connection"""
         self._ensure_open("create")
         self.family = 2  # Keep default AF_INET
-        self.type = 1  # Keep default SOCK_STREAM
-        self.proto = 0  # Keep default Kernel
-        if is_tuple2(address):
-            host, port = address
+        self.type = 1    # Keep default SOCK_STREAM
+        self.proto = 0   # Keep default Kernel
+        host, port, _, _ = parse_addr(address)
 
         packet = IPCPayloadBuilder.build(
             state=self,
