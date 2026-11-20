@@ -157,7 +157,7 @@ class Introspection:
         spec = importlib.util.spec_from_file_location(plugin, str(pgpath))
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
-        
+
         return self._parse_plugin_metadata(module)
 
 
