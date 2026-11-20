@@ -2,13 +2,14 @@ import inspect
 import smf
 import ast
 
-from typing import Any
+from typing import Any, Tuple, Dict
 from pathlib import Path
 
+from .introspection import introspection as intros
 from .safe import NullPlugin
 
 
-def inspect_teardown(file_path: Path) -> dict:
+def inspect_teardown(file_path: Path) -> Dict:
     source = file_path.read_text(encoding="utf-8")
     tree = ast.parse(source, filename=str(file_path))
 
@@ -43,33 +44,37 @@ def inspect_teardown(file_path: Path) -> dict:
     return {"valid": not requires_teardown or has_teardown}
 
 
-def extract_plugin(module: Any, plugin_name: str) -> tuple[Any, str]:
+def extract_plugin(module: Any, plugin_name: str) -> Tuple[Any, str]:
     """
     Validasi ketat arsitektur plugin.
     Jika plugin OOP cacat/gagal inisialisasi, kembalikan NullPlugin agar runtime tetap stabil.
     """
-    # 1. Jika tidak ada atribut 'Plugin', 100% Fungsional
+    if not intros.metadata_plugin(plugin_name):
+        smf.printd("Plugin failed metadata validation", plugin_name, level="WARN")
+        return NullPlugin(plugin_name), "INVALID"
+        
+    # If there is no 'Plugin' attribute, 100% Functional
     if not hasattr(module, "Plugin"):
         return module, "FUNCTIONAL"
 
     # ==========================================
-    # ZONA OOP: Karena ada 'Plugin', diproses sebagai OOP
+    # OOP ZONE: Since there is a 'Plugin', it is processed as OOP
     # ==========================================
     plugin_class = getattr(module, "Plugin")
 
-    # [VALIDASI 1] Cek apakah benar Class?
+    # [VALIDATION 1] Check whether the Class is correct?
     if not inspect.isclass(plugin_class):
         smf.printd(f"[{plugin_name}] The 'Plugin' attribute is not a Class", level="WARN")
-        return NullPlugin(plugin_name), "BROKEN"
+        return NullPlugin(plugin_name), "INVALID"
 
-    # [VALIDASI 2] Cek entry point 'execute()'
+    # [VALIDATION 2] Check entry point 'execute()'
     if not hasattr(plugin_class, "execute") or not callable(
         getattr(plugin_class, "execute")
     ):
         smf.printd(
             f"OOP Plugin [{plugin_name}] has no entry point 'execute()'", level="WARN"
         )
-        return NullPlugin(plugin_name), "BROKEN"
+        return NullPlugin(plugin_name), "INVALID"
 
     if hasattr(module, "__file__"):
         teardown_info = inspect_teardown(Path(module.__file__))
@@ -80,7 +85,7 @@ def extract_plugin(module: Any, plugin_name: str) -> tuple[Any, str]:
                 f"but has no teardown()",
                 level="WARN",
             )
-            return NullPlugin(plugin_name), "BROKEN"
+            return NullPlugin(plugin_name), "INVALID"
 
     # [STATE ALLOCATION]
     try:
