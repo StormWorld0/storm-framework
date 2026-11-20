@@ -46,18 +46,18 @@ class Introspection:
             gt = getattr(lp, "get_plugin", None)
 
             if gt and isinstance(gt, object):
-                return gt
+                return callable(gt)
         except Exception:
             pass
         return None
 
     def _plugin_get(self, plugin: str) -> Dict[str, Any] | None:
-        if not obj := self._take_plugin():
+        if not (obj := self._take_plugin()):
             return None
 
-        pgpath = obj(plugin)
-        if pgpath:
-            return pgpath
+        pgdict = obj(plugin)
+        if pgdict:
+            return pgdict
         return None
 
     def _can_call_meta_func(self, obj: Any) -> Tuple[bool, Any]:
