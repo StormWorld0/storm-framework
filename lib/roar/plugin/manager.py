@@ -176,7 +176,7 @@ class LoadPlugin:
     """Called by API"""
 
     def __init__(self):
-        self.pm = PluginManager()
+        self.pm = PM
         self._PLUGIN_DIR = self.pm._PLUGIN_DIR
         self._REGISTRY = self.pm._REGISTRY
         self._ACTIVE_PLUGINS = self.pm._ACTIVE_PLUGINS
@@ -284,5 +284,5 @@ class LoadPlugin:
 # ==========================================
 # AUTO-EXECUTION (Early Life Cycle)
 # ==========================================
-PluginManager().build_index()
+PM = PluginManager()
 LP = LoadPlugin()
