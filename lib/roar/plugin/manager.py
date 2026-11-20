@@ -243,14 +243,12 @@ class LoadPlugin:
         """Mengambil proxy plugin dari RAM."""
         plugin = self._REGISTRY.get(plugin_name)
         if plugin is None:
-            smf.printd(
-                "Caller requested inactive plugin", plugin_name, level="INFO"
-            )
+            smf.printd("Caller requested inactive plugin", plugin_name, level="INFO")
             return NullPlugin(plugin_name)
         return plugin
 
     def broadcast(
-        self, 
+        self,
         event_name: str,
         *args: Any,
         **kwargs: Any,
