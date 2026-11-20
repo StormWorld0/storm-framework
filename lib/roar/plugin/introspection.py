@@ -120,6 +120,7 @@ class Introspection:
 
         if isinstance(plugin, object):
             parsed = self._parse_plugin_metadata(plugin)
+            smf.printd("Results of metadata parse", parsed, level="DEBUG")
             if parsed:
                 return parsed
 
