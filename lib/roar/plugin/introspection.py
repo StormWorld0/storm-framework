@@ -43,14 +43,14 @@ class Introspection:
             from . import manager
 
             lp = getattr(manager, "LP", None)
-            pm = getattr(lp, "pm", None)
-            idx = getattr(pm, "_plugin_index", None)
+            idx = getattr(lp, "_plugin_index", None)
 
             if idx and isinstance(idx, dict):
                 smf.printd("Indexing dict format", idx, level="INFO")
                 return idx
-        except Exception:
-            pass
+        except Exception as e:
+            smf.printd("Import manager and object index retrieval", e, level="ERROR")
+            return None
         return None
 
     def _plugin_path(self, plugin: str) -> Path | None:
