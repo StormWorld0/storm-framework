@@ -240,11 +240,6 @@ class CRSD:
             smf.printd("Response Dict CRS", res_dict, level="DEBUG")
             return res_dict, res_err
         except KeyboardInterrupt:
-            try:
-                if proc and proc.stdin:
-                    proc.stdin.close()
-            except Exception:
-                pass
             return {"status": "INTER", "message": "KeyboardInterrupt detected"}, {}
         except (BrokenPipeError, OSError):
             pid.reap_zombie()
