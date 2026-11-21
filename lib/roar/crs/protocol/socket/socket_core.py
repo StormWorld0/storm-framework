@@ -192,5 +192,7 @@ class SocketCore:
             raise TypeError("'closefd' only supports int")
         if fileno <= 0:
             raise ValueError(f"'closefd' invalid value {fileno}")
+        if not fileno == self._sock_fd:
+            return
         self._sock_fd = -1
         return os.close(fileno)
