@@ -53,4 +53,4 @@ def execute(options, net):
     except Exception as e:
         smf.printd("Socket testing failed", e, level="ERROR")
     finally:
-        sock.close()
+        sock.close(sock.fileno())
