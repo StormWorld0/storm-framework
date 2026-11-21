@@ -14,22 +14,22 @@ Testing Socket
 REQUIRED_OPTIONS = {"HOST": "", "PORT": ""}
 
 
-def execute(options, net):
+def execute(options, net, log):
     host = options.get("HOST")
     port = options.get("PORT")
 
     sock = net.Socket()
     try:
         sock.socket(sock.AF_INET, sock.SOCK_STREAM)
-        smf.printf("Socket created:", sock.fileno())
+        log.printi("Socket created =>", sock.fileno())
 
         result = sock.connect((host, port))
         if not result.ok:
-            smf.printd("Connect failed", result.message, level="ERROR")
+            log.printw("Connect failed =>", result.message)
             return
 
-        smf.printf("IP Local  =>", sock.getsockname())
-        smf.printf("IP Server =>", sock.getpeername())
+        log.printi("IP Local  =>", sock.getsockname())
+        log.printi("IP Server =>", sock.getpeername())
 
         data = (
             f"GET /anything HTTP/1.1\r\n"
@@ -40,18 +40,18 @@ def execute(options, net):
 
         result = sock.send(data)
         if not result.ok:
-            smf.printd("Send failed", result.message, level="ERROR")
+            log.printw("Send failed =>", result.message)
             return
 
         result = sock.recv(1024)
         if result.ok:
-            smf.printf("Int response    =>", result.int_bytes)
-            smf.printf("Hex response    =>", result.hex_bytes)
-            smf.printf("Raw response    =>", result.raw_bytes)
-            smf.printf("Str response    =>", result.str_bytes)
+            log.prints("Int response    =>", result.int_bytes)
+            log.prints("Hex response    =>", result.hex_bytes)
+            log.prints("Raw response    =>", result.raw_bytes)
+            log.prints("Str response    =>", result.str_bytes)
     except KeyboardInterrupt:
         pass
     except Exception as e:
-        smf.printd("Socket testing failed", e, level="ERROR")
+        log.printw("Socket testing failed =>", e)
     finally:
-        sock.close()
+        sock.close(sock.fileno())
