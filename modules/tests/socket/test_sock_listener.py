@@ -107,8 +107,8 @@ def execute(options, net, log):
         log.printw("Test Exception =>", e)
     finally:
         if conn is not None:
-            conn.close()
+            conn.close(conn.fileno())
         if srv_sock is not None:
-            srv_sock.close()
+            srv_sock.close(srv_sock.fileno())
         if clt_sock is not None:
-            clt_sock.close()
+            clt_sock.close(clt_sock.fileno())
