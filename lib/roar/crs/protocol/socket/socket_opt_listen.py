@@ -65,4 +65,3 @@ class ListenOptions:
         if self.state._timeout != 0.0:
             value = self.state._timeout
         return value
-        
