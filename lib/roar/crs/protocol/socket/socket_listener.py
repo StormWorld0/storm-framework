@@ -139,7 +139,7 @@ class ClientListener(ListenState, ListenInspect, ListenFD):
         """Closing read/write"""
         self.state._ensure_open("shutdown")
         self._ensure_open("shutdown")
-            
+
         packet = IPCPayloadBuilder.build(
             state=self,
             cfd=self._cfd,
