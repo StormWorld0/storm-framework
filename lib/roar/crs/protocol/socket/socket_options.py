@@ -4,7 +4,7 @@ from ...endpoint import CRS
 
 
 class SocketOptions:
-    """Daftar semua socket options"""
+    """List all socket options"""
 
     def setsockopt(
         self,
@@ -31,7 +31,7 @@ class SocketOptions:
         level: str | int,
         name: str | int,
         **kwargs,
-    ) -> SocketResponse:
+    ) -> int:
         """Getting socket options"""
         self._ensure_open("getsockopt")
         packet = IPCPayloadBuilder.build(
