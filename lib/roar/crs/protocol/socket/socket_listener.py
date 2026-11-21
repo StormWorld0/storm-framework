@@ -1,3 +1,5 @@
+import os
+
 from .state_build import IPCPayloadBuilder
 from .state_listen import ListenState
 from .response import SocketResponse
@@ -137,7 +139,6 @@ class ClientListener(
     ) -> SocketResponse:
         """Closing read/write"""
         self._ensure_open("shutdown")
-
         packet = IPCPayloadBuilder.build(
             state=self,
             cfd=self._cfd,
@@ -150,6 +151,7 @@ class ClientListener(
 
     def close(
         self,
+        fileno: int | None = None,
         **kwargs,
     ) -> SocketResponse:
         """Disconnecting Client Listener"""
@@ -157,6 +159,24 @@ class ClientListener(
             return SocketResponse(
                 {"status": "WARN", "message": "ClientFD has been closed."}
             )
+            
+        def closefd(val) -> None:
+            if isinstance(val, bool):
+                return
+            if not isinstance(val, int):
+                return
+            if val < 0:
+                return
+            if not val == self.state._client_fd:
+                return
+            self.state._client_fd = -1
+            try:
+                return os.close(val)
+            except OSError:
+                return
+            
+        if fileno is not None:
+            closefd(fileno)
 
         packet = IPCPayloadBuilder.build(
             state=self.state,
