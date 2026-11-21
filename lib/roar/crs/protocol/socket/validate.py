@@ -1,62 +1,47 @@
-def _is_strict_int(value: object) -> bool:
-    return isinstance(value, int) and not isinstance(value, bool)
-
-
-def _validate_optional_str(value: object, name: str) -> str | None:
-    if value is None or value == "":
-        return None
-    if not isinstance(value, str):
-        raise TypeError(f"{name} must be a str or None, got {type(value).__name__}")
-    return value
-
-
-def _validate_optional_int(value: object, name: str) -> int | None:
-    if value is None:
-        return None
-    if not _is_strict_int(value):
-        raise TypeError(f"{name} must be an int or None, got {type(value).__name__}")
-    return value
-
-
-def _parse_optional_port(value: object) -> int | None:
-    if value is None:
-        return None
-    if _is_strict_int(value):
-        return value
-    if isinstance(value, str):
-        stripped = value.strip()
-        if not stripped.isascii() and not stripped.isdigit():
-            raise ValueError("port string must not be empty")
-        try:
-            return int(stripped, 10)
-        except ValueError as exc:
-            raise ValueError(f"port cannot be converted to int: {value!r}") from exc
-    raise TypeError(
-        f"port must be an int, numeric str, or None, got {type(value).__name__}"
-    )
-
-
 def parse_addr(addr: object) -> tuple[str | None, int | None, int | None, int | None]:
-    if not isinstance(addr, tuple):
+    if type(addr) is not tuple:
         raise TypeError("Address must be a tuple")
 
-    if len(addr) == 2:
+    n = len(addr)
+    if n == 2:
         host, port = addr
-        flowinfo, scope_id = None, None
-    elif len(addr) == 4:
+        flowinfo = scope_id = None
+    elif n == 4:
         host, port, flowinfo, scope_id = addr
     else:
-        raise ValueError(f"Address tuple must have 2 or 4 elements, got {len(addr)}")
+        raise ValueError("Address tuple must have 2 or 4 elements")
 
-    parsed_host = _validate_optional_str(host, "host")
-    parsed_port = _parse_optional_port(port)
-    parsed_flowinfo = _validate_optional_int(flowinfo, "flowinfo")
-    parsed_scope_id = _validate_optional_int(scope_id, "scope_id")
+    if host is None or host == "":
+        host = None
+    elif type(host) is not str:
+        raise TypeError("host must be a str or None")
 
-    if parsed_host is None and parsed_port is None:
+    if port is None:
+        pass
+    elif type(port) is int:
+        pass
+    elif type(port) is str:
+        s = port.strip()
+        if not s:
+            raise ValueError("port string must not be empty")
+        try:
+            port = int(s, 10)
+        except ValueError as exc:
+            raise ValueError("port cannot be converted to int") from exc
+    else:
+        raise TypeError("port must be an int, numeric str, or None")
+
+    if flowinfo is not None and type(flowinfo) is not int:
+        raise TypeError("flowinfo must be an int or None")
+
+    if scope_id is not None and type(scope_id) is not int:
+        raise TypeError("scope_id must be an int or None")
+
+    if host is None and port is None:
         raise ValueError("At least one of 'host' or 'port' must be provided")
 
-    return (parsed_host, parsed_port, parsed_flowinfo, parsed_scope_id)
+    return (host, port, flowinfo, scope_id)
+
 
 
 def is_tuple2(value) -> bool:
