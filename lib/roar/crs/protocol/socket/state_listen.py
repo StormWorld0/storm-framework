@@ -11,7 +11,7 @@ class ListenState:
 
     def _ensure_open(self, operation: str):
         """Prevent execution in a closed session"""
-        if self._is_closed_cfd:
+        if self.state._is_closed or self._is_closed_cfd:
             smf.printd(
                 f"Cannot {operation} on a closed Socket client session.", level="ERROR"
             )
