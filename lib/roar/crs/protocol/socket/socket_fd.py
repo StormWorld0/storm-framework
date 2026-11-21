@@ -1,5 +1,3 @@
-import os
-
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
 from .utils_fd import real_fd
