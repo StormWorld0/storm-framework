@@ -55,7 +55,7 @@ class SocketOptions:
         self._timeout = float(value)
         return self
 
-    def gettimeout(self) -> float:
+    def gettimeout(self) -> float | None:
         """Taking a timeout"""
         value = None
         if self._timeout != 0.0:
