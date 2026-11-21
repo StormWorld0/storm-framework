@@ -405,14 +405,16 @@ sock.getpeername()
 ```python
 sock.fileno()
 ```
-**Response:** Returns Python File Descriptor.
+**Description:** This function returns the Python FD table number, and needs to be closed if it is called but not used. Can be closed with `sock.close(sock.fileno)` this will automatically close the Golang and Python FDs.
 
 
 **Closing the connection**
 ```python
-resp = sock.close()
+resp = sock.close(fileno)
 ```
 **Description:** This is used to close the connection when it is finished or when an error occurs, so that the connection does not hang and to avoid OOM.
+
+**Argument:** `fileno` It is optional to close the Python FD with `os.close()` running simultaneously with the Golang FD closure.
 
 **Response**
 - **status:** SUCCESS/WARN/ERROR.
