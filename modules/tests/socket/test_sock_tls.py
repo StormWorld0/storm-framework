@@ -139,5 +139,4 @@ def execute(options, net, log):
     except sock.Exception as e:
         log.printe("Error Socket =>", e)
     finally:
-        sock.closefd(sock.fileno())
-        sock.close()
+        sock.close(sock.fileno())
