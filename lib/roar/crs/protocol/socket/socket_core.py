@@ -190,10 +190,10 @@ class SocketCore:
                 return os.close(val)
             except OSError:
                 return
-            
+
         if fileno is not None:
             closefd(fileno)
-            
+
         packet = IPCPayloadBuilder.build(state=self, mode="close", close_session=True)
         resp = CRS.send(packet)
         self._is_closed = True
