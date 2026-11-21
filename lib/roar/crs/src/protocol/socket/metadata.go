@@ -13,7 +13,7 @@ func (ctx *ExecutionContext) GenerateMetadata(readBytes int) map[string]interfac
 		"is_reused":    ctx.IsReused,
 		"rtt_ms":       time.Since(ctx.StartTime).Milliseconds(),
 		"Cheked":       reflect.TypeOf(ctx.Conn).String(),
-		"isAlreadyTLS": strconv.FormatBool(ctls.IsTLSConn(ctx.Conn)),
+		"isAlreadyTLS": strconv.FormatBool(ctls.IsUTLSConn(ctx.Conn)),
 		"read_bytes":   readBytes,
 	}
 
