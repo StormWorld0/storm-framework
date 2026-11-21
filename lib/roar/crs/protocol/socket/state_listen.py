@@ -1,5 +1,6 @@
 import smf
 
+
 class ListenState:
     """Socket listener state management"""
 
@@ -11,7 +12,9 @@ class ListenState:
     def _ensure_open(self, operation: str):
         """Prevent execution in a closed session"""
         if self._is_closed_cfd:
-            smf.printd(f"Cannot {operation} on a closed Socket client session.", level="ERROR")
+            smf.printd(
+                f"Cannot {operation} on a closed Socket client session.", level="ERROR"
+            )
             raise RuntimeError(
                 f"Cannot execute {operation}() on a closed Socket client session."
             )
