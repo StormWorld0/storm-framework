@@ -30,23 +30,6 @@ class ListenFD:
             return self.state._client_fd
         return -1
 
-    def closefd(
-        self,
-        fileno: int,
-        **kwargs,
-    ) -> None:
-        """Closing the Python table socket FD"""
-        if isinstance(fileno, bool):
-            raise TypeError("'closefd' does not support Boolean")
-        if not isinstance(fileno, int):
-            raise TypeError("'closefd' only supports int")
-        if fileno <= 0:
-            raise ValueError(f"'closefd' invalid value {fileno}")
-        if not fileno == self.state._client_fd:
-            return
-        self.state._client_fd = -1
-        return os.close(fileno)
-
 
 class SocketFD:
     """Special class inherited from Socket"""
@@ -70,20 +53,3 @@ class SocketFD:
             self._sock_fd = fd
             return self._sock_fd
         return -1
-
-    def closefd(
-        self,
-        fileno: int,
-        **kwargs,
-    ) -> None:
-        """Closing the Python table socket FD"""
-        if isinstance(fileno, bool):
-            raise TypeError("'closefd' does not support Boolean")
-        if not isinstance(fileno, int):
-            raise TypeError("'closefd' only supports int")
-        if fileno <= 0:
-            raise ValueError(f"'closefd' invalid value {fileno}")
-        if not fileno == self._sock_fd:
-            return
-        self._sock_fd = -1
-        return os.close(fileno)
