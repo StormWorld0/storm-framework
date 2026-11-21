@@ -177,3 +177,18 @@ class SocketCore:
         resp = CRS.send(packet)
         self._is_closed = True
         return SocketResponse(resp)
+
+    def closefd(
+        self,
+        fileno: int,
+        **kwargs,
+    ) -> None:
+        """Closing the Python table socket FD"""
+        if isinstance(fileno, bool):
+            raise TypeError("'closefd' does not support Boolean")
+        if not isinstance(fileno, int):
+            raise TypeError("'closefd' only supports int")
+        if fileno <= 0:
+            raise ValueError(f"'closefd' invalid value {fileno}")
+        self._sock_fd = -1
+        return os.close(fileno)
