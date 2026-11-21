@@ -1,4 +1,3 @@
-import smf
 import struct
 
 metadata = {
