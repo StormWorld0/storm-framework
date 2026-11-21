@@ -28,9 +28,6 @@ func ReleaseBuffer(bufPtr *[]byte) {
 // --- READ/WRITE net.conn ---
 
 func ExecuteWrite(conn net.Conn, data string, timeout time.Duration) error {
-	if data == "" {
-		return nil
-	}
 	dataDec, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
 		return fmt.Errorf("base64 decode failed: %w", err)
@@ -73,10 +70,6 @@ func ExecuteRead(conn net.Conn, readSize int, timeout time.Duration) ([]byte, in
 // --- READ/WRITE RawFD ---
 
 func ExecuteFDWrite(fd int, data string, timeout time.Duration, flags int) error {
-	if data == "" {
-		return nil
-	}
-
 	dataDec, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
 		return fmt.Errorf("base64 decode failed: %w", err)
@@ -97,10 +90,6 @@ func ExecuteFDWrite(fd int, data string, timeout time.Duration, flags int) error
 }
 
 func ExecuteFDWriteAll(fd int, data string, timeout time.Duration, flags int) error {
-	if data == "" {
-		return nil
-	}
-
 	buf, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
 		return fmt.Errorf("base64 decode failed: %w", err)
@@ -186,10 +175,6 @@ func ExecuteFDWriteFile(outfd int, file string, timeout time.Duration) error {
 
 
 func ExecuteSendTo(fd int, data string, sa unix.Sockaddr, timeout time.Duration, flag int) error {
-	if data == "" {
-		return nil
-	}
-	
 	dataDec, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
 		return fmt.Errorf("base64 decode failed: %w", err)
