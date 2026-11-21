@@ -159,7 +159,7 @@ class ClientListener(
             return SocketResponse(
                 {"status": "WARN", "message": "ClientFD has been closed."}
             )
-            
+
         def closefd(val) -> None:
             if isinstance(val, bool):
                 return
@@ -174,7 +174,7 @@ class ClientListener(
                 return os.close(val)
             except OSError:
                 return
-            
+
         if fileno is not None:
             closefd(fileno)
 
