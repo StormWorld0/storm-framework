@@ -141,4 +141,3 @@ def execute(options, net, log):
     finally:
         sock.closefd(sock.fileno())
         sock.close()
-        
