@@ -17,6 +17,22 @@ def _validate_optional_int(value: object, name: str) -> int | None:
         raise TypeError(f"{name} must be an int or None, got {type(value).__name__}")
     return value
 
+def _parse_optional_port(value: object) -> int | None:
+    if value is None:
+        return None
+    if _is_strict_int(value):
+        return value
+    if isinstance(value, str):
+        stripped = value.strip()
+        final = stripped.isascii() and stripped.isdigit()
+        if not final:
+            raise ValueError("port string must not be empty")
+        try:
+            return int(final)
+        except ValueError as exc:
+            raise ValueError(f"port cannot be converted to int: {value!r}") from exc
+    raise TypeError(f"port must be an int, numeric str, or None, got {type(value).__name__}")
+    
 
 def parse_addr(addr: object) -> tuple[str | None, int | None, int | None, int | None]:
     if not isinstance(addr, tuple):
@@ -31,7 +47,7 @@ def parse_addr(addr: object) -> tuple[str | None, int | None, int | None, int | 
         raise ValueError(f"Address tuple must have 2 or 4 elements, got {len(addr)}")
 
     parsed_host = _validate_optional_str(host, "host")
-    parsed_port = _validate_optional_int(port, "port")
+    parsed_port = _parse_optional_port(port)
     parsed_flowinfo = _validate_optional_int(flowinfo, "flowinfo")
     parsed_scope_id = _validate_optional_int(scope_id, "scope_id")
 
