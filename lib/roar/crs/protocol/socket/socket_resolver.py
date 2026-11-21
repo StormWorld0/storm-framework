@@ -1,6 +1,6 @@
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
-from .validate import is_tuple2, parse_flags
+from .validate import is_tuple2, parse_flags, parse_addr
 from ...endpoint import CRS
 
 
@@ -9,7 +9,7 @@ class SocketResolver:
 
     def getaddrinfo(
         self,
-        address: tuple[str, str | int],
+        address: tuple[str, int],
         family: str | int = None,
         type: str | int = None,
         proto: str | int = None,
@@ -18,8 +18,7 @@ class SocketResolver:
     ) -> SocketResponse:
         """Dapatkan informasi alamat"""
         self._ensure_open("getaddrinfo")
-        if is_tuple2(address):
-            host, port = address
+        host, port, _, _ = parse_addr(address)
         if flags is not None:
             flags = parse_flags(flags)
 
@@ -46,14 +45,7 @@ class SocketResolver:
     ) -> SocketResponse:
         """Dapatkan Hostname dari (IP, PORT)"""
         self._ensure_open("getnameinfo")
-        if not isinstance(address, tuple):
-            raise TypeError("address must be a tuple")
-        if len(address) not in (2, 4):
-            raise ValueError("Expected 2 or 4 arguments")
-
-        host, port = address[:2]
-        flowinfo = address[2] if len(address) == 4 else None
-        scopeid = address[3] if len(address) == 4 else None
+        host, port, flow, scope = parse_addr(address)
         if flags is not None:
             flags = parse_flags(flags)
 
@@ -61,8 +53,8 @@ class SocketResolver:
             state=self,
             host=host,
             port=port,
-            flowinfo=flowinfo,
-            scopeid=scopeid,
+            flowinfo=flow,
+            scopeid=scope,
             flag=flags,
             mode="getnameinfo",
         )
