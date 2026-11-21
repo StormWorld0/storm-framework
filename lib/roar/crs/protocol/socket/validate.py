@@ -25,8 +25,7 @@ def _parse_optional_port(value: object) -> int | None:
         return value
     if isinstance(value, str):
         stripped = value.strip()
-        final_bool = stripped.isascii() and stripped.isdigit()
-        if not final_bool:
+        if not stripped.isascii() and not stripped.isdigit():
             raise ValueError("port string must not be empty")
         try:
             return int(stripped, 10)
