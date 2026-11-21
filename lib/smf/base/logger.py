@@ -44,3 +44,22 @@ class Logger:
             smf.printf(f"[~] {CC.RED}{label}{CC.RESET}")
         else:
             smf.printf(f"[~] {CC.RED}{label}{CC.RESET}", *args)
+
+    def printf(self, label: str = "", *args) -> None:
+        if not label:
+            smf.printf()
+            return
+
+        if not args:
+            smf.printf(f"{CC.WHITE}{label}{CC.RESET}")
+        else:
+            smf.printf(f"{CC.WHITE}{label}{CC.RESET}", *args)
+
+    def printd(self, *args, **kwargs) -> None:
+        if not args:
+            return
+
+        if not kwargs:
+            return
+        else:
+            smf.printd(*args, **kwargs)
