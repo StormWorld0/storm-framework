@@ -1,6 +1,7 @@
 import os
 
 from .state_build import IPCPayloadBuilder
+from .state_listen import ListenState
 from .response import SocketResponse
 from .socket_inspect import ListenInspect
 from .socket_fd import ListenFD
@@ -8,13 +9,8 @@ from .validate import parse_flags, parse_addr
 from ...endpoint import CRS
 
 
-class ClientListener(ListenInspect, ListenFD):
+class ClientListener(ListenState, ListenInspect, ListenFD):
     """Class Khusus menangani IO/Close Listener"""
-
-    def __init__(self, state, cfd: int = None):
-        self.state = state
-        self._cfd = cfd
-        self._is_closed_cfd = False
 
     def sendall(
         self,
@@ -24,6 +20,7 @@ class ClientListener(ListenInspect, ListenFD):
     ) -> SocketResponse:
         """Sending all data"""
         self.state._ensure_open("sendall")
+        self._ensure_open("sendall")
         if flags is not None:
             flags = parse_flags(flags)
 
@@ -46,6 +43,7 @@ class ClientListener(ListenInspect, ListenFD):
     ) -> SocketResponse:
         """Sending data"""
         self.state._ensure_open("send")
+        self._ensure_open("send")
         if flags is not None:
             flags = parse_flags(flags)
 
@@ -68,6 +66,7 @@ class ClientListener(ListenInspect, ListenFD):
     ) -> SocketResponse:
         """Taking Buffer"""
         self.state._ensure_open("recv")
+        self._ensure_open("recv")
         if flags is not None:
             flags = parse_flags(flags)
 
@@ -91,6 +90,7 @@ class ClientListener(ListenInspect, ListenFD):
     ) -> SocketResponse:
         """Send datagram along with Host & Port"""
         self.state._ensure_open("sendto")
+        self._ensure_open("sendto")
         host, port, _, _ = parse_addr(address)
         if flags is not None:
             flags = parse_flags(flags)
@@ -116,6 +116,7 @@ class ClientListener(ListenInspect, ListenFD):
     ) -> SocketResponse:
         """Taking Buffer"""
         self.state._ensure_open("recvfrom")
+        self._ensure_open("recvfrom")
         if flags is not None:
             flags = parse_flags(flags)
 
@@ -137,6 +138,8 @@ class ClientListener(ListenInspect, ListenFD):
     ) -> SocketResponse:
         """Closing read/write"""
         self.state._ensure_open("shutdown")
+        self._ensure_open("shutdown")
+            
         packet = IPCPayloadBuilder.build(
             state=self,
             cfd=self._cfd,
@@ -179,5 +182,7 @@ class ClientListener(ListenInspect, ListenFD):
             raise TypeError("'closefd' only supports int")
         if fileno <= 0:
             raise ValueError(f"'closefd' invalid value {fileno}")
+        if not fileno == self.state._client_fd:
+            return
         self.state._client_fd = -1
         return os.close(fileno)
