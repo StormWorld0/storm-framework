@@ -1,3 +1,5 @@
+import os
+
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
 from .socket_inspect import ListenInspect
@@ -164,3 +166,18 @@ class ClientListener(ListenInspect, ListenFD):
         resp = CRS.send(packet)
         self._is_closed_cfd = True
         return SocketResponse(resp)
+
+    def closefd(
+        self,
+        fileno: int,
+        **kwargs,
+    ) -> None:
+        """Closing the Python table socket FD"""
+        if isinstance(fileno, bool):
+            raise TypeError("'closefd' does not support Boolean")
+        if not isinstance(fileno, int):
+            raise TypeError("'closefd' only supports int")
+        if fileno <= 0:
+            raise ValueError(f"'closefd' invalid value {fileno}")
+        self.state._client_fd = -1
+        return os.close(fileno)
