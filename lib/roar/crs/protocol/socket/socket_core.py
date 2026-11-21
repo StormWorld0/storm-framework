@@ -1,5 +1,3 @@
-import os
-
 from .socket_listener import ClientListener
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
@@ -179,20 +177,3 @@ class SocketCore:
         resp = CRS.send(packet)
         self._is_closed = True
         return SocketResponse(resp)
-
-    def closefd(
-        self,
-        fileno: int,
-        **kwargs,
-    ) -> None:
-        """Closing the Python table socket FD"""
-        if isinstance(fileno, bool):
-            raise TypeError("'closefd' does not support Boolean")
-        if not isinstance(fileno, int):
-            raise TypeError("'closefd' only supports int")
-        if fileno <= 0:
-            raise ValueError(f"'closefd' invalid value {fileno}")
-        if not fileno == self._sock_fd:
-            return
-        self._sock_fd = -1
-        return os.close(fileno)
