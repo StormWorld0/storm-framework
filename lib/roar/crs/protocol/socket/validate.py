@@ -17,6 +17,7 @@ def _validate_optional_int(value: object, name: str) -> int | None:
         raise TypeError(f"{name} must be an int or None, got {type(value).__name__}")
     return value
 
+
 def _parse_optional_port(value: object) -> int | None:
     if value is None:
         return None
@@ -31,8 +32,10 @@ def _parse_optional_port(value: object) -> int | None:
             return int(final)
         except ValueError as exc:
             raise ValueError(f"port cannot be converted to int: {value!r}") from exc
-    raise TypeError(f"port must be an int, numeric str, or None, got {type(value).__name__}")
-    
+    raise TypeError(
+        f"port must be an int, numeric str, or None, got {type(value).__name__}"
+    )
+
 
 def parse_addr(addr: object) -> tuple[str | None, int | None, int | None, int | None]:
     if not isinstance(addr, tuple):
