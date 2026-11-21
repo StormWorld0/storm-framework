@@ -70,6 +70,6 @@ smf> log dump
 This was intentionally designed to speed up in-depth investigations across different devices and usage environments, because we believe that something being stable on our side doesn’t necessarily mean it will be stable for users.
 
 ```bash
-smf> load sendlog_service
+smf> load telemetry
 ```
 
