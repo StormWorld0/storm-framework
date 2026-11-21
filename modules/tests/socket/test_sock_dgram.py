@@ -16,12 +16,11 @@ REQUIRED_OPTIONS = {"HOST": "", "PORT": ""}
 dns_query = b"\xaa\xbb\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\x01\x00\x01"
 
 
-def execute(options, net):
+def execute(options, net, log):
     host = options.get("HOST")
     port = options.get("PORT")
 
     sock = net.Socket()
-
     try:
         # Socket Allocation
         sock.socket(sock.AF_INET, sock.SOCK_DGRAM)
@@ -32,25 +31,25 @@ def execute(options, net):
         # Send datagram
         resp = sock.sendto(dns_query, (host, port))
         if not resp.ok:
-            smf.printf("[!] Failed sendto =>", resp.message)
+            log.printw("Failed sendto =>", resp.message)
             return
 
         # Get response Buffer and remote IP
         resp = sock.recvfrom(1024)
         if resp.ok:
-            smf.printf("[✓] File Descriptor =>", sock.fileno())
-            smf.printf("[✓] Remote IP    =>", resp.remote_ip)
-            smf.printf()
-            smf.printf("[✓] Raw Bytes    =>", resp.raw_bytes)
-            smf.printf("[✓] Hex Bytes    =>", resp.hex_bytes)
-            smf.printf("[✓] Int Bytes    =>", resp.int_bytes)
-            smf.printf("[✓] Str Bytes    =>", resp.str_bytes)
+            log.printi("File Descriptor =>", sock.fileno())
+            log.printi("Remote IP    =>", resp.remote_ip)
+            log.printi()
+            log.prints("Raw Bytes    =>", resp.raw_bytes)
+            log.prints("Hex Bytes    =>", resp.hex_bytes)
+            log.prints("Int Bytes    =>", resp.int_bytes)
+            log.prints("Str Bytes    =>", resp.str_bytes)
             return
 
-        smf.printf("[!] Failed recvfrom =>", resp.message)
+        log.printw("Failed recvfrom =>", resp.message)
     except KeyboardInterrupt:
         pass
     except Exception as e:
-        smf.printd("Connection error", e, level="ERROR")
+        log.printw("Connection error", e)
     finally:
         sock.close(sock.fileno())
