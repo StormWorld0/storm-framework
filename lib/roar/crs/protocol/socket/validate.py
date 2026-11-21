@@ -43,7 +43,6 @@ def parse_addr(addr: object) -> tuple[str | None, int | None, int | None, int | 
     return (host, port, flowinfo, scope_id)
 
 
-
 def is_tuple2(value) -> bool:
     if isinstance(value, bool):
         raise TypeError("Boolean is not a valid address")
