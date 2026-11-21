@@ -162,10 +162,10 @@ class ObjectTLS:
                 return os.close(val)
             except OSError:
                 return
-            
+
         if fileno is not None:
             closefd(fileno)
-            
+
         packet = IPCPayloadBuilder.build(
             state=self.state, mode="close", close_session=True
         )
