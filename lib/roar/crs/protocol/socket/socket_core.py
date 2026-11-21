@@ -181,7 +181,7 @@ class SocketCore:
                 return
             if not isinstance(val, int):
                 return
-            if val <= 0:
+            if val < 0:
                 return
             if not val == self._sock_fd:
                 return
