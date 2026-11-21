@@ -98,7 +98,9 @@ class SocketState:
         self.cfd = cfd
 
         # CRS session isolation
-        self.sessid = sessid if sessid is not None else f"smf_sess_{uuid.uuid4().hex[:12]}"
+        self.sessid = (
+            sessid if sessid is not None else f"smf_sess_{uuid.uuid4().hex[:12]}"
+        )
         self._is_closed = False
         self.close_session = close_session
 
