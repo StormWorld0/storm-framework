@@ -1,3 +1,5 @@
+import os
+
 from .socket_listener import ClientListener
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
@@ -167,12 +169,31 @@ class SocketCore:
 
     def close(
         self,
+        fileno: int | None = None,
         **kwargs,
     ) -> SocketResponse:
         """Disconnecting"""
         if self._is_closed:
             return SocketResponse({"status": "closed", "session_id": self.sessid})
 
+        def closefd(val) -> None:
+            if isinstance(val, bool):
+                return
+            if not isinstance(val, int):
+                return
+            if val <= 0:
+                return
+            if not val == self._sock_fd:
+                return
+            self._sock_fd = -1
+            try:
+                return os.close(val)
+            except OSError:
+                return
+            
+        if fileno is not None:
+            closefd(fileno)
+            
         packet = IPCPayloadBuilder.build(state=self, mode="close", close_session=True)
         resp = CRS.send(packet)
         self._is_closed = True
