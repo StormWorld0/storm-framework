@@ -1,9 +1,9 @@
 import smf
 
 metadata = {
-    "Name": "Testing Cycle Socket",
+    "Name": "Testing Socket",
     "Description": """
-Testing Socket
+Testing Socket Datagram
 """,
     "Author": ["zxelzy"],
     "Action": [["Scan", {"Description": "Testing socket"}]],
@@ -53,4 +53,4 @@ def execute(options, net):
     except Exception as e:
         smf.printd("Connection error", e, level="ERROR")
     finally:
-        sock.close()
+        sock.close(sock.fileno())
