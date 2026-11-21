@@ -1,3 +1,5 @@
+import os
+
 from .socket_listener import ClientListener
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
