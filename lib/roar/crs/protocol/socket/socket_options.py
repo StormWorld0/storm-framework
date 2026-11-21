@@ -32,7 +32,7 @@ class SocketOptions:
         name: str | int,
         **kwargs,
     ) -> SocketResponse:
-        """Mengambil socket options"""
+        """Getting socket options"""
         self._ensure_open("getsockopt")
         packet = IPCPayloadBuilder.build(
             state=self,
