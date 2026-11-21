@@ -48,8 +48,10 @@ class SocketOptions:
 
     def settimeout(self, value: float | int):
         """Global Timeout"""
+        if isinstance(value, bool):
+            raise TypeError("'settimeout' does not support boolean")
         if not isinstance(value, (float, int)):
-            raise ValueError("'settimeout' Argument must be a float or int.")
+            raise TypeError("'settimeout' only supports float or int.")
         self._timeout = float(value)
         return self
 
