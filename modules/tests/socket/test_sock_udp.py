@@ -42,7 +42,7 @@ def build_dns_query(domain: str, txid: int = 0x1234) -> bytes:
     return header + qname + question
 
 
-def execute(options, net):
+def execute(options, net, log):
     host = options.get("HOST")
     port = 53
     sock = net.Socket()
@@ -52,36 +52,33 @@ def execute(options, net):
         if not obj:
             return
 
-        smf.printf("File Decriptor =>", sock.fileno())
+        log.printi("File Decriptor =>", sock.fileno())
 
         # Connect to server
         result = sock.connect((host, port))
         if not result.ok:
-            smf.printd("DNS connect failed", result.message, level="ERROR")
+            log.printw("DNS connect failed =>", result.message)
             return
 
         # Global timeout
         sock.settimeout(2.0)
 
-        # Build data
-        query = build_dns_query("example.com")
-
         # Send data
-        result = sock.send(query)
+        result = sock.sendall(build_dns_query(host))
         if not result.ok:
-            smf.printd("DNS query failed", result.message, level="ERROR")
+            log.printw("DNS query failed =>", result.message)
             return
 
         # Retrieve response Buffer
         result = sock.recv(4096)
         if result.ok:
-            smf.printf("Int Response       =>", result.int_bytes)
-            smf.printf("Raw Response       =>", result.raw_bytes)
-            smf.printf("Hex Response       =>", result.hex_bytes)
-            smf.printf("Str Response       =>", result.str_bytes)
+            log.prints("Int Response       =>", result.int_bytes)
+            log.prints("Raw Response       =>", result.raw_bytes)
+            log.prints("Hex Response       =>", result.hex_bytes)
+            log.prints("Str Response       =>", result.str_bytes)
     except KeyboardInterrupt:
         pass
     except Exception as e:
-        smf.printd("UDP DNS testing failed", e, level="ERROR")
+        log.printw("UDP DNS testing failed =>", e)
     finally:
-        sock.close()
+        sock.close(sock.fileno())
