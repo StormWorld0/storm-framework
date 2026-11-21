@@ -9,23 +9,17 @@ By abstracting network communications into a CRS, The system gains full control 
 - **Dependency Decoupling & Supply Chain Security:** Reduces the risk of vulnerabilities and breaking changes from third-party libraries by isolating all I/O operations into one centralized engine.
 - **Performance & Low Latency:** Leverages Go's execution speed and I/O model to minimize overhead when handling high-density communications.
 - **Connection Stability:** Provides custom connection pooling management, retry mechanisms, and predictable timeout handling.
-- **Concurrency Management:** Leverage native Go Routines to handle concurrent I/O tasks efficiently with controlled resource consumption.
+- **Concurrency Management:** Leverage native Goroutines to handle concurrent I/O tasks efficiently with controlled resource consumption.
 
 ### 📝 Technical Specifications
 
 **Tech Stack & Runtime**
 - **Language:** Go (Golang)
-- **Primary Paradigm:** Asynchronous / Non-blocking I/O (via Goroutines & Channels)
+- **Primary Paradigm:** Asynchronous / Non-blocking via Goroutines
 - **Interface Boundary:** Accessible via Wrapper & IPC Layer
 
 **Supported Protocols & Status**  
 Currently CRS implements a subset of network protocols focused on the system's core requirements. Although the protocol coverage is still being developed, the existing implementation has been optimized (tuned) and passed validation testing on various production modules.
-
-### Some of the available;
-
-- **http_requests**: REST API & Web Resource Delivery
-- **requests**: DNS Query Resolution or DNS Resolution
-- **socket**: Low-level Stream Communication
 
 **Note on Concurrency:** Although Goroutines are widely used across engines, Some specific protocol handlers still use precise synchronous/sequential execution to avoid race conditions or out-of-order execution in stateful protocols.
 
