@@ -14,7 +14,7 @@ Testing Socket
 REQUIRED_OPTIONS = {"HOST": "", "PORT": ""}
 
 
-def execute(options, net):
+def execute(options, net, log):
     host = options.get("HOST")
     port = options.get("PORT")
 
@@ -33,27 +33,27 @@ def execute(options, net):
     try:
         obj = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
         if obj:
-            smf.printf("[✓] File Decriptor =>", sock.fileno())
+            log.printi("File Decriptor =>", sock.fileno())
 
         resp = sock.connect((host, port))
         if not resp.ok:
-            smf.printf("[!] Failed connect =>", resp.message)
+            log.printw("Failed connect =>", resp.message)
             return
 
         resp = sock.sendall(data)
         if not resp.ok:
-            smf.printf("[!] Failed sendall =>", resp.message)
+            log.printw("Failed sendall =>", resp.message)
             return
 
         resp = sock.recv(4096)
         if resp.ok:
-            smf.printf("[✓] Raw bytes =>", resp.raw_bytes)
-            smf.printf("[✓] Hex Bytes =>", resp.hex_bytes)
-            smf.printf("[✓] Int bytes =>", resp.int_bytes)
-            smf.printf("[✓] Str bytes =>", resp.str_bytes)
+            log.prints("Raw bytes =>", resp.raw_bytes)
+            log.prints("Hex Bytes =>", resp.hex_bytes)
+            log.prints("Int bytes =>", resp.int_bytes)
+            log.prints("Str bytes =>", resp.str_bytes)
     except KeyboardInterrupt:
         pass
     except Exception as e:
-        smf.printf("[*] Error Socket =>", e)
+        log.printw("Error Socket =>", e)
     finally:
-        sock.close()
+        sock.close(sock.fileno())
