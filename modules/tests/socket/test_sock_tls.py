@@ -140,3 +140,4 @@ def execute(options, net, log):
         log.printe("Error Socket =>", e)
     finally:
         sock.close()
+        sock.closefd(sock.fileno())
