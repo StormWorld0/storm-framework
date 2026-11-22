@@ -1,7 +1,7 @@
 metadata = {
     "Name": "Testing Getaddrinfo Socket",
     "Description": """
-Testing Socket
+Testing Socket Getaddrinfo and Getnameinfo POSIX like.
 """,
     "Author": ["zxelzy"],
     "Action": [["Scan", {"Description": "Testing socket"}]],
@@ -19,7 +19,7 @@ def execute(options, net, log):
     sock = net.Socket()
     try:
         log.printi(f"Getaddrinfo =>", f"{host}:{port}")
-        resp = sock.getaddrinfo((host, port))
+        resp = sock.getaddrinfo(host, port)
         log.prints("Getaddrinfo Results =>", resp)
 
         addrs = [sockaddr for _, _, _, _, sockaddr in resp if sockaddr]
