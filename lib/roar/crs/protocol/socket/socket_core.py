@@ -14,9 +14,9 @@ class SocketCore:
 
     def socket(
         self,
-        family: str | int,
-        type: str | int,
-        proto: str | int = None,
+        family: int,
+        type: int,
+        proto: int | None = None,
         **kwargs,
     ) -> Self:
         """Open Socket"""
@@ -113,7 +113,7 @@ class SocketCore:
     def create_connection(
         self,
         address: tuple[str, int],
-        timeout: float | int = None,
+        timeout: float | int | None = None,
         **kwargs,
     ) -> SocketResponse:
         """Creating a TCP Stream connection"""
@@ -153,7 +153,7 @@ class SocketCore:
 
     def shutdown(
         self,
-        how: str | int,
+        how: int,
         **kwargs,
     ) -> SocketResponse:
         """Closing read/write"""
