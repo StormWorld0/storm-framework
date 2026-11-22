@@ -108,15 +108,15 @@ def execute(options, net, log):
     port = options.get("PORT")
 
     sock = net.Socket()
-    res = sock.socket(sock.AF_INET, sock.SOCK_STREAM, sock.IPPROTO_IP) # Open Socket
-    log.prints(res.fileno) # Print File-Decryptor (FD)
+    sock.socket(sock.AF_INET, sock.SOCK_STREAM, sock.IPPROTO_IP) # Open Socket
+    log.prints(sock.fileno()) # 'sock.fileno()' return Python table FD
 
     sock.timeout(2.0) # Set global timeout
-    sock.connect(host, port) # Connected to Socket
+    sock.connect((host, port)) # Connected to Socket
 
     data = b"0x01..." # Data Bytes
 
-    sock.send(data) # Send data
+    sock.sendall(data) # Send data
     resp = sock.recv(1024) # Read buffer
 
     if resp.ok:
@@ -133,15 +133,16 @@ def execute(options, net, log):
 
     try:
         # Upgrade TLS connection
-        r = sock.uptls(cert, key, ca, verify=False)
+        obj, r = sock.uptls(cert, key, ca, verify=False)
 
-        # Automatically use TLS connection after upgrade
-        sock.send()
-        sock.recv()
+        obj.send()
+        obj.recv()
     except Exception as e:
         log.printe("Label message", e) # Enter error exception
     finally:
-        sock.close() # Stop the connection so it doesn't hang
+        # 'sock.close()' Close Golang table FD.
+        # 'sock.close(sock.fileno())' Close FD of Python and Golang tables
+        sock.close(sock.fileno()) 
 
     log.printi("Cipher Suite", r.tls.cipher)
     log.printi("Version TLS 1.0/1.1/1.2/1.3", r.tls.version)
