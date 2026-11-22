@@ -411,6 +411,13 @@ sock.close(fileno)
 **Argument:** `fileno` It is optional to close the Python FD with `os.close()` running simultaneously with the Golang FD closure.
 
 
+**Taking over ownership of FD**
+```python
+sock.detach()
+```
+**Description:** `detach()` returns the FD number of the Python table process and it also automatically closes the FD of the Golang table process. The `detach` object is also always called in `SSLSocket` in `CPython`.
+
+
 **Exception Socket**
 ```python
 try:
