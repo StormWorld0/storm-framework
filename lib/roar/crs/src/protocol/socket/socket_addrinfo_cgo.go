@@ -31,21 +31,25 @@ int parse_sockaddr(struct sockaddr *sa, char *ip_str, int ip_len, int *port, uin
 import "C"
 import (
 	"fmt"
-	"strconv"
 	"unsafe"
-
 	"golang.org/x/sys/unix"
 )
 
-func getAddrInfo(ctx *ExecutionContext) (string, int, []map[string]interface{}, int, error) {
-	hostFinal := ""
+func getAddrInfo(ctx *ExecutionContext) ([]map[string]interface{}, int, error) {
+	// Convert host (*string) to C-string
+	var cNode *C.char
 	if ctx.Req.Host != nil {
-		hostFinal = *ctx.Req.Host
+		hostStrVal := DerefString(ctx.Req.Host, "")
+		cNode = C.CString(hostStrVal)
+		defer C.free(unsafe.Pointer(cNode))
 	}
 
-	portPtr := 0
-	if ctx.Req.Port != nil {
-		portPtr = *ctx.Req.Port
+	// Convert serv (*any) to C-string
+	var cService *C.char
+	if ctx.Req.Serv != nil {
+		servStrVal := DerefString(ctx.Req.Serv, "")
+		cService = C.CString(servStrVal)
+		defer C.free(unsafe.Pointer(cService))
 	}
 
 	family := ParseAF(ctx.Req.AF)
@@ -53,22 +57,7 @@ func getAddrInfo(ctx *ExecutionContext) (string, int, []map[string]interface{}, 
 	protocol := ParseProtocol(ctx.Req.SProto)
 	flags := ParseFlags(ctx.Req.Flags)
 
-	// Tangani host (*string) untuk C-string
-	var cNode *C.char
-	if hostFinal != "" {
-		cNode = C.CString(hostFinal)
-		defer C.free(unsafe.Pointer(cNode))
-	}
-
-	// Konversi *int port menjadi string service untuk C-string
-	var cService *C.char
-	if ctx.Req.Port != nil {
-		portStrVal := strconv.Itoa(*ctx.Req.Port)
-		cService = C.CString(portStrVal)
-		defer C.free(unsafe.Pointer(cService))
-	}
-
-	// Siapkan struct hints C
+	// Struct hints C
 	var hints C.struct_addrinfo
 	C.memset(unsafe.Pointer(&hints), 0, C.size_t(unsafe.Sizeof(hints)))
 	hints.ai_family = C.int(family)
@@ -78,11 +67,11 @@ func getAddrInfo(ctx *ExecutionContext) (string, int, []map[string]interface{}, 
 
 	var res *C.struct_addrinfo
 
-	// Panggil libc getaddrinfo asli
+	// Call libc getaddrinfo
 	ret := C.getaddrinfo(cNode, cService, &hints, &res)
 	if ret != 0 {
 		gaiErrStr := C.GoString(C.gai_strerror(ret))
-		return "", 0, nil, 0, fmt.Errorf("getaddrinfo failed: %s", gaiErrStr)
+		return nil, 0, fmt.Errorf("getaddrinfo failed: %s", gaiErrStr)
 	}
 	defer C.freeaddrinfo(res)
 
@@ -130,8 +119,8 @@ func getAddrInfo(ctx *ExecutionContext) (string, int, []map[string]interface{}, 
 	}
 
 	if len(results) == 0 {
-		return "", 0, nil, 0, fmt.Errorf("getaddrinfo: No address associated with hostname.")
+		return nil, 0, fmt.Errorf("getaddrinfo: No address associated with hostname.")
 	}
 
-	return hostFinal, portPtr, results, len(results), nil
+	return results, len(results), nil
 }
