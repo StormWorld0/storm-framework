@@ -33,3 +33,4 @@ def execute(options, net, log):
         pass
     except Exception as e:
         log.printe("Error =>", e)
+        log.printd("Error", e, level="ERROR")
