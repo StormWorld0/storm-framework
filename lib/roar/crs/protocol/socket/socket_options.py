@@ -8,9 +8,9 @@ class SocketOptions:
 
     def setsockopt(
         self,
-        level: str | int,
-        name: str | int,
-        value: int = None,
+        level: int,
+        name: int,
+        value: int | None = None,
         **kwargs,
     ) -> SocketResponse:
         """Socket Options Configuration"""
@@ -28,8 +28,8 @@ class SocketOptions:
 
     def getsockopt(
         self,
-        level: str | int,
-        name: str | int,
+        level: int,
+        name: int,
         **kwargs,
     ) -> int:
         """Getting socket options"""
