@@ -339,7 +339,7 @@ sock.settimeout(value)
 ```
 **Description:** The timeout function is created to set a default timeout for all functions executed after it, eliminating the need to apply timeouts repeatedly in each function. Default = 0 Bloking.
 
-**Value:** In this parameter, the input must be in the form of a float such as: 1.0, 10.5, etc.
+**Value:** The input must be in the form of a float or Int.
 
 ```python
 sock.gettimout()
@@ -361,12 +361,14 @@ sock.create_connection(address, timeout)
 
 **Get Address Information**
 ```python
-sock.getaddrinfo(address, family, type, proto, flags)
+sock.getaddrinfo(address, service, family, type, proto, flags)
 ```
 **Parameter**
+- **address:** Hostname such as: example.com, etc.
+- **service:** Int (80, 8080, 443, etc.) or Str ("http", "https", etc.)
 - **family:** Address Family such as: `sock.AF_INET`, `sock.AF_INET6`, etc.
 - **type:** Sock Type like: `sock.SOCK_STREAM`, `sock.SOCK_DGRAM`, etc.
-- **proto:** Protocols such as: `sock.IPPROTO_IP`, etc. | Default 0 = Determined by Kernel UNIX
+- **proto:** Protocols such as: `sock.IPPROTO_IP`, etc. | Default 0
 - **flags:** MSG_* such as: `sock.MSG_OOB`, `sock.MSG_MORE`, etc. | Optional Default 0.
 
 **Response**: This function can return IPv4 with the format: `list[tuple[int, int, int, str, tuple[str, int]]]` or IPv6 with the format: `list[tuple[int, int, int, str, tuple[str, int, int, int]]]` and the order is family, socktype, protocol, cannonname, sockaddr.
