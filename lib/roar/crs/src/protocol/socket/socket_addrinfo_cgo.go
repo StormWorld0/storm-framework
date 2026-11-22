@@ -96,7 +96,7 @@ func getAddrInfo(ctx *ExecutionContext) ([]map[string]interface{}, int, error) {
 		ipStr := C.GoString(&ipBuf[0])
 
 		var portVal interface{} = nil
-		if ctx.Req.Port != nil {
+		if cPort != 0 {
 			portVal = int(cPort)
 		}
 
