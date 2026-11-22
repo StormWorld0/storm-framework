@@ -79,7 +79,7 @@ class ObjectTLS:
         self,
         level: int,
         name: int,
-        value: int = None,
+        value: int | None = None,
         **kwargs,
     ) -> SocketResponse:
         """Socket Options Configuration"""
