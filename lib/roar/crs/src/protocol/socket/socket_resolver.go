@@ -6,7 +6,7 @@ import (
 )
 
 func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
-	h1, p2, r1, r2, e1 := getAddrInfo(ctx)
+	r1, c1, e1 := getAddrInfo(ctx)
 	if e1 != nil {
 		return packet.ResponsePacket{Status: "S-ERROR", Message: e1.Error()}
 	}
@@ -14,10 +14,8 @@ func handleGetAddrInfo(ctx *ExecutionContext) packet.ResponsePacket {
 	return packet.ResponsePacket{
 		Status: "SUCCESS",
 		Data: map[string]interface{}{
-			"host":    h1,
-			"service": p2,
 			"results": r1,
-			"count":   r2,
+			"count":   c1,
 			"rtt_ms":  time.Since(ctx.StartTime).Milliseconds(),
 		},
 	}
