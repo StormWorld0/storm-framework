@@ -134,7 +134,7 @@ class ClientListener(
 
     def shutdown(
         self,
-        how: str | int,
+        how: int,
         **kwargs,
     ) -> SocketResponse:
         """Closing read/write"""
