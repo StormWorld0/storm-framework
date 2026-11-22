@@ -9,23 +9,23 @@ class SocketResolver:
 
     def getaddrinfo(
         self,
-        address: tuple[str, int],
-        family: str | int = None,
-        type: str | int = None,
-        proto: str | int = None,
+        address: str,
+        service: str,
+        family: int | None = None,
+        type: int | None = None,
+        proto: int | None = None,
         flags: int | None = None,
         **kwargs,
     ) -> SocketResponse:
         """Dapatkan informasi alamat"""
         self._ensure_open("getaddrinfo")
-        host, port, _, _ = parse_addr(address)
         if flags is not None:
             flags = parse_flags(flags)
 
         packet = IPCPayloadBuilder.build(
             state=self,
-            host=host,
-            port=port,
+            host=address,
+            serv=service,
             addr_fam=family,
             stype=type,
             sproto=proto,
