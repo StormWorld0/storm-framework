@@ -14,8 +14,8 @@ from lib.smf.exception import (
 
 class SocketState:
     """
-    Manajemen Konfigurasi & State Sesi.
-    Menyimpan properti koneksi dan memvalidasi siklus hidup soket.
+    Configuration Management & Session State.
+    Stores connection properties and validates socket lifecycle.
     """
 
     SocketError
@@ -37,6 +37,7 @@ class SocketState:
         self,
         host: str | None = None,
         port: int | None = None,
+        serv: str | int | None = None,
         af: int | None = None,
         type: int | None = None,
         proto: int | None = None,
@@ -49,9 +50,6 @@ class SocketState:
         file: str = "",
         timeout: float = 0.0,
         buffer: int = 0,
-        ratelimit: int = 0,
-        cfd: int = -1,
-        sessid: str | None = None,
         keepalive: bool = True,
         mode: str = "socket",
         verify: bool = True,
@@ -62,16 +60,14 @@ class SocketState:
         ca: str = "",
         flowinfo: int = 0,
         scopeid: int = 0,
-        con: int = 1,
-        sock_fd: int = -1,
-        clt_fd: int = -1,
         **kwargs,
     ):
         self.host = host
         self.port = int(port) if port is not None else None
+        self.serv = serv
         self._timeout = float(timeout)
         self.buffer = int(buffer)
-        self.ratelimit = int(ratelimit)
+        self.ratelimit = 0
         self.keepalive = keepalive
         self.mode = mode
         self.infotls = infotls
@@ -85,7 +81,7 @@ class SocketState:
         self.level = level
         self.name = name
         self.value = int(value)
-        self.flag = flags
+        self.flags = flags
         self.how = how
 
         # IPv6 by getnameinfo
@@ -95,12 +91,10 @@ class SocketState:
         # Used by listen
         self.backlog = backlog
         self.file = file
-        self.cfd = cfd
+        self.cfd = -1 # Set default
 
         # CRS session isolation
-        self.sessid = (
-            sessid if sessid is not None else f"smf_sess_{uuid.uuid4().hex[:12]}"
-        )
+        self.sessid = f"smf_sess_{uuid.uuid4().hex[:12]}"
         self._is_closed = False
         self.close_session = close_session
 
@@ -111,12 +105,12 @@ class SocketState:
         self.key = key
         self.ca = ca
 
-        # Goroutine not support
-        self.con = con
+        # Set Goroutine 1 (True)
+        self.con = 1
 
-        # Cache File Descriptor. Operation O(1)
-        self._sock_fd = sock_fd
-        self._client_fd = clt_fd
+        # Cache File Descriptor. Set default -1
+        self._sock_fd = -1
+        self._client_fd = -1
 
         if kwargs:
             smf.printf(
@@ -124,7 +118,7 @@ class SocketState:
             )
 
     def _ensure_open(self, operation: str):
-        """Validasi internal untuk mencegah eksekusi operasi pada sesi yang tertutup."""
+        """Prevents execution of operations on closed sessions."""
         if self._is_closed:
             smf.printd(f"Cannot {operation} on a closed Socket session.", level="ERROR")
             raise RuntimeError(
@@ -133,43 +127,41 @@ class SocketState:
 
 
 class IPCPayloadBuilder:
-    """
-    Data Marshalling & Payload Transformation.
-    Terisolasi untuk menangani translasi state dan parameter operasional menjadi skema JSON/Dict.
-    """
+    """Data Marshalling & Payload Transformation."""
 
     @staticmethod
     def build(
         state: SocketState,
-        host: str = None,
-        port: str | int = None,
+        host: str | None = None,
+        port: int | None = None,
+        serv: str | int | None = None,
         data: str | bytes = b"",
-        addr_fam: str | int = None,
-        stype: str | int = None,
-        sproto: str | int = None,
-        level: str | int = None,
-        name: str | int = None,
-        value: int = None,
-        flag: str | int = None,
-        how: str | int = None,
-        backlog: int = None,
-        file: str = None,
-        infotls: bool = None,
-        verify: bool = None,
-        cert: str = None,
-        key: str = None,
-        ca: str = None,
-        flowinfo: int = None,
-        scopeid: int = None,
-        buffer: int = None,
-        timeout: float = None,
-        ratelimit: int = None,
-        cfd: int = None,
-        mode: str = None,
-        close_session: bool = None,
+        addr_fam: str | int | None = None,
+        stype: str | int | None = None,
+        sproto: str | int | None = None,
+        level: str | int | None = None,
+        name: str | int | None = None,
+        value: int | None = None,
+        flag: str | int | None = None,
+        how: str | int | None = None,
+        backlog: int | None = None,
+        file: str | None = None,
+        infotls: bool | None = None,
+        verify: bool | None = None,
+        cert: str | None = None,
+        key: str | None = None,
+        ca: str | None = None,
+        flowinfo: int | None = None,
+        scopeid: int | None = None,
+        buffer: int | None = None,
+        timeout: float | None = None,
+        ratelimit: int | None = None,
+        cfd: int | None = None,
+        mode: str | None = None,
+        close_session: bool | None = None,
     ) -> dict:
 
-        # Encoding muatan data
+        # Encoding data payload
         data_str = ""
         if data:
             data_bytes = data.encode("utf-8") if isinstance(data, str) else data
@@ -177,8 +169,10 @@ class IPCPayloadBuilder:
 
         return {
             "primitive": "SOCKET",
+            "mode": mode if mode is not None else state.mode,
             "host": host if host is not None else state.host,
             "port": int(port) if port is not None else state.port,
+            "service": serv if serv is not None else state.serv,
             "data": data_str,
             "addr-fam": addr_fam if addr_fam is not None else state.family,
             "stype": stype if stype is not None else state.type,
@@ -186,7 +180,7 @@ class IPCPayloadBuilder:
             "opt-level": level,
             "opt-name": name,
             "opt-value": int(value) if value is not None else state.value,
-            "flags": flag if flag is not None else state.flag,
+            "flags": flag if flag is not None else state.flags,
             "how": how if how is not None else state.how,
             "backlog": backlog if backlog is not None else state.backlog,
             "file": file if file is not None else state.file,
@@ -199,7 +193,6 @@ class IPCPayloadBuilder:
             "close-session": (
                 close_session if close_session is not None else state.close_session
             ),
-            "mode": mode if mode is not None else state.mode,
             "verify": verify if verify is not None else state.verify,
             "info_tls": infotls if infotls is not None else state.infotls,
             "tls-cert": cert,
