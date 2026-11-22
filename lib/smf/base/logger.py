@@ -75,9 +75,9 @@ class Logger:
             return
         if len(kwargs) != 1:
             return
-            
+
         level = kwargs.get("level")
         if level not in ("DEBUG", "WARN", "INFO", "ERROR"):
             return
-            
+
         smf.printd(*args, level=level)
