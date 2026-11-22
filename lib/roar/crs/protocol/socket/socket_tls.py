@@ -11,7 +11,7 @@ class SocketTLS:
         self,
         cert: str,
         key: str,
-        ca: str = None,
+        ca: str | None = None,
         verify: bool = True,
         **kwargs,
     ) -> SocketResponse:
