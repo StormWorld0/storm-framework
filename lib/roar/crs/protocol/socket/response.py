@@ -98,7 +98,7 @@ class SocketResponse:
             protocol = item.get("protocol", 0)
             canonname = item.get("canonname", "")
             ip = item.get("ip", "")
-            port = int(item.get("port", 0))
+            port = item.get("port", 0)
 
             if family == socket.AF_INET6:
                 flow = item.get("flowinfo", 0)
