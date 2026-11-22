@@ -77,8 +77,8 @@ class ObjectTLS:
 
     def setsockopt(
         self,
-        level: str | int,
-        name: str | int,
+        level: int,
+        name: int,
         value: int = None,
         **kwargs,
     ) -> SocketResponse:
@@ -97,8 +97,8 @@ class ObjectTLS:
 
     def getsockopt(
         self,
-        level: str | int,
-        name: str | int,
+        level: int,
+        name: int,
         **kwargs,
     ) -> SocketResponse:
         """Getting socket options"""
