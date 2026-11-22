@@ -91,7 +91,7 @@ class SocketState:
         # Used by listen
         self.backlog = backlog
         self.file = file
-        self.cfd = -1 # Set default
+        self.cfd = -1  # Set default
 
         # CRS session isolation
         self.sessid = f"smf_sess_{uuid.uuid4().hex[:12]}"
