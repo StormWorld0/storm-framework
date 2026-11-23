@@ -53,3 +53,7 @@ jobs:
           
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Verify image in Docker Hub
+        run: docker buildx imagetools inspect stormworld0/storm-framework:latest
+     
