@@ -5,7 +5,7 @@ from ...endpoint import CRS
 
 
 class SocketIO:
-    """Daftar semua socket IO"""
+    """List all IO sockets"""
 
     def sendall(
         self,
