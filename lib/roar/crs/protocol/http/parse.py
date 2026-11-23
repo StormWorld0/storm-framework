@@ -31,15 +31,19 @@ def domain_to_ip(domain):
         ipv6 = set()
 
         for result in resp:
-            ip = result[0][4][0]
+            if len(result) < 5 or not result[4]:
+                continue
+                
+            ip = result[4][0]
             try:
                 addr = ipaddress.ip_address(ip)
-                if addr.version == 4:
-                    ipv4.add(ip)
-                elif addr.version == 6:
-                    ipv6.add(ip)
             except ValueError:
                 continue
+
+            if addr.version == 4:
+                ipv4.add(ip)
+            elif addr.version == 6:
+                ipv6.add(ip)
 
         return {
             "ipv4": sorted(ipv4),
