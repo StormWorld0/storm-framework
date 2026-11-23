@@ -135,7 +135,11 @@ class SocketCore:
         return SocketResponse(resp)
 
     def detach(self) -> int:
-        """Take over the FD socket"""
+        """
+        Take over the FD socket
+        change ownership of Python FD 
+        and automatically close Golang FD!
+        """
         value = -1
         if self._sock_fd == -1:
             value = self.fileno()
@@ -172,7 +176,10 @@ class SocketCore:
         fileno: int | None = None,
         **kwargs,
     ) -> SocketResponse:
-        """Disconnecting"""
+        """
+        Closing Golang FD `close()`
+        Closing Golang and Python FD `close(fileno)`
+        """
         if self._is_closed:
             return SocketResponse({"status": "closed", "session_id": self.sessid})
 
