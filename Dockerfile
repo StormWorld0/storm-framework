@@ -14,22 +14,9 @@ WORKDIR ${APP_HOME}
 
 # Install build dependencies.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    git \
-    bash \
-    curl \
-    golang \
-    build-essential \
-    libpcap-dev \
-    clang \
-    cmake \
-    openssl \
-    cargo \
-    pkg-config \
-    libssl-dev \
-    rustc \
-    python3-dev \
-    libffi-dev \
-    libreadline-dev \
+        git bash curl golang build-essential libpcap-dev \
+        clang cmake openssl cargo pkg-config libssl-dev rustc \
+        python3-dev libffi-dev libreadline-dev \
     && rm -rf /var/lib/apt/lists/*
 
 COPY . .
@@ -61,26 +48,12 @@ WORKDIR ${APP_HOME}
 
 # Install Runtime Libraries & Optional Tooling
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    bash \
-    curl \
-    nmap \
-    git \
-    pkg-config \
-    procps \
-    libpcap0.8 \
-    ca-certificates \
-    ffmpeg \
-    openssl \
-    libreadline8 \
-    ncurses-bin \
-    sqlite3 \
-    libcap2-bin \
+        bash curl nmap git pkg-config procps libpcap0.8 \
+        ca-certificates openssl libreadline8 ncurses-bin \
+        sqlite3 libcap2-bin \
     && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /var/lib/dpkg/status-old \
-    && rm -rf "${APP_HOME}/docs" \
-    && rm -rf "${APP_HOME}/external/source/dep" \
-    && rm -rf "${APP_HOME}/lib/smf/core/sf/cache" \
     && mkdir -p /go/bin /go/pkg /go/src
 
 # Copy the build wheels results
@@ -94,12 +67,13 @@ RUN pip install --no-cache-dir /tmp/wheels/* && rm -rf /tmp/wheels
 # Copy source code & compilation results
 COPY --from=builder ${APP_HOME} ${APP_HOME}
 
-# Tagging container environment
-RUN echo "smf" > ${APP_HOME}/.docker
-
-# The entrypoint file is in the source code repo.
-# which has been copied to ${APP_HOME} from the builder.
-RUN chmod +x ${APP_HOME}/docker/entrypoint.sh \
+# Delete unused trash directory contents and perform configuration.
+RUN rm -rf \
+        "${APP_HOME}/docs" \
+        "${APP_HOME}/external/source/dep" \
+        "${APP_HOME}/lib/smf/core/sf/cache" \
+    && echo "smf" > ${APP_HOME}/.docker \
+    && chmod +x ${APP_HOME}/docker/entrypoint.sh \
     && ln -s ${APP_HOME}/docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
