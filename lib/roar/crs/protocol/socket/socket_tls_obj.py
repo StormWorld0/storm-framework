@@ -144,7 +144,12 @@ class ObjectTLS:
         fileno: int | None = None,
         **kwargs,
     ) -> SocketResponse:
-        """Disconnecting"""
+        """
+        Disconnecting
+
+        Closing Golang FD `close()`
+        Closing Golang and Python FD `close(fileno)`
+        """
         if self.state._is_closed:
             return SocketResponse({"status": "closed", "session_id": self.state.sessid})
 
