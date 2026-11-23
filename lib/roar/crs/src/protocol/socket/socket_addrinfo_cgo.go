@@ -31,6 +31,7 @@ int parse_sockaddr(struct sockaddr *sa, char *ip_str, int ip_len, int *port, uin
 import "C"
 import (
 	"fmt"
+	"sort"
 	"unsafe"
 	"golang.org/x/sys/unix"
 )
@@ -121,6 +122,30 @@ func getAddrInfo(ctx *ExecutionContext) ([]map[string]interface{}, int, error) {
 	if len(results) == 0 {
 		return nil, 0, fmt.Errorf("getaddrinfo: No address associated with hostname.")
 	}
+
+	sort.Slice(results, func(i, j int) bool {
+	    sTypeI, _ := results[i]["socktype"].(int)
+	    sTypeJ, _ := results[j]["socktype"].(int)
+    	if sTypeI != sTypeJ {
+	    	return sTypeI < sTypeJ
+	    }
+
+	    famI, _ := results[i]["family"].(int)
+    	famJ, _ := results[j]["family"].(int)
+	    if famI != famJ {
+		    return famI < famJ
+	    }
+
+    	ipI, _ := results[i]["ip"].(string)
+	    ipJ, _ := results[j]["ip"].(string)
+	    if ipI != ipJ {
+		    return ipI < ipJ
+	    }
+
+	    portI, _ := results[i]["port"].(int)
+	    portJ, _ := results[j]["port"].(int)
+	    return portI < portJ
+    })
 
 	return results, len(results), nil
 }
