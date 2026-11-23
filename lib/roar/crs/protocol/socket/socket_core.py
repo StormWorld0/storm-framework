@@ -179,7 +179,7 @@ class SocketCore:
         Closing Golang FD `close()`
         Closing Golang and Python FD `close(fileno)`
 
-        Note: Once called, it cannot be called again. 
+        Note: Once called, it cannot be called again.
         If you previously used `close()` and the Python FD is still active,
         close it manually with `os.close(fileno)`.
         """
