@@ -5,7 +5,7 @@ from ...endpoint import CRS
 
 
 class SocketResolver:
-    """Daftar semua socket resolver"""
+    """List all socket resolvers"""
 
     def getaddrinfo(
         self,
