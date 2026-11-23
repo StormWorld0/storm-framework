@@ -20,7 +20,7 @@ class SocketTLS:
 
         `uptls` returns 2 elements `conn, resp = uptls()`
         `conn` refers to a derived object `uptls`
-        which can be used to perform I/O operations and set options 
+        which can be used to perform I/O operations and set options
         or take options up to close() or close(fileno)
         """
         self._ensure_open("uptls")
