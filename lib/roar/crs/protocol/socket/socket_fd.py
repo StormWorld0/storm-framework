@@ -8,7 +8,13 @@ class ListenFD:
     """Special class instance from Accept function"""
 
     def fileno(self, **kwargs) -> int:
-        """Retrieving FD Client Socket"""
+        """
+        Retrieving Client Socket FD using `SCM_RIGHTS`
+        and save the fd to the local state cache for further use.
+
+        There are now 2 active FD Clients belonging to Python and Golang that refer to the same socket,
+        and need `close(fileno)` mechanism to close these 2 Client FDs!
+        """
         self._ensure_open("fileno")
         if self.state._client_fd != -1:
             return self.state._client_fd
@@ -33,7 +39,14 @@ class SocketFD:
     """Special class inherited from Socket"""
 
     def fileno(self, **kwargs) -> int:
-        """Taking FD Socket"""
+        """
+        Retrieving the FD of a Python prose table with `SCM_RIGHTS`
+        and save the fd locally for future use!
+
+        Now there are 2 active FDs belonging to Python and Golang that refer to the same socket,
+        and need `close(fileno)` mechanism to close these 2 active FDs,
+        except for the transfer of FD ownership which only requires using the object close() from the new owner!
+        """
         self._ensure_open("fileno")
         if self._sock_fd != -1:
             return self._sock_fd
