@@ -135,8 +135,11 @@ def execute(options, net, log):
             return
 
         accept_box = []
+
         def run_accepts():
-            accept_box.append(_accept_concurrent(sock, count=worker_count, timeout=PING_PONG_TIMEOUT))
+            accept_box.append(
+                _accept_concurrent(sock, count=worker_count, timeout=PING_PONG_TIMEOUT)
+            )
 
         acceptor_thread = threading.Thread(target=run_accepts, daemon=True)
         acceptor_thread.start()
@@ -161,7 +164,9 @@ def execute(options, net, log):
         for idx, conn in enumerate(accepted_conns, start=1):
             log.prints(f"Accepted ClientFD ({idx}) =>", conn.fileno())
 
-        for idx, (clt_sock, conn) in enumerate(zip(client_socks, accepted_conns), start=1):
+        for idx, (clt_sock, conn) in enumerate(
+            zip(client_socks, accepted_conns), start=1
+        ):
             ping_msg = f"CLIENT{idx}_TEST_PING".encode()
             if not _run_ping_pong(clt_sock, conn, ping_msg, PONG_PAYLOAD, idx, log):
                 log.printw(f"Ping-Pong Failed on Client ({idx})")
@@ -175,4 +180,3 @@ def execute(options, net, log):
         _cleanup_sockets(log, accepted_conns)
         _cleanup_sockets(log, client_socks)
         _cleanup_sockets(log, [sock])
-        
