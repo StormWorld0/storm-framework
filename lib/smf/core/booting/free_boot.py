@@ -14,6 +14,7 @@ from lib.roar.callbin.manager import BinaryManager
 from lib.smf.postgresql import DBManager
 from lib.smf.exception.handler import exception_handler
 from lib.smf.exception import SMFSyncError
+from ..security.syscall import is_docker
 
 
 def sysboot():
@@ -51,6 +52,9 @@ def sysboot():
             if (config_path := Path.home() / ".smf" / "database.yml").exists():
                 db = DBManager(config_path)
                 db.current_workspace = "default"
+
+            if is_docker():
+                smf.printd("Docker detected", level="INFO")
 
             # Countdown to pause and start
             time.sleep(2)
