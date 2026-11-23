@@ -178,7 +178,7 @@ class SocketCore:
     ) -> SocketResponse:
         """
         Disconnecting
-        
+
         Closing Golang FD `close()`
         Closing Golang and Python FD `close(fileno)`
         """
