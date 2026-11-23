@@ -137,7 +137,7 @@ class SocketCore:
     def detach(self) -> int:
         """
         Take over the FD socket
-        change ownership of Python FD 
+        change ownership of Python FD
         and automatically close Golang FD!
         """
         value = -1
