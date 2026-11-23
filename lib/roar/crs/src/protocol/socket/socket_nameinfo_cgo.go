@@ -30,7 +30,7 @@ int call_getnameinfo(const char *ip_str, int port, uint32_t flowinfo, uint32_t s
             sin6->sin6_scope_id = scope_id;
             salen = sizeof(struct sockaddr_in6);
         } else {
-            return -1; // Format IP tidak valid
+            return -1; // Invalid IP format
         }
     }
     return getnameinfo((struct sockaddr *)&sa, salen, host_buf, host_len, serv_buf, serv_len, flags);
@@ -50,7 +50,7 @@ func getNameInfo(ctx *ExecutionContext) (string, string, error) {
 	}
 
 	hostFinal := DerefString(addr, "")
-	portFinal := DerefString(port, "")
+	portFinal := DerefString(port, "0")
 
 	portInt, err := strconv.Atoi(portFinal)
 	if err != nil {
@@ -83,7 +83,7 @@ func getNameInfo(ctx *ExecutionContext) (string, string, error) {
 	)
 
 	if ret != 0 {
-		if int(ret) == -1 {
+		if ret == -1 {
 			return "", "", fmt.Errorf("Invalid IP address format.")
 		}
 		gaiErrStr := C.GoString(C.gai_strerror(ret))
