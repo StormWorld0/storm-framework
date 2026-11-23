@@ -24,9 +24,9 @@ class Socket(
     ConstantsMix,
 ):
     """
-    Facade Antarmuka Socket.
-    Mewarisi SocketState untuk mempertahankan kompatibilitas atribut (Backward Compatibility).
-    Hanya berfokus sebagai Register Domain Socket.
+    Socket Interface Facade.
+    Inherit SocketState to maintain attribute compatibility (Backward Compatibility).
+    Only focused as Domain Socket Register.
     """
 
     def __enter__(self):
