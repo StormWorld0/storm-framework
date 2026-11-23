@@ -6,8 +6,8 @@ from .metadata import TLSMetadata
 
 class SocketResponse:
     """
-    Wrapper untuk mengelola respons dinamis dari CRS (IPC).
-    Menyediakan Type-Safety, Property Access, dan Lazy Decoding.
+    Wrapper for managing dynamic responses.
+    Provides Type-Safety, Property Access, and Lazy Decoding.
     """
 
     def __init__(self, raw_response: Dict[str, Any]):
@@ -20,22 +20,22 @@ class SocketResponse:
 
     @property
     def ok(self) -> bool:
-        """Mengembalikan True jika response berhasil"""
+        """Returns True if the response is successful"""
         return self._status.upper() == "SUCCESS"
 
     @property
     def status(self) -> str:
-        """Mempermudah pengecekan status respons."""
+        """Makes it easier to check response status"""
         return self._status
 
     @property
     def message(self) -> str:
-        """Mengembalikan pesan ERROR/SUCCESS/TIMEOUT."""
+        """Returns ERROR/SUCCESS/TIMEOUT message"""
         return self._message
 
     @property
     def raw_bytes(self) -> bytes:
-        """Mengembalikan raw bytes murni."""
+        """Returns pure raw bytes"""
         raw_val = self._data.get("raw_bytes")
 
         if isinstance(raw_val, bytes):
@@ -51,29 +51,29 @@ class SocketResponse:
 
     @property
     def str_bytes(self) -> str:
-        """Mengembalikan raw bytes sebagai string."""
+        """Returns raw bytes as a string"""
         return self.raw_bytes.decode("utf-8", errors="ignore")
 
     @property
     def hex_bytes(self) -> str:
-        """Mengembalikan bytes berupa HEX"""
+        """Returns raw bytes in HEX format"""
         return self._data.get("hex_bytes", "")
 
     @property
     def int_bytes(self) -> int:
-        """Mengembalikan bytes berupa angka"""
+        """Returns raw bytes as a number"""
         return self._data.get("read_bytes", 0)
 
     @property
     def remote_ip(self) -> tuple[str, int]:
-        """Mengembalikan IP Server"""
+        """Return Server IP"""
         addr = self._data.get("remote_ip", "unknown")
         ip, port = addr.rsplit(":", 1)
         return (ip, int(port))
 
     @property
     def local_ip(self) -> tuple[str, int]:
-        """Mengecek IP keluar sebelum ke internet global"""
+        """Checking outgoing IP before going to global internet"""
         val = self._data.get("local_ip", "unknown")
         if isinstance(val, dict):
             addr = val.get("Addr", 0)
@@ -85,7 +85,7 @@ class SocketResponse:
 
     @property
     def addrinfo(self) -> list[tuple]:
-        """Mengonversi data 'results' dari getaddrinfo ke daftar tuple standar"""
+        """Converts 'results' data from getaddrinfo to a standard tuple list."""
         if self.status != "SUCCESS":
             return []
 
@@ -112,7 +112,7 @@ class SocketResponse:
 
     @property
     def nameinfo(self) -> tuple[str, str]:
-        """Mengembalikan 'tuple' dari getnameinfo."""
+        """Returns a 'tuple' from getnameinfo"""
         if self.status != "SUCCESS":
             return ("", "")
 
@@ -122,35 +122,35 @@ class SocketResponse:
 
     @property
     def rtt_ms(self) -> int:
-        """Round Trip Time dalam millisecond."""
+        """Round Trip Time in milliseconds"""
         return self._data.get("rtt_ms", 0)
 
     @property
     def is_reused(self) -> bool:
-        """Melihat apakah koneksi yang di gunakan sama dengan sebelumnya"""
+        """See if the connection used is the same as before."""
         return self._data.get("is_reused", False)
 
     @property
     def checked_type(self) -> str:
-        """Tipe refleksi interface Go (reflect.TypeOf(conn).String())"""
+        """Go interface reflection type (reflect.TypeOf(conn).String())"""
         return self._data.get("Cheked", "")
 
     @property
     def status_tls(self) -> bool:
-        """Menerjemahkan string boolean dari Go (strconv.FormatBool) ke native Python bool."""
+        """Translating boolean strings from `isAlreadyTLS`"""
         val = self._data.get("isAlreadyTLS", "false")
         return val.lower() == "true"
 
     @property
     def tls(self) -> Optional[TLSMetadata]:
-        """Objek TLSMetadata jika info_tls tersedia, sebaliknya None."""
+        """TLSMetadata object if info_tls is available, otherwise None."""
         tls_data = self._data.get("info_tls")
         if tls_data and isinstance(tls_data, dict):
             return TLSMetadata(tls_data)
         return None
 
     def _client_fd(self):
-        """Mengembalikan CFD tabel Golang"""
+        """Returns Golang table CFD"""
         if not (fd := self._data.get("client_fd")):
             return -1
         return fd
