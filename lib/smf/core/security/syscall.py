@@ -12,7 +12,7 @@ import struct
 
 from rootmap import ROOT
 from dotenv import dotenv_values
-from lib.roar.crs.net_api import Socket
+
 
 # --- Struct Definition for Syscalls ---
 
@@ -57,7 +57,7 @@ class Sysinfo(ctypes.Structure):
     ]
 
 
-def is_docker() -> bool:
+def is_this_docker() -> bool:
     """
     Performs heuristic validation via syscall to detect the Docker environment.
     This function is 100% unprivileged (can be run by root or a regular user).
@@ -106,10 +106,18 @@ def is_docker() -> bool:
             smf.printf("Syscall => Mount Namespace Isolation True > Score 30")
             score += 30
 
-    # MAC ADDRESS OUI CHECK (Kernel IOCTL) - Weight: 30
-    # Unprivileged: Reading MAC address (SIOCGIFHWADDR) does not require CAP_NET_ADMIN,
-    # just need open() access to a regular socket.
+    return score > threshold
+    
+
+
+def is_docker() -> bool:
     def get_mac_address_ioctl(ifname: str) -> str:
+        try:
+            from lib.roar.crs.net_api import Socket
+        except ImportError:
+            smf.printd("Error import net_api socket", level="WARN")
+            return ""
+            
         sock = Socket()
         sock.socket(sock.AF_INET, sock.SOCK_DGRAM)
         try:
@@ -120,26 +128,17 @@ def is_docker() -> bool:
         except OSError:
             return ""
         finally:
-            sock.close()
+            sock.close(sock.fileno())
 
-    interfaces = ["eth0"]
+    interfaces = ["eth0", "eth1"]
     matched_docker = False
 
     for iface in interfaces:
         mac = get_mac_address_ioctl(iface)
         if mac.startswith("02:42"):
             matched_docker = True
-            smf.printd(f"Syscall => IOCTL True ({iface}) > Score 30", level="INFO")
-            score += 30
+            smf.printd(f"Syscall => IOCTL True ({iface})", level="INFO")
             break
 
-    return score >= threshold
-
-
-def is_this_docker() -> bool:
-    path = os.path.join(ROOT, ".env")
-    if not os.path.isfile(path):
-        return False
-
-    cfg = dotenv_values(path)
-    return cfg.get("DOCKER", "False").lower() == "true"
+    return matched_docker
+    
