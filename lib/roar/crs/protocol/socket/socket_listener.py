@@ -16,7 +16,7 @@ class ClientListener(
     ListenOptions,
     ListenFD,
 ):
-    """Class Khusus menangani IO/Close Listener"""
+    """Special Class to handle IO/Close Listener"""
 
     def sendall(
         self,
@@ -154,7 +154,12 @@ class ClientListener(
         fileno: int | None = None,
         **kwargs,
     ) -> SocketResponse:
-        """Disconnecting Client Listener"""
+        """
+        Disconnecting Client Listener
+
+        Closing Golang FD Client `close()`
+        Closing Golang and Python FD Client `close(fileno)`
+        """
         if self._is_closed_cfd:
             return SocketResponse(
                 {"status": "WARN", "message": "ClientFD has been closed."}
