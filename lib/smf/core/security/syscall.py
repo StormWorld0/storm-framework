@@ -10,10 +10,6 @@ import ctypes
 import fcntl
 import struct
 
-from rootmap import ROOT
-from dotenv import dotenv_values
-
-
 # --- Struct Definition for Syscalls ---
 
 
@@ -107,7 +103,6 @@ def is_this_docker() -> bool:
             score += 30
 
     return score > threshold
-    
 
 
 def is_docker() -> bool:
@@ -117,7 +112,7 @@ def is_docker() -> bool:
         except ImportError:
             smf.printd("Error import net_api socket", level="WARN")
             return ""
-            
+
         sock = Socket()
         sock.socket(sock.AF_INET, sock.SOCK_DGRAM)
         try:
@@ -141,4 +136,3 @@ def is_docker() -> bool:
             break
 
     return matched_docker
-    
