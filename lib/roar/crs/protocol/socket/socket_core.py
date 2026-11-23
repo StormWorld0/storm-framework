@@ -10,7 +10,7 @@ from lib.smf.exception import SocketError
 
 
 class SocketCore:
-    """Daftar semua fungsi core socket"""
+    """List of all core socket functions"""
 
     def socket(
         self,
