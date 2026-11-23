@@ -33,7 +33,7 @@ def domain_to_ip(domain):
         for result in resp:
             if len(result) < 5 or not result[4]:
                 continue
-                
+
             ip = result[4][0]
             try:
                 addr = ipaddress.ip_address(ip)
