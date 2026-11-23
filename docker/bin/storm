@@ -49,7 +49,6 @@ fi
 
 # Docker Execution (Ekspansi Array)
 exec docker run $TTY_FLAG --init --rm \
-    --network host \
     "${PRIV_FLAGS[@]}" \
     -v storm_data:"$APP_HOME/config" \
     -v "$PWD:/workspace" \
