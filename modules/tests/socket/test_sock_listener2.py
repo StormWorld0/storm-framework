@@ -61,16 +61,16 @@ def execute(options, net, log):
         t1.start()
         t2.start()
 
-        # Beri jeda 100ms 
+        # Beri jeda 100ms
         time.sleep(0.1)
 
         # Client Simulator
         clt1_sock = net.Socket()
         clt2_sock = net.Socket()
-        
+
         clt1_sock.socket(clt1_sock.AF_INET, clt1_sock.SOCK_STREAM)
         clt2_sock.socket(clt2_sock.AF_INET, clt2_sock.SOCK_STREAM)
-        
+
         log.prints("Socket ClientFD (1) =>", clt1_sock.fileno())
         log.prints("Socket ClientFD (2) =>", clt2_sock.fileno())
 
@@ -89,7 +89,7 @@ def execute(options, net, log):
 
         conn1, resp1 = client["c1"][0]
         conn2, resp2 = client["c2"][0]
-        
+
         if not resp1.ok:
             log.printw("(1) Accept Error     =>", resp1.message)
             return
@@ -113,15 +113,14 @@ def execute(options, net, log):
             reply1 = clt1_sock.recv(1024)
             log.prints("Client (1) Received  =>", reply1.raw_bytes)
 
-        
         data2 = conn2.recv(1024)
         log.prints("Server Received  =>", data2.raw_bytes)
         if data2.raw_bytes == b"CLIENT2_TEST_PING":
             conn2.send(b"SERVER_TEST_PONG")
-            
+
             reply2 = clt2_sock.recv(1024)
             log.prints("Client (2) Received  =>", reply2.raw_bytes)
-            
+
         log.prints()
         log.printi("SERVER LIFECYCLE TEST PASSED PERFECTLY!")
     except Exception as e:
@@ -137,4 +136,3 @@ def execute(options, net, log):
             clt2_sock.close(clt2_sock.fileno())
         if srv_sock is not None:
             srv_sock.close(srv_sock.fileno())
-            
