@@ -5,7 +5,7 @@ from ...endpoint import CRS
 
 
 class SocketTLS:
-    """Daftar semua socket upgrade TLS"""
+    """List all TLS upgrade sockets"""
 
     def uptls(
         self,
@@ -15,7 +15,14 @@ class SocketTLS:
         verify: bool = True,
         **kwargs,
     ) -> SocketResponse:
-        """Upgrade connection to TLS/SSL"""
+        """
+        Upgrade connection to TLS/SSL
+
+        `uptls` returns 2 elements `conn, resp = uptls()`
+        `conn` refers to a derived object `uptls`
+        which can be used to perform I/O operations and set options 
+        or take options up to close() or close(fileno)
+        """
         self._ensure_open("uptls")
         if self.is_tls:
             return SocketResponse({"status": "WARN", "message": "Already TLS"})
