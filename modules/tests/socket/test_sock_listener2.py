@@ -14,125 +14,165 @@ Testing Socket Listener
 }
 
 
+BACKLOG = 5
+PING_PONG_TIMEOUT = 2.0
+RECV_BUFFER_SIZE = 1024
+PONG_PAYLOAD = b"SERVER_TEST_PONG"
+
+
+def _setup_listener(net, log):
+    sock = net.Socket()
+    srv_sock.socket(sock.AF_INET, sock.SOCK_STREAM)
+    log.printi("Server RawFD  =>", sock.fileno())
+
+    sock.setsockopt(sock.SOL_SOCKET, sock.SO_REUSEADDR, 1)
+    resp = sock.bind(("127.0.0.1", 0))
+    if not resp.ok:
+        log.printw("Bind Failed     =>", resp.message)
+        return sock, None, None, False
+
+    host, port = sock.getsockname()
+    log.printi("Bound to Address =>", f"{host}:{port}")
+
+    resp = sock.listen(BACKLOG)
+    if not resp.ok:
+        log.printw("Listen Failed   =>", resp.message)
+        return sock, host, port, False
+
+    log.prints(f"Status Listen    => Success (Backlog: {BACKLOG})")
+    return sock, host, port, True
+
+
+def _accept_concurrent(sock, count=2, timeout=PING_PONG_TIMEOUT):
+    results = [None] * count
+    threads = []
+
+    def worker(idx):
+        results[idx] = sock.accept()
+
+    for idx in range(count):
+        t = threading.Thread(target=worker, args=(idx,), daemon=True)
+        threads.append(t)
+        t.start()
+
+    for t in threads:
+        t.join(timeout=timeout)
+
+    accepted = []
+    for idx, item in enumerate(results):
+        if item is None:
+            return None, f"Accept worker ({idx + 1}) timed out"
+        conn, resp = item
+        if not resp.ok:
+            return None, f"Accept ({idx + 1}) failed: {resp.message}"
+        accepted.append(conn)
+
+    return accepted, None
+
+
+def _connect_clients(net, host, port, count, log):
+    clients = []
+    for idx in range(count):
+        sock = net.Socket()
+        sock.socket(sock.AF_INET, sock.SOCK_STREAM)
+        log.prints(f"Socket ClientFD ({idx + 1}) =>", sock.fileno())
+
+        resp = sock.connect((host, port))
+        if not resp.ok:
+            log.printw(f"Client ({idx + 1}) Connect Failed =>", resp.message)
+            _cleanup_sockets(log, [*clients, sock])
+            return None
+
+        clients.append(sock)
+
+    log.prints("Client Connected =>", f"{host}:{port}")
+    return clients
+
+
+def _run_ping_pong(clt_sock, conn, ping_msg, pong_msg, idx, log):
+    clt_sock.send(ping_msg)
+    data = conn.recv(RECV_BUFFER_SIZE)
+    raw_in = getattr(data, "raw_bytes", None)
+    log.prints(f"Server Received ({idx}) =>", raw_in)
+
+    if raw_in != ping_msg:
+        log.printw(f"Unexpected payload ({idx}) =>", raw_in)
+        return False
+
+    conn.send(pong_msg)
+    reply = clt_sock.recv(RECV_BUFFER_SIZE)
+    raw_out = getattr(reply, "raw_bytes", None)
+    log.prints(f"Client ({idx}) Received  =>", raw_out)
+
+    if raw_out != pong_msg:
+        log.printw(f"Unexpected reply ({idx}) =>", raw_out)
+        return False
+
+    return True
+
+
+def _cleanup_sockets(log, sockets):
+    for sock in sockets:
+        if sock is None:
+            continue
+        try:
+            fd = sock.fileno()
+            if fd is not None and fd >= 0:
+                sock.close(fd)
+        except Exception as e:
+            log.printw("Cleanup Close Warning =>", e)
+
+
 def execute(options, net, log):
-    srv_sock = net.Socket()
-    clt1_sock = None
-    clt2_sock = None
-    conn1 = None
-    conn2 = None
+    worker_count = 2
+    sock = None
+    client_socks = []
+    accepted_conns = []
+
     try:
-        # Allocation
-        srv_sock.socket(srv_sock.AF_INET, srv_sock.SOCK_STREAM)
-        log.printi("Server RawFD  =>", srv_sock.fileno())
-
-        # Allow Address Reuse (SO_REUSEADDR)
-        srv_sock.setsockopt(srv_sock.SOL_SOCKET, srv_sock.SO_REUSEADDR, 1)
-
-        # Bind ke Localhost port 0 (OS akan alokasikan Ephemeral Port acak)
-        resp = srv_sock.bind(("127.0.0.1", 0))
-        if not resp.ok:
-            log.printw("Bind Failed     =>", resp.message)
+        sock, host, port, ok = _setup_listener(net, log)
+        if not ok:
             return
 
-        host, port = srv_sock.getsockname()
+        accept_box = []
+        def run_accepts():
+            accept_box.append(_accept_concurrent(sock, count=worker_count, timeout=PING_PONG_TIMEOUT))
 
-        log.printi("Bound to Address =>", f"{host}:{port}")
-
-        # Listen dengan Backlog 5
-        resp = srv_sock.listen(5)
-        if not resp.ok:
-            log.printw("Listen Failed   =>", resp.message)
-            return
-        log.printi("Status Listen    => Success (Backlog: 5)")
-
-        # Variable penampung
-        client = {
-            "c1": [],
-            "c2": [],
-        }
-
-        # Worker Thread untuk menjalankan accept()
-        def accept_worker(name):
-            conn, resp = srv_sock.accept()
-            client[name].append((conn, resp))
-
-        t1 = threading.Thread(target=accept_worker, args=("c1",), daemon=True)
-        t2 = threading.Thread(target=accept_worker, args=("c2",), daemon=True)
-        t1.start()
-        t2.start()
-
-        # Beri jeda 100ms
+        acceptor_thread = threading.Thread(target=run_accepts, daemon=True)
+        acceptor_thread.start()
         time.sleep(0.1)
 
-        # Client Simulator
-        clt1_sock = net.Socket()
-        clt2_sock = net.Socket()
+        connected = _connect_clients(net, host, port, worker_count, log)
+        if connected is None:
+            return
+        client_socks = connected
 
-        clt1_sock.socket(clt1_sock.AF_INET, clt1_sock.SOCK_STREAM)
-        clt2_sock.socket(clt2_sock.AF_INET, clt2_sock.SOCK_STREAM)
-
-        log.prints("Socket ClientFD (1) =>", clt1_sock.fileno())
-        log.prints("Socket ClientFD (2) =>", clt2_sock.fileno())
-
-        resp1 = clt1_sock.connect((host, port))
-        resp2 = clt2_sock.connect((host, port))
-        if resp1.ok and resp2.ok:
-            log.prints("Client Connected =>", f"{host}:{port}")
-        else:
-            log.printw("Client (1) Connect Failed =>", resp1.message)
-            log.printw("Client (2) Connect Failed =>", resp2.message)
+        acceptor_thread.join(timeout=PING_PONG_TIMEOUT + 0.5)
+        if not accept_box:
+            log.printw("Accept Error => Acceptor thread did not complete")
             return
 
-        # Tunggu thread accept() menerima koneksi
-        t1.join(timeout=2.0)
-        t2.join(timeout=2.0)
-
-        conn1, resp1 = client["c1"][0]
-        conn2, resp2 = client["c2"][0]
-
-        if not resp1.ok:
-            log.printw("(1) Accept Error     =>", resp1.message)
+        conns, accept_err = accept_box[0]
+        if accept_err is not None:
+            log.printw("Accept Error =>", accept_err)
             return
-        if not resp2.ok:
-            log.printw("(2) Accept Error     =>", resp2.message)
-            return
+        accepted_conns = conns
 
-        log.prints("Accepted ClientFD (1) =>", conn1.fileno())
-        log.prints("Accepted ClientFD (2) =>", conn2.fileno())
+        for idx, conn in enumerate(accepted_conns, start=1):
+            log.prints(f"Accepted ClientFD ({idx}) =>", conn.fileno())
 
-        # Echo Verification Test (PING - PONG)
-        clt1_sock.send(b"CLIENT1_TEST_PING")
-        clt2_sock.send(b"CLIENT2_TEST_PING")
-
-        # Server baca paket via ClientListener
-        data1 = conn1.recv(1024)
-        log.prints("Server Received  =>", data1.raw_bytes)
-        if data1.raw_bytes == b"CLIENT1_TEST_PING":
-            conn1.send(b"SERVER_TEST_PONG")
-
-            reply1 = clt1_sock.recv(1024)
-            log.prints("Client (1) Received  =>", reply1.raw_bytes)
-
-        data2 = conn2.recv(1024)
-        log.prints("Server Received  =>", data2.raw_bytes)
-        if data2.raw_bytes == b"CLIENT2_TEST_PING":
-            conn2.send(b"SERVER_TEST_PONG")
-
-            reply2 = clt2_sock.recv(1024)
-            log.prints("Client (2) Received  =>", reply2.raw_bytes)
+        for idx, (clt_sock, conn) in enumerate(zip(client_socks, accepted_conns), start=1):
+            ping_msg = f"CLIENT{idx}_TEST_PING".encode()
+            if not _run_ping_pong(clt_sock, conn, ping_msg, PONG_PAYLOAD, idx, log):
+                log.printw(f"Ping-Pong Failed on Client ({idx})")
+                return
 
         log.prints()
         log.printi("SERVER LIFECYCLE TEST PASSED PERFECTLY!")
     except Exception as e:
         log.printw("Test Exception =>", e)
     finally:
-        if conn1 is not None:
-            conn1.close(conn1.fileno())
-        if conn2 is not None:
-            conn2.close(conn2.fileno())
-        if clt1_sock is not None:
-            clt1_sock.close(clt1_sock.fileno())
-        if clt2_sock is not None:
-            clt2_sock.close(clt2_sock.fileno())
-        if srv_sock is not None:
-            srv_sock.close(srv_sock.fileno())
+        _cleanup_sockets(log, accepted_conns)
+        _cleanup_sockets(log, client_socks)
+        _cleanup_sockets(log, [sock])
+        
