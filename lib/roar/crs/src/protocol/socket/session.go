@@ -23,6 +23,11 @@ type ExecutionContext struct {
 	KeepSession bool
 }
 
+type ClientSessionKey struct {
+	SessionID string
+	FD        int
+}
+
 func NewExecutionContext(req packet.RequestPacket) *ExecutionContext {
 	timeout := 0 * time.Second
 	if req.Timeout > 0 {
@@ -49,9 +54,16 @@ func (ctx *ExecutionContext) LoadSessionState() error {
 		return nil
 	}
 
-	if v, ok := utils.ClientFD.Load(ctx.Req.SessionID); ok {
-		ctx.CFD = v.(int) // Load ClientFD if present
-	}
+	if ctx.Req.CltFD >= 0 {
+	    key := ClientSessionKey{
+		    SessionID: ctx.Req.SessionID,
+		    FD:        ctx.Req.CltFD,
+	    }
+	    if _, ok := utils.ClientFD.Load(key); ok {
+	    	ctx.CFD = ctx.Req.CltFD
+	    }
+    }
+
 
 	if hostVal, ok := utils.SessionHosts.Load(ctx.Req.SessionID); ok {
 		switch h := hostVal.(type) {
@@ -83,7 +95,11 @@ func (ctx *ExecutionContext) LoadSessionState() error {
 // Save the ClientFD taken from the accept lintener
 func (ctx *ExecutionContext) SaveSessionCFD(val int) {
 	if ctx.Req.SessionID != "" && ctx.Req.KeepAlive {
-		utils.ClientFD.Store(ctx.Req.SessionID, val)
+		key := ClientSessionKey{
+			SessionID: ctx.Req.SessionID,
+			FD:        val,
+		}
+		utils.ClientFD.Store(key, true)
 		ctx.KeepSession = true
 	}
 }
@@ -110,9 +126,15 @@ func (ctx *ExecutionContext) CloseSession() packet.ResponsePacket {
 		utils.SessionLocks.Delete(ctx.Req.SessionID) // Delete SessionLock
 
 		// Delete Client's Descriptor File
-		if val, ok := utils.ClientFD.LoadAndDelete(ctx.Req.SessionID); ok {
-			unix.Close(val.(int))
-		}
+	    sessID := ctx.Req.SessionID
+		utils.ClientFD.Range(func(k, _ any) bool {
+			if key, ok := k.(ClientSessionKey); ok && key.SessionID == sessID {
+				if _, loaded := utils.ClientFD.LoadAndDelete(key); loaded && key.FD >= 0 {
+					unix.Close(key.FD)
+				}
+			}
+			return true
+		})
 		if val, ok := utils.ActiveSessions.LoadAndDelete(ctx.Req.SessionID); ok {
 			switch v := val.(type) {
 			case net.Conn:    //
@@ -130,15 +152,22 @@ func (ctx *ExecutionContext) CloseSession() packet.ResponsePacket {
 // Close ClientFD Accept Listener's Close mode
 func (ctx *ExecutionContext) CloseCFD() packet.ResponsePacket {
 	ctx.KeepSession = true
-	if ctx.Req.SessionID != "" {
-		if val, ok := utils.ClientFD.LoadAndDelete(ctx.Req.SessionID); ok {
-			unix.Close(val.(int))
-			return packet.ResponsePacket{Status: "SUCCESS", Message: "ClienFD closed"}
-		}
-		return packet.ResponsePacket{Status: "WARN", Message: "No active ClientFD found to close"}
+	if ctx.Req.SessionID == "" || ctx.Req.CltFD < 0 {
+		return packet.ResponsePacket{Status: "WARN", Message: "Incomplete data to close the ClientFD"}
 	}
-	return packet.ResponsePacket{Status: "WARN", Message: "Incomplete data to close the ClientFD"}
+	key := ClientSessionKey{
+		SessionID: ctx.Req.SessionID,
+		FD:        ctx.Req.CltFD,
+	}
+	if _, ok := utils.ClientFD.LoadAndDelete(key); ok {
+		if err := unix.Close(ctx.Req.CltFD); err != nil {
+			return packet.ResponsePacket{Status: "S-ERROR", Message: "Failed to close ClientFD: " + err.Error()}
+		}
+		return packet.ResponsePacket{Status: "SUCCESS", Message: "ClientFD closed"}
+	}
+	return packet.ResponsePacket{Status: "WARN", Message: "No active ClientFD found to close"}
 }
+
 
 // Emergency run by defer
 func (ctx *ExecutionContext) Cleanup() {
@@ -149,13 +178,18 @@ func (ctx *ExecutionContext) Cleanup() {
 		if ctx.RawFD != -1 {
 			unix.Close(ctx.RawFD)    // Closed RawFD
 		}
-		if ctx.CFD != -1 {
-			unix.Close(ctx.CFD)      // Closed ClienFD
-		}
 		if ctx.Req.SessionID != "" {
+			sessID := ctx.Req.SessionID
+			utils.ClientFD.Range(func(k, _ any) bool {
+				if key, ok := k.(ClientSessionKey); ok && key.SessionID == sessID {
+					if _, loaded := utils.ClientFD.LoadAndDelete(key); loaded && key.FD >= 0 {
+						unix.Close(key.FD) // Closed ClienFD
+					}
+				}
+				return true
+			})
 			utils.ActiveSessions.Delete(ctx.Req.SessionID) // Delete Active Session
 			utils.SessionHosts.Delete(ctx.Req.SessionID)   // Delete Host
-			utils.ClientFD.Delete(ctx.Req.SessionID)       // Delete ClientFD
 			utils.SessionLocks.Delete(ctx.Req.SessionID)   // Delete SessionsLock
 		}
 	}
