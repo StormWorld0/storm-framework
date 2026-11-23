@@ -140,16 +140,13 @@ class SocketCore:
         change ownership of Python FD
         and automatically close Golang FD!
         """
-        value = -1
         if self._sock_fd == -1:
             value = self.fileno()
-            self._sock_fd = -1
-            self.close()
-            return value
         else:
             value = self._sock_fd
-            self._sock_fd = -1
-            self.close()
+
+        self._sock_fd = -1
+        self.close()
 
         if value == -1:
             raise ValueError("No FD, run 'socket' first before taking over FD.")
@@ -181,6 +178,10 @@ class SocketCore:
 
         Closing Golang FD `close()`
         Closing Golang and Python FD `close(fileno)`
+
+        Note: Once called, it cannot be called again. 
+        If you previously used `close()` and the Python FD is still active,
+        close it manually with `os.close(fileno)`.
         """
         if self._is_closed:
             return SocketResponse({"status": "closed", "session_id": self.sessid})
