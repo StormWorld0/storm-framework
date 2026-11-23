@@ -17,7 +17,7 @@ class SocketResolver:
         flags: int | None = None,
         **kwargs,
     ) -> SocketResponse:
-        """Dapatkan informasi alamat"""
+        """Get IP address and Port information"""
         self._ensure_open("getaddrinfo")
         if flags is not None:
             flags = parse_flags(flags)
@@ -43,7 +43,7 @@ class SocketResolver:
         flags: int | None = None,
         **kwargs,
     ) -> SocketResponse:
-        """Dapatkan Hostname dari (IP, PORT)"""
+        """Get Hostname and service from (IP, PORT)"""
         self._ensure_open("getnameinfo")
         host, port, flow, scope = parse_addr(address)
         if flags is not None:
@@ -64,7 +64,7 @@ class SocketResolver:
         return response.nameinfo
 
     def getsockname(self, **kwargs) -> SocketResponse:
-        """Dapatkan IP local socket"""
+        """Get local socket IP"""
         self._ensure_open("getsockname")
         packet = IPCPayloadBuilder.build(
             state=self,
@@ -76,7 +76,7 @@ class SocketResolver:
         return response.local_ip
 
     def getpeername(self, **kwargs) -> SocketResponse:
-        """Dapatkan IP server socket"""
+        """Get socket server IP"""
         self._ensure_open("getpeername")
         packet = IPCPayloadBuilder.build(
             state=self,
