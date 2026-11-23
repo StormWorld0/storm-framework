@@ -22,7 +22,7 @@ PONG_PAYLOAD = b"SERVER_TEST_PONG"
 
 def _setup_listener(net, log):
     sock = net.Socket()
-    srv_sock.socket(sock.AF_INET, sock.SOCK_STREAM)
+    sock.socket(sock.AF_INET, sock.SOCK_STREAM)
     log.printi("Server RawFD  =>", sock.fileno())
 
     sock.setsockopt(sock.SOL_SOCKET, sock.SO_REUSEADDR, 1)
