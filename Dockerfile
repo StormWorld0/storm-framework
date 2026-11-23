@@ -51,7 +51,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         bash curl nmap git pkg-config procps libpcap0.8 \
         ca-certificates openssl libreadline8 ncurses-bin \
         sqlite3 libcap2-bin \
-    && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /var/lib/dpkg/status-old \
     && mkdir -p /go/bin /go/pkg /go/src
