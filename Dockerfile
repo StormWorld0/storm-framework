@@ -24,9 +24,12 @@ COPY . .
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip wheel --no-cache-dir --extra-index-url https://pypi.org/simple -r requirements.txt -w /tmp/wheels
 
-RUN python3 -m scripts.cpl.compiler
-RUN chmod +x ${APP_HOME}/smfstart
-
+RUN python3 -m scripts.cpl.compiler \
+    && chmod +x ${APP_HOME}/smfstart \
+    && rm -rf \
+        "${APP_HOME}/docs" \
+        "${APP_HOME}/external/source/dep" \
+        "${APP_HOME}/lib/smf/core/sf/cache"
 
 # ==========================================
 # Optimized Runtime
@@ -48,9 +51,8 @@ WORKDIR ${APP_HOME}
 
 # Install Runtime Libraries & Optional Tooling
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        bash curl nmap git pkg-config procps libpcap0.8 \
-        ca-certificates openssl libreadline8 ncurses-bin \
-        sqlite3 libcap2-bin \
+        bash curl nmap procps libpcap0.8 ca-certificates openssl \
+        libreadline8 ncurses-bin sqlite3 libcap2-bin \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /var/lib/dpkg/status-old \
     && mkdir -p /go/bin /go/pkg /go/src
@@ -61,17 +63,14 @@ COPY --from=builder /tmp/wheels /tmp/wheels
 # Install wheels. pip maintained
 # Reason: Offensive Framework has modules that require library installation
 # third parties dynamically at runtime.
-RUN pip install --no-cache-dir /tmp/wheels/* && rm -rf /tmp/wheels
-
+RUN --mount=type=bind,from=builder,source=/tmp/wheels,target=/tmp/wheels \
+    pip install --no-cache-dir /tmp/wheels/*
+    
 # Copy source code & compilation results
 COPY --from=builder ${APP_HOME} ${APP_HOME}
 
-# Delete unused trash directory contents and perform configuration.
-RUN rm -rf \
-        "${APP_HOME}/docs" \
-        "${APP_HOME}/external/source/dep" \
-        "${APP_HOME}/lib/smf/core/sf/cache" \
-    && echo "smf" > ${APP_HOME}/.docker \
+# Performing configuration
+RUN echo "smf" > ${APP_HOME}/.docker \
     && chmod +x ${APP_HOME}/docker/entrypoint.sh \
     && ln -s ${APP_HOME}/docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 
