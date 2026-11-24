@@ -2,6 +2,7 @@ import sys
 import smf
 from .log_utils import extract_logs
 
+
 def log_export():
     level = "debug"
     try:
