@@ -42,7 +42,7 @@ def execute(args, ctx):
             valup = val.upper()
 
             # Security Validation (Whitelist)
-            valid_levels = {"DEBUG", "INFO", "WARN", "ERROR", "CRITICAL"}
+            valid_levels = {"ALL", "DEBUG", "INFO", "WARN", "ERROR", "CRITICAL"}
             if valup not in valid_levels:
                 smf.printf(
                     f"[!]{CC.YELLOW} Unknown log level => {valup} >> Allowed => {', '.join(valid_levels)}{CC.RESET}"
@@ -66,7 +66,7 @@ def execute(args, ctx):
         else:
             # If the user types: take backup, take system, etc.
             smf.printf(
-                f"[!] {CC.YELLOW}Unknown subcommand => {cmd} for >> export{CC.RESET}"
+                f"[!] {CC.YELLOW}Unknown subcommand =>{CC.RESET}", cmd
             )
     else:
         # If the user just types "log dump" or "log export" without a level argument
