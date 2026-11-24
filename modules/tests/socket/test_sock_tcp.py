@@ -21,11 +21,7 @@ def execute(options, net, log):
         sock.socket(sock.AF_INET, sock.SOCK_STREAM)
         log.printi("Socket created =>", sock.fileno())
 
-        result = sock.connect((host, port))
-        if not result.ok:
-            log.printw("Connect failed =>", result.message)
-            return
-
+        sock.connect((host, port))
         log.printi("IP Local  =>", sock.getsockname())
         log.printi("IP Server =>", sock.getpeername())
 
