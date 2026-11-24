@@ -6,7 +6,7 @@ from .log_utils import extract_logs
 def log_export():
     level = "debug"
     try:
-        if "--data" in sys.argv:
+        if "--log" in sys.argv:
             index = sys.argv.index("--log")
             if index + 1 < len(sys.argv):
                 level = sys.argv[index + 1]
