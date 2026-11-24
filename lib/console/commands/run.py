@@ -5,15 +5,6 @@ import inspect
 from apps.utility.colors import CC
 
 
-def aexc(net):
-    sock = net.Socket()
-    http = net.HTTPR()
-    return (
-        sock,
-        http,
-    )
-
-
 # Run command to run a module that we want to execute
 # The workflow is as below;
 #
@@ -63,11 +54,6 @@ def execute(args, ctx):
         )
         return
 
-    # A set of custom exceptions
-    # to handle forced module termination if something is detected on the network
-    # The final security if the module does not use exceptions.
-    sock, http = aexc(_net)
-
     # Execution module
     try:
         execute = current_module.execute
@@ -88,14 +74,6 @@ def execute(args, ctx):
             execute(options)
         else:
             raise TypeError("Invalid signature modules")
-    except http.HttpException as e:
-        smf.printf(f"{CC.RED}Module '{module_name}' error =>{CC.RESET}", e)
-        smf.printd("Module detected error", e, level="ERROR")
-        return
-    except sock.SocketException as e:
-        smf.printf(f"{CC.RED}Module '{module_name}' error =>{CC.RESET}", e)
-        smf.printd("Module detected error", e, level="ERROR")
-        return
     except (Exception, RuntimeError, AttributeError) as e:
         smf.printf(f"{CC.RED}Module '{module_name}' error =>{CC.RESET}", e)
         smf.printd("Module detected error", e, level="ERROR")
