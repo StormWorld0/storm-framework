@@ -111,6 +111,8 @@ pub fn execute_telemetry(
                 }
             },
             Err(_) => String::new(),
+        } else {
+            String::new()
         }
     };
 
