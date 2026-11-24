@@ -31,10 +31,10 @@ def extract_logs(level_target: str, output_file: str = "log.txt"):
         query = """
             SELECT timestamp, level, label, payload, caller, location, traceback
             FROM system_logs 
-            WHERE level = ? 
+            WHERE (? = 'ALL' OR level = ?)
             ORDER BY timestamp DESC
         """
-        cursor.execute(query, (level_query,))
+        cursor.execute(query, (level_query, level_query))
         rows = cursor.fetchall()
         conn.close()
 
