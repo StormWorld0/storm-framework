@@ -3,6 +3,7 @@ from .response import SocketResponse
 from ...endpoint import CRS
 from typing import Self
 
+
 class ListenOptions:
     """List all listener options"""
 
