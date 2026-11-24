@@ -7,7 +7,7 @@ from typing import Tuple
 class ListenResolv:
     """Special class to handle Resolver Listener"""
 
-    def getsockname(self) -> Tuple[str, int]:
+    def getsockname(self) -> tuple[str, int]:
         """Get local socket IP"""
         self._ensure_open("getsockname")
         packet = IPCPayloadBuilder.build(
@@ -20,7 +20,7 @@ class ListenResolv:
         response = SocketResponse(resp)
         return response.local_ip
 
-    def getpeername(self) -> Tuple[str, int]:
+    def getpeername(self) -> tuple[str, int]:
         """Get socket server IP"""
         self._ensure_open("getpeername")
         packet = IPCPayloadBuilder.build(
