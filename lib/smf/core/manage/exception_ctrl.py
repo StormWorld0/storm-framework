@@ -1,4 +1,5 @@
 import smf
+from lib.smf.telemetry import trace_ms
 from typing import Any, Iterable, Mapping
 from lib.smf.exception import (
     CRSBrokenError,
@@ -56,6 +57,7 @@ class ExceptionGate:
         raise exc_cls(message)
 
     @classmethod
+    @trace_ms
     def gate_stream(cls, stream: Iterable[Mapping[str, Any]]) -> None:
         gate_item = cls.gate_item
         for item in stream:
