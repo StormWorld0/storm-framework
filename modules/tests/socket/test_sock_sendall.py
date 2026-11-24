@@ -34,7 +34,7 @@ def execute(options, net, log):
 
         sock.connect((host, port))
         sock.sendall(data)
-        
+
         resp = sock.recv(4096)
         if resp.ok:
             log.prints("Raw bytes =>", resp.raw_bytes)
