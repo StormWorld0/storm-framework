@@ -27,6 +27,13 @@ case "${1:-}" in
         exec ./smfupdate --data Termux
         ;;
 
+    --log)
+        if [ "$#" -eq 2 ] && [ "${2:-}" = "-e" ]; then
+            python3 -m lib.smfdb_helpers.helper_db --log "$2"
+        fi
+        echo "[*] Invalid arguments: $*" >&2
+        ;;
+
     -c)
         if [ "${2:-}" != "--crt" ] || [ "$#" -ne 2 ]; then
             echo "[*] Invalid arguments: $*" >&2
@@ -34,7 +41,7 @@ case "${1:-}" in
         fi
 
         if [ ! -f "./data/smf_ca.crt" ]; then
-            echo "[*] ERROR: ./data/smf_ca.crt not found." >&2
+            echo "[*] /data/smf_ca.crt not found." >&2
             exit 1
         fi
 
