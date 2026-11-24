@@ -85,15 +85,10 @@ def execute(options, net, log):
     sock = net.Socket()
     try:
         sock.settimeout(5.0)
-        obj = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
-        if obj:
-            log.prints("File Decriptor =>", sock.fileno())
+        sock.socket(sock.AF_INET, sock.SOCK_STREAM)
+        log.prints("File Decriptor =>", sock.fileno())
 
-        resp = sock.connect((host, port))
-        if not resp.ok:
-            log.printw("Failed connect =>", resp.message)
-            return
-
+        sock.connect((host, port))
         log.prints("Checked Type =>", resp.checked_type)
         log.prints("Status TLS   =>", resp.status_tls)
         log.prints()
