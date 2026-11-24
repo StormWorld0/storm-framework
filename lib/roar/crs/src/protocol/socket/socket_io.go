@@ -17,7 +17,7 @@ func handleSendAll(ctx *ExecutionContext) packet.ResponsePacket {
 	
 	if fd >= 0 {
 		flag := ParseFlags(ctx.Req.Flags)
-		if err := ExecuteFDWriteAll(fd, ctx.Req.Data, ctx.Timeout, flag); err != nil {
+		if err := ExecuteSendAll(fd, ctx.Req.Data, ctx.Timeout, flag); err != nil {
 		    ctx.SaveSession(ctx.RawFD)
 		    // Error timeout (EAGAIN / EWOULDBLOCK)
 		    if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
@@ -46,7 +46,7 @@ func handleSendFile(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "S-WARN", Message: "No client socket (FD) found for sendfile."}
 	}
 
-	if err := ExecuteFDWriteFile(ctx.CFD, ctx.Req.File, ctx.Timeout); err != nil {
+	if err := ExecuteSendFile(ctx.CFD, ctx.Req.File, ctx.Timeout); err != nil {
 		ctx.SaveSessionCFD(ctx.CFD)
 		// Error timeout (EAGAIN / EWOULDBLOCK)
 		if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
@@ -72,7 +72,7 @@ func handleSend(ctx *ExecutionContext) packet.ResponsePacket {
 	
 	if fd >= 0 {
 		flag := ParseFlags(ctx.Req.Flags)
-		if err := ExecuteFDWrite(fd, ctx.Req.Data, ctx.Timeout, flag); err != nil {
+		if err := ExecuteSend(fd, ctx.Req.Data, ctx.Timeout, flag); err != nil {
 			ctx.SaveSession(ctx.RawFD)
 		    // Error timeout (EAGAIN / EWOULDBLOCK)
 		    if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
