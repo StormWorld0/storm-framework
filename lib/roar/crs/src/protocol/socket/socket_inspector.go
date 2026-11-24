@@ -23,7 +23,11 @@ func handleGetPeerName(ctx *ExecutionContext) packet.ResponsePacket {
         }
         return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
     }
-    
+
+	if ctx.Conn == nil {
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "Socket connection has not been created"}
+	}
+	
     meta := ctx.GenerateMetadata(0)
     if rAddr := ctx.Conn.RemoteAddr(); rAddr != nil {
         meta["remote_ip"] = rAddr
@@ -50,6 +54,10 @@ func handleGetSockName(ctx *ExecutionContext) packet.ResponsePacket {
 		}
         return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
     }
+
+	if ctx.Conn == nil {
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "Socket connection has not been created"}
+	}
 
     meta := ctx.GenerateMetadata(0)
     if lAddr := ctx.Conn.LocalAddr(); lAddr != nil {
