@@ -34,14 +34,14 @@ class SocketCore:
 
         resp = SocketResponse(CRS.send(packet))
         if not resp.ok:
-            raise SocketError(f"Socket creation failed: {resp.message}")
+            raise SocketError(resp.message)
         return self
 
     def bind(
         self,
         address: tuple[str, int],
         **kwargs,
-    ) -> SocketResponse:
+    ) -> None:
         """Binding local connection"""
         self._ensure_open("bind")
         host, port, _, _ = parse_addr(address)
@@ -53,14 +53,14 @@ class SocketCore:
             mode="bind",
         )
 
-        resp = CRS.send(packet)
-        return SocketResponse(resp)
+        CRS.send(packet)
+        return None
 
     def listen(
         self,
         backlog: int,
         **kwargs,
-    ) -> SocketResponse:
+    ) -> None:
         """Waiting for incoming connection"""
         self._ensure_open("listen")
         packet = IPCPayloadBuilder.build(
@@ -70,12 +70,12 @@ class SocketCore:
         )
 
         resp = CRS.send(packet)
-        return SocketResponse(resp)
+        return None
 
     def accept(
         self,
         **kwargs,
-    ) -> SocketResponse:
+    ) -> tuple[object, tuple[str, int]] | None:
         """Retrieving Incoming Connections"""
         self._ensure_open("accept")
         packet = IPCPayloadBuilder.build(
@@ -84,18 +84,18 @@ class SocketCore:
         )
 
         resp = CRS.send(packet)
-        response = SocketResponse(resp)
+        r = SocketResponse(resp)
 
-        cfd = response._client_fd()
+        cfd = r._client_fd()
         if cfd < 0:
-            return None, response
-        return ClientListener(self, cfd), response
+            return None, None
+        return ClientListener(self, cfd), r.remote_ip
 
     def connect(
         self,
         address: tuple[str, int],
         **kwargs,
-    ) -> SocketResponse:
+    ) -> None:
         """Open Connection"""
         self._ensure_open("connect")
         host, port, _, _ = parse_addr(address)
@@ -107,15 +107,15 @@ class SocketCore:
             mode="connect",
         )
 
-        resp = CRS.send(packet)
-        return SocketResponse(resp)
+        CRS.send(packet)
+        return None
 
     def create_connection(
         self,
         address: tuple[str, int],
         timeout: float | int | None = None,
         **kwargs,
-    ) -> SocketResponse:
+    ) -> Self:
         """Creating a TCP Stream connection"""
         self._ensure_open("create")
         self.family = 2  # Keep default AF_INET
@@ -131,8 +131,8 @@ class SocketCore:
             mode="create",
         )
 
-        resp = CRS.send(packet)
-        return SocketResponse(resp)
+        CRS.send(packet)
+        return self
 
     def detach(self) -> int:
         """
@@ -156,7 +156,7 @@ class SocketCore:
         self,
         how: int,
         **kwargs,
-    ) -> SocketResponse:
+    ) -> None:
         """Closing read/write"""
         self._ensure_open("shutdown")
         packet = IPCPayloadBuilder.build(
@@ -165,14 +165,14 @@ class SocketCore:
             mode="shutdown",
         )
 
-        resp = CRS.send(packet)
-        return SocketResponse(resp)
+        CRS.send(packet)
+        return None
 
     def close(
         self,
         fileno: int | None = None,
         **kwargs,
-    ) -> SocketResponse:
+    ) -> None:
         """
         Disconnecting
 
@@ -184,27 +184,27 @@ class SocketCore:
         close it manually with `os.close(fileno)`.
         """
         if self._is_closed:
-            return SocketResponse({"status": "closed", "session_id": self.sessid})
+            return OSError("The socket is closed")
 
         def closefd(val) -> None:
             if isinstance(val, bool):
-                return
+                return None
             if not isinstance(val, int):
-                return
+                return None
             if val < 0:
-                return
+                return None
             if not val == self._sock_fd:
-                return
+                return None
             self._sock_fd = -1
             try:
                 return os.close(val)
             except OSError:
-                return
+                return None
 
         if fileno is not None:
             closefd(fileno)
 
         packet = IPCPayloadBuilder.build(state=self, mode="close", close_session=True)
-        resp = CRS.send(packet)
+        CRS.send(packet)
         self._is_closed = True
-        return SocketResponse(resp)
+        return None
