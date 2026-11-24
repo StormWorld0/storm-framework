@@ -45,7 +45,7 @@ show_help() {
     echo "    [-c --crt]           : Copying CA to HOME Directory"
     echo "    [--update]           : Update to the latest version"
     echo "    [--clean]            : Cleaning Injection files (If there are)"
-    echo "    [--log -e <lvl>]"    : Export logs from internal database to a .txt file"
+    echo "    [--log -e <lvl>]     : Export logs from internal database to a .txt file"
     echo
     echo "  Database:"
     echo "    [-db init]           : Initializing the PostgreSQL database"
