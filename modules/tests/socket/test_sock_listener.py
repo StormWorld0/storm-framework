@@ -35,6 +35,7 @@ def execute(options, net, log):
         log.printi("Bound to Address =>", f"{host}:{port}")
 
         client_handler = []
+
         def accept_worker():
             conn, resp = srv_sock.accept()
             client_handler.append((conn, resp))
@@ -51,7 +52,7 @@ def execute(options, net, log):
 
         clt_sock.connect((host, port))
         log.prints("Client Connected =>", f"{host}:{port}")
-        
+
         # Tunggu thread accept() menerima koneksi
         t.join(timeout=2.0)
 
