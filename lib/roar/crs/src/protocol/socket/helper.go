@@ -16,12 +16,8 @@ func resolveSockAddr(req packet.RequestPacket) (unix.Sockaddr, error) {
 	}
 
 	hostStr := DerefString(addr, "")
-	portStr := DerefString(port, "")
+	portStr := DerefString(port, "0")
 	
-	if portStr == "" {
-		portStr = "0"
-	}
-
 	ports, _ := strconv.Atoi(portStr)
 	ips, err := net.LookupIP(hostStr)
 	if err != nil || len(ips) == 0 {
