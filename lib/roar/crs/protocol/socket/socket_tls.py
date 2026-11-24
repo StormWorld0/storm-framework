@@ -14,7 +14,7 @@ class SocketTLS:
         ca: str | None = None,
         verify: bool = True,
         **kwargs,
-    ) -> SocketResponse:
+    ) -> tuple[object, object]:
         """
         Upgrade connection to TLS/SSL
 
