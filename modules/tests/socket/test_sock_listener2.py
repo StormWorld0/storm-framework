@@ -27,7 +27,7 @@ def _setup_listener(net, log):
 
     sock.setsockopt(sock.SOL_SOCKET, sock.SO_REUSEADDR, 1)
     sock.bind(("127.0.0.1", 0))
-    
+
     host, port = sock.getsockname()
     log.printi("Bound to Address =>", f"{host}:{port}")
 
@@ -39,6 +39,7 @@ def _setup_listener(net, log):
 def _accept_concurrent(sock, count=2, timeout=PING_PONG_TIMEOUT):
     results = [None] * count
     threads = []
+
     def worker(idx):
         results[idx] = sock.accept()
 
@@ -119,6 +120,7 @@ def execute(options, net, log):
             return
 
         accept_box = []
+
         def run_accepts():
             accept_box.append(
                 _accept_concurrent(sock, count=worker_count, timeout=PING_PONG_TIMEOUT)
