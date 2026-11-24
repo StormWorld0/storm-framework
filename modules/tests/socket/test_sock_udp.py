@@ -54,10 +54,7 @@ def execute(options, net, log):
         log.printi("File Decriptor =>", sock.fileno())
 
         # Connect to server
-        result = sock.connect((host, port))
-        if not result.ok:
-            log.printw("DNS connect failed =>", result.message)
-            return
+        sock.connect((host, port))
 
         # Global timeout
         sock.settimeout(2.0)
