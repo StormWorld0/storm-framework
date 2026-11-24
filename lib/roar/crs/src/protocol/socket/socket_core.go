@@ -65,7 +65,7 @@ func handleAccept(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "S-WARN", Message: "No raw socket (FD) found for accept."}
 	}
 
-	nFD, _, err := unix.Accept(ctx.RawFD)
+	nFD, sa, err := unix.Accept(ctx.RawFD)
 	if err != nil {
 		if err == unix.EAGAIN || err == unix.EWOULDBLOCK {
 			return packet.ResponsePacket{Status: "S-TIMEOUT", Message: "Accept timeout expired. No incoming connections."}
@@ -78,6 +78,7 @@ func handleAccept(ctx *ExecutionContext) packet.ResponsePacket {
 		Status: "SUCCESS", 
 		Data: map[string]interface{}{
 			"client_fd":  nFD,
+			"remote_ip":  formatSockaddr(sa),
 		},
 	}
 }
