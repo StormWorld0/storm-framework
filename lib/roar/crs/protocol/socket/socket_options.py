@@ -52,7 +52,7 @@ class SocketOptions:
             raise TypeError("'settimeout' does not support boolean")
         if not isinstance(value, (float, int)):
             raise TypeError("'settimeout' only supports float or int.")
-        self._timeout = float(value)
+        self._timeout = value
         return self
 
     def gettimeout(self) -> float | None:
