@@ -136,7 +136,7 @@ class ClientListener(
         self,
         how: int,
         **kwargs,
-    ) -> SocketResponse:
+    ) -> None:
         """Closing read/write"""
         self._ensure_open("shutdown")
         packet = IPCPayloadBuilder.build(
@@ -146,14 +146,14 @@ class ClientListener(
             mode="shutdown",
         )
 
-        resp = CRS.send(packet)
-        return SocketResponse(resp)
+        CRS.send(packet)
+        return None
 
     def close(
         self,
         fileno: int | None = None,
         **kwargs,
-    ) -> SocketResponse:
+    ) -> None:
         """
         Disconnecting Client Listener
 
@@ -161,24 +161,22 @@ class ClientListener(
         Closing Golang and Python FD Client `close(fileno)`
         """
         if self._is_closed_cfd:
-            return SocketResponse(
-                {"status": "WARN", "message": "ClientFD has been closed."}
-            )
+            raise OSError("ClientFD has been closed")
 
         def closefd(val) -> None:
             if isinstance(val, bool):
-                return
+                return None
             if not isinstance(val, int):
-                return
+                return None
             if val < 0:
-                return
+                return None
             if not val == self.state._client_fd:
-                return
+                return None
             self.state._client_fd = -1
             try:
                 return os.close(val)
             except OSError:
-                return
+                return None
 
         if fileno is not None:
             closefd(fileno)
@@ -189,6 +187,6 @@ class ClientListener(
             mode="close-cfd",
         )
 
-        resp = CRS.send(packet)
+        CRS.send(packet)
         self._is_closed_cfd = True
-        return SocketResponse(resp)
+        return None
