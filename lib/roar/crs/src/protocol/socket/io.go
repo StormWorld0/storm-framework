@@ -105,22 +105,21 @@ func ExecuteFDWriteAll(fd int, data string, timeout time.Duration, flags int) er
 		}()
 	}
 
-	total := 0
-	for total < len(buf) {
+	n := 0
+	for n < len(buf) {
 		var p0 unsafe.Pointer
-		if len(buf[total:]) > 0 {
-			p0 = unsafe.Pointer(&buf[total:][0])
+		if len(buf[n:]) > 0 {
+			p0 = unsafe.Pointer(&buf[n:][0])
 		}
 	    r1, _, e1 := unix.Syscall6(unix.SYS_SENDTO, uintptr(fd), uintptr(p0), 
-								   uintptr(len(buf[total:])), uintptr(flags), 0, 0)
+								   uintptr(len(buf[n:])), uintptr(flags), 0, 0)
 		if e1 != 0 {
 			if e1 == unix.EINTR {
 				continue
 			}
 			return e1
 		}
-		n := int(r1)
-		total += n
+		n += int(r1)
 	}
 	return nil
 }
