@@ -39,20 +39,21 @@ show_help() {
     echo "Arguments"
     echo
     echo "  System:"
-    echo "    [-h][--help]     : Displays existing commands"
-    echo "    [-v][--version]  : Displays the current version"
-    echo "    [-v -L]          : Shows whether the latest update is available"
-    echo "    [-c --crt]       : Copying CA to HOME Directory"
-    echo "    [--update]       : Update to the latest version"
-    echo "    [--clean]        : Cleaning Injection files (If there are)"
+    echo "    [-h][--help]         : Displays existing commands"
+    echo "    [-v][--version]      : Displays the current version"
+    echo "    [-v -L]              : Shows whether the latest update is available"
+    echo "    [-c --crt]           : Copying CA to HOME Directory"
+    echo "    [--update]           : Update to the latest version"
+    echo "    [--clean]            : Cleaning Injection files (If there are)"
+    echo "    [--log -e <lvl>]"    : Export logs from internal database to a .txt file"
     echo
     echo "  Database:"
-    echo "    [-db init]       : Initializing the PostgreSQL database"
-    echo "    [-db reinit]     : Reinitializing the PostgreSQL database"
-    echo "    [-db delete]     : Deleting a PostgreSQL database"
-    echo "    [-db start]      : Starting the PostgreSQL service"
-    echo "    [-db stop]       : Stopping the PostgreSQL service"
-    echo "    [-db status]     : Checking the condition of the PostgreSQL service"
+    echo "    [-db init]           : Initializing the PostgreSQL database"
+    echo "    [-db reinit]         : Reinitializing the PostgreSQL database"
+    echo "    [-db delete]         : Deleting a PostgreSQL database"
+    echo "    [-db start]          : Starting the PostgreSQL service"
+    echo "    [-db stop]           : Stopping the PostgreSQL service"
+    echo "    [-db status]         : Checking the condition of the PostgreSQL service"
     echo
 }
 
@@ -64,6 +65,13 @@ case "${1:-}" in
             exit 1
         fi
         exec ./smfupdate --data Linux
+        ;;
+
+    --log)
+        if [ "$#" -eq 3 ] && [ "${2:-}" = "-e" ]; then
+            exec python3 -m lib.smfdb_helpers.helper_db --log "$3"
+        fi
+        echo "[*] Invalid arguments: $*" >&2
         ;;
 
     -c)
