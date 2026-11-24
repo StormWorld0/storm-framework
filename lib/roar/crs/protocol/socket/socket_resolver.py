@@ -2,6 +2,7 @@ from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
 from .validate import parse_flags, parse_addr
 from ...endpoint import CRS
+from typing import List, Tuple
 
 
 class SocketResolver:
@@ -16,7 +17,7 @@ class SocketResolver:
         proto: int | None = None,
         flags: int | None = None,
         **kwargs,
-    ) -> SocketResponse:
+    ) -> List[Tuple]:
         """Get IP address and Port information"""
         self._ensure_open("getaddrinfo")
         if flags is not None:
@@ -42,7 +43,7 @@ class SocketResolver:
         address: tuple[str, int, int, int],
         flags: int | None = None,
         **kwargs,
-    ) -> SocketResponse:
+    ) -> Tuple[str, str]:
         """Get Hostname and service from (IP, PORT)"""
         self._ensure_open("getnameinfo")
         host, port, flow, scope = parse_addr(address)
@@ -63,7 +64,7 @@ class SocketResolver:
         response = SocketResponse(resp)
         return response.nameinfo
 
-    def getsockname(self, **kwargs) -> SocketResponse:
+    def getsockname(self, **kwargs) -> Tuple[str, int]:
         """Get local socket IP"""
         self._ensure_open("getsockname")
         packet = IPCPayloadBuilder.build(
@@ -75,7 +76,7 @@ class SocketResolver:
         response = SocketResponse(resp)
         return response.local_ip
 
-    def getpeername(self, **kwargs) -> SocketResponse:
+    def getpeername(self, **kwargs) -> Tuple[str, int]:
         """Get socket server IP"""
         self._ensure_open("getpeername")
         packet = IPCPayloadBuilder.build(
