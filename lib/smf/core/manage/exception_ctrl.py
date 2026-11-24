@@ -46,12 +46,6 @@ class ExceptionGate:
         message = item.get("message", "UNKNOWN")
         msg_id = item.get("msg_id", "UNKNOWN")
 
-        smf.printd(
-            "Target Alert Captured",
-            f"Msg ID {msg_id} | Status: {status} | Msg: {message}",
-            level="WARN",
-        )
-
         if status in cls.TWO_ARG_STATUSES:
             raise exc_cls(status, message)
         raise exc_cls(message)
