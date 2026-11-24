@@ -109,11 +109,11 @@ pub fn execute_telemetry(
                 } else {
                     String::new()
                 }
-            },
+            }
             Err(_) => String::new(),
-        } else {
-            String::new()
         }
+    } else {
+        String::new()
     };
 
     // Database Initialization
