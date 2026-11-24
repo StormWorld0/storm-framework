@@ -29,20 +29,12 @@ def execute(options, net, log):
 
     sock = net.Socket()
     try:
-        obj = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
-        if obj:
-            log.printi("File Decriptor =>", sock.fileno())
+        sock.socket(sock.AF_INET, sock.SOCK_STREAM)
+        log.printi("File Decriptor =>", sock.fileno())
 
-        resp = sock.connect((host, port))
-        if not resp.ok:
-            log.printw("Failed connect =>", resp.message)
-            return
-
-        resp = sock.sendall(data)
-        if not resp.ok:
-            log.printw("Failed sendall =>", resp.message)
-            return
-
+        sock.connect((host, port))
+        sock.sendall(data)
+        
         resp = sock.recv(4096)
         if resp.ok:
             log.prints("Raw bytes =>", resp.raw_bytes)
