@@ -18,10 +18,7 @@ def execute(options, net, log):
 
     sock = net.Socket()
     try:
-        res = sock.create_connection((host, port), timeout=2.0)
-        if not res.ok:
-            log.printw("Connect failed =>", res.message)
-            return
+        sock.create_connection((host, port), timeout=2.0)
 
         log.printi("Socket created =>", sock.fileno())
         log.printi("IP Local  =>", sock.getsockname())
