@@ -17,6 +17,10 @@ def trace_ms(func: F, *, log_fn: Callable[[str], None] = print) -> F:
             return func(*args, **kwargs)
         finally:
             elapsed_ms = (perf_counter_ns() - start_ns) / 1_000_000
-            smf.printd("Logic performance in ms", f"{func.__qualname__}: {elapsed_ms:.4f} ms", level="INFO")
+            smf.printd(
+                "Logic performance in ms",
+                f"{func.__qualname__}: {elapsed_ms:.4f} ms",
+                level="INFO",
+            )
 
     return wrapper  # type: ignore[return-value]
