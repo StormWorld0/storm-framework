@@ -17,7 +17,7 @@ class SocketResolver:
         proto: int | None = None,
         flags: int | None = None,
         **kwargs,
-    ) -> List[Tuple]:
+    ) -> list[tuple]:
         """Get IP address and Port information"""
         self._ensure_open("getaddrinfo")
         if flags is not None:
@@ -43,7 +43,7 @@ class SocketResolver:
         address: tuple[str, int, int, int],
         flags: int | None = None,
         **kwargs,
-    ) -> Tuple[str, str]:
+    ) -> tuple[str, str]:
         """Get Hostname and service from (IP, PORT)"""
         self._ensure_open("getnameinfo")
         host, port, flow, scope = parse_addr(address)
@@ -64,7 +64,7 @@ class SocketResolver:
         response = SocketResponse(resp)
         return response.nameinfo
 
-    def getsockname(self, **kwargs) -> Tuple[str, int]:
+    def getsockname(self, **kwargs) -> tuple[str, int]:
         """Get local socket IP"""
         self._ensure_open("getsockname")
         packet = IPCPayloadBuilder.build(
@@ -76,7 +76,7 @@ class SocketResolver:
         response = SocketResponse(resp)
         return response.local_ip
 
-    def getpeername(self, **kwargs) -> Tuple[str, int]:
+    def getpeername(self, **kwargs) -> tuple[str, int]:
         """Get socket server IP"""
         self._ensure_open("getpeername")
         packet = IPCPayloadBuilder.build(
