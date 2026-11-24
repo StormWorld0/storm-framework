@@ -113,16 +113,6 @@ sock.connect(address)
 **Parameter**
 - **address:** tuple (host, port).
 
-**Response**
-- **status:** SUCCESS/WARN/ERROR/TIMEOUT.
-- **message:** Messages adjust to status.
-
-- **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
-- **is_reused:** Returns a Boolean. True=Using the same connection. False=Create a new connection.
-- **rtt_ms:** Returns the Round Trip Time in milliseconds.
-- **checked_type:** Returns the connection status to see if the tls/tcp connection is working. | Debug.
-- **status_tls:** Returns a Boolean. If True=TLS is enabled. False=TLS is disabled.
-
 
 **Send Data**
 ```python
@@ -267,11 +257,6 @@ sock.bind(address)
 **Parameter**
 - **address:** Tuple (host, port).
 
-**Response**
-- **status:** SUCCESS/WARN/ERROR/TIMEOUT.
-- **message:** Messages adjust to status.
-- **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
-
 
 **Listen**
 ```python
@@ -279,11 +264,6 @@ sock.listen(backlog)
 ```
 **Parameter**
 - **backlog:** Maximum limit of inbound connection queue allowed to hang before `accept()`.
-
-**Response**
-- **status:** SUCCESS/WARN/ERROR/TIMEOUT.
-- **message:** Messages adjust to status.
-- **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
 
 
 **Accept**
@@ -305,10 +285,7 @@ conn, resp = sock.accept()
 - **gettimeout**
 - **close**
 
-**Response**
-- **status:** SUCCESS/WARN/ERROR/TIMEOUT.
-- **message:** Messages adjust to status.
-- **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
+**Response:** Client address format `tuple[str, int]`.
 
 
 **Set Socket Options**
@@ -319,11 +296,6 @@ sock.setsockopt(level, name, value)
 - **level:** OptLevel such as: `sock.SOL_SOCKET`, etc.
 - **name:** OptName such as: `sock.SO_REUSEADDR`, `sock.TCP_NODELAY`, etc.
 - **value:** OptVal it is the value of a pointer to a Buffer Memory | int
-
-**Response**
-- **status:** SUCCESS/WARN/ERROR/TIMEOUT.
-- **message:** Messages adjust to status.
-- **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
 
 
 **Get Socket Options**
@@ -352,11 +324,6 @@ sock.gettimout()
 sock.create_connection(address, timeout)
 ```
 **Description:** This function is used to immediately open a connection quickly without having to perform socket() and connect() literacy because this is done automatically by the binary CRS. This makes it faster and requires less code. Send, receive, and uptls still require manual processing afterward.
-
-**Response**
-- **status:** SUCCESS/WARN/ERROR/TIMEOUT.
-- **message:** Messages adjust to status.
-- **ok:** Return boolean from SUCCESS status. Allows the syntax: if resp.ok:
 
 
 **Get Address Information**
