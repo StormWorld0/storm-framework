@@ -1,2 +1,2 @@
-from .exception_ctrl import ExceptionManager  # noqa
+from .exception_ctrl import ExceptionGate  # noqa
 from .pid_manager import PIDManager  # noqa
