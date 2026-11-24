@@ -27,3 +27,6 @@ def log_export():
     except Exception as e:
         smf.printf(f"[*] Error Exception Wrapper Data => {e}")
         sys.exit(1)
+
+if __name__ == "__main__":
+    log_export()
