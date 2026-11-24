@@ -89,22 +89,29 @@ pub fn execute_telemetry(
         Err(_) => "SysModuleError".to_string(),
     };
 
+    // Just include!
+    let is_error = |l: &str|
+        l.eq_ignore_ascii_case("ERROR") ||
+        l.eq_ignore_ascii_case("CRITICAL");
+
     // Taking Traceback if there is an active Exception
-    let traceback_info = match py.import("traceback").and_then(|tb| tb.getattr("format_exc")) {
-        Ok(format_exc) => {
-            if let Ok(tb_obj) = format_exc.call0() {
-                let tb_str = tb_obj.extract::<String>().unwrap_or_default();
-                // format_exc() returns "NoneType: None" if there are no active errors
-                if !tb_str.trim().is_empty() && !tb_str.contains("NoneType: None") {
-                    tb_str.trim().to_string()
+    let traceback_info = if is_error(level) {
+        match py.import("traceback").and_then(|tb| tb.getattr("format_exc")) {
+            Ok(format_exc) => {
+                if let Ok(tb_obj) = format_exc.call0() {
+                    let tb_str = tb_obj.extract::<String>().unwrap_or_default();
+                    // format_exc() returns "NoneType: None" if there are no active errors
+                    if !tb_str.trim().is_empty() && !tb_str.contains("NoneType: None") {
+                        tb_str.trim().to_string()
+                    } else {
+                        String::new()
+                    }
                 } else {
                     String::new()
                 }
-            } else {
-                String::new()
-            }
-        },
-        Err(_) => String::new(),
+            },
+            Err(_) => String::new(),
+        }
     };
 
     // Database Initialization
