@@ -1,4 +1,4 @@
-import smf
+iimport smf
 import time
 from functools import wraps
 from typing import Callable, TypeVar
@@ -24,7 +24,7 @@ def trace_ms(func: F, *, log_fn: Callable[[str], None] = print) -> F:
         try:
             return func(*args, **kwargs)
         finally:
-            elapsed_ms = format_duration((perf_counter_ns() - start_ns) / 1_000_000)
+            elapsed_ms = format_duration((perf_counter_ns() - start_ns))
             smf.printd(
                 "Logic performance in ms",
                 f"{func.__qualname__}: {elapsed_ms}",
