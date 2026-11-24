@@ -1,7 +1,7 @@
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
 from ...endpoint import CRS
-
+from typing import Self
 
 class ListenOptions:
     """List all listener options"""
@@ -16,7 +16,7 @@ class ListenOptions:
         """Socket Options Configuration"""
         self._ensure_open("setsockopt")
         packet = IPCPayloadBuilder.build(
-            state=self,
+            state=self.state,
             cfd=self._cfd,
             level=level,
             name=name,
@@ -36,7 +36,7 @@ class ListenOptions:
         """Getting socket options"""
         self._ensure_open("getsockopt")
         packet = IPCPayloadBuilder.build(
-            state=self,
+            state=self.state,
             cfd=self._cfd,
             level=level,
             name=name,
@@ -44,11 +44,10 @@ class ListenOptions:
         )
 
         resp = CRS.send(packet)
-        response = SocketResponse(resp)
-        val = response._data.get("val_opt", -1)
-        return val
+        r = SocketResponse(resp)
+        return r._data.get("val_opt", -1)
 
-    def settimeout(self, value: float | int):
+    def settimeout(self, value: float | int) -> Self:
         """Global Timeout"""
         self._ensure_open("settimeout")
         if isinstance(value, bool):
@@ -61,7 +60,4 @@ class ListenOptions:
     def gettimeout(self) -> float | None:
         """Taking a timeout"""
         self._ensure_open("gettimeout")
-        value = None
-        if self.state._timeout != 0.0:
-            value = self.state._timeout
-        return value
+        return self.state._timeout
