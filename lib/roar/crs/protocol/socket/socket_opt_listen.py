@@ -13,7 +13,7 @@ class ListenOptions:
         name: int,
         value: int | None = None,
         **kwargs,
-    ) -> SocketResponse:
+    ) -> None:
         """Socket Options Configuration"""
         self._ensure_open("setsockopt")
         packet = IPCPayloadBuilder.build(
@@ -25,8 +25,8 @@ class ListenOptions:
             mode="setsockopt",
         )
 
-        resp = CRS.send(packet)
-        return SocketResponse(resp)
+        CRS.send(packet)
+        return None
 
     def getsockopt(
         self,
