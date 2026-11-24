@@ -158,7 +158,7 @@ class CRSD:
 
         msg_id = uuid.uuid4().hex
         data["msg_id"] = msg_id
-        timeout = float(data.get("timeout", 5.0))
+        timeout = data.get("timeout", 0.0)
         event = threading.Event()
 
         with cls._dict_lock:
@@ -187,8 +187,8 @@ class CRSD:
                     "message": f"Failed to write IPC: {write_err}",
                 }, {}
 
-            if timeout == 0.0:
-                req_timeout = None
+            if timeout is None:
+                req_timeout = timeout
             else:
                 req_timeout = timeout + 1.0
 
