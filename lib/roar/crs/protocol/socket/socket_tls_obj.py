@@ -81,7 +81,7 @@ class ObjectTLS:
         name: int,
         value: int | None = None,
         **kwargs,
-    ) -> SocketResponse:
+    ) -> None:
         """Socket Options Configuration"""
         self.state._ensure_open("setsockopt")
         packet = IPCPayloadBuilder.build(
@@ -92,15 +92,15 @@ class ObjectTLS:
             mode="setsockopt",
         )
 
-        resp = CRS.send(packet)
-        return SocketResponse(resp)
+        CRS.send(packet)
+        return None
 
     def getsockopt(
         self,
         level: int,
         name: int,
         **kwargs,
-    ) -> SocketResponse:
+    ) -> int:
         """Getting socket options"""
         self.state._ensure_open("getsockopt")
         packet = IPCPayloadBuilder.build(
@@ -111,11 +111,10 @@ class ObjectTLS:
         )
 
         resp = CRS.send(packet)
-        response = SocketResponse(resp)
-        val = response._data.get("val_opt", -1)
-        return val
+        r = SocketResponse(resp)
+        return r._data.get("val_opt", -1)
 
-    def getsockname(self, **kwargs) -> SocketResponse:
+    def getsockname(self, **kwargs) -> tuple[str, int]:
         """Get local socket IP"""
         self.state._ensure_open("getsockname")
         packet = IPCPayloadBuilder.build(
@@ -127,7 +126,7 @@ class ObjectTLS:
         response = SocketResponse(resp)
         return response.local_ip
 
-    def getpeername(self, **kwargs) -> SocketResponse:
+    def getpeername(self, **kwargs) -> tuple[str, int]:
         """Get socket server IP"""
         self.state._ensure_open("getpeername")
         packet = IPCPayloadBuilder.build(
@@ -143,7 +142,7 @@ class ObjectTLS:
         self,
         fileno: int | None = None,
         **kwargs,
-    ) -> SocketResponse:
+    ) -> None:
         """
         Disconnecting
 
@@ -151,22 +150,22 @@ class ObjectTLS:
         Closing Golang and Python FD `close(fileno)`
         """
         if self.state._is_closed:
-            return SocketResponse({"status": "closed", "session_id": self.state.sessid})
+            raise OSError("The socket is closed")
 
         def closefd(val) -> None:
             if isinstance(val, bool):
-                return
+                return None
             if not isinstance(val, int):
-                return
+                return None
             if val < 0:
-                return
+                return None
             if not val == self.state._sock_fd:
-                return
+                return None
             self.state._sock_fd = -1
             try:
                 return os.close(val)
             except OSError:
-                return
+                return None
 
         if fileno is not None:
             closefd(fileno)
@@ -174,6 +173,6 @@ class ObjectTLS:
         packet = IPCPayloadBuilder.build(
             state=self.state, mode="close", close_session=True
         )
-        resp = CRS.send(packet)
+        CRS.send(packet)
         self.state._is_closed = True
-        return SocketResponse(resp)
+        return None
