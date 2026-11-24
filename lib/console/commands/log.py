@@ -65,9 +65,7 @@ def execute(args, ctx):
 
         else:
             # If the user types: take backup, take system, etc.
-            smf.printf(
-                f"[!] {CC.YELLOW}Unknown subcommand =>{CC.RESET}", cmd
-            )
+            smf.printf(f"[!] {CC.YELLOW}Unknown subcommand =>{CC.RESET}", cmd)
     else:
         # If the user just types "log dump" or "log export" without a level argument
         smf.printf(f"[!]{CC.YELLOW} Argument failed. Usage: help{CC.RESET}")
