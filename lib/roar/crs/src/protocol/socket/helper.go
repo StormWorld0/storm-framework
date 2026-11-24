@@ -8,7 +8,7 @@ import (
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 )
 
-// Helper internal untuk resolving host/IP ke unix.Sockaddr (menghindari duplikasi)
+// Helper for resolving host/IP to unix.Sockaddr
 func resolveSockAddr(req packet.RequestPacket) (unix.Sockaddr, error) {
 	addr, port, err := BuildTarget(req.Host, req.Port)
 	if err != nil {
@@ -31,9 +31,9 @@ func resolveSockAddr(req packet.RequestPacket) (unix.Sockaddr, error) {
 	afInt := ParseAF(req.AF)
 	for _, ip := range ips {
 		if afInt == unix.AF_INET6 {
-			if ip4 := ip.To4(); ip4 == nil {
+			if ip6 := ip.To16(); ip6 != nil {
 				var addr16 [16]byte
-				copy(addr16[:], ip.To16())
+				copy(addr16[:], ip6)
 				return &unix.SockaddrInet6{Port: ports, Addr: addr16}, nil
 			}
 		} else {
