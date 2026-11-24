@@ -29,7 +29,7 @@ case "${1:-}" in
 
     --log)
         if [ "$#" -eq 3 ] && [ "${2:-}" = "-e" ]; then
-            exec ./lib/smfdb_helpers/helper_db.py --log "$3"
+            exec python3 -m lib.smfdb_helpers.helper_db.py --log "$3"
         fi
         echo "[*] Invalid arguments: $*" >&2
         ;;
