@@ -66,7 +66,7 @@ class SocketState:
         self.port = port
         self.serv = serv
         self._timeout = timeout
-        
+
         self.buffer = buffer
         self.ratelimit = 0
         self.keepalive = keepalive
