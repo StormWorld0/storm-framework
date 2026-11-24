@@ -26,19 +26,12 @@ def _setup_listener(net, log):
     log.printi("Server RawFD  =>", sock.fileno())
 
     sock.setsockopt(sock.SOL_SOCKET, sock.SO_REUSEADDR, 1)
-    resp = sock.bind(("127.0.0.1", 0))
-    if not resp.ok:
-        log.printw("Bind Failed     =>", resp.message)
-        return sock, None, None, False
-
+    sock.bind(("127.0.0.1", 0))
+    
     host, port = sock.getsockname()
     log.printi("Bound to Address =>", f"{host}:{port}")
 
-    resp = sock.listen(BACKLOG)
-    if not resp.ok:
-        log.printw("Listen Failed   =>", resp.message)
-        return sock, host, port, False
-
+    sock.listen(BACKLOG)
     log.prints(f"Status Listen    => Success (Backlog: {BACKLOG})")
     return sock, host, port, True
 
@@ -46,7 +39,6 @@ def _setup_listener(net, log):
 def _accept_concurrent(sock, count=2, timeout=PING_PONG_TIMEOUT):
     results = [None] * count
     threads = []
-
     def worker(idx):
         results[idx] = sock.accept()
 
@@ -54,7 +46,6 @@ def _accept_concurrent(sock, count=2, timeout=PING_PONG_TIMEOUT):
         t = threading.Thread(target=worker, args=(idx,), daemon=True)
         threads.append(t)
         t.start()
-
     for t in threads:
         t.join(timeout=timeout)
 
@@ -63,10 +54,9 @@ def _accept_concurrent(sock, count=2, timeout=PING_PONG_TIMEOUT):
         if item is None:
             return None, f"Accept worker ({idx + 1}) timed out"
         conn, resp = item
-        if not resp.ok:
-            return None, f"Accept ({idx + 1}) failed: {resp.message}"
+        if not resp:
+            return None, f"Accept worker ({idx + 1}) error"
         accepted.append(conn)
-
     return accepted, None
 
 
@@ -77,12 +67,7 @@ def _connect_clients(net, host, port, count, log):
         sock.socket(sock.AF_INET, sock.SOCK_STREAM)
         log.prints(f"Socket ClientFD ({idx + 1}) =>", sock.fileno())
 
-        resp = sock.connect((host, port))
-        if not resp.ok:
-            log.printw(f"Client ({idx + 1}) Connect Failed =>", resp.message)
-            _cleanup_sockets(log, [*clients, sock])
-            return None
-
+        sock.connect((host, port))
         clients.append(sock)
 
     log.prints("Client Connected =>", f"{host}:{port}")
@@ -107,7 +92,6 @@ def _run_ping_pong(clt_sock, conn, ping_msg, pong_msg, idx, log):
     if raw_out != pong_msg:
         log.printw(f"Unexpected reply ({idx}) =>", raw_out)
         return False
-
     return True
 
 
@@ -117,9 +101,9 @@ def _cleanup_sockets(log, sockets):
             continue
         try:
             fd = sock.fileno()
-            if fd is not None and fd >= 0:
+            if fd >= 0:
                 sock.close(fd)
-        except Exception as e:
+        except OSError as e:
             log.printw("Cleanup Close Warning =>", e)
 
 
@@ -135,7 +119,6 @@ def execute(options, net, log):
             return
 
         accept_box = []
-
         def run_accepts():
             accept_box.append(
                 _accept_concurrent(sock, count=worker_count, timeout=PING_PONG_TIMEOUT)
