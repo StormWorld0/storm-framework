@@ -1,6 +1,7 @@
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
 from ...endpoint import CRS
+from typing import Self
 
 
 class SocketOptions:
@@ -42,11 +43,10 @@ class SocketOptions:
         )
 
         resp = CRS.send(packet)
-        response = SocketResponse(resp)
-        val = response._data.get("val_opt", -1)
-        return val
+        r = SocketResponse(resp)
+        return r._data.get("val_opt", -1)
 
-    def settimeout(self, value: float | int):
+    def settimeout(self, value: float | int) -> Self:
         """Global Timeout"""
         if isinstance(value, bool):
             raise TypeError("'settimeout' does not support boolean")
@@ -57,7 +57,4 @@ class SocketOptions:
 
     def gettimeout(self) -> float | None:
         """Taking a timeout"""
-        value = None
-        if self._timeout != 0.0:
-            value = self._timeout
-        return value
+        return self._timeout
