@@ -38,6 +38,7 @@ class SocketState:
         host: str | None = None,
         port: int | None = None,
         serv: str | int | None = None,
+        timeout: float | None = None,
         af: int | None = None,
         type: int | None = None,
         proto: int | None = None,
@@ -48,7 +49,6 @@ class SocketState:
         value: int = 0,
         backlog: int = 0,
         file: str = "",
-        timeout: float = 0.0,
         buffer: int = 0,
         keepalive: bool = True,
         mode: str = "socket",
@@ -63,10 +63,11 @@ class SocketState:
         **kwargs,
     ):
         self.host = host
-        self.port = int(port) if port is not None else None
+        self.port = port
         self.serv = serv
-        self._timeout = float(timeout)
-        self.buffer = int(buffer)
+        self._timeout = timeout
+        
+        self.buffer = buffer
         self.ratelimit = 0
         self.keepalive = keepalive
         self.mode = mode
@@ -80,7 +81,7 @@ class SocketState:
         # SOL_* and SO_* and value and MSG_*
         self.level = level
         self.name = name
-        self.value = int(value)
+        self.value = value
         self.flags = flags
         self.how = how
 
@@ -171,7 +172,7 @@ class IPCPayloadBuilder:
             "primitive": "SOCKET",
             "mode": mode if mode is not None else state.mode,
             "host": host if host is not None else state.host,
-            "port": int(port) if port is not None else state.port,
+            "port": port if port is not None else state.port,
             "service": serv if serv is not None else state.serv,
             "data": data_str,
             "addr-fam": addr_fam if addr_fam is not None else state.family,
@@ -179,12 +180,12 @@ class IPCPayloadBuilder:
             "sproto": sproto if sproto is not None else state.proto,
             "opt-level": level,
             "opt-name": name,
-            "opt-value": int(value) if value is not None else state.value,
+            "opt-value": value if value is not None else state.value,
             "flags": flag if flag is not None else state.flags,
             "how": how if how is not None else state.how,
             "backlog": backlog if backlog is not None else state.backlog,
             "file": file if file is not None else state.file,
-            "timeout": float(timeout) if timeout is not None else state._timeout,
+            "timeout": timeout if timeout is not None else state._timeout,
             "buffer": buffer if buffer is not None else state.buffer,
             "ratelimit": ratelimit if ratelimit is not None else state.ratelimit,
             "client-fd": cfd if cfd is not None else state.cfd,
@@ -198,7 +199,7 @@ class IPCPayloadBuilder:
             "tls-cert": cert,
             "tls-key": key,
             "tls-ca": ca,
-            "flowinfo": int(flowinfo) if flowinfo is not None else state.flowinfo,
-            "scope_id": int(scopeid) if scopeid is not None else state.scopeid,
+            "flowinfo": flowinfo if flowinfo is not None else state.flowinfo,
+            "scope_id": scopeid if scopeid is not None else state.scopeid,
             "goroutine": state.con,
         }
