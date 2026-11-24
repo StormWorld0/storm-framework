@@ -69,7 +69,7 @@ func ExecuteRead(conn net.Conn, readSize int, timeout time.Duration) ([]byte, in
 
 // --- READ/WRITE RawFD ---
 
-func ExecuteFDWrite(fd int, data string, timeout time.Duration, flags int) error {
+func ExecuteSend(fd int, data string, timeout time.Duration, flags int) error {
 	dataDec, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
 		return fmt.Errorf("base64 decode failed: %w", err)
@@ -89,7 +89,7 @@ func ExecuteFDWrite(fd int, data string, timeout time.Duration, flags int) error
 	return err
 }
 
-func ExecuteFDWriteAll(fd int, data string, timeout time.Duration, flags int) error {
+func ExecuteSendAll(fd int, data string, timeout time.Duration, flags int) error {
 	buf, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
 		return fmt.Errorf("base64 decode failed: %w", err)
@@ -124,7 +124,7 @@ func ExecuteFDWriteAll(fd int, data string, timeout time.Duration, flags int) er
 	return nil
 }
 
-func ExecuteFDWriteFile(outfd int, file string, timeout time.Duration) error {
+func ExecuteSendFile(outfd int, file string, timeout time.Duration) error {
 	if file == "" {
 		return nil
 	}
