@@ -32,6 +32,10 @@ func handleSendAll(ctx *ExecutionContext) packet.ResponsePacket {
 	    ctx.SaveSession(ctx.RawFD)
 	    return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(fd, 0)}
 	}
+
+	if ctx.Conn == nil {
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "Socket connection has not been created"}
+	}
 	
 	if err := ExecuteWrite(ctx.Conn, ctx.Req.Data, ctx.Timeout); err != nil {
 		return packet.ResponsePacket{Status: "S-ERROR", Message: "SendAll failed: " + err.Error()}
@@ -87,6 +91,10 @@ func handleSend(ctx *ExecutionContext) packet.ResponsePacket {
 		ctx.SaveSession(ctx.RawFD)
 		return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(fd, 0)}
     }
+
+	if ctx.Conn == nil {
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "Socket connection has not been created"}
+	}
 	
 	if err := ExecuteWrite(ctx.Conn, ctx.Req.Data, ctx.Timeout); err != nil {
 		return packet.ResponsePacket{Status: "S-ERROR", Message: "Send failed: " + err.Error()}
@@ -129,6 +137,10 @@ func handleRecv(ctx *ExecutionContext) packet.ResponsePacket {
 	    meta["raw_bytes"] = base64.StdEncoding.EncodeToString(buffer[:n])
 	    meta["hex_bytes"] = hex.EncodeToString(buffer[:n])
     	return packet.ResponsePacket{Status: "SUCCESS", Data: meta}
+	}
+
+	if ctx.Conn == nil {
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "Socket connection has not been created"}
 	}
 	
 	buffer, n, bufPtr, err := ExecuteRead(ctx.Conn, ctx.Req.Buffer, ctx.Timeout)
