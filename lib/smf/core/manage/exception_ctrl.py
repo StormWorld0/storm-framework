@@ -30,9 +30,7 @@ class ExceptionGate:
         "H-ERROR": HttpError,
     }
 
-    TWO_ARG_STATUSES: frozenset[str] = frozenset(
-        {"CRITICAL", "BROKEN", "ERROR", "INTER"}
-    )
+    TWO_ARG_STATUSES: frozenset[str] = frozenset({"CRITICAL", "BROKEN", "ERROR", "INTER"})
 
     @classmethod
     def gate_item(cls, item: Mapping[str, Any]) -> None:
@@ -63,4 +61,3 @@ class ExceptionGate:
         for item in stream:
             if isinstance(item, Mapping):
                 gate_item(item)
-                    
