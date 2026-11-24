@@ -87,12 +87,8 @@ def execute(options, net, log):
         sock.settimeout(5.0)
         sock.socket(sock.AF_INET, sock.SOCK_STREAM)
         log.prints("File Decriptor =>", sock.fileno())
-
         sock.connect((host, port))
-        log.prints("Checked Type =>", resp.checked_type)
-        log.prints("Status TLS   =>", resp.status_tls)
-        log.prints()
-
+        
         with tempfile.TemporaryDirectory() as tmp_dir:
             cert_file, key_file = generate_temp_tls_files(tmp_dir, common_name=host)
 
