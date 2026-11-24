@@ -26,53 +26,32 @@ def execute(options, net, log):
         # Allow Address Reuse (SO_REUSEADDR)
         srv_sock.setsockopt(srv_sock.SOL_SOCKET, srv_sock.SO_REUSEADDR, 1)
 
-        # Bind ke Localhost port 0 (OS akan alokasikan Ephemeral Port acak)
-        resp = srv_sock.bind(("127.0.0.1", 0))
-        if not resp.ok:
-            log.printw("Bind Failed     =>", resp.message)
-            return
+        # Bind ke Localhost port 0
+        srv_sock.bind(("127.0.0.1", 0))
+        srv_sock.listen(5)
 
         host, port = srv_sock.getsockname()
 
         log.printi("Bound to Address =>", f"{host}:{port}")
 
-        # Listen dengan Backlog 5
-        resp = srv_sock.listen(5)
-        if not resp.ok:
-            log.printw("Listen Failed   =>", resp.message)
-            return
-        log.printi("Status Listen    => Success (Backlog: 5)")
-
-        # Variable penampung ClientListener hasil accept()
         client_handler = []
-
-        # Worker Thread untuk menjalankan accept()
         def accept_worker():
-            # conn: ClientListener, acc_resp: ResponsePacket
             conn, resp = srv_sock.accept()
             client_handler.append((conn, resp))
 
         t = threading.Thread(target=accept_worker)
         t.daemon = True
         t.start()
-
-        # Beri jeda 100ms agar thread server siap blocking di accept()
         time.sleep(0.1)
 
-        # Client Simulator: Connect ke Port Ephemeral Server
+        # Client Simulator
         clt_sock = net.Socket()
         clt_sock.socket(clt_sock.AF_INET, clt_sock.SOCK_STREAM)
-        if clt_sock:
-            log.prints("Socket ClientFD =>", clt_sock.fileno())
+        log.prints("Socket ClientFD =>", clt_sock.fileno())
 
-        resp = clt_sock.connect((host, port))
-
-        if resp.ok:
-            log.prints("Client Connected =>", f"{host}:{port}")
-        else:
-            log.printw("Client Connect Failed =>", resp.message)
-            return
-
+        clt_sock.connect((host, port))
+        log.prints("Client Connected =>", f"{host}:{port}")
+        
         # Tunggu thread accept() menerima koneksi
         t.join(timeout=2.0)
 
@@ -80,11 +59,7 @@ def execute(options, net, log):
             log.printw("Accept Failed    => Timeout waiting for client")
             return
 
-        conn, resp = client_handler[0]
-        if not resp.ok:
-            log.printw("Accept Error     =>", resp.message)
-            return
-
+        conn, _ = client_handler[0]
         log.prints("Accepted ClientFD =>", conn.fileno())
 
         # Echo Verification Test (PING - PONG)
