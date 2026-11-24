@@ -1,4 +1,4 @@
-iimport smf
+import smf
 import time
 from functools import wraps
 from typing import Callable, TypeVar
