@@ -12,7 +12,6 @@ def format_duration(elapsed_ns: int) -> str:
     if elapsed_ns < 1_000_000:
         return f"{elapsed_ns / 1_000:g} µs"
     return f"{elapsed_ns / 1_000_000:g} ms"
-    
 
 
 def trace_ms(func: F, *, log_fn: Callable[[str], None] = print) -> F:
