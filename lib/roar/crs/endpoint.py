@@ -1,5 +1,5 @@
 from .transport import CRSD
-from lib.smf.core.manage import ExceptionManager as em
+from lib.smf.core.manage import ExceptionGate as eg
 
 
 class CRS:
@@ -14,5 +14,5 @@ class CRS:
                     yield data
 
         # Management Exception
-        em.process_exc(_process_data(resp, err))
+        eg.gate_stream(_process_data(resp, err))
         return resp
