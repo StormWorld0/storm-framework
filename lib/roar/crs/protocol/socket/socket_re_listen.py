@@ -1,7 +1,6 @@
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
 from ...endpoint import CRS
-from typing import Tuple
 
 
 class ListenResolv:
