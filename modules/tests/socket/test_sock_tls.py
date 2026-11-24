@@ -88,7 +88,7 @@ def execute(options, net, log):
         sock.socket(sock.AF_INET, sock.SOCK_STREAM)
         log.prints("File Decriptor =>", sock.fileno())
         sock.connect((host, port))
-        
+
         with tempfile.TemporaryDirectory() as tmp_dir:
             cert_file, key_file = generate_temp_tls_files(tmp_dir, common_name=host)
 
