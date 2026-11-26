@@ -17,7 +17,7 @@ class ExceptionGate:
     __slots__ = ()
 
     EXCEPTION_CLASSES: dict[str, type[Exception]] = {
-        "CRITICAL": CRSRuntimeError,
+        "ALERT": CRSRuntimeError,
         "BROKEN": CRSBrokenError,
         "ERROR": CRSException,
         "INTER": CRSKeyboardInterrupt,
@@ -29,7 +29,9 @@ class ExceptionGate:
         "H-ERROR": HttpError,
     }
 
-    TWO_ARG_STATUSES: frozenset[str] = frozenset({"CRITICAL", "BROKEN", "ERROR", "INTER"})
+    TWO_ARG_STATUSES: frozenset[str] = frozenset({
+        "ALERT", "BROKEN", "ERROR", "INTER"
+    })
 
     @classmethod
     def gate_item(cls, item: Mapping[str, Any]) -> None:
