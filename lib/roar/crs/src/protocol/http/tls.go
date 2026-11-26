@@ -1,66 +1,81 @@
 package http
 
 import (
-	"crypto/x509"
-	"encoding/base64"
-	"fmt"
 	"os"
+	"fmt"
 	"strings"
-
+	"net/url"
+	"crypto/x509"
+	"crypto/tls"
 	"github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 )
 
-// parsePEMBytes mengisolasi logika parsing PEM string, Base64, atau File Path.
-func parsePEMBytes(input string) ([]byte, error) {
-	input = strings.TrimSpace(input)
-	if input == "" {
-		return nil, nil
+
+func buildCustomTLSConfig(req packet.RequestPacket) (*tls.Config, error) {
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: !req.Verify,
+		MinVersion:         tls.VersionTLS10,
+		Renegotiation:      tls.RenegotiateOnceAsClient,
 	}
 
-	// Cek jika input adalah raw PEM string
-	if strings.Contains(input, "-----BEGIN") {
+	getPEMBytes := func(input string) ([]byte, error) {
+		if input == "" {
+			return nil, nil
+		}
+		if strings.Contains(input, "-----BEGIN") {
+			return []byte(input), nil
+		}
+		if _, err := os.Stat(input); err == nil {
+			bytes, err := os.ReadFile(input)
+			if err != nil {
+				return nil, fmt.Errorf("read file %s failed: %w", input, err)
+			}
+			return bytes, nil
+		}
 		return []byte(input), nil
 	}
 
-	// Cek jika input adalah Base64 Encoded PEM (Common pada payload JSON/Protobuf)
-	if decoded, err := base64.StdEncoding.DecodeString(input); err == nil {
-		if strings.Contains(string(decoded), "-----BEGIN") {
-			return decoded, nil
+	if req.TLSCert != "" && req.TLSKey != "" {
+		certBytes, err := getPEMBytes(req.TLSCert)
+		if err != nil {
+			return nil, fmt.Errorf("process tls-cert failed: %w", err)
 		}
+		keyBytes, err := getPEMBytes(req.TLSKey)
+		if err != nil {
+			return nil, fmt.Errorf("process tls-key failed: %w", err)
+		}
+		cert, err := tls.X509KeyPair(certBytes, keyBytes)
+		if err != nil {
+			return nil, fmt.Errorf("load x509 key pair: %w", err)
+		}
+		tlsConfig.Certificates = []tls.Certificate{cert}
 	}
 
-	// Cek jika input berupa File Path (Langsung ReadFile tanpa os.Stat untuk mencegah TOCTOU)
-	// CATATAN KEAMANAN: Hanya gunakan blok ini jika input dijamin berasal dari trusted source (misal: config internal)
-	if bytes, err := os.ReadFile(input); err == nil {
-		return bytes, nil
+	if req.TLSCA != "" {
+		caBytes, err := getPEMBytes(req.TLSCA)
+		if err != nil {
+			return nil, fmt.Errorf("process tls-ca failed: %w", err)
+		}
+		caCertPool := x509.NewCertPool()
+		if !caCertPool.AppendCertsFromPEM(caBytes) {
+			return nil, fmt.Errorf("failed to parse custom CA PEM")
+		}
+		tlsConfig.RootCAs = caCertPool
 	}
 
-	// Fallback jika berupa byte stream tanpa header PEM baku
-	return []byte(input), nil
-}
-
-func buildCaTLS(req packet.RequestPacket) (*x509.CertPool, error) {
-	if req.TLSCA == "" {
-		return nil, nil
-	}
-
-	caBytes, err := parsePEMBytes(req.TLSCA)
+	u, err := url.Parse(req.URL)
 	if err != nil {
-		return nil, fmt.Errorf("process tls-ca failed: %w", err)
+		return nil, err
 	}
 
-	if len(caBytes) == 0 {
-		return nil, nil
+	hostOnly := u.Hostname()
+	if hostOnly == "" {
+		return nil, fmt.Errorf("failed to extract host from url")
 	}
 
-	pool, err := x509.SystemCertPool()
-	if err != nil || pool == nil {
-    	pool = x509.NewCertPool()
+	if tlsConfig.ServerName == "" {
+		tlsConfig.ServerName = hostOnly
 	}
 
-	if ok := pool.AppendCertsFromPEM(caBytes); !ok {
-		return nil, fmt.Errorf("failed to parse custom CA PEM: no valid certificate blocks found")
-	}
-
-	return pool, nil
+	return tlsConfig, nil
 }
