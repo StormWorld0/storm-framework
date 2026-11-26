@@ -44,14 +44,15 @@ class HTTPClient(HTTPState, HTTPMethod):
 
         if cert is not None:
             if not isinstance(cert, str):
-                raise TypeError(f"Option 'cert' must be string, got {type(cert).__name__}")
+                raise TypeError(
+                    f"Option 'cert' must be string, got {type(cert).__name__}"
+                )
             self._TLSCert = cert
 
         if key is not None:
             if not isinstance(key, str):
                 raise TypeError(f"Option 'key' must be string, got {type(key).__name__}")
             self._TLSKey = key
-            
 
         if ca is not None:
             if not isinstance(ca, str):
