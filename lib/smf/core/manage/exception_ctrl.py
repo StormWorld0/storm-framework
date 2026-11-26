@@ -50,7 +50,6 @@ class ExceptionGate:
         raise exc_cls(message)
 
     @classmethod
-    @trace_ms
     def gate_stream(cls, stream: Iterable[Mapping[str, Any]]) -> None:
         gate_item = cls.gate_item
         for item in stream:
