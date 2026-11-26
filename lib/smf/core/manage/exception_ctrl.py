@@ -1,4 +1,3 @@
-from lib.smf.telemetry import trace_ms
 from typing import Any, Iterable, Mapping
 from lib.smf.exception import (
     CRSBrokenError,
