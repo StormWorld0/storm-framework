@@ -98,6 +98,7 @@ class CRSD:
 
                     res_dict = json.loads(line_str)
                     msg_id = res_dict.get("msg_id")
+                    smf.printd("Response Dict CRS", res_dict, level="DEBUG")
 
                     if msg_id:
                         with cls._dict_lock:
@@ -158,7 +159,7 @@ class CRSD:
 
         msg_id = uuid.uuid4().hex
         data["msg_id"] = msg_id
-        timeout = data.get("timeout", 0.0)
+        timeout = data.get("timeout", None)
         event = threading.Event()
 
         with cls._dict_lock:
@@ -233,11 +234,10 @@ class CRSD:
             res_err = {}
             if stderr_lines:
                 res_err = {
-                    "status": "CRITICAL",
+                    "status": "ALERT",
                     "message": " | ".join(stderr_lines),
                 }
 
-            smf.printd("Response Dict CRS", res_dict, level="DEBUG")
             return res_dict, res_err
         except KeyboardInterrupt:
             return {"status": "INTER", "message": "KeyboardInterrupt detected"}, {}
