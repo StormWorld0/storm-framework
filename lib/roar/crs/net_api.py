@@ -4,7 +4,6 @@ from .protocol import (
     ipwhois as IPWhois,
     domwhois as DWhois,
     Socket,
-    TelnetClient as Telnet,
 )
 
 # Define wrapper protocol
@@ -15,5 +14,4 @@ __all__ = [
     "IPWhois",
     "DWhois",
     "Socket",
-    "Telnet",
 ]
