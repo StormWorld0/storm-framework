@@ -29,9 +29,7 @@ class ExceptionGate:
         "H-ERROR": HttpError,
     }
 
-    TWO_ARG_STATUSES: frozenset[str] = frozenset({
-        "ALERT", "BROKEN", "ERROR", "INTER"
-    })
+    TWO_ARG_STATUSES: frozenset[str] = frozenset({"ALERT", "BROKEN", "ERROR", "INTER"})
 
     @classmethod
     def gate_item(cls, item: Mapping[str, Any]) -> None:
