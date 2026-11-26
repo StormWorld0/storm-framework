@@ -76,31 +76,6 @@ func main() {
 			}
 			continue
 		}
-
-		// [MODE SYNCHRONOUS]: For non-thread-safe protocols
-		if req.Go <= 0 {
-			var res packet.ResponsePacket
-			handler, ok := protocol.Handlers[req.Primitive]
-			if !ok {
-				res = packet.ResponsePacket{
-					Status: "ERROR", 
-					Message: "Unknown primitive: " + req.Primitive,
-				}
-			} else {
-				res = handler(req) // Execution blocking loop scanner
-			}
-
-			// IMPORTANT: Copy the MsgID from Request to Response
-			// so that the results that come out are not thrown away.
-			res.MsgID = req.MsgID
-			
-			select {
-			case responseChan <- res:
-			case <-ctx.Done():
-				goto Shutdown
-			}
-			continue
-		}
 		
 		wgWorkers.Add(1)
 
