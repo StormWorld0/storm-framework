@@ -41,12 +41,13 @@ class HTTPState:
         rawhttp: bool = False,
         tls: bool = False,
         verify: bool = True,
+        cert: str = "",
+        key: str = "",
         ca: str = "",
         retry: int = 2,
         timeout: float = 5.0,
         rlimit: int = 150,
         frate: int = 50,
-        con: int = 1,
         **kwargs,
     ):
         self._method = method.upper()
@@ -57,12 +58,13 @@ class HTTPState:
         self._rawhttp = rawhttp
         self._tls = tls
         self._verify = verify
+        self._TLSCert = cert
+        self._TLSKey = key
         self._TLSCA = ca
         self._retry = retry
         self._timeout = timeout
         self.ratelimit = rlimit
         self.fixed_ratelimit = frate
-        self.goroutine = con
 
         if kwargs:
             smf.printf(
@@ -112,11 +114,12 @@ class IPCPayloadBuilder:
             "rawmode": state._rawhttp,
             "info_tls": state._tls,
             "verify": state._verify,
+            "tls-cert": state._TLSCert,
+            "tls-key": state._TLSKey,
             "tls-ca": state._TLSCA,
             "retry": state._retry,
             "timeout": state._timeout,
             "ratelimit": state.ratelimit,
             "frate": state.fixed_ratelimit,
-            "goroutine": state.goroutine,
             "encoding": encode,
         }
