@@ -1,7 +1,6 @@
 package http
 
 import (
-	"crypto/x509"
 	"crypto/tls"
 	"net/http"
 	"errors"
@@ -19,24 +18,15 @@ func ExecuteStandard(req packet.RequestPacket, timeout time.Duration) packet.Res
 
 	client := retryablehttp.NewClient(retryOptions)
 
-	var tlsCA *x509.CertPool
-	if req.TLSCA != "" {
-		var err error
-	    tlsCA, err = buildCaTLS(req)
-	    if err != nil {
-		    return BuildErrorResponse("H-ERROR", "retryablehttp", "Failed build CA: "+err.Error())
-	    }
-    }
-
+	tlsCfg, err := buildCustomTLSConfig(req)
+	if err != nil {
+		return BuildErrorResponse("H-ERROR", "retryablehttp", err.Error()) 
+	}
+	
 	// Transport Architecture for resource optimization and TLS handling
 	client.HTTPClient.Transport = &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
-		TLSClientConfig: &tls.Config{
-			RootCAs:            tlsCA,
-			InsecureSkipVerify: !req.Verify,
-			MinVersion:         tls.VersionTLS10,
-			Renegotiation:      tls.RenegotiateOnceAsClient,
-		},
+		TLSClientConfig:       tlsCfg,
 		MaxIdleConns:          100,
 		MaxIdleConnsPerHost:   10,
 		IdleConnTimeout:       90 * time.Second,
