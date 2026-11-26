@@ -8,7 +8,7 @@ class TelnetState:
     """Managing Telnet State"""
 
     def __init__(
-        self, 
+        self,
         host: str,
         port: int = 23,
         timeout: int | float = 3.0,
