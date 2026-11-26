@@ -3,7 +3,6 @@
 # -- Author zxelzy (Refactored)
 
 from .state import TelnetState
-from .response import TelnetResponse
 from .io import TelnetIO
 from .iac import TelnetIAC
 
