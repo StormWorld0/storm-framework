@@ -27,7 +27,7 @@ class CRSD:
     _pending_requests = {}
     _pending_stderr = {}
     _responses = {}
-    _reader_thread = None
+    _stdout_thread = None
     _stderr_thread = None
 
     @classmethod
@@ -61,14 +61,14 @@ class CRSD:
             pid.prepare("crs_engine", cls._process.pid)
 
             # Turn on Background Reader
-            if cls._reader_thread is None or not cls._reader_thread.is_alive():
-                cls._reader_thread = threading.Thread(
-                    target=cls._background_reader,
+            if cls._stdout_thread is None or not cls._stdout_thread.is_alive():
+                cls._stdout_thread = threading.Thread(
+                    target=cls._stdout_reader,
                     args=(cls._process,),
                     name="_crs_stdout",
                     daemon=True,
                 )
-                cls._reader_thread.start()
+                cls._stdout_thread.start()
 
             # Turn on Background stderr
             if cls._stderr_thread is None or not cls._stderr_thread.is_alive():
@@ -83,7 +83,7 @@ class CRSD:
             return cls._process
 
     @classmethod
-    def _background_reader(cls, my_proc):
+    def _stdout_reader(cls, my_proc):
         """A standalone thread that constantly reads Go stdout."""
         try:
             while my_proc and my_proc.poll() is None:
