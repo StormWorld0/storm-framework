@@ -10,12 +10,7 @@ class TelnetIO:
         self,
         expected: Union[str, bytes, List[Union[str, bytes]]] = b"",
     ) -> Tuple[Union[str, bytes], int]:
-        """Membaca Response Telnet (Tuple return: data, match_index)"""
-        self._ensure_open("read")
-
-        timeout = self._timeout
-        raw = self.raw
-
+        """Reading Telnet Response (Tuple return: data, match_index)"""
         if expected == "" or expected == b"":
             expected_list = []
         elif not isinstance(expected, (list, tuple)):
@@ -28,8 +23,9 @@ class TelnetIO:
             for item in expected_list
         ]
 
-        wait_time = timeout
+        wait_time = 3.0
         start_time = time.time()
+        raw = self.raw
 
         while True:
             if expected_bytes:
@@ -45,24 +41,19 @@ class TelnetIO:
             if (time.time() - start_time) >= wait_time:
                 break
 
-            # Evaluasi status koneksi keseluruhan (resp_con), bukan variabel independen.
-            if self.resp_con.ok:
-                resp = self.sock.settimeout(timeout).recv(4096)
+            resp = self.sock.recv(4096)
+            if resp.status in ("S-ERROR", "S-WARN", "S-ALERT"):
+                break
 
-                if resp.status in ("ERROR", "WARN", "ALERT"):
+            if resp.ok and not resp.raw_bytes:
+                if self._buffer:
                     break
+                continue
 
-                if resp.ok and not resp.raw_bytes:
-                    if self._buffer:
-                        break
-                    continue
+            clean_chunk = self._negotiate_iac(resp.raw_bytes)
+            self._buffer += clean_chunk
 
-                clean_chunk = self._negotiate_iac(resp.raw_bytes)
-                self._buffer += clean_chunk
-
-                if not expected_bytes:
-                    break
-            else:
+            if not expected_bytes:
                 break
 
         res = self._buffer
@@ -75,22 +66,22 @@ class TelnetIO:
         command: Union[str, bytes],
         expected: Union[str, bytes, List[Union[str, bytes]]] = b"",
     ) -> Tuple[Union[str, bytes], int]:
-        """Mengirim data Telnet dan langsung membaca Response"""
+        """Send Telnet data and immediately read the Response"""
         self._ensure_open("send")
 
         # Mencegah payload biner (negosiasi IAC) rusak akibat penambahan CRLF otomatis
         if isinstance(command, str):
             cmd_payload = f"{command}\r\n".encode("utf-8")
         else:
-            # Jika diawali dengan byte IAC, asumsikan ini adalah perintah protokol murni
+            # Jika diawali dengan byte IAC
             if command.startswith(TelnetCmd.IAC):
                 cmd_payload = command
             else:
                 cmd_payload = command + b"\r\n"
 
-        # Validasi pengiriman. Jika socket drop, gagalkan langsung tanpa menunggu siklus read.
-        send_status = self.sock.settimeout(self._timeout).sendall(cmd_payload)
-        if not send_status.ok:
+        # Validasi pengiriman.
+        resp= self.sock.sendall(cmd_payload)
+        if not resp.ok:
             return (b"" if self.raw else ""), -1
 
         return self.read(expected)
