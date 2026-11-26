@@ -80,7 +80,7 @@ class TelnetIO:
                 cmd_payload = command + b"\r\n"
 
         # Validasi pengiriman.
-        resp= self.sock.sendall(cmd_payload)
+        resp = self.sock.sendall(cmd_payload)
         if not resp.ok:
             return (b"" if self.raw else ""), -1
 
