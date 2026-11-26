@@ -14,6 +14,8 @@ class HTTPClient(HTTPState, HTTPMethod):
 
     def setoptions(
         self,
+        cert: str | None = None,
+        key: str | None = None,
         ca: str | None = None,
         retry: int | None = None,
         redirect: bool | None = None,
@@ -39,6 +41,17 @@ class HTTPClient(HTTPState, HTTPMethod):
             if retry < 0 or retry > 100:
                 raise ValueError("Option 'retry' must be between 0 and 100")
             self._retry = retry
+
+        if cert is not None:
+            if not isinstance(cert, str):
+                raise TypeError(f"Option 'cert' must be string, got {type(cert).__name__}")
+            self._TLSCert = cert
+
+        if key is not None:
+            if not isinstance(key, str):
+                raise TypeError(f"Option 'key' must be string, got {type(key).__name__}")
+            self._TLSKey = key
+            
 
         if ca is not None:
             if not isinstance(ca, str):
