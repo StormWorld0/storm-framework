@@ -1,5 +1,3 @@
-import os
-import fcntl
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
 from .utils_fd import real_fd
@@ -75,10 +73,10 @@ class SocketFD:
             state=self,
             mode="getbloking",
         )
-        
+
         resp = SocketResponse(CRS.send(packet))
         if not resp.ok:
             raise OSError("Failed to check FD status")
-            
+
         is_block = resp._data.get("status-fd")
         return is_block
