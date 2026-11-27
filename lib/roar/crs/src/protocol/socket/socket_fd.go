@@ -81,7 +81,7 @@ func handleGetBlocking(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "S-WARN", Message: "There is no FD available to check blocking status"}
 	}
 	
-	fl, err := unix.FcntlInt(sFD, unix.F_GETFL, 0)
+	fl, err := unix.FcntlInt(uintptr(sFD), unix.F_GETFL, 0)
     if err != nil {
         return packet.ResponsePacket{Status: "S-ERROR", Message: err.Error()}
     }
@@ -92,6 +92,11 @@ func handleGetBlocking(ctx *ExecutionContext) packet.ResponsePacket {
 		status = true
 	} else {
 		status = false
+	}
+	if ctx.RawFD != -1 {
+		ctx.SaveSession(ctx.RawFD)
+	} else if ctx.Conn != nil {
+	    ctx.SaveSession(ctx.Conn)
 	}
 	return packet.ResponsePacket{Status: "SUCCESS", Data: map[string]interface{}{"status-fd": status}}
 }
