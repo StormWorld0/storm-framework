@@ -183,5 +183,5 @@ func handleShutdown(ctx *ExecutionContext) packet.ResponsePacket {
 	}
 
 	ctx.SaveSessionCFD(ctx.CFD)
-	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(fd, 0)}
+	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(ctx.CFD, 0)}
 }
