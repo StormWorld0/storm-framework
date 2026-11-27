@@ -111,7 +111,7 @@ class SocketState:
 
         # Cache File Descriptor. Set default -1
         self._sock_fd = -1
-        self._client_fd = -1
+        self._client_fd = -1 # Default fallback only
 
         if kwargs:
             smf.printf(
