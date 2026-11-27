@@ -1,3 +1,5 @@
+import os
+import fcntl
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
 from .utils_fd import real_fd
@@ -56,11 +58,27 @@ class SocketFD:
             mode="fileno",
         )
 
-        resp = CRS.send(packet)
-        response = SocketResponse(resp)
-
-        if uds := response._data.get("socket_uds"):
+        resp = SocketResponse(CRS.send(packet))
+        if uds := resp._data.get("socket_uds"):
             fd = real_fd(uds)
             self._sock_fd = fd
             return self._sock_fd
         return -1
+
+    def getbloking(self) -> bool:
+        """
+        View FD status
+        True if blocking and False if non-blocking
+        """
+        self._ensure_open("getbloking")
+        packet = IPCPayloadBuilder.build(
+            state=self,
+            mode="getbloking",
+        )
+        
+        resp = SocketResponse(CRS.send(packet))
+        if not resp.ok:
+            raise OSError("Failed to check FD status")
+            
+        is_block = resp._data.get("status-fd")
+        return is_block
