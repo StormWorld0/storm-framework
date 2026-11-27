@@ -40,9 +40,7 @@ class SocketCore:
             mode="socket",
         )
 
-        resp = SocketResponse(CRS.send(packet))
-        if not resp.ok:
-            raise SocketError(resp.message)
+        CRS.send(packet)
         return self
 
     def bind(
