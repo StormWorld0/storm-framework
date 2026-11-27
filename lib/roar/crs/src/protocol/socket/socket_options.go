@@ -14,8 +14,8 @@ func handleSetsockopt(ctx *ExecutionContext) packet.ResponsePacket {
 
 	var intFD int = -1
 
-	if ctx.Req.CltFD != -1 {     // FD Client Listener
-		intFD = ctx.Req.CltFD
+	if ctx.CFD != -1 {           // FD Client
+		intFD = ctx.CFD
 	} else if ctx.RawFD != -1 {  // FD Socket
 		intFD = ctx.RawFD
 	} else if ctx.Conn != nil {  // FD net.Conn / tls.UConn
@@ -39,14 +39,14 @@ func handleSetsockopt(ctx *ExecutionContext) packet.ResponsePacket {
 
 	level := ParseOptLevel(ctx.Req.OptLevel)
 	optName := ParseOptName(ctx.Req.OptName)
-	optVal := int(ctx.Req.OptVal)
+	optVal := ctx.Req.OptVal
 
 	if err := unix.SetsockoptInt(intFD, level, optName, optVal); err != nil {
 		return packet.ResponsePacket{Status: "S-ERROR", Message: "Setsockopt failed: " + err.Error()}
 	}
 
-	if ctx.Req.CltFD != -1 {
-		ctx.SaveSessionCFD(ctx.Req.CltFD)
+	if ctx.CFD != -1 {
+		ctx.SaveSessionCFD(ctx.CFD)
 	} else if ctx.RawFD != -1 {
 		ctx.SaveSession(ctx.RawFD)
 	} else if ctx.Conn != nil {
@@ -62,8 +62,8 @@ func handleGetSockOpt(ctx *ExecutionContext) packet.ResponsePacket {
 
 	var intFD int = -1
 
-	if ctx.Req.CltFD != -1 {       // FD Client Listener
-		intFD = ctx.Req.CltFD
+	if ctx.CFD != -1 {             // FD Client
+		intFD = ctx.CFD
 	} else if ctx.RawFD != -1 {    // FD Socket
 		intFD = ctx.RawFD
 	} else if ctx.Conn != nil {    // FD net.Conn / tls.UConn
@@ -93,8 +93,8 @@ func handleGetSockOpt(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "S-ERROR", Message: "Getsockopt failed: " + err.Error()}
 	}
 	
-	if ctx.Req.CltFD != -1 {
-		ctx.SaveSessionCFD(ctx.Req.CltFD)
+	if ctx.CFD != -1 {
+		ctx.SaveSessionCFD(ctx.CFD)
 	} else if ctx.RawFD != -1 {
 		ctx.SaveSession(ctx.RawFD)
 	} else if ctx.Conn != nil {
