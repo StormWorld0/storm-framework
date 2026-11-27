@@ -11,11 +11,11 @@ import (
 
 func handleSendAll(ctx *ExecutionContext) packet.ResponsePacket {
 	fd := ctx.RawFD
-	if ctx.Req.CltFD >= 0 {
-		fd = ctx.Req.CltFD
+	if ctx.CFD != -1 {
+		fd = ctx.CFD
 	}
 	
-	if fd >= 0 {
+	if fd != -1 {
 		flag := ParseFlags(ctx.Req.Flags)
 		if err := ExecuteSendAll(fd, ctx.Req.Data, ctx.Timeout, flag); err != nil {
 		    ctx.SaveSession(ctx.RawFD)
@@ -70,11 +70,11 @@ func handleSendFile(ctx *ExecutionContext) packet.ResponsePacket {
 
 func handleSend(ctx *ExecutionContext) packet.ResponsePacket {
 	fd := ctx.RawFD
-	if ctx.Req.CltFD >= 0 {
-		fd = ctx.Req.CltFD
+	if ctx.CFD != -1 {
+		fd = ctx.CFD
 	}
 	
-	if fd >= 0 {
+	if fd != -1 {
 		flag := ParseFlags(ctx.Req.Flags)
 		if err := ExecuteSend(fd, ctx.Req.Data, ctx.Timeout, flag); err != nil {
 			ctx.SaveSession(ctx.RawFD)
@@ -106,11 +106,11 @@ func handleSend(ctx *ExecutionContext) packet.ResponsePacket {
 
 func handleRecv(ctx *ExecutionContext) packet.ResponsePacket {
 	fd := ctx.RawFD
-	if ctx.Req.CltFD >= 0 {
-		fd = ctx.Req.CltFD
+	if ctx.CFD != -1 {
+		fd = ctx.CFD
 	}
 	
-    if fd >= 0 {
+    if fd != -1 {
 		flag := ParseFlags(ctx.Req.Flags)
 		buffer, n, _, bufPtr, err := ExecuteRecvFrom(fd, ctx.Req.Buffer, ctx.Timeout, flag)
 	    defer ReleaseBuffer(bufPtr)
@@ -171,11 +171,11 @@ func handleRecv(ctx *ExecutionContext) packet.ResponsePacket {
 
 func handleSendTo(ctx *ExecutionContext) packet.ResponsePacket {
 	fd := ctx.RawFD
-	if ctx.Req.CltFD >= 0 {
-		fd = ctx.Req.CltFD
+	if ctx.CFD != -1 {
+		fd = ctx.CFD
 	}
 	
-	if fd < 0 {
+	if fd == -1 {
 		return packet.ResponsePacket{Status: "S-WARN", Message: "No raw socket (FD) found for sendto."}
 	}
 
@@ -209,11 +209,11 @@ func handleSendTo(ctx *ExecutionContext) packet.ResponsePacket {
 
 func handleRecvFrom(ctx *ExecutionContext) packet.ResponsePacket {
 	fd := ctx.RawFD
-	if ctx.Req.CltFD >= 0 {
-		fd = ctx.Req.CltFD
+	if ctx.CFD != -1 {
+		fd = ctx.CFD
 	}
 	
-	if fd < 0 {
+	if fd == -1 {
 		return packet.ResponsePacket{Status: "S-WARN", Message: "No raw socket (FD) found for recvfrom."}
 	}
 
