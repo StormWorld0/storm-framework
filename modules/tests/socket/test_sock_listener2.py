@@ -145,6 +145,7 @@ def execute(options, net, log):
             log.printw("Accept Error =>", accept_err)
             return
         accepted_conns = conns
+        log.printi("Debug the contents of accept_conn:", accepted_conns)
 
         for idx, conn in enumerate(accepted_conns, start=1):
             log.prints(f"Accepted ClientFD ({idx}) =>", conn.fileno())
