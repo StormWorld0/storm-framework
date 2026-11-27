@@ -192,7 +192,7 @@ class SocketCore:
         close it manually with `os.close(fileno)`.
         """
         if self._is_closed:
-            return OSError("The socket is closed")
+            raise OSError("The socket is closed")
 
         def closefd(val) -> None:
             if isinstance(val, bool):
