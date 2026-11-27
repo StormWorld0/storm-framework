@@ -11,12 +11,21 @@ func handleSocket(ctx *ExecutionContext) packet.ResponsePacket {
 	afInt := ParseAF(ctx.Req.AF)
 	sInt := ParseSockType(ctx.Req.SType)
 	protoInt := ParseProtocol(ctx.Req.SProto)
+	udsPath := ctx.Req.UdsPath
 
-	fd, err := unix.Socket(afInt, sInt, protoInt)
-	if err != nil {
-		return packet.ResponsePacket{Status: "S-ERROR", Message: "Failed to create socket: " + err.Error()}
+	if udsPath == nil {
+	    fd, err := unix.Socket(afInt, sInt, protoInt)
+	    if err != nil {
+		    return packet.ResponsePacket{Status: "S-ERROR", Message: "Failed to create socket: " + err.Error()}
+	    }
+		ctx.SaveSession(fd)
+		return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(fd, 0)}
 	}
 
+	fd := udsToFD(udsPath)
+	if fd == -1 {
+		return packet.ResponsePacket{Status: "S-ERROR", Message: "Failed to retrieve FD from UDS"}
+	}
 	ctx.SaveSession(fd)
 	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(fd, 0)}
 }
