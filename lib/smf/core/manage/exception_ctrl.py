@@ -42,7 +42,6 @@ class ExceptionGate:
             return
 
         message = item.get("message", "UNKNOWN")
-        msg_id = item.get("msg_id", "UNKNOWN")
 
         if status in cls.TWO_ARG_STATUSES:
             raise exc_cls(status, message)
