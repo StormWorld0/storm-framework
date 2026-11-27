@@ -47,13 +47,13 @@ func resolveSockAddr(req packet.RequestPacket) (unix.Sockaddr, error) {
 
 
 
-func udsToFD(udsPath string) int {
-	if !strings.HasPrefix(udsPath, "@") {
+func udsToFD(udsPath *string) int {
+	if !strings.HasPrefix(*udsPath, "@") {
 		return -1
 	}
 
 	// Abstract namespace in Linux begins with a null byte ('\x00')
-	addr := &unix.SockaddrUnix{Name: "\x00" + udsPath[1:]}
+	addr := &unix.SockaddrUnix{Name: "\x00" + *udsPath[1:]}
 
 	fd, err := unix.Socket(unix.AF_UNIX, unix.SOCK_STREAM, 0)
 	if err != nil {
