@@ -31,7 +31,14 @@ def execute(options, net, log):
 
         sock.connect((host, port))
 
-        resp = sock.sendall(b"abrakadabra")
+        data = (
+            f"GET /anything HTTP/1.1\r\n"
+            f"Host: {host}\r\n"
+            f"Connection: close\r\n"
+            f"\r\n"
+        )
+
+        resp = sock.sendall(data)
         if not resp.ok:
             log.printw("Failed to send data =>", resp.message)
             return
