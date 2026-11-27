@@ -170,9 +170,9 @@ class ClientListener(
                 return None
             if val < 0:
                 return None
-            if not val == self.state._client_fd:
+            if not val == self._local_client_fd:
                 return None
-            self.state._client_fd = -1
+            self._local_client_fd = -1
             try:
                 return os.close(val)
             except OSError:
