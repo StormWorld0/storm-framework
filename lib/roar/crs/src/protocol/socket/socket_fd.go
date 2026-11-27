@@ -3,6 +3,7 @@ package socket
 import (
     "fmt"
 	"syscall"
+	"golang.org/x/sys/unix"
     "github.com/StormWorld0/storm-framework/lib/roar/crs/src/packet"
 )
 
@@ -57,3 +58,40 @@ func handleFilenoClt(ctx *ExecutionContext) packet.ResponsePacket {
     ctx.SaveSessionCFD(ctx.CFD)
     return packet.ResponsePacket{Status: "SUCCESS", Data: map[string]interface{}{"client_uds": udsPath}}
 } 
+
+func handleGetBlocking(ctx *ExecutionContext) packet.ResponsePacket {
+	var sFD int = -1
+	if ctx.RawFD != -1 {
+		sFD = ctx.RawFD
+	} else if ctx.Conn != nil {
+		if sc, ok := ctx.Conn.(interface{ SyscallConn() (syscall.RawConn, error) }); ok {
+			raw, err := sc.SyscallConn()
+			if err != nil {
+				return packet.ResponsePacket{Status: "S-ERROR", Message: "Failed to get SyscallConn: " + err.Error()}
+			}
+			err = raw.Control(func(fd uintptr) {
+				sFD = int(fd)
+			})
+			if err != nil {
+				return packet.ResponsePacket{Status: "S-ERROR", Message: "FD Control failed: " + err.Error()}
+			}
+		}
+	}
+	if sFD == -1 {
+		return packet.ResponsePacket{Status: "S-WARN", Message: "There is no FD available to check blocking status"}
+	}
+	
+	fl, err := unix.FcntlInt(sFD, unix.F_GETFL, 0)
+    if err == nil {
+        return packet.ResponsePacket{Status: "S-ERROR", Message: err.Error()}
+    }
+	
+	var status bool
+	isBlock := (fl & unix.O_NONBLOCK) == 0
+	if isBlock {
+		status = true
+	} else {
+		status = false
+	}
+	return packet.ResponsePacket{Status: "SUCCESS", Data: map[string]interface{}{"status-fd": status}}
+}
