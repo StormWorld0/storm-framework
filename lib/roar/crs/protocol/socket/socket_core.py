@@ -188,8 +188,7 @@ class SocketCore:
         If you previously used `close()` and the Python FD is still active,
         close it manually with `os.close(fileno)`.
         """
-        if self._is_closed:
-            raise OSError("The socket is closed")
+        self._ensure_open("close")
 
         def closefd(val) -> None:
             if isinstance(val, bool):
