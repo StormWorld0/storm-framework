@@ -82,8 +82,7 @@ func handleUpgradeTLS(ctx *ExecutionContext) packet.ResponsePacket {
 	if err != nil {
 		return packet.ResponsePacket{Status: "S-ERROR", Message: "TLS Upgrade failed: " + err.Error()}
 	}
-
-	ctx.Conn = tlsConn
-	ctx.SaveSession(ctx.Conn)
+	
+	ctx.SaveSession(tlsConn)
 	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadata(0)}
 }
