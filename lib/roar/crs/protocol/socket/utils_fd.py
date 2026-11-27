@@ -1,6 +1,10 @@
+import os
+import uuid
 import socket
 import struct
 import fcntl
+import array
+import threading
 
 
 def real_fd(uds_path: str) -> int:
@@ -44,3 +48,67 @@ def real_fd(uds_path: str) -> int:
             return local_fd
     except (OSError, struct.error):
         return -1
+
+
+def build_uds(fd: int | None, timeout: float = 3.0) -> str | None:
+    if fd is None or fd < 0:
+        return None
+
+    # Ensure fd is valid
+    os.fstat(fd)
+
+    uds = f"@socket_fd_{uuid.uuid4().hex}"
+    real_path = uds.replace("@", "\x00", 1)
+
+    ready = threading.Event()
+    startup_error: list[BaseException] = []
+
+    def _serve_once() -> None:
+        server: socket.socket | None = None
+        conn: socket.socket | None = None
+        try:
+            server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            server.bind(real_path)
+            server.listen(1)
+            server.settimeout(timeout)
+            ready.set()
+
+            conn, _ = server.accept()
+            conn.settimeout(timeout)
+
+            fd_array = array.array("i", [fd])
+            ancdata = [(socket.SOL_SOCKET, socket.SCM_RIGHTS, fd_array.tobytes())]
+            sent = conn.sendmsg([b"\x01"], ancdata)
+            if sent < 1:
+                raise RuntimeError("Failed to send payload SCM_RIGHTS")
+
+            # Receive FIN from Go
+            ack = conn.recv(1)
+            if ack in not (b"", b"\x01"):
+                raise ConnectionError("Peer closes connection before sending FIN")
+        except BaseException as exc:
+            if not ready.is_set():
+                startup_error.append(exc)
+        finally:
+            if conn is not None:
+                try:
+                    conn.close()
+                except OSError:
+                    pass
+            if server is not None:
+                try:
+                    server.close()
+                except OSError:
+                    pass
+
+    worker = threading.Thread(target=_serve_once, daemon=True)
+    worker.start()
+
+    if not ready.wait(timeout=timeout):
+        raise TimeoutError("UDS listener failed to ready within timeout")
+
+    if startup_error:
+        raise startup_error[0]
+
+    return uds
+    
