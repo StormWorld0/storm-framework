@@ -20,11 +20,14 @@ def execute(options, net, log):
 
     try:
         _sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        log.printi("FD socket =>", _sock.fileno())
+        log.printi("FD socket        =>", _sock.fileno())
+        log.printi("Status FD socket =>", _sock.getblocking())
+        log.printi()
 
         sock = net.Socket()
-        sock.socket(sock.AF_INET, sock.SOCK_STREAM, fileno=_sock.detach())
-        log.prints("FD net.Socket =>", sock.fileno())
+        sock.socket(fileno=_sock.detach())
+        log.prints("FD net.Socket        =>", sock.fileno())
+        log.prints("Status FD net.Socket =>", sock.getbloking())
 
         sock.connect((host, port))
 
