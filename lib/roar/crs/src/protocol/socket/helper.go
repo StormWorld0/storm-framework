@@ -99,17 +99,17 @@ func udsToFD(udsPath *string) int {
 			_ = unix.Close(extra)
 		}
 		iFD := fds[0]
-		flags, err := unix.FcntlInt(iFD, unix.F_GETFD, 0)
+		flags, err := unix.FcntlInt(uintptr(iFD), unix.F_GETFD, 0)
 		if err == nil {
-			_, _ = unix.FcntlInt(iFD, unix.F_SETFD, flags|unix.FD_CLOEXEC)
+			_, _ = unix.FcntlInt(uintptr(iFD), unix.F_SETFD, flags|unix.FD_CLOEXEC)
 		}
-		fl, err := unix.FcntlInt(iFD, unix.F_GETFL, 0)
+		fl, err := unix.FcntlInt(uintptr(iFD), unix.F_GETFL, 0)
 		if err != nil {
 			_ = unix.Close(iFD)
 			return -1
 		}
 		if fl&unix.O_NONBLOCK != 0 {
-			if _, err := unix.FcntlInt(iFD, unix.F_SETFL, fl&^unix.O_NONBLOCK); err != nil {
+			if _, err := unix.FcntlInt(uintptr(iFD), unix.F_SETFL, fl&^unix.O_NONBLOCK); err != nil {
 				_ = unix.Close(iFD)
 				return -1
 			}
