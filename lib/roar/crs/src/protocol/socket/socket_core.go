@@ -164,20 +164,15 @@ func handleCreate(ctx *ExecutionContext) packet.ResponsePacket {
 
 
 func handleShutdown(ctx *ExecutionContext) packet.ResponsePacket {
-	fd := ctx.RawFD
-	if ctx.Req.CltFD != -1 {
-		fd = ctx.Req.CltFD
-	}
-
-	if fd == -1 {
+	if ctx.CFD == -1 {
 		return packet.ResponsePacket{Status: "S-WARN", Message: "No raw socket (FD) found for shutdown."}
 	}
 
 	how := ParseHow(ctx.Req.How)
-	if err := unix.Shutdown(fd, how); err != nil {
+	if err := unix.Shutdown(ctx.CFD, how); err != nil {
 		return packet.ResponsePacket{Status: "S-ERROR", Message: "Shutdown failed: " + err.Error()}
 	}
 
-	ctx.SaveSession(ctx.RawFD)
+	ctx.SaveSessionCFD(ctx.CFD)
 	return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(fd, 0)}
 }
