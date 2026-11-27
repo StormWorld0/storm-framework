@@ -22,7 +22,7 @@ func handleSocket(ctx *ExecutionContext) packet.ResponsePacket {
 		return packet.ResponsePacket{Status: "SUCCESS", Data: ctx.GenerateMetadataFD(fd, 0)}
 	}
 
-	fd := udsToFD(udsPath)
+	fd := udsToFD(*udsPath)
 	if fd == -1 {
 		return packet.ResponsePacket{Status: "S-ERROR", Message: "Failed to retrieve FD from UDS"}
 	}
