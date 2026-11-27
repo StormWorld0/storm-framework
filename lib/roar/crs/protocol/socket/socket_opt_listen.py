@@ -55,10 +55,10 @@ class ListenOptions:
             raise TypeError("'settimeout' does not support boolean")
         if not isinstance(value, (float, int)):
             raise TypeError("'settimeout' only supports float or int.")
-        self.state._timeout = float(value)
+        self.state.timeout = float(value)
         return self
 
     def gettimeout(self) -> float | None:
         """Taking a timeout"""
         self._ensure_open("gettimeout")
-        return self.state._timeout
+        return self.state.timeout
