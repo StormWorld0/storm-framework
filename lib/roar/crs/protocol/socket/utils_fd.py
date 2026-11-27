@@ -83,8 +83,8 @@ def build_uds(fd: int | None, timeout: float = 3.0) -> str | None:
                 raise RuntimeError("Failed to send payload SCM_RIGHTS")
 
             # Receive FIN from Go
-            ack = conn.recv(1)
-            if ack in not (b"", b"\x01"):
+            fin = conn.recv(1)
+            if fin not in (b"", b"\x01"):
                 raise ConnectionError("Peer closes connection before sending FIN")
         except BaseException as exc:
             if not ready.is_set():
