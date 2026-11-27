@@ -28,6 +28,7 @@ class SocketCore:
         self.proto = proto if proto is not None else 0
         uds = None
         if fileno is not None:
+            self._sock_fd = fileno
             uds = build_uds(fileno)
 
         packet = IPCPayloadBuilder.build(
