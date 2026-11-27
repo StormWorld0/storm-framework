@@ -7,11 +7,11 @@ import (
 
 func handleGetPeerName(ctx *ExecutionContext) packet.ResponsePacket {
     fd := ctx.RawFD
-	if ctx.Req.CltFD >= 0 {
-		fd = ctx.Req.CltFD
-    }
+	if ctx.CFD != -1 {
+		fd = ctx.CFD
+	}
 
-    if fd >= 0 {
+    if fd != -1 {
         remoteAddr, err := unix.Getpeername(fd)
         ctx.SaveSession(ctx.RawFD)
         if err != nil {
@@ -38,11 +38,11 @@ func handleGetPeerName(ctx *ExecutionContext) packet.ResponsePacket {
 
 func handleGetSockName(ctx *ExecutionContext) packet.ResponsePacket {
     fd := ctx.RawFD
-	if ctx.Req.CltFD >= 0 {
-		fd = ctx.Req.CltFD
-    }
+	if ctx.CFD != -1 {
+		fd = ctx.CFD
+	}
 
-    if fd >= 0 {
+    if fd != -1 {
         ctx.SaveSession(ctx.RawFD)
         localAddr, err := unix.Getsockname(fd)
         if err != nil {
