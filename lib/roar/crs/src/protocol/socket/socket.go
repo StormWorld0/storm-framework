@@ -30,6 +30,7 @@ var handlers = map[string]CommandHandler{
 	"getnameinfo": handleGetNameInfo,
 	"getpeername": handleGetPeerName,
 	"getsockname": handleGetSockName,
+	"getbloking":  handleGetBlocking,
 }
 
 // A socket is an entry point for executing a connection using POSIX-like primitive operations.
