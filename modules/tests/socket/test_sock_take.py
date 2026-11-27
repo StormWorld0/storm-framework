@@ -3,7 +3,7 @@ import socket
 metadata = {
     "Name": "Testing TCP Socket",
     "Description": """
-Testing Socket
+Testing socket using FD ownership transfer mechanism
 """,
     "Author": ["zxelzy"],
     "Action": [["Scan", {"Description": "Testing socket"}]],
