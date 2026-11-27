@@ -20,7 +20,7 @@ def execute(options, net, log):
 
     try:
         _sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        _sock.setbloking(False)
+        _sock.setblocking(False)
         log.printi("FD socket        =>", _sock.fileno())
         log.printi("Status FD socket =>", _sock.getblocking())
         log.printi()
