@@ -27,7 +27,7 @@ type RequestPacket struct {
 	OptVal        int               `json:"opt-value,omitempty"` // Value Integer
 	Flags         any               `json:"flags,omitempty"`     // MSG_OOB, MSG_MORE, ...
 	How           any               `json:"how,omitempty"`       // SHUT_RDWR, SHUT_WR, SHUT_RD
-	UdsPath       *string           `json:"uds-path"`            // contains: @socket_fd_* Unix Domain Socket
+	UdsPath       *string           `json:"uds-path,omitempty"`  // contains: @socket_fd_* Unix Domain Socket
 
 	FlowInfo      int               `json:"flowinfo,omitempty"`  // IPv6
 	ScopeID       int               `json:"scope_id,omitempty"`  // IPv6
