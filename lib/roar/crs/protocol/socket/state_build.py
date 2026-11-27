@@ -105,10 +105,7 @@ class SocketState:
         self.cert = cert
         self.key = key
         self.ca = ca
-
-        # Set Goroutine 1 (True)
-        self.con = 1
-
+        
         # Cache File Descriptor. Set default -1
         self._sock_fd = -1
         self._client_fd = -1  # Default fallback only
@@ -203,5 +200,4 @@ class IPCPayloadBuilder:
             "flowinfo": flowinfo if flowinfo is not None else state.flowinfo,
             "scope_id": scopeid if scopeid is not None else state.scopeid,
             "uds-path": fileno,
-            "goroutine": state.con,
         }
