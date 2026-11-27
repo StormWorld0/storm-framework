@@ -82,7 +82,7 @@ func handleGetBlocking(ctx *ExecutionContext) packet.ResponsePacket {
 	}
 	
 	fl, err := unix.FcntlInt(sFD, unix.F_GETFL, 0)
-    if err == nil {
+    if err != nil {
         return packet.ResponsePacket{Status: "S-ERROR", Message: err.Error()}
     }
 	
