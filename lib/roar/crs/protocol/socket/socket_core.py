@@ -30,6 +30,7 @@ class SocketCore:
             addr_fam=family,
             stype=type,
             sproto=proto,
+            fileno=fileno,
             mode="socket",
         )
 
