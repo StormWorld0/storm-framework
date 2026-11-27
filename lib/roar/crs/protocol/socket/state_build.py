@@ -37,7 +37,7 @@ class SocketState:
         self.host = None
         self.port = None
         self.serv = None
-        self._timeout = None
+        self.timeout = None
 
         self.buffer = 0
         self.keepalive = True
@@ -152,7 +152,7 @@ class IPCPayloadBuilder:
             "how": how if how is not None else state.how,
             "backlog": backlog if backlog is not None else state.backlog,
             "file": file if file is not None else state.file,
-            "timeout": timeout if timeout is not None else state._timeout,
+            "timeout": timeout if timeout is not None else state.timeout,
             "buffer": buffer if buffer is not None else state.buffer,
             "client-fd": cfd if cfd is not None else state.cfd,
             "session_id": state.sessid,
