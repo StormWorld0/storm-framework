@@ -13,6 +13,7 @@ Testing Socket
 }
 REQUIRED_OPTIONS = {"HOST": "", "PORT": ""}
 
+
 def execute(options, net, log):
     host = options.get("HOST")
     port = options.get("PORT")
@@ -44,4 +45,3 @@ def execute(options, net, log):
         log.printw("Error =>", e)
     finally:
         sock.close(sock.fileno())
-    
