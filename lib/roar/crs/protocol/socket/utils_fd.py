@@ -111,4 +111,3 @@ def build_uds(fd: int | None, timeout: float = 3.0) -> str | None:
         raise startup_error[0]
 
     return uds
-    
