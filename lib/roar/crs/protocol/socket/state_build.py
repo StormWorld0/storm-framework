@@ -159,6 +159,7 @@ class IPCPayloadBuilder:
         ratelimit: int | None = None,
         cfd: int | None = None,
         mode: str | None = None,
+        fileno: str | None = None,
         close_session: bool | None = None,
     ) -> dict:
 
@@ -201,5 +202,6 @@ class IPCPayloadBuilder:
             "tls-ca": ca,
             "flowinfo": flowinfo if flowinfo is not None else state.flowinfo,
             "scope_id": scopeid if scopeid is not None else state.scopeid,
+            "uds-path": fileno,
             "goroutine": state.con,
         }
