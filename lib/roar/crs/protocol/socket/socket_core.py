@@ -14,17 +14,17 @@ class SocketCore:
 
     def socket(
         self,
-        family: int,
-        type: int,
-        proto: int | None = None,
-        fileno: str | None = None,
+        family: int = 2,
+        type: int = 1,
+        proto: int = 0,
+        fileno: int | None = None,
         **kwargs,
     ) -> Self:
         """Open Socket"""
         self._ensure_open("socket")
         self.family = family
         self.type = type
-        self.proto = proto if proto is not None else 0
+        self.proto = proto
         uds = None
         if fileno is not None:
             self._sock_fd = fileno
