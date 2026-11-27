@@ -17,6 +17,7 @@ class SocketCore:
         family: int,
         type: int,
         proto: int | None = None,
+        fileno: str | None = None,
         **kwargs,
     ) -> Self:
         """Open Socket"""
