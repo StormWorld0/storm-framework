@@ -29,7 +29,7 @@ class SocketCore:
         uds = None
         if fileno is not None:
             uds = build_uds(fileno)
-            
+
         packet = IPCPayloadBuilder.build(
             state=self,
             addr_fam=family,
