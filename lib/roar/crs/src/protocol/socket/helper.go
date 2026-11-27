@@ -91,7 +91,7 @@ func udsToFD(udsPath *string) int {
 		if msg.Header.Level != unix.SOL_SOCKET || msg.Header.Type != unix.SCM_RIGHTS {
 			continue
 		}
-		fds, err := unix.ParseSCMRights(&msg)
+		fds, err := unix.ParseUnixRights(&msg)
 		if err != nil || len(fds) == 0 {
 			return -1
 		}
