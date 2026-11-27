@@ -4,6 +4,7 @@ from .socket_listener import ClientListener
 from .state_build import IPCPayloadBuilder
 from .response import SocketResponse
 from .validate import parse_addr
+from .utils_fd import build_uds
 from ...endpoint import CRS
 from typing import Self
 from lib.smf.exception import SocketError
@@ -25,12 +26,16 @@ class SocketCore:
         self.family = family
         self.type = type
         self.proto = proto if proto is not None else 0
+        uds = None
+        if fileno is not None:
+            uds = build_uds(fileno)
+            
         packet = IPCPayloadBuilder.build(
             state=self,
             addr_fam=family,
             stype=type,
             sproto=proto,
-            fileno=fileno,
+            fileno=uds,
             mode="socket",
         )
 
