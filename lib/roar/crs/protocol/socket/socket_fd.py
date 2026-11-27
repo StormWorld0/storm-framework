@@ -16,8 +16,8 @@ class ListenFD:
         and need `close(fileno)` mechanism to close these 2 Client FDs!
         """
         self._ensure_open("fileno")
-        if self.state._client_fd != -1:
-            return self.state._client_fd
+        if self._local_client_fd != -1:
+            return self._local_client_fd
 
         packet = IPCPayloadBuilder.build(
             state=self.state,
@@ -30,8 +30,8 @@ class ListenFD:
 
         if uds := response._data.get("client_uds"):
             fd = real_fd(uds)
-            self.state._client_fd = fd
-            return self.state._client_fd
+            self._local_client_fd = fd
+            return self._local_client_fd
         return -1
 
 
