@@ -7,7 +7,6 @@ from .validate import parse_addr
 from .utils_fd import build_uds
 from ...endpoint import CRS
 from typing import Self
-from lib.smf.exception import SocketError
 
 
 class SocketCore:
