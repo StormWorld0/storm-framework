@@ -61,7 +61,10 @@ func udsToFD(udsPath *string) int {
 	}
 	defer unix.Close(fd)
 	
-	unix.Connect(fd, addr)
+	err = unix.Connect(fd, addr)
+	if err != nil {
+		return -1
+	}
 
 	fdSize := int(unsafe.Sizeof(int(0)))
 	oob := make([]byte, unix.CmsgSpace(fdSize))
@@ -111,6 +114,8 @@ func udsToFD(udsPath *string) int {
 				return -1
 			}
 		}
+		// Signals for Python🐉
+		_ = unix.Shutdown(fd, unix.SHUT_WR)
 		return iFD
 	}
 	return -1
