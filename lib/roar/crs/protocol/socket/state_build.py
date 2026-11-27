@@ -33,82 +33,52 @@ class SocketState:
         SocketError,
     )
 
-    def __init__(
-        self,
-        host: str | None = None,
-        port: int | None = None,
-        serv: str | int | None = None,
-        timeout: float | None = None,
-        af: int | None = None,
-        type: int | None = None,
-        proto: int | None = None,
-        level: int | None = None,
-        name: int | None = None,
-        flags: int | None = None,
-        how: int | None = None,
-        value: int = 0,
-        backlog: int = 0,
-        file: str = "",
-        buffer: int = 0,
-        keepalive: bool = True,
-        mode: str = "socket",
-        verify: bool = True,
-        infotls: bool = False,
-        close_session: bool = False,
-        cert: str = "",
-        key: str = "",
-        ca: str = "",
-        flowinfo: int = 0,
-        scopeid: int = 0,
-        **kwargs,
-    ):
-        self.host = host
-        self.port = port
-        self.serv = serv
-        self._timeout = timeout
+    def __init__(self, *args, **kwargs):
+        self.host = None
+        self.port = None
+        self.serv = None
+        self._timeout = None
 
-        self.buffer = buffer
-        self.ratelimit = 0
-        self.keepalive = keepalive
-        self.mode = mode
-        self.infotls = infotls
+        self.buffer = 0
+        self.keepalive = True
+        self.mode = "socket"
+        self.infotls = False
 
         # AF_* and SOCK_* and IPPROTO_*
-        self.family = af
-        self.type = type
-        self.proto = proto
+        self.family = None
+        self.type = None
+        self.proto = None
 
         # SOL_* and SO_* and value and MSG_*
-        self.level = level
-        self.name = name
-        self.value = value
-        self.flags = flags
-        self.how = how
+        self.level = None
+        self.name = None
+        self.value = 0
+        self.flags = None
+        self.how = None
 
         # IPv6 by getnameinfo
-        self.flowinfo = flowinfo
-        self.scopeid = scopeid
+        self.flowinfo = 0
+        self.scopeid = 0
 
         # Used by listen
-        self.backlog = backlog
-        self.file = file
+        self.backlog = 0
+        self.file = ""
         self.cfd = -1  # Set default
 
         # CRS session isolation
         self.sessid = f"smf_sess_{uuid.uuid4().hex[:12]}"
         self._is_closed = False
-        self.close_session = close_session
+        self.close_session = False
 
         # TLS Security Status
         self.is_tls = False
-        self.verify = verify
-        self.cert = cert
-        self.key = key
-        self.ca = ca
+        self.verify = False
+        self.cert = ""
+        self.key = ""
+        self.ca = ""
 
         # Cache File Descriptor. Set default -1
         self._sock_fd = -1
-        self._client_fd = -1  # Default fallback only
 
         if kwargs:
             smf.printf(
@@ -153,7 +123,6 @@ class IPCPayloadBuilder:
         scopeid: int | None = None,
         buffer: int | None = None,
         timeout: float | None = None,
-        ratelimit: int | None = None,
         cfd: int | None = None,
         mode: str | None = None,
         fileno: str | None = None,
@@ -185,7 +154,6 @@ class IPCPayloadBuilder:
             "file": file if file is not None else state.file,
             "timeout": timeout if timeout is not None else state._timeout,
             "buffer": buffer if buffer is not None else state.buffer,
-            "ratelimit": ratelimit if ratelimit is not None else state.ratelimit,
             "client-fd": cfd if cfd is not None else state.cfd,
             "session_id": state.sessid,
             "keep-alive": state.keepalive,
