@@ -8,6 +8,7 @@ class ListenState:
         self.state = state
         self._cfd = cfd
         self._is_closed_cfd = False
+        self._local_client_fd = -1
 
     def _ensure_open(self, operation: str):
         """Prevent execution in a closed session"""
